@@ -1,4 +1,4 @@
-﻿# Subs Availability & Calendar Model
+# Subs Availability & Calendar Model
 
 ## Purpose
 Provide a lightweight, shared availability layer for all industries so future booking-slot logic has structured data.
@@ -14,8 +14,8 @@ Includes:
 - `BusinessAvailabilityWindow`
 - `StaffAvailabilityWindow`
 - `ServiceSchedulingRule`
-- `StaffBreakWindow` (placeholder for future rota/break logic)
-- `StaffRotaDay` (placeholder for future rota/day modeling)
+- `StaffBreakWindow`
+- `StaffRotaDay`
 - `CalendarPreviewItem`
 
 ## Industry scheduling defaults
@@ -37,13 +37,15 @@ Patterns:
 ## Local storage keys
 Implemented in:
 - `src/lib/calendar/local-availability.ts`
+- `src/lib/calendar/local-staff-rota.ts`
 
 Keys:
 - `subs-business-availability:<industrySlug>`
 - `subs-staff-availability:<industrySlug>`
+- `subs-staff-rota:<industrySlug>`
 
 ## Local helper behavior
-Functions:
+Availability functions:
 - `listLocalBusinessAvailability`
 - `saveLocalBusinessAvailability`
 - `seedLocalBusinessAvailability`
@@ -54,15 +56,34 @@ Functions:
 - `updateStaffAvailability`
 - `clearLocalAvailability`
 
+Rota functions:
+- `listLocalStaffRota`
+- `getLocalStaffRotaForStaff`
+- `saveLocalStaffRota`
+- `updateLocalStaffRotaForStaff`
+- `seedLocalStaffRota`
+- `clearLocalStaffRota`
+
 Seeding:
-- creates sensible Mon-Sat windows based on industry type
-- staff windows mirror business windows when staff exists
+- creates sensible Mon-Fri or Tue-Sat defaults based on industry style
+- creates per-staff weekday rota rows
+- includes a default lunch break on working days
 - seeding only runs when no data exists
 
 ## Admin settings UI
 `/admin/settings` includes:
 - Availability editor (window CRUD for business/staff)
+- Staff rota & breaks editor (working days + break windows per staff member)
 - Calendar preview (informational summary + mock upcoming items)
+
+## Appointment slot usage (current mock)
+Preferred slot tiles can use:
+- staff rota day windows when a staff member is selected
+- break windows to avoid suggesting times inside breaks
+- business availability fallback when no staff rota/day window exists
+
+This is still local/mock preferred-slot behavior only.
+No real conflict-checking against existing appointments is performed.
 
 ## Not implemented yet
 - no conflict-checking engine
@@ -80,8 +101,5 @@ For real appointment booking, slot availability must eventually combine:
 - existing bookings at the same time
 - whether customer staff selection is enabled by admin
 
-Current implementation only offers preferred-slot suggestions and clearly marks that final confirmation comes from the business.
-
 ## Future direction
 Later backend work can persist availability by site + staff, add conflict checks, and build slot availability and assignment workflows on top of this model.
-

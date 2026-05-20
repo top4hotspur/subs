@@ -15,6 +15,7 @@ import {
   getStaffAvailability,
   listLocalBusinessAvailability,
 } from "@/lib/calendar/local-availability";
+import { getLocalStaffRotaForStaff } from "@/lib/calendar/local-staff-rota";
 import { isAppointmentStyleIndustry } from "@/lib/requests/appointment-industries";
 import {
   getDefaultLocationTypeForIndustry,
@@ -122,11 +123,15 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
     const staffAvailability = selectedStaffMember?.id
       ? getStaffAvailability(templateSlug, selectedStaffMember.id)
       : [];
+    const staffRotaDays = selectedStaffMember?.id
+      ? getLocalStaffRotaForStaff(templateSlug, selectedStaffMember.id)
+      : [];
     return buildPreferredAppointmentSlots({
       selectedDate: form.preferredDate,
       industrySlug: templateSlug,
       businessAvailabilityWindows: businessAvailabilityAll,
       selectedStaffAvailabilityWindows: staffAvailability,
+      selectedStaffRotaDays: staffRotaDays,
       selectedStaffId: selectedStaffMember?.id,
       selectedStaffName: selectedStaffMember?.displayName,
       serviceDurationMinutes: 45,

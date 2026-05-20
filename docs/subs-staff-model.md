@@ -28,12 +28,14 @@ Each staff member stores `serviceIds`, enabling service-to-staff mapping for fut
 ## Availability integration
 Availability windows are stored separately and linked by `staffId`:
 - `subs-staff-availability:<industrySlug>`
+- `subs-staff-rota:<industrySlug>` for working-day and break-window modeling
 
 See:
 - `docs/subs-availability-calendar-model.md`
 
 ## Current UI usage
 - `/admin/settings`: staff editor + availability editor
+- `/admin/settings`: staff rota & breaks editor (local mock)
 - customer request form: optional preferred-staff selector
 - `/admin`: assignment dropdown when staff exists
 

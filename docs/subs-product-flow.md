@@ -17,6 +17,7 @@
   - `nail-salon`
 - Preferred time uses morning/afternoon/evening tile selection.
 - Tiles are preference hints, not guaranteed live availability.
+- When staff is selected, local rota and break windows can shape preferred slot suggestions.
 
 ## Future appointment requirements (not implemented)
 Real appointment slot availability will later require:

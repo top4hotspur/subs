@@ -1,5 +1,8 @@
-﻿import {
+import {
+  AvailabilityWindowType,
   BusinessAvailabilityWindow,
+  StaffBreakWindow,
+  StaffRotaDay,
   StaffAvailabilityWindow,
   Weekday,
 } from "@/lib/calendar/calendar-types";
@@ -30,6 +33,7 @@ type BuildPreferredAppointmentSlotsOptions = {
   industrySlug: WebsiteTemplateSlug;
   businessAvailabilityWindows: BusinessAvailabilityWindow[];
   selectedStaffAvailabilityWindows?: StaffAvailabilityWindow[];
+  selectedStaffRotaDays?: StaffRotaDay[];
   serviceDurationMinutes?: number;
   selectedStaffId?: string;
   selectedStaffName?: string;
@@ -58,6 +62,18 @@ function toMinutes(time: string): number {
   return h * 60 + m;
 }
 
+function overlapsBreak(startTime: string, endTime: string, breaks: StaffBreakWindow[]): boolean {
+  const start = toMinutes(startTime);
+  const end = toMinutes(endTime);
+
+  return breaks.some((item) => {
+    if (!item.active) return false;
+    const bStart = toMinutes(item.startTime);
+    const bEnd = toMinutes(item.endTime);
+    return start < bEnd && end > bStart;
+  });
+}
+
 export function getDayPeriodForTime(time: string): DayPeriod {
   const minutes = toMinutes(time);
   if (minutes < 12 * 60) return DayPeriod.MORNING;
@@ -72,6 +88,7 @@ export function buildPreferredAppointmentSlots(
     selectedDate,
     businessAvailabilityWindows,
     selectedStaffAvailabilityWindows = [],
+    selectedStaffRotaDays = [],
     serviceDurationMinutes = 45,
     selectedStaffId,
     selectedStaffName,
@@ -86,9 +103,29 @@ export function buildPreferredAppointmentSlots(
     return [];
   }
 
-  const sourceWindows = selectedStaffAvailabilityWindows.length > 0
-    ? selectedStaffAvailabilityWindows.filter((window) => window.active && window.weekday === weekday)
-    : businessAvailabilityWindows.filter((window) => window.active && window.weekday === weekday);
+  const rotaDay = selectedStaffRotaDays.find((day) => day.weekday === weekday);
+  const rotaWindows: StaffAvailabilityWindow[] =
+    rotaDay && rotaDay.working && rotaDay.startTime && rotaDay.endTime
+      ? [
+          {
+            id: `rota_${selectedStaffId ?? "staff"}_${weekday}`,
+            staffId: selectedStaffId ?? "",
+            weekday,
+            startTime: rotaDay.startTime,
+            endTime: rotaDay.endTime,
+            type: AvailabilityWindowType.APPOINTMENT_ONLY,
+            notes: "Derived from staff rota",
+            active: true,
+          },
+        ]
+      : [];
+
+  const sourceWindows =
+    rotaWindows.length > 0
+      ? rotaWindows
+      : selectedStaffAvailabilityWindows.length > 0
+        ? selectedStaffAvailabilityWindows.filter((window) => window.active && window.weekday === weekday)
+        : businessAvailabilityWindows.filter((window) => window.active && window.weekday === weekday);
 
   if (sourceWindows.length === 0) {
     return GENERIC_SLOTS.map((time, index) => ({
@@ -115,14 +152,23 @@ export function buildPreferredAppointmentSlots(
       const hh = String(Math.floor(cursor / 60)).padStart(2, "0");
       const mm = String(cursor % 60).padStart(2, "0");
       const startTime = `${hh}:${mm}`;
+      const endTime = addMinutes(startTime, serviceDurationMinutes);
+
+      if (rotaDay?.breaks?.length && overlapsBreak(startTime, endTime, rotaDay.breaks)) {
+        continue;
+      }
+
       slots.push({
         id: `${window.id}_${index}_${cursor}`,
         label: startTime,
         date: selectedDate,
         startTime,
-        endTime: addMinutes(startTime, serviceDurationMinutes),
+        endTime,
         period: getDayPeriodForTime(startTime),
-        source: selectedStaffAvailabilityWindows.length > 0 ? "staff_availability" : "business_availability",
+        source:
+          rotaWindows.length > 0 || selectedStaffAvailabilityWindows.length > 0
+            ? "staff_availability"
+            : "business_availability",
         staffId: selectedStaffId,
         staffName: selectedStaffName,
         availableLike: true,

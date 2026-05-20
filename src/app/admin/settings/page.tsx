@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { AvailabilityEditor } from "@/components/calendar/availability-editor";
 import { CalendarPreview } from "@/components/calendar/calendar-preview";
+import { StaffRotaEditor } from "@/components/calendar/staff-rota-editor";
 import { NotificationTemplateEditor } from "@/components/notifications/notification-template-editor";
 import { ServiceEditor } from "@/components/sites/service-editor";
 import { SiteSettingsSummary } from "@/components/sites/site-settings-summary";
@@ -206,6 +207,14 @@ export default function AdminSettingsPage() {
           </section>
 
           <AvailabilityEditor industrySlug={selectedSlug} staffMembers={staff} services={settings.services} />
+          <StaffRotaEditor key={`rota_${selectedSlug}`} industrySlug={selectedSlug} staffMembers={staff} />
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900">Rota controls and future slot logic</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Staff rota controls future appointment-slot generation. Break windows represent blocked time.
+              In this demo, rota and breaks are structured local mock data only.
+            </p>
+          </section>
           <CalendarPreview industrySlug={selectedSlug} staffMembers={staff} services={settings.services} />
 
           <NotificationTemplateEditor

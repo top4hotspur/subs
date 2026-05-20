@@ -18,6 +18,7 @@ No real auth, database, APIs, payment, or conflict-checking engine is active.
   - Afternoon
   - Evening
 - Tiles are generated from local availability windows where present, or fallback preferred examples when not.
+- If a preferred staff member is selected and local rota exists, tiles can be generated from that staff member's rota day and break windows.
 - The UI explicitly states that the business confirms final availability.
 
 ## Staff choice behavior
@@ -45,3 +46,9 @@ No real auth, database, APIs, payment, or conflict-checking engine is active.
 ## Completion/review messaging
 Completion and review messaging are still local/mock status outcomes only.
 No real message sending is performed in this phase.
+
+## Local storage keys used
+- `subs-customer-requests`
+- `subs-staff-availability:<industrySlug>`
+- `subs-business-availability:<industrySlug>`
+- `subs-staff-rota:<industrySlug>`
