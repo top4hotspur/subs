@@ -1,0 +1,502 @@
+﻿import { WebsiteTemplate } from "@/lib/sites/types";
+
+export const websiteTemplates: Record<WebsiteTemplate["slug"], WebsiteTemplate> = {
+  taxi: {
+    slug: "taxi",
+    name: "Taxi & Private Hire Websites",
+    category: "Taxi Website",
+    marketingSummary:
+      "Managed taxi and private hire websites built to drive direct bookings and trusted local visibility.",
+    featureBullets: [
+      "Booking-first homepage structure",
+      "Clear service area and transfer messaging",
+      "Rapid updates for fares and contact details",
+    ],
+    pricing: {
+      setupFeeLabel: "From GBP 399 one-off setup",
+      monthlyFeeLabel: "From GBP 79/month managed",
+      notes: "Pricing varies by pages, integrations, and support level.",
+    },
+    demoLogin: { email: "demo.taxi@myexperiment.club", password: "demo123" },
+    defaultConfig: {
+      businessName: "CityRide Private Hire",
+      primaryColor: "#0ea5e9",
+      accentColor: "#0369a1",
+      heroHeadline: "24/7 Taxi & Private Hire Service You Can Trust",
+      heroSubheading:
+        "Fast pickups, fixed-fare journeys, and professional drivers across your local area.",
+      ctaLabel: "Book Your Ride",
+      services: [
+        { id: "airport", name: "Airport transfers" },
+        { id: "local", name: "Local and long-distance journeys" },
+        { id: "corporate", name: "Corporate account travel" },
+        { id: "event", name: "Event and station pickups" },
+      ],
+      openingHours: { summary: "Open 24 hours" },
+      contact: {
+        phone: "020 7946 1000",
+        email: "bookings@cityride.example",
+        address: "15 Market Street, Central District",
+      },
+    },
+  },
+  barbers: {
+    slug: "barbers",
+    name: "Barber Websites",
+    category: "Barbers Website",
+    marketingSummary:
+      "Managed barber websites designed to showcase services, prices, and recurring client bookings.",
+    featureBullets: [
+      "Clear service and pricing sections",
+      "Promotion-ready homepage layout",
+      "Quick contact and walk-in messaging",
+    ],
+    pricing: {
+      setupFeeLabel: "From GBP 349 one-off setup",
+      monthlyFeeLabel: "From GBP 69/month managed",
+      notes: "Pricing varies by pages, integrations, and support level.",
+    },
+    demoLogin: { email: "demo.barbers@myexperiment.club", password: "demo123" },
+    defaultConfig: {
+      businessName: "Northside Barber Co.",
+      primaryColor: "#f97316",
+      accentColor: "#c2410c",
+      heroHeadline: "Sharp Cuts, Clean Fades, Reliable Service",
+      heroSubheading:
+        "Convert new visitors into regular clients with a polished barber website.",
+      ctaLabel: "Book Your Cut",
+      services: [
+        { id: "fades", name: "Skin fades" },
+        { id: "beard", name: "Beard shaping" },
+        { id: "kids", name: "Kids cuts" },
+        { id: "shave", name: "Hot towel shaves" },
+      ],
+      openingHours: { summary: "Mon-Sat: 9:00-19:00, Sun: 10:00-16:00" },
+      contact: {
+        phone: "020 7946 2000",
+        email: "bookings@northsidebarber.example",
+        address: "8 Kings Avenue, Riverside",
+      },
+    },
+  },
+  hairdressers: {
+    slug: "hairdressers",
+    name: "Hairdresser Websites",
+    category: "Hairdressers Website",
+    marketingSummary:
+      "Managed hairdresser websites built to promote stylists, services, and repeat salon appointments.",
+    featureBullets: [
+      "Service categories and style menus",
+      "Stylist/team presentation blocks",
+      "Seasonal offer and campaign-ready content",
+    ],
+    pricing: {
+      setupFeeLabel: "From GBP 359 one-off setup",
+      monthlyFeeLabel: "From GBP 72/month managed",
+      notes: "Pricing varies by pages, integrations, and support level.",
+    },
+    demoLogin: {
+      email: "demo.hairdressers@myexperiment.club",
+      password: "demo123",
+    },
+    defaultConfig: {
+      businessName: "Luna Hair Studio",
+      primaryColor: "#ec4899",
+      accentColor: "#9d174d",
+      heroHeadline: "Colour, Cuts, and Styling Your Clients Will Love",
+      heroSubheading:
+        "Showcase your services and encourage first-time visitors to book with confidence.",
+      ctaLabel: "Book a Consultation",
+      services: [
+        { id: "cut", name: "Wash, cut and blow dry" },
+        { id: "color", name: "Full colour and highlights" },
+        { id: "balayage", name: "Balayage and toning" },
+        { id: "event", name: "Bridal and event styling" },
+      ],
+      openingHours: { summary: "Tue-Sat: 9:30-18:30, Sun-Mon: Closed" },
+      contact: {
+        phone: "020 7946 4000",
+        email: "hello@lunahair.example",
+        address: "4 Victoria Parade, Westfield",
+      },
+    },
+  },
+  beauticians: {
+    slug: "beauticians",
+    name: "Beautician Websites",
+    category: "Beauticians Website",
+    marketingSummary:
+      "Managed beautician websites that highlight treatments, trust signals, and consultation bookings.",
+    featureBullets: [
+      "Treatment-led service menus",
+      "Testimonial and results sections",
+      "Consultation-focused call-to-actions",
+    ],
+    pricing: {
+      setupFeeLabel: "From GBP 349 one-off setup",
+      monthlyFeeLabel: "From GBP 69/month managed",
+      notes: "Pricing varies by pages, integrations, and support level.",
+    },
+    demoLogin: {
+      email: "demo.beauticians@myexperiment.club",
+      password: "demo123",
+    },
+    defaultConfig: {
+      businessName: "Glow Beauty Rooms",
+      primaryColor: "#a855f7",
+      accentColor: "#7e22ce",
+      heroHeadline: "Beauty Treatments Tailored to Every Client",
+      heroSubheading:
+        "Present your specialist treatments and grow high-value repeat bookings.",
+      ctaLabel: "Book a Treatment",
+      services: [
+        { id: "facials", name: "Advanced facials" },
+        { id: "lashes", name: "Lash and brow styling" },
+        { id: "wax", name: "Waxing services" },
+        { id: "packages", name: "Bridal beauty packages" },
+      ],
+      openingHours: { summary: "Mon-Sat: 10:00-19:00" },
+      contact: {
+        phone: "020 7946 5000",
+        email: "bookings@glowbeauty.example",
+        address: "11 Rose Court, Central Quarter",
+      },
+    },
+  },
+  "nail-salon": {
+    slug: "nail-salon",
+    name: "Nail Salon Websites",
+    category: "Nail Salon Website",
+    marketingSummary:
+      "Managed nail salon websites designed to showcase treatments, pricing, and seasonal style collections.",
+    featureBullets: [
+      "Treatment and package menu sections",
+      "Visual style and gallery-ready layout",
+      "Fast updates for promotions and bookings",
+    ],
+    pricing: {
+      setupFeeLabel: "From GBP 339 one-off setup",
+      monthlyFeeLabel: "From GBP 68/month managed",
+      notes: "Pricing varies by pages, integrations, and support level.",
+    },
+    demoLogin: {
+      email: "demo.nailsalon@myexperiment.club",
+      password: "demo123",
+    },
+    defaultConfig: {
+      businessName: "Blush Nail Lounge",
+      primaryColor: "#fb7185",
+      accentColor: "#be123c",
+      heroHeadline: "Nail Care, BIAB and Nail Art That Stands Out",
+      heroSubheading:
+        "Promote your signature styles, treatment options, and client booking journey.",
+      ctaLabel: "Book Nail Appointment",
+      services: [
+        { id: "manicure", name: "Luxury manicures" },
+        { id: "biab", name: "BIAB overlays" },
+        { id: "gel", name: "Gel polish treatments" },
+        { id: "art", name: "Custom nail art" },
+      ],
+      openingHours: { summary: "Mon-Sat: 9:30-19:00" },
+      contact: {
+        phone: "020 7946 5100",
+        email: "hello@blushnails.example",
+        address: "19 High Street, Brookside",
+      },
+    },
+  },
+  massage: {
+    slug: "massage",
+    name: "Massage Therapist Websites",
+    category: "Massage Website",
+    marketingSummary:
+      "Managed massage therapist websites focused on treatment clarity, trust, and session bookings.",
+    featureBullets: [
+      "Treatment-focused service content",
+      "Wellness package and pricing visibility",
+      "Simple booking and enquiry CTAs",
+    ],
+    pricing: {
+      setupFeeLabel: "From GBP 339 one-off setup",
+      monthlyFeeLabel: "From GBP 67/month managed",
+      notes: "Pricing varies by pages, integrations, and support level.",
+    },
+    demoLogin: {
+      email: "demo.massage@myexperiment.club",
+      password: "demo123",
+    },
+    defaultConfig: {
+      businessName: "CalmTouch Therapy",
+      primaryColor: "#14b8a6",
+      accentColor: "#0f766e",
+      heroHeadline: "Massage Therapy for Recovery and Relaxation",
+      heroSubheading:
+        "Help new clients discover your treatments and book sessions quickly.",
+      ctaLabel: "Book a Session",
+      services: [
+        { id: "deep", name: "Deep tissue massage" },
+        { id: "sports", name: "Sports recovery massage" },
+        { id: "relax", name: "Relaxation massage" },
+        { id: "aroma", name: "Aromatherapy massage" },
+      ],
+      openingHours: { summary: "Mon-Fri: 9:00-20:00, Sat: 10:00-16:00" },
+      contact: {
+        phone: "020 7946 6000",
+        email: "appointments@calmtouch.example",
+        address: "27 Green Walk, Meadow Park",
+      },
+    },
+  },
+  "window-cleaning": {
+    slug: "window-cleaning",
+    name: "Window Cleaning Websites",
+    category: "Window Cleaning Website",
+    marketingSummary:
+      "Managed window cleaning websites that build trust and support regular residential/commercial bookings.",
+    featureBullets: [
+      "Coverage zones and plan clarity",
+      "Residential and commercial service blocks",
+      "Quote request-first conversion sections",
+    ],
+    pricing: {
+      setupFeeLabel: "From GBP 329 one-off setup",
+      monthlyFeeLabel: "From GBP 65/month managed",
+      notes: "Pricing varies by pages, integrations, and support level.",
+    },
+    demoLogin: {
+      email: "demo.windowcleaning@myexperiment.club",
+      password: "demo123",
+    },
+    defaultConfig: {
+      businessName: "ClearView Window Cleaning",
+      primaryColor: "#0284c7",
+      accentColor: "#0f766e",
+      heroHeadline: "Sparkling Windows for Homes and Businesses",
+      heroSubheading:
+        "Promote your service coverage, reliability, and repeat-clean options.",
+      ctaLabel: "Request a Quote",
+      services: [
+        { id: "residential", name: "Residential window cleaning" },
+        { id: "commercial", name: "Commercial contracts" },
+        { id: "gutter", name: "Gutter and fascia cleaning" },
+        { id: "solar", name: "Solar panel cleaning" },
+      ],
+      openingHours: { summary: "Mon-Fri: 8:00-18:00, Sat: 8:00-14:00" },
+      contact: {
+        phone: "020 7946 3000",
+        email: "hello@clearview.example",
+        address: "22 Station Lane, Brookfield",
+      },
+    },
+  },
+  "dog-grooming": {
+    slug: "dog-grooming",
+    name: "Dog Grooming Websites",
+    category: "Dog Grooming Website",
+    marketingSummary:
+      "Managed dog grooming websites that showcase grooming packages and drive appointment enquiries.",
+    featureBullets: [
+      "Package-led service sections",
+      "Trust-building care messaging",
+      "Simple booking and contact pathways",
+    ],
+    pricing: {
+      setupFeeLabel: "From GBP 329 one-off setup",
+      monthlyFeeLabel: "From GBP 66/month managed",
+      notes: "Pricing varies by pages, integrations, and support level.",
+    },
+    demoLogin: {
+      email: "demo.doggrooming@myexperiment.club",
+      password: "demo123",
+    },
+    defaultConfig: {
+      businessName: "Happy Paws Grooming Studio",
+      primaryColor: "#f59e0b",
+      accentColor: "#b45309",
+      heroHeadline: "Professional Dog Grooming for Happy, Healthy Pets",
+      heroSubheading:
+        "Show dog owners your grooming packages, care approach, and easy booking options.",
+      ctaLabel: "Book Grooming Session",
+      services: [
+        { id: "full", name: "Full groom packages" },
+        { id: "bath", name: "Bath and brush service" },
+        { id: "nails", name: "Nail clipping and paw care" },
+        { id: "puppy", name: "Puppy intro grooms" },
+      ],
+      openingHours: { summary: "Tue-Sat: 9:00-18:00" },
+      contact: {
+        phone: "020 7946 7000",
+        email: "bookings@happypaws.example",
+        address: "31 Willow Road, North Park",
+      },
+    },
+  },
+  "driving-instructors": {
+    slug: "driving-instructors",
+    name: "Driving Instructor Websites",
+    category: "Driving Instructors Website",
+    marketingSummary:
+      "Managed driving instructor websites that explain lesson plans and convert enquiries into students.",
+    featureBullets: [
+      "Lesson package and pricing blocks",
+      "Area coverage and availability messaging",
+      "Learner trust and pass-rate style content",
+    ],
+    pricing: {
+      setupFeeLabel: "From GBP 349 one-off setup",
+      monthlyFeeLabel: "From GBP 69/month managed",
+      notes: "Pricing varies by pages, integrations, and support level.",
+    },
+    demoLogin: {
+      email: "demo.drivinginstructors@myexperiment.club",
+      password: "demo123",
+    },
+    defaultConfig: {
+      businessName: "FirstPass Driving School",
+      primaryColor: "#2563eb",
+      accentColor: "#1d4ed8",
+      heroHeadline: "Driving Lessons Built for First-Time Pass Success",
+      heroSubheading:
+        "Attract learners with clear lesson options, pricing, and instructor credibility.",
+      ctaLabel: "Book Intro Lesson",
+      services: [
+        { id: "manual", name: "Manual driving lessons" },
+        { id: "intensive", name: "Intensive lesson courses" },
+        { id: "mock", name: "Mock test sessions" },
+        { id: "refresher", name: "Refresher driving lessons" },
+      ],
+      openingHours: { summary: "Mon-Sun: 8:00-20:00" },
+      contact: {
+        phone: "020 7946 8000",
+        email: "hello@firstpass.example",
+        address: "12 College Road, Eastfield",
+      },
+    },
+  },
+  "mobile-valeting": {
+    slug: "mobile-valeting",
+    name: "Mobile Valeting Websites",
+    category: "Mobile Valeting Website",
+    marketingSummary:
+      "Managed mobile valeting websites that highlight convenience, package options, and local coverage.",
+    featureBullets: [
+      "Vehicle package comparison sections",
+      "Coverage area and mobile-callout layout",
+      "Easy quote/booking CTAs",
+    ],
+    pricing: {
+      setupFeeLabel: "From GBP 339 one-off setup",
+      monthlyFeeLabel: "From GBP 67/month managed",
+      notes: "Pricing varies by pages, integrations, and support level.",
+    },
+    demoLogin: {
+      email: "demo.mobilevaleting@myexperiment.club",
+      password: "demo123",
+    },
+    defaultConfig: {
+      businessName: "ShineOn Mobile Valeting",
+      primaryColor: "#0ea5e9",
+      accentColor: "#075985",
+      heroHeadline: "Professional Mobile Valeting at Your Home or Workplace",
+      heroSubheading:
+        "Promote your package options, local availability, and high-quality detailing.",
+      ctaLabel: "Get Valeting Quote",
+      services: [
+        { id: "mini", name: "Mini valet package" },
+        { id: "full", name: "Full valet package" },
+        { id: "detail", name: "Interior deep clean" },
+        { id: "ceramic", name: "Ceramic protection add-on" },
+      ],
+      openingHours: { summary: "Mon-Sat: 8:00-18:00" },
+      contact: {
+        phone: "020 7946 9000",
+        email: "bookings@shineon.example",
+        address: "Mobile service across West and Central districts",
+      },
+    },
+  },
+  cleaners: {
+    slug: "cleaners",
+    name: "Cleaning Business Websites",
+    category: "Cleaners Website",
+    marketingSummary:
+      "Managed cleaning business websites for domestic and commercial cleaning companies.",
+    featureBullets: [
+      "Service type and package clarity",
+      "Recurring and one-off cleaning messaging",
+      "Fast enquiry and quote flow",
+    ],
+    pricing: {
+      setupFeeLabel: "From GBP 329 one-off setup",
+      monthlyFeeLabel: "From GBP 65/month managed",
+      notes: "Pricing varies by pages, integrations, and support level.",
+    },
+    demoLogin: {
+      email: "demo.cleaners@myexperiment.club",
+      password: "demo123",
+    },
+    defaultConfig: {
+      businessName: "BrightHome Cleaning Co.",
+      primaryColor: "#06b6d4",
+      accentColor: "#0e7490",
+      heroHeadline: "Reliable Cleaning Services for Homes and Workplaces",
+      heroSubheading:
+        "Showcase your cleaning packages and win consistent local contracts.",
+      ctaLabel: "Request Cleaning Quote",
+      services: [
+        { id: "domestic", name: "Domestic regular cleans" },
+        { id: "deep", name: "Deep cleaning visits" },
+        { id: "end", name: "End-of-tenancy cleaning" },
+        { id: "commercial", name: "Commercial office cleaning" },
+      ],
+      openingHours: { summary: "Mon-Sat: 7:30-18:30" },
+      contact: {
+        phone: "020 7946 9100",
+        email: "hello@brighthome.example",
+        address: "44 Grove Street, Southfield",
+      },
+    },
+  },
+  gardeners: {
+    slug: "gardeners",
+    name: "Gardener & Landscaping Websites",
+    category: "Gardeners Website",
+    marketingSummary:
+      "Managed gardener and landscaping websites built to attract regular maintenance and project enquiries.",
+    featureBullets: [
+      "Seasonal service and project showcase",
+      "Maintenance plan and landscaping messaging",
+      "Quick quote and consultation CTAs",
+    ],
+    pricing: {
+      setupFeeLabel: "From GBP 339 one-off setup",
+      monthlyFeeLabel: "From GBP 67/month managed",
+      notes: "Pricing varies by pages, integrations, and support level.",
+    },
+    demoLogin: {
+      email: "demo.gardeners@myexperiment.club",
+      password: "demo123",
+    },
+    defaultConfig: {
+      businessName: "GreenLine Gardens & Landscaping",
+      primaryColor: "#22c55e",
+      accentColor: "#166534",
+      heroHeadline: "Garden Maintenance and Landscaping That Transforms Outdoor Space",
+      heroSubheading:
+        "Position your business for ongoing garden care clients and larger landscaping projects.",
+      ctaLabel: "Book Garden Visit",
+      services: [
+        { id: "maintenance", name: "Regular garden maintenance" },
+        { id: "hedge", name: "Hedge and shrub trimming" },
+        { id: "lawn", name: "Lawn treatment and care" },
+        { id: "landscape", name: "Landscaping and redesign projects" },
+      ],
+      openingHours: { summary: "Mon-Fri: 8:00-17:30, Sat: 8:00-13:00" },
+      contact: {
+        phone: "020 7946 9200",
+        email: "projects@greenline.example",
+        address: "9 Orchard Way, Hillview",
+      },
+    },
+  },
+};
