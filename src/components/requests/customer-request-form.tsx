@@ -80,12 +80,13 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
       ? CustomerRequestPricingStatus.PRICE_CONFIRMED
       : CustomerRequestPricingStatus.QUOTE_REQUIRED,
   );
+  const preferredStaffLabel = appointmentStyle ? "Preferred barber/stylist (optional)" : "Preferred staff member (optional)";
 
   const [form, setForm] = useState({
     customerName: "",
     customerEmail: "",
     customerPhone: "",
-    serviceId: effectiveServices[0]?.id ?? "",
+    serviceId: "",
     preferredDate: "",
     preferredTime: "",
     customerAddress: "",
@@ -133,6 +134,11 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
             ))}
           </ul>
         </div>
+      ) : null}
+      {appointmentStyle && businessAvailabilityPreview.length === 0 ? (
+        <p className="mt-1 text-xs text-slate-600">
+          Availability windows are confirmed by the business after review. Live slot booking is not enabled in this demo.
+        </p>
       ) : null}
       {!customerSelectableByDefault ? (
         <p className="mt-1 text-xs text-slate-600">The business will allocate the right team member.</p>
@@ -203,7 +209,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
         <input className="rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="Customer email" value={form.customerEmail} onChange={(event) => setForm((c) => ({ ...c, customerEmail: event.target.value }))} />
         <input className="rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="Customer phone" value={form.customerPhone} onChange={(event) => setForm((c) => ({ ...c, customerPhone: event.target.value }))} />
         <select className="rounded-md border border-slate-300 px-2 py-1 text-sm" value={form.serviceId} onChange={(event) => setForm((c) => ({ ...c, serviceId: event.target.value }))}>
-          <option value="">Select service</option>
+          <option value="">{appointmentStyle ? "Select appointment service" : "Select service"}</option>
           {effectiveServices.map((service) => (
             <option key={service.id} value={service.id}>{service.name}</option>
           ))}
@@ -217,7 +223,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
             value={form.preferredStaffId}
             onChange={(event) => setForm((c) => ({ ...c, preferredStaffId: event.target.value }))}
           >
-            <option value="">Preferred staff member (optional)</option>
+            <option value="">{preferredStaffLabel}</option>
             {selectableStaff.map((staff) => (
               <option key={staff.id} value={staff.id}>
                 {staff.displayName}
