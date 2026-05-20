@@ -67,6 +67,8 @@ export type SetupRequestDraft = {
   existingDomain?: string;
   desiredDomain?: string;
   businessName: string;
+  demoDraftId?: string;
+  demoDraftName?: string;
   contactName?: string;
   contactEmail?: string;
   contactPhone?: string;
@@ -113,7 +115,11 @@ export type DemoSiteConfig = {
 };
 
 export type DemoCustomisationDraft = {
-  slug: WebsiteTemplateSlug;
+  id: string;
+  draftName: string;
+  templateSlug: WebsiteTemplateSlug;
+  createdAtIso: string;
+  updatedAtIso: string;
   config: DemoSiteConfig;
 };
 

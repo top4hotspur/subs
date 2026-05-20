@@ -5,68 +5,74 @@ import { useRouter } from "next/navigation";
 import { getWebsiteSubscriptionOffer } from "@/lib/pricing/subscription-offer";
 import { createLocalSetupRequest } from "@/lib/setup/local-setup-requests";
 import {
+  getActiveLocalDemoDraftId,
+  getLocalDemoDraft,
+} from "@/lib/demo/local-demo-drafts";
+import { primaryButtonClass } from "@/lib/ui/button-styles";
+import {
   CommunicationOption,
-  DemoCustomisationDraft,
   DomainOption,
   SetupRequestDraft,
   SubscriptionSetupStatus,
   WebsiteTemplate,
 } from "@/lib/sites/types";
+import {
+  communicationOptionLabel,
+  domainOptionLabel,
+  formatGbp,
+} from "@/lib/ui/display-labels";
 
 type SetupRequestFormProps = {
   template: WebsiteTemplate;
 };
 
-function getDraftStorageKey(slug: WebsiteTemplate["slug"]): string {
-  return `subs-demo-draft:${slug}`;
-}
-
-function readBusinessNameFromDemoDraft(template: WebsiteTemplate): string {
+function readBusinessNameFromActiveDraft(template: WebsiteTemplate): string {
   if (typeof window === "undefined") {
     return template.defaultConfig.businessName;
   }
 
-  const raw = window.localStorage.getItem(getDraftStorageKey(template.slug));
-  if (!raw) {
+  const activeId = getActiveLocalDemoDraftId(template.slug);
+  if (!activeId) {
     return template.defaultConfig.businessName;
   }
 
-  try {
-    const parsed = JSON.parse(raw) as DemoCustomisationDraft;
-    return parsed.config.businessName || template.defaultConfig.businessName;
-  } catch {
-    return template.defaultConfig.businessName;
-  }
+  const draft = getLocalDemoDraft(activeId);
+  return draft?.config.businessName || template.defaultConfig.businessName;
 }
 
-function getDomainLabel(option: DomainOption): string {
-  switch (option) {
-    case DomainOption.EXISTING_DOMAIN:
-      return "I already own a domain and can update nameservers/DNS";
-    case DomainOption.CUSTOMER_BUYS_DOMAIN:
-      return "I will buy my own domain and point it to you";
-    case DomainOption.WE_REGISTER_DOMAIN:
-      return "I want you to register/manage a domain for me";
-    default:
-      return option;
+function readDraftContext(template: WebsiteTemplate): { demoDraftId?: string; demoDraftName?: string } {
+  if (typeof window === "undefined") {
+    return {};
   }
-}
 
-function getCommunicationLabel(option: CommunicationOption): string {
-  return option === CommunicationOption.EMAIL_AND_WHATSAPP
-    ? "Email + WhatsApp"
-    : "Email only";
+  const activeId = getActiveLocalDemoDraftId(template.slug);
+  if (!activeId) {
+    return {};
+  }
+
+  const draft = getLocalDemoDraft(activeId);
+  if (!draft) {
+    return {};
+  }
+
+  return {
+    demoDraftId: draft.id,
+    demoDraftName: draft.draftName,
+  };
 }
 
 export function SetupRequestForm({ template }: SetupRequestFormProps) {
   const router = useRouter();
   const offer = getWebsiteSubscriptionOffer();
+  const draftContext = readDraftContext(template);
 
   const [draft, setDraft] = useState<SetupRequestDraft>({
     templateSlug: template.slug,
     domainOption: DomainOption.EXISTING_DOMAIN,
     communicationOption: CommunicationOption.EMAIL_ONLY,
-    businessName: readBusinessNameFromDemoDraft(template),
+    businessName: readBusinessNameFromActiveDraft(template),
+    demoDraftId: draftContext.demoDraftId,
+    demoDraftName: draftContext.demoDraftName,
     contactEmail: template.defaultConfig.contact.email,
     contactPhone: template.defaultConfig.contact.phone,
   });
@@ -87,10 +93,11 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
     () => [
       `Industry: ${template.name}`,
       `Business name: ${draft.businessName || "-"}`,
-      `Domain option: ${getDomainLabel(draft.domainOption)}`,
-      `Communication: ${getCommunicationLabel(draft.communicationOption)}`,
-      `Setup total: £${setupTotal}`,
-      `Monthly total: £${monthlyFee}`,
+      `Demo draft: ${draft.demoDraftName || "Template defaults"}`,
+      `Domain option: ${domainOptionLabel(draft.domainOption)}`,
+      `Communication: ${communicationOptionLabel(draft.communicationOption)}`,
+      `Setup total: ${formatGbp(setupTotal)}`,
+      `Monthly total: ${formatGbp(monthlyFee)}`,
       `Email included: Yes`,
       `WhatsApp add-on: ${
         draft.communicationOption === CommunicationOption.EMAIL_AND_WHATSAPP
@@ -161,6 +168,12 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
         <section className="space-y-3 rounded-xl border border-slate-200 p-4">
           <h2 className="text-lg font-semibold text-slate-900">Industry setup details</h2>
           <p className="text-sm text-slate-600">You are setting up: {template.name}</p>
+          <p className="text-sm text-slate-600">
+            Detailed booking, job, calendar, staff and admin tools are configured during setup based on your business type.
+          </p>
+          {draft.demoDraftName ? (
+            <p className="text-sm text-slate-600">Using draft: {draft.demoDraftName}</p>
+          ) : null}
           <label className="block text-sm font-medium text-slate-700">
             Business name
             <input
@@ -209,8 +222,7 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
                 setDraft((c) => ({ ...c, domainOption: DomainOption.WE_REGISTER_DOMAIN }))
               }
             />
-            I want you to register/manage a domain for me (+£
-            {offer.domainRegistrationFeeGbp} one-off)
+            I want you to register/manage a domain for me (+{formatGbp(offer.domainRegistrationFeeGbp)} one-off)
           </label>
 
           {draft.domainOption === DomainOption.EXISTING_DOMAIN ? (
@@ -266,7 +278,7 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
                 setDraft((c) => ({ ...c, communicationOption: CommunicationOption.EMAIL_AND_WHATSAPP }))
               }
             />
-            Email + WhatsApp (+£{offer.whatsappAddonMonthlyFeeGbp}/month)
+            Email + WhatsApp (+{formatGbp(offer.whatsappAddonMonthlyFeeGbp)}/month)
           </label>
         </section>
 
@@ -325,7 +337,7 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
 
         <button
           type="submit"
-          className="inline-flex rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700"
+          className={primaryButtonClass}
         >
           Request setup review
         </button>
@@ -335,16 +347,16 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
         <h2 className="text-lg font-semibold text-slate-900">Live setup summary</h2>
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
           <p>
-            <span className="font-semibold">Setup fee:</span> £{offer.setupFeeGbp}
+            <span className="font-semibold">Setup fee:</span> {formatGbp(offer.setupFeeGbp)}
           </p>
           <p>
-            <span className="font-semibold">Domain fee:</span> £{domainFee}
+            <span className="font-semibold">Domain fee:</span> {formatGbp(domainFee)}
           </p>
           <p>
-            <span className="font-semibold">Setup total:</span> £{setupTotal}
+            <span className="font-semibold">Setup total:</span> {formatGbp(setupTotal)}
           </p>
           <p>
-            <span className="font-semibold">Monthly fee:</span> £{monthlyFee}
+            <span className="font-semibold">Monthly fee:</span> {formatGbp(monthlyFee)}
           </p>
           <p>
             <span className="font-semibold">Email included:</span> Yes
@@ -365,3 +377,4 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
     </div>
   );
 }
+

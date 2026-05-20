@@ -1,7 +1,8 @@
 ﻿import Link from "next/link";
+import { SimpleOfferCard } from "@/components/pricing/simple-offer-card";
 import { listWebsiteTemplates } from "@/lib/sites/mock-repository";
 import { WebsiteTemplateSlug } from "@/lib/sites/types";
-import { SimpleOfferCard } from "@/components/pricing/simple-offer-card";
+import { secondaryButtonClass } from "@/lib/ui/button-styles";
 
 const industryGroups: Array<{
   title: string;
@@ -71,10 +72,7 @@ export function MarketingHome() {
                           <li key={bullet}>{bullet}</li>
                         ))}
                       </ul>
-                      <Link
-                        href={`/${template.slug}`}
-                        className="mt-5 inline-flex rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
-                      >
+                      <Link href={`/${template.slug}`} className={`mt-5 ${secondaryButtonClass}`}>
                         Explore {template.category}
                       </Link>
                     </article>

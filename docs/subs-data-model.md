@@ -1,80 +1,39 @@
 ﻿# Subs Data Model
 
-## WebsiteTemplate
-A `WebsiteTemplate` is a static template definition for one supported industry.
+## Core domains
+- Templates: static industry template catalogue (`WebsiteTemplate`)
+- Demo drafts: per-prospect local customisation (`DemoCustomisationDraft`)
+- Setup requests: local mock subscription onboarding records
+- Site settings: reusable per-site configuration (`CustomerSiteSettings`)
+- Services/pricing: editable service catalogue (`SiteServiceItem`)
+- Staff: team records + role metadata (`StaffMember`)
+- Availability/calendar: business + staff windows + scheduling hints
+- Customer requests/jobs: shared enquiry/booking/job model (`CustomerRequest`)
+- Notification templates: editable message templates per industry/channel/event
 
-### Supported launch industries (12)
-- `taxi`
-- `barbers`
-- `hairdressers`
-- `beauticians`
-- `nail-salon`
-- `massage`
-- `window-cleaning`
-- `dog-grooming`
-- `driving-instructors`
-- `mobile-valeting`
-- `cleaners`
-- `gardeners`
+## UI display helpers
+Centralized display formatting is defined in:
+- `src/lib/ui/display-labels.ts`
 
-## WebsiteSubscriptionOffer
-A `WebsiteSubscriptionOffer` defines one commercial offer (no package tiers):
-- setup fee
-- monthly fee
-- optional domain registration/management fee
-- optional WhatsApp add-on monthly fee
-- included feature list
+Request badge component:
+- `src/components/requests/request-status-badge.tsx`
 
-Source: `src/lib/pricing/subscription-offer.ts`.
+## Local storage keys
+- `subs-demo-drafts:index`
+- `subs-demo-draft:<draftId>`
+- `subs-active-demo-draft:<industrySlug>`
+- `subs-setup-requests`
+- `subs-site-settings:<industrySlug>`
+- `subs-staff:<industrySlug>`
+- `subs-business-availability:<industrySlug>`
+- `subs-staff-availability:<industrySlug>`
+- `subs-customer-requests`
+- `subs-notification-templates:<industrySlug>`
 
-## SetupRequestDraft
-Client-side setup form draft shape:
-- template slug
-- domain option
-- communication option
-- business/contact details
-- optional domain and notes fields
+Current persistence is intentionally browser-only mock storage.
 
-## LocalSetupRequest
-Browser-persisted mock request record extends setup draft with:
-- `id`
-- `createdAtIso`
-- `status`
-- `setupTotalGbp`
-- `monthlyTotalGbp`
 
-## Setup request statuses
-- `DRAFT_DEMO`
-- `SETUP_REVIEW_REQUESTED`
-- `DOMAIN_DETAILS_REQUIRED`
-- `PAYMENT_PENDING`
-- `SITE_PROVISIONING`
-- `SITE_LIVE`
-- `CHANGE_REQUESTED`
-- `CANCELLED`
+## Local Analytics and Financials Preview
+- Added browser-only analytics types and local summary builder under src/lib/analytics
+- Metrics are derived from local requests, services, and staff data (no API/database)n- Income values are estimates only and should not be treated as accounting records
 
-## Local demo and setup persistence
-Customisation drafts:
-- key pattern: `subs-demo-draft:<industry-slug>`
-
-Setup requests:
-- key: `subs-setup-requests`
-
-Setup page uses demo draft localStorage to prefill business name when available.
-
-## Repository contract
-`src/lib/sites/repository.ts` remains template/demo focused:
-- `listWebsiteTemplates()`
-- `getWebsiteTemplate(slug)`
-- `getDefaultDemoConfig(slug)`
-- `createDemoDraft(slug)`
-- `updateDemoDraft(draft, patch)`
-
-## What moves later to backend
-- setup requests to database
-- authenticated customer/admin identities
-- API create/read/update operations
-- billing/payment state and webhooks
-- workflow audit and operational history
-
-Current persistence is browser-only mock storage and not production-grade.

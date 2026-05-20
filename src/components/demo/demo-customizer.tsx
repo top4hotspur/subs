@@ -2,18 +2,20 @@
 
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
+import { DemoDraftPicker } from "@/components/demo/demo-draft-picker";
 import { DemoPreview } from "@/components/demo/demo-preview";
-import { updateDemoDraft } from "@/lib/sites/mock-repository";
-import { DemoCustomisationDraft, DemoSiteService, WebsiteTemplate } from "@/lib/sites/types";
+import {
+  getOrCreateActiveLocalDemoDraft,
+  updateLocalDemoDraft,
+} from "@/lib/demo/local-demo-drafts";
+import { getDefaultDemoConfig } from "@/lib/sites/mock-repository";
+import { DemoCustomisationDraft, DemoSiteConfig, DemoSiteService, WebsiteTemplate } from "@/lib/sites/types";
+import { outlineButtonClass, primaryButtonClass, secondaryButtonClass } from "@/lib/ui/button-styles";
 
 type DemoCustomizerProps = {
   template: WebsiteTemplate;
   initialDraft: DemoCustomisationDraft;
 };
-
-function getStorageKey(slug: WebsiteTemplate["slug"]): string {
-  return `subs-demo-draft:${slug}`;
-}
 
 function parseServices(input: string): DemoSiteService[] {
   return input
@@ -27,6 +29,7 @@ function buildDemoSummary(template: WebsiteTemplate, draft: DemoCustomisationDra
   const { config } = draft;
   return [
     `Template: ${template.name}`,
+    `Demo name: ${draft.draftName}`,
     `Business: ${config.businessName}`,
     `Contact: ${config.contact.phone} | ${config.contact.email}`,
     `Location: ${config.contact.address}`,
@@ -45,21 +48,11 @@ function hydrateDraft(
     return initialDraft;
   }
 
-  const raw = window.localStorage.getItem(getStorageKey(template.slug));
-  if (!raw) {
+  try {
+    return getOrCreateActiveLocalDemoDraft(template.slug);
+  } catch {
     return initialDraft;
   }
-
-  try {
-    const parsedDraft = JSON.parse(raw) as DemoCustomisationDraft;
-    if (parsedDraft.slug === template.slug) {
-      return parsedDraft;
-    }
-  } catch {
-    // Ignore malformed browser-only draft data.
-  }
-
-  return initialDraft;
 }
 
 export function DemoCustomizer({ template, initialDraft }: DemoCustomizerProps) {
@@ -75,7 +68,6 @@ export function DemoCustomizer({ template, initialDraft }: DemoCustomizerProps) 
 
   function persistDraft(nextDraft: DemoCustomisationDraft): void {
     setDraft(nextDraft);
-    window.localStorage.setItem(getStorageKey(template.slug), JSON.stringify(nextDraft));
     setIsSaved(true);
     if (savedTimerRef.current) {
       window.clearTimeout(savedTimerRef.current);
@@ -83,8 +75,16 @@ export function DemoCustomizer({ template, initialDraft }: DemoCustomizerProps) 
     savedTimerRef.current = window.setTimeout(() => setIsSaved(false), 1800);
   }
 
-  function applyPatch(patch: Parameters<typeof updateDemoDraft>[1]): void {
-    persistDraft(updateDemoDraft(draft, patch));
+  type DemoDraftPatch = {
+    draftName?: string;
+    config?: Partial<DemoSiteConfig>;
+  };
+
+  function applyPatch(patch: DemoDraftPatch): void {
+    const updated = updateLocalDemoDraft(draft.id, patch);
+    if (updated) {
+      persistDraft(updated);
+    }
   }
 
   const config = draft.config;
@@ -95,52 +95,62 @@ export function DemoCustomizer({ template, initialDraft }: DemoCustomizerProps) 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">Customisation panel</h2>
-            <p className="text-sm text-slate-600">Browser-only demo draft editing.</p>
+            <p className="text-sm text-slate-600">
+              Your changes are saved to this named demo in this browser only.
+            </p>
           </div>
           <span className="text-xs font-medium text-emerald-700">
             {isSaved ? "Saved in this browser" : " "}
           </span>
         </div>
 
+        <DemoDraftPicker
+          templateSlug={template.slug}
+          activeDraftId={draft.id}
+          onActiveDraftChange={(nextDraft) => {
+            setDraft(nextDraft);
+            setIsSaved(false);
+          }}
+        />
+
+        <section className="space-y-3 rounded-xl border border-slate-200 p-4">
+          <h3 className="text-sm font-semibold text-slate-900">Demo identity</h3>
+          <label className="block text-sm font-medium text-slate-700">
+            Demo/site name
+            <input
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              value={draft.draftName}
+              onChange={(event) => applyPatch({ draftName: event.target.value })}
+            />
+          </label>
+          <p className="text-xs text-slate-500">Used only for your local mock demo instance.</p>
+        </section>
+
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            onClick={() => {
-              window.localStorage.removeItem(getStorageKey(template.slug));
-              setDraft(initialDraft);
-              setIsSaved(false);
-            }}
-          >
-            Reset demo
+          <button type="button" className={outlineButtonClass} onClick={() => {
+            const defaults = getDefaultDemoConfig(template.slug);
+            if (!defaults) return;
+            const updated = updateLocalDemoDraft(draft.id, { config: defaults });
+            if (updated) persistDraft(updated);
+          }}>
+            Reset this demo
           </button>
-          <button
-            type="button"
-            className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700"
-            onClick={async () => {
-              try {
-                await navigator.clipboard.writeText(summary);
-                setCopyState("copied");
-              } catch {
-                setCopyState("error");
-              }
-              window.setTimeout(() => setCopyState("idle"), 1500);
-            }}
-          >
+          <button type="button" className={secondaryButtonClass} onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(summary);
+              setCopyState("copied");
+            } catch {
+              setCopyState("error");
+            }
+            window.setTimeout(() => setCopyState("idle"), 1500);
+          }}>
             Copy demo summary
           </button>
-          <Link
-            href={`/setup/${template.slug}`}
-            className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-medium text-white hover:bg-sky-700"
-          >
+          <Link href={`/setup/${template.slug}`} className={primaryButtonClass}>
             Start setup
           </Link>
           <span className="text-xs text-slate-500">
-            {copyState === "copied"
-              ? "Summary copied"
-              : copyState === "error"
-                ? "Copy failed"
-                : " "}
+            {copyState === "copied" ? "Summary copied" : copyState === "error" ? "Copy failed" : " "}
           </span>
         </div>
 
@@ -148,117 +158,55 @@ export function DemoCustomizer({ template, initialDraft }: DemoCustomizerProps) 
           <h3 className="text-sm font-semibold text-slate-900">Brand</h3>
           <label className="block text-sm font-medium text-slate-700">
             Business name
-            <input
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-              value={config.businessName}
-              onChange={(event) => applyPatch({ businessName: event.target.value })}
-            />
+            <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" value={config.businessName} onChange={(event) => applyPatch({ config: { businessName: event.target.value } })} />
           </label>
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block text-sm font-medium text-slate-700">
-              Primary colour
-              <input
-                type="color"
-                className="mt-1 h-10 w-full rounded-lg border border-slate-300 p-1"
-                value={config.primaryColor}
-                onChange={(event) => applyPatch({ primaryColor: event.target.value })}
-              />
+            <label className="block text-sm font-medium text-slate-700">Primary colour
+              <input type="color" className="mt-1 h-10 w-full rounded-lg border border-slate-300 p-1" value={config.primaryColor} onChange={(event) => applyPatch({ config: { primaryColor: event.target.value } })} />
             </label>
-            <label className="block text-sm font-medium text-slate-700">
-              Accent colour
-              <input
-                type="color"
-                className="mt-1 h-10 w-full rounded-lg border border-slate-300 p-1"
-                value={config.accentColor}
-                onChange={(event) => applyPatch({ accentColor: event.target.value })}
-              />
+            <label className="block text-sm font-medium text-slate-700">Accent colour
+              <input type="color" className="mt-1 h-10 w-full rounded-lg border border-slate-300 p-1" value={config.accentColor} onChange={(event) => applyPatch({ config: { accentColor: event.target.value } })} />
             </label>
           </div>
         </section>
 
         <section className="space-y-3 rounded-xl border border-slate-200 p-4">
           <h3 className="text-sm font-semibold text-slate-900">Contact</h3>
-          <label className="block text-sm font-medium text-slate-700">
-            Phone number
-            <input
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-              value={config.contact.phone}
-              onChange={(event) =>
-                applyPatch({ contact: { ...config.contact, phone: event.target.value } })
-              }
-            />
+          <label className="block text-sm font-medium text-slate-700">Phone number
+            <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" value={config.contact.phone} onChange={(event) => applyPatch({ config: { contact: { ...config.contact, phone: event.target.value } } })} />
           </label>
-          <label className="block text-sm font-medium text-slate-700">
-            Email
-            <input
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-              value={config.contact.email}
-              onChange={(event) =>
-                applyPatch({ contact: { ...config.contact, email: event.target.value } })
-              }
-            />
+          <label className="block text-sm font-medium text-slate-700">Email
+            <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" value={config.contact.email} onChange={(event) => applyPatch({ config: { contact: { ...config.contact, email: event.target.value } } })} />
           </label>
-          <label className="block text-sm font-medium text-slate-700">
-            Address / location
-            <input
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-              value={config.contact.address}
-              onChange={(event) =>
-                applyPatch({ contact: { ...config.contact, address: event.target.value } })
-              }
-            />
+          <label className="block text-sm font-medium text-slate-700">Address / location
+            <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" value={config.contact.address} onChange={(event) => applyPatch({ config: { contact: { ...config.contact, address: event.target.value } } })} />
           </label>
         </section>
 
         <section className="space-y-3 rounded-xl border border-slate-200 p-4">
           <h3 className="text-sm font-semibold text-slate-900">Homepage text</h3>
-          <label className="block text-sm font-medium text-slate-700">
-            Hero headline
-            <input
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-              value={config.heroHeadline}
-              onChange={(event) => applyPatch({ heroHeadline: event.target.value })}
-            />
+          <label className="block text-sm font-medium text-slate-700">Hero headline
+            <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" value={config.heroHeadline} onChange={(event) => applyPatch({ config: { heroHeadline: event.target.value } })} />
           </label>
-          <label className="block text-sm font-medium text-slate-700">
-            Hero subheading
-            <input
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-              value={config.heroSubheading}
-              onChange={(event) => applyPatch({ heroSubheading: event.target.value })}
-            />
+          <label className="block text-sm font-medium text-slate-700">Hero subheading
+            <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" value={config.heroSubheading} onChange={(event) => applyPatch({ config: { heroSubheading: event.target.value } })} />
           </label>
-          <label className="block text-sm font-medium text-slate-700">
-            Call-to-action label
-            <input
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-              value={config.ctaLabel}
-              onChange={(event) => applyPatch({ ctaLabel: event.target.value })}
-            />
+          <label className="block text-sm font-medium text-slate-700">Call-to-action label
+            <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" value={config.ctaLabel} onChange={(event) => applyPatch({ config: { ctaLabel: event.target.value } })} />
           </label>
         </section>
 
         <section className="space-y-3 rounded-xl border border-slate-200 p-4">
           <h3 className="text-sm font-semibold text-slate-900">Services</h3>
-          <label className="block text-sm font-medium text-slate-700">
-            Services list (one per line)
-            <textarea
-              className="mt-1 min-h-28 w-full rounded-lg border border-slate-300 px-3 py-2"
-              value={servicesInput}
-              onChange={(event) => applyPatch({ services: parseServices(event.target.value) })}
-            />
+          <label className="block text-sm font-medium text-slate-700">Services list (one per line)
+            <textarea className="mt-1 min-h-28 w-full rounded-lg border border-slate-300 px-3 py-2" value={servicesInput} onChange={(event) => applyPatch({ config: { services: parseServices(event.target.value) } })} />
           </label>
         </section>
 
         <section className="space-y-3 rounded-xl border border-slate-200 p-4">
           <h3 className="text-sm font-semibold text-slate-900">Opening hours</h3>
-          <label className="block text-sm font-medium text-slate-700">
-            Hours summary
-            <input
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-              value={config.openingHours.summary}
-              onChange={(event) => applyPatch({ openingHours: { summary: event.target.value } })}
-            />
+          <label className="block text-sm font-medium text-slate-700">Hours summary
+            <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" value={config.openingHours.summary} onChange={(event) => applyPatch({ config: { openingHours: { summary: event.target.value } } })} />
           </label>
         </section>
       </aside>

@@ -1,13 +1,46 @@
-﻿import Link from "next/link";
-import { DemoCustomisationDraft, WebsiteTemplate } from "@/lib/sites/types";
+﻿"use client";
+
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import { CustomerRequestForm } from "@/components/requests/customer-request-form";
+import { getLocalCustomerSiteSettings } from "@/lib/sites/local-site-settings";
+import { listLocalStaff } from "@/lib/staff/local-staff";
+import { StaffMember } from "@/lib/staff/staff-types";
+import { DemoCustomisationDraft, DemoSiteService, WebsiteTemplate } from "@/lib/sites/types";
+import { primaryButtonClass, secondaryButtonClass } from "@/lib/ui/button-styles";
 
 type DemoPreviewProps = {
   template: WebsiteTemplate;
   draft: DemoCustomisationDraft;
 };
 
+function resolveActiveServices(template: WebsiteTemplate, draftServices: DemoSiteService[]): DemoSiteService[] {
+  if (typeof window === "undefined") {
+    return draftServices;
+  }
+
+  const settings = getLocalCustomerSiteSettings(template.slug, template);
+  const active = settings.services
+    .filter((service) => service.active)
+    .map((service) => ({
+      id: service.id,
+      name: service.name,
+      description: service.description,
+      priceLabel: service.priceLabel,
+    }));
+
+  return active.length > 0 ? active : draftServices;
+}
+
 export function DemoPreview({ template, draft }: DemoPreviewProps) {
   const { config } = draft;
+  const [requestServices] = useState<DemoSiteService[]>(() => resolveActiveServices(template, config.services));
+  const localStaff = useMemo<StaffMember[]>(() => {
+    if (typeof window === "undefined") {
+      return [];
+    }
+    return listLocalStaff(template.slug).filter((member) => member.active);
+  }, [template.slug]);
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -16,11 +49,7 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
         <h1 className="mt-2 text-3xl font-bold text-white">{config.businessName}</h1>
         <p className="mt-3 max-w-2xl text-white/90">{config.heroHeadline}</p>
         <p className="mt-1 text-white/80">{config.heroSubheading}</p>
-        <button
-          className="mt-5 rounded-lg px-4 py-2 text-sm font-semibold text-white"
-          style={{ backgroundColor: config.accentColor }}
-          type="button"
-        >
+        <button className="mt-5 rounded-lg px-4 py-2 text-sm font-semibold text-white" style={{ backgroundColor: config.accentColor }} type="button">
           {config.ctaLabel}
         </button>
       </div>
@@ -59,20 +88,24 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
           Demo login: {template.demoLogin.email} / {template.demoLogin.password}
         </div>
         <div className="flex gap-2">
-          <Link
-            href={`/demo/${template.slug}/customise`}
-            className="inline-flex rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
-          >
-            Open Customisation Area
+          <Link href={`/demo/${template.slug}/customise`} className={secondaryButtonClass}>
+            Customise my demo
           </Link>
-          <Link
-            href={`/setup/${template.slug}`}
-            className="inline-flex rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
-          >
+          <Link href={`/setup/${template.slug}`} className={primaryButtonClass}>
             Start setup
           </Link>
         </div>
       </div>
+
+      <div className="border-t border-slate-200 bg-white px-8 py-4 text-xs text-slate-600">
+        Future workflow support can include bookings/quote requests, staff and calendar tools, job completion updates,
+        and review request messaging. Email is standard, with optional WhatsApp add-on messaging.
+      </div>
+
+      <div className="border-t border-slate-200 bg-white px-8 py-4">
+        <CustomerRequestForm templateSlug={template.slug} services={requestServices} staffMembers={localStaff} />
+      </div>
     </div>
   );
 }
+

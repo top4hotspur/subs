@@ -16,6 +16,11 @@ function cloneConfig(config: DemoSiteConfig): DemoSiteConfig {
   };
 }
 
+function defaultDraftName(slug: WebsiteTemplateSlug): string {
+  const template = websiteTemplates[slug];
+  return `My ${template?.category ?? "Website"} Demo`;
+}
+
 export const mockWebsiteTemplatesRepository: WebsiteTemplatesRepository = {
   listWebsiteTemplates() {
     return Object.values(websiteTemplates);
@@ -36,12 +41,21 @@ export const mockWebsiteTemplatesRepository: WebsiteTemplatesRepository = {
       return null;
     }
 
-    return { slug, config };
+    const now = new Date().toISOString();
+    return {
+      id: `template-default-${slug}`,
+      draftName: defaultDraftName(slug),
+      templateSlug: slug,
+      createdAtIso: now,
+      updatedAtIso: now,
+      config,
+    };
   },
 
   updateDemoDraft(draft, patch) {
     return {
       ...draft,
+      updatedAtIso: new Date().toISOString(),
       config: {
         ...draft.config,
         ...patch,

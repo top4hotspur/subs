@@ -1,8 +1,11 @@
 ﻿import Link from "next/link";
 import { notFound } from "next/navigation";
+import { OperationsBlueprintSummary } from "@/components/industry/operations-blueprint-summary";
 import { SimpleOfferCard } from "@/components/pricing/simple-offer-card";
+import { getBlueprintForTemplate } from "@/lib/industry/operations-repository";
 import { getWebsiteTemplate } from "@/lib/sites/mock-repository";
 import { isWebsiteTemplateSlug, WEBSITE_TEMPLATE_SLUGS } from "@/lib/sites/types";
+import { outlineButtonClass, primaryButtonClass, secondaryButtonClass } from "@/lib/ui/button-styles";
 
 type IndustryPageProps = {
   params: Promise<{ industry: string }>;
@@ -24,6 +27,8 @@ export default async function IndustryPage({ params }: IndustryPageProps) {
     notFound();
   }
 
+  const blueprint = getBlueprintForTemplate(template.slug);
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
       <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
@@ -31,19 +36,36 @@ export default async function IndustryPage({ params }: IndustryPageProps) {
         <h1 className="mt-2 text-4xl font-bold text-slate-900">{template.defaultConfig.heroHeadline}</h1>
         <p className="mt-4 max-w-3xl text-lg text-slate-600">{template.defaultConfig.heroSubheading}</p>
         <p className="mt-3 max-w-3xl text-slate-600">
-          This is the full site offer, not a cut-down package. Customise the demo first,
-          email notifications are included, WhatsApp is optional, and domain choices are confirmed in setup.
+          The demo is the starting point. Your customisations are saved to your own draft in this browser.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Link href={`/demo/${template.slug}`} className="rounded-lg bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-700">See the demo</Link>
-          <Link href={`/demo/${template.slug}/customise`} className="rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-100">Customise this demo</Link>
-          <Link href={`/setup/${template.slug}`} className="rounded-lg bg-sky-600 px-5 py-3 text-sm font-semibold text-white hover:bg-sky-700">Start setup</Link>
+          <Link href={`/demo/${template.slug}`} target="_blank" rel="noreferrer" className={outlineButtonClass}>
+            View demo site
+          </Link>
+          <Link href={`/demo/${template.slug}/customise`} className={secondaryButtonClass}>
+            Customise my demo
+          </Link>
+          <Link href={`/setup/${template.slug}`} className={primaryButtonClass}>
+            Start setup
+          </Link>
         </div>
       </section>
 
       <section className="mt-8">
         <SimpleOfferCard industrySlug={template.slug} ctaLabel="Start setup" />
       </section>
+
+      {blueprint ? (
+        <section className="mt-8">
+          <OperationsBlueprintSummary
+            blueprint={blueprint}
+            variant="full"
+            showPortalHighlights
+            showAdminHighlights
+            showLifecycle
+          />
+        </section>
+      ) : null}
 
       <section className="mt-8 grid gap-6 lg:grid-cols-2">
         <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

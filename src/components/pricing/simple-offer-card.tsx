@@ -1,6 +1,7 @@
 ﻿import Link from "next/link";
 import { getWebsiteSubscriptionOffer } from "@/lib/pricing/subscription-offer";
 import { WebsiteTemplateSlug } from "@/lib/sites/types";
+import { primaryButtonClass } from "@/lib/ui/button-styles";
 
 type SimpleOfferCardProps = {
   industrySlug?: WebsiteTemplateSlug;
@@ -40,10 +41,7 @@ export function SimpleOfferCard({ industrySlug, ctaLabel }: SimpleOfferCardProps
         <li>Email notifications included as standard</li>
       </ul>
 
-      <Link
-        href={href}
-        className="mt-6 inline-flex rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700"
-      >
+      <Link href={href} className={`mt-6 ${primaryButtonClass}`}>
         {ctaLabel ?? (industrySlug ? "Start setup" : "Choose your business type")}
       </Link>
     </section>
