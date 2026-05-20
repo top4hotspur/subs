@@ -13,33 +13,39 @@ export function SimpleOfferCard({ industrySlug, ctaLabel }: SimpleOfferCardProps
   const href = industrySlug ? `/setup/${industrySlug}` : "/#industries";
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <p className="text-sm font-semibold uppercase tracking-wide text-sky-600">
+    <section className="rounded-3xl border border-slate-200 bg-white px-6 py-7 shadow-sm sm:px-8">
+      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
         One simple website subscription
       </p>
-      <h2 className="mt-2 text-2xl font-bold text-slate-900">No confusing packages</h2>
-      <p className="mt-3 text-slate-600">
-        The demo you customise is the site we build for you.
+      <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">No confusing packages</h2>
+      <p className="mt-3 max-w-3xl text-slate-600">
+        The demo you customise is the site we build for you. Everything starts with one professional managed offer.
       </p>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2">
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <p className="text-sm text-slate-600">Website setup fee</p>
-          <p className="text-2xl font-semibold text-slate-900">£{offer.setupFeeGbp}</p>
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Setup fee</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-900">£{offer.setupFeeGbp}</p>
           <p className="text-sm text-slate-600">one-off</p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <p className="text-sm text-slate-600">Monthly subscription</p>
-          <p className="text-2xl font-semibold text-slate-900">£{offer.monthlyFeeGbp}</p>
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Monthly</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-900">£{offer.monthlyFeeGbp}</p>
           <p className="text-sm text-slate-600">per month</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Domain service</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-900">£{offer.domainRegistrationFeeGbp}</p>
+          <p className="text-sm text-slate-600">only if we register/manage</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">WhatsApp add-on</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-900">+£{offer.whatsappAddonMonthlyFeeGbp}</p>
+          <p className="text-sm text-slate-600">optional monthly</p>
         </div>
       </div>
 
-      <ul className="mt-5 list-disc space-y-2 pl-5 text-sm text-slate-600">
-        <li>Domain registration/management: £{offer.domainRegistrationFeeGbp} one-off if needed</li>
-        <li>Optional WhatsApp add-on: +£{offer.whatsappAddonMonthlyFeeGbp}/month</li>
-        <li>Email notifications included as standard</li>
-      </ul>
+      <p className="mt-4 text-sm text-slate-600">Email notifications are included as standard.</p>
 
       <Link href={href} className={`mt-6 ${primaryButtonClass}`}>
         {ctaLabel ?? (industrySlug ? "Start setup" : "Choose your business type")}
@@ -47,3 +53,4 @@ export function SimpleOfferCard({ industrySlug, ctaLabel }: SimpleOfferCardProps
     </section>
   );
 }
+

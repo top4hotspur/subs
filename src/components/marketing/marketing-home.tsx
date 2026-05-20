@@ -1,8 +1,12 @@
 ﻿import Link from "next/link";
+import { SiteCard } from "@/components/site-ui/site-card";
+import { SiteCtaPanel } from "@/components/site-ui/site-cta-panel";
+import { SiteHero } from "@/components/site-ui/site-hero";
+import { SiteSection } from "@/components/site-ui/site-section";
 import { SimpleOfferCard } from "@/components/pricing/simple-offer-card";
 import { listWebsiteTemplates } from "@/lib/sites/mock-repository";
 import { WebsiteTemplateSlug } from "@/lib/sites/types";
-import { secondaryButtonClass } from "@/lib/ui/button-styles";
+import { outlineButtonClass, secondaryButtonClass } from "@/lib/ui/button-styles";
 
 const industryGroups: Array<{
   title: string;
@@ -22,79 +26,152 @@ const industryGroups: Array<{
   },
 ];
 
+const trustPoints = [
+  "Full website included",
+  "Mobile-friendly design",
+  "Customer enquiry and booking flow support",
+  "Admin tools planned in platform model",
+  "Email notifications included",
+  "Optional WhatsApp add-on",
+  "Hosting and ongoing management",
+];
+
+const faqs = [
+  {
+    q: "Is this a cut-down package?",
+    a: "No. The demo you customise is the site we set up and manage for you.",
+  },
+  {
+    q: "Can I use my own domain?",
+    a: "Yes. You can use an existing domain, buy one yourself, or ask us to register/manage it.",
+  },
+  {
+    q: "What if I do not have a logo?",
+    a: "No problem. The site uses a polished text-brand fallback until you provide a logo.",
+  },
+  {
+    q: "Are email notifications included?",
+    a: "Yes. Email notifications are included as standard.",
+  },
+  {
+    q: "Can I add WhatsApp?",
+    a: "Yes. WhatsApp communication can be added as an optional +GBP10/month add-on.",
+  },
+  {
+    q: "Can I customise the demo before subscribing?",
+    a: "Yes. You can customise first, then start setup when ready.",
+  },
+];
+
 export function MarketingHome() {
   const templateMap = new Map(
     listWebsiteTemplates().map((template) => [template.slug, template]),
   );
 
   return (
-    <main className="bg-slate-50">
-      <section className="mx-auto max-w-6xl px-4 pb-10 pt-16 sm:px-6 lg:px-8">
-        <p className="text-sm font-semibold uppercase tracking-wide text-sky-600">
-          Subs / MyExperiment.club
-        </p>
-        <h1 className="mt-3 max-w-3xl text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-          Subscription websites for local service businesses
-        </h1>
-        <p className="mt-5 max-w-3xl text-lg text-slate-600">
-          Start with an industry demo, customise your own version, then subscribe.
-          We handle setup, hosting, and ongoing management for you.
-        </p>
-      </section>
+    <main className="bg-slate-100">
+      <div className="mx-auto max-w-6xl space-y-8 px-4 py-10 sm:px-6 lg:px-8">
+        <SiteHero
+          eyebrow="Subs / MyExperiment.club"
+          title="Subscription websites for local service businesses"
+          subtitle="Demo first, customise your version, then request setup. One simple website subscription with ongoing management."
+          helperText="GBP149 setup + GBP30/month. Email included. Optional WhatsApp add-on +GBP10/month."
+          actions={(
+            <>
+              <Link href="#industries" className={secondaryButtonClass}>
+                Choose your business type
+              </Link>
+              <Link href="/demo/barbers" className={outlineButtonClass}>
+                View example demo
+              </Link>
+              <Link href="#how-it-works" className={outlineButtonClass}>
+                How it works
+              </Link>
+            </>
+          )}
+        />
 
-      <section className="mx-auto max-w-6xl px-4 pb-2 sm:px-6 lg:px-8">
         <SimpleOfferCard ctaLabel="Choose your business type" />
-      </section>
 
-      <section id="industries" className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        <h2 className="text-2xl font-semibold text-slate-900">Choose your business type</h2>
-        <p className="mt-2 text-slate-600">
-          Browse our 12 launch industries and open the one that matches your business.
-        </p>
+        <SiteSection id="industries" title="Choose your business type" eyebrow="12 launch industries">
+          <p className="text-slate-600">
+            Browse by industry, open the demo, customise your version, and move to setup when ready.
+          </p>
 
-        <div className="mt-8 space-y-8">
-          {industryGroups.map((group) => (
-            <div key={group.title}>
-              <h3 className="text-lg font-semibold text-slate-900">{group.title}</h3>
-              <div className="mt-4 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {group.slugs.map((slug) => {
-                  const template = templateMap.get(slug);
-                  if (!template) {
-                    return null;
-                  }
+          <div className="mt-8 space-y-8">
+            {industryGroups.map((group) => (
+              <div key={group.title}>
+                <h3 className="text-lg font-semibold text-slate-900">{group.title}</h3>
+                <div className="mt-4 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                  {group.slugs.map((slug) => {
+                    const template = templateMap.get(slug);
+                    if (!template) {
+                      return null;
+                    }
 
-                  return (
-                    <article key={template.slug} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                      <h4 className="text-xl font-semibold text-slate-900">{template.name}</h4>
-                      <p className="mt-2 text-sm text-slate-600">{template.marketingSummary}</p>
-                      <ul className="mt-4 list-disc space-y-1 pl-5 text-sm text-slate-600">
-                        {template.featureBullets.map((bullet) => (
-                          <li key={bullet}>{bullet}</li>
-                        ))}
-                      </ul>
-                      <Link href={`/${template.slug}`} className={`mt-5 ${secondaryButtonClass}`}>
-                        Explore {template.category}
-                      </Link>
-                    </article>
-                  );
-                })}
+                    return (
+                      <SiteCard key={template.slug} title={template.name} subtitle={template.marketingSummary}>
+                        <ul className="list-disc space-y-1 pl-5 text-sm text-slate-600">
+                          {template.featureBullets.slice(0, 3).map((bullet) => (
+                            <li key={bullet}>{bullet}</li>
+                          ))}
+                        </ul>
+                        <Link href={`/${template.slug}`} className={`mt-4 ${secondaryButtonClass}`}>
+                          Explore {template.category}
+                        </Link>
+                      </SiteCard>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </SiteSection>
 
-      <section id="how-it-works" className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-        <h2 className="text-2xl font-semibold text-slate-900">How it works</h2>
-        <ol className="mt-6 grid gap-4 md:grid-cols-4">
-          {["Choose your industry", "View and customise demo", "Request setup review", "We host and manage it"].map((step, index) => (
-            <li key={step} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-sm font-semibold text-sky-700">Step {index + 1}</p>
-              <p className="mt-2 font-medium text-slate-900">{step}</p>
-            </li>
-          ))}
-        </ol>
-      </section>
+        <SiteSection id="how-it-works" title="How it works" eyebrow="Simple journey">
+          <ol className="grid gap-4 md:grid-cols-5">
+            {[
+              "Choose your business type",
+              "View the demo",
+              "Customise your demo",
+              "Start setup",
+              "We configure and host the site",
+            ].map((step, index) => (
+              <li key={step} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Step {index + 1}</p>
+                <p className="mt-2 text-sm font-medium text-slate-900">{step}</p>
+              </li>
+            ))}
+          </ol>
+        </SiteSection>
+
+        <SiteSection title="Platform highlights" eyebrow="Trust and capability">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {trustPoints.map((point) => (
+              <div key={point} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm">
+                {point}
+              </div>
+            ))}
+          </div>
+        </SiteSection>
+
+        <SiteSection title="Frequently asked questions" eyebrow="FAQ">
+          <div className="grid gap-4 md:grid-cols-2">
+            {faqs.map((faq) => (
+              <SiteCard key={faq.q} title={faq.q} subtitle={faq.a} />
+            ))}
+          </div>
+        </SiteSection>
+
+        <SiteCtaPanel
+          title="Ready to see your website live direction?"
+          subtitle="Choose your industry, customise your demo, and start setup when you are happy."
+          primaryHref="#industries"
+          primaryLabel="Choose your business type"
+          secondaryHref="/demo/taxi"
+          secondaryLabel="View example demo"
+        />
+      </div>
     </main>
   );
 }

@@ -37,7 +37,7 @@ export function DemoPageClient({ template, defaultDraft }: DemoPageClientProps) 
   return (
     <div className="space-y-4">
       {hasActiveDraft ? (
-        <div className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+        <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900 shadow-sm">
           <p className="font-semibold">
             Showing your customised demo draft: {activeDraft?.draftName}
           </p>
@@ -61,7 +61,7 @@ export function DemoPageClient({ template, defaultDraft }: DemoPageClientProps) 
           </div>
         </div>
       ) : (
-        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm">
           <p>
             You are viewing the default template demo. Create your own version to personalise it.
           </p>
@@ -77,3 +77,4 @@ export function DemoPageClient({ template, defaultDraft }: DemoPageClientProps) 
     </div>
   );
 }
+

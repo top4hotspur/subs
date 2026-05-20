@@ -45,3 +45,9 @@ Local key format:
 - No production analytics integrations.
 - No real notification delivery integration.
 
+
+## UI defaults and brand fallback
+- Default rendering now uses neutral theme surfaces and card/tile components for broad industry fit
+- Text-based brand mark fallback remains first-class when no logo is present
+- Customer colour customisation can be applied later without changing core local/mock platform behavior
+

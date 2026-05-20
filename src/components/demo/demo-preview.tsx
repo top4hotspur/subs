@@ -3,6 +3,11 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { CustomerRequestForm } from "@/components/requests/customer-request-form";
+import { SiteBrandMark } from "@/components/site-ui/site-brand-mark";
+import { SiteCard } from "@/components/site-ui/site-card";
+import { SiteCtaPanel } from "@/components/site-ui/site-cta-panel";
+import { SiteFooterBlock } from "@/components/site-ui/site-footer-block";
+import { SiteServiceGrid } from "@/components/site-ui/site-service-grid";
 import { getLocalCustomerSiteSettings } from "@/lib/sites/local-site-settings";
 import { listLocalStaff } from "@/lib/staff/local-staff";
 import { StaffMember } from "@/lib/staff/staff-types";
@@ -43,51 +48,15 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
   }, [template.slug]);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="p-8" style={{ backgroundColor: config.primaryColor }}>
-        <p className="text-sm font-medium text-white/85">{template.category}</p>
-        <h1 className="mt-2 text-3xl font-bold text-white">{config.businessName}</h1>
-        <p className="mt-3 max-w-2xl text-white/90">{config.heroHeadline}</p>
-        <p className="mt-1 text-white/80">{config.heroSubheading}</p>
-        <button className="mt-5 rounded-lg px-4 py-2 text-sm font-semibold text-white" style={{ backgroundColor: config.accentColor }} type="button">
-          {config.ctaLabel}
-        </button>
-      </div>
-
-      <div className="grid gap-6 p-8 sm:grid-cols-2">
-        <section>
-          <h2 className="text-lg font-semibold text-slate-900">Services</h2>
-          <ul className="mt-3 space-y-2 text-sm text-slate-600">
-            {config.services.map((service) => (
-              <li key={service.id} className="rounded-md border border-slate-200 px-3 py-2">
-                {service.name}
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="space-y-3 text-sm text-slate-600">
-          <div>
-            <h2 className="font-semibold text-slate-900">Contact</h2>
-            <p>{config.contact.phone}</p>
-            <p>{config.contact.email}</p>
-          </div>
-          <div>
-            <h2 className="font-semibold text-slate-900">Opening hours</h2>
-            <p>{config.openingHours.summary}</p>
-          </div>
-          <div>
-            <h2 className="font-semibold text-slate-900">Location</h2>
-            <p>{config.contact.address}</p>
-          </div>
-        </section>
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-8 py-4">
-        <div className="text-xs text-slate-500">
-          Demo login: {template.demoLogin.email} / {template.demoLogin.password}
-        </div>
-        <div className="flex gap-2">
+    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 shadow-sm">
+      <section className="rounded-b-3xl border-b border-slate-800 bg-slate-900 px-6 py-8 text-white sm:px-8">
+        <SiteBrandMark name={config.businessName} tagline={template.category} dark />
+        <h1 className="mt-6 text-4xl font-bold tracking-tight">{config.heroHeadline}</h1>
+        <p className="mt-3 max-w-2xl text-slate-200">{config.heroSubheading}</p>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <button className="rounded-xl px-4 py-2 text-sm font-semibold text-white" style={{ backgroundColor: config.accentColor }} type="button">
+            {config.ctaLabel}
+          </button>
           <Link href={`/demo/${template.slug}/customise`} className={secondaryButtonClass}>
             Customise my demo
           </Link>
@@ -95,15 +64,65 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
             Start setup
           </Link>
         </div>
-      </div>
+      </section>
 
-      <div className="border-t border-slate-200 bg-white px-8 py-4 text-xs text-slate-600">
-        Future workflow support can include bookings/quote requests, staff and calendar tools, job completion updates,
-        and review request messaging. Email is standard, with optional WhatsApp add-on messaging.
-      </div>
+      <div className="space-y-6 px-6 py-8 sm:px-8">
+        <SiteCard title="Services" subtitle="Tile-based service layout matching your selected industry template.">
+          <SiteServiceGrid services={config.services} />
+        </SiteCard>
 
-      <div className="border-t border-slate-200 bg-white px-8 py-4">
-        <CustomerRequestForm templateSlug={template.slug} services={requestServices} staffMembers={localStaff} />
+        <div className="grid gap-4 lg:grid-cols-3">
+          <SiteCard title="Contact" subtitle={`${config.contact.phone} | ${config.contact.email}`}>
+            <p className="text-sm text-slate-600">{config.contact.address}</p>
+          </SiteCard>
+          <SiteCard title="Opening hours" subtitle={config.openingHours.summary} />
+          <SiteCard title="Demo login placeholder" subtitle={`${template.demoLogin.email} / ${template.demoLogin.password}`} />
+        </div>
+
+        <SiteCard title="Future workflow support" subtitle="Bookings, quote requests, staff scheduling, completion updates, and review requests can be configured during setup.">
+          <p className="text-sm text-slate-600">Email is standard; WhatsApp messaging is optional via add-on.</p>
+        </SiteCard>
+
+        <SiteCard title="Example customer request" subtitle="This is a local mock form only and does not send real requests.">
+          <CustomerRequestForm templateSlug={template.slug} services={requestServices} staffMembers={localStaff} />
+        </SiteCard>
+
+        <SiteCtaPanel
+          title="Like this direction for your business site?"
+          subtitle="Continue customising this draft or move to setup when ready."
+          primaryHref={`/setup/${template.slug}`}
+          primaryLabel="Start setup"
+          secondaryHref={`/demo/${template.slug}/customise`}
+          secondaryLabel="Continue customising"
+        />
+
+        <SiteFooterBlock
+          brand={config.businessName}
+          description="Managed local-business website subscription with ongoing support and clear setup workflow."
+          groups={[
+            {
+              title: "Explore",
+              links: [
+                { label: "Industry page", href: `/${template.slug}` },
+                { label: "Customise demo", href: `/demo/${template.slug}/customise` },
+              ],
+            },
+            {
+              title: "Setup",
+              links: [
+                { label: "Start setup", href: `/setup/${template.slug}` },
+                { label: "Customer portal (mock)", href: "/account" },
+              ],
+            },
+            {
+              title: "Admin",
+              links: [
+                { label: "Admin portal (mock)", href: "/admin" },
+                { label: "Admin settings", href: "/admin/settings" },
+              ],
+            },
+          ]}
+        />
       </div>
     </div>
   );
