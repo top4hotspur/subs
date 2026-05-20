@@ -6,7 +6,15 @@ import {
   shouldUseFixedSlotsByDefault,
   shouldUseFlexibleWindowsByDefault,
 } from "@/lib/calendar/industry-calendar-defaults";
-import { listLocalBusinessAvailability } from "@/lib/calendar/local-availability";
+import {
+  AppointmentSlotPreference,
+  buildPreferredAppointmentSlots,
+  DayPeriod,
+} from "@/lib/calendar/appointment-slot-preferences";
+import {
+  getStaffAvailability,
+  listLocalBusinessAvailability,
+} from "@/lib/calendar/local-availability";
 import { isAppointmentStyleIndustry } from "@/lib/requests/appointment-industries";
 import {
   getDefaultLocationTypeForIndustry,
@@ -59,15 +67,15 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
     () => (staffMembers ?? []).filter((staff) => staff.active && staff.customerSelectable),
     [staffMembers],
   );
-  const businessAvailabilityPreview = useMemo(
+  const businessAvailabilityAll = useMemo(
     () =>
       typeof window === "undefined"
         ? []
         : listLocalBusinessAvailability(templateSlug)
-            .filter((window) => window.active)
-            .slice(0, 3),
+            .filter((window) => window.active),
     [templateSlug],
   );
+  const businessAvailabilityPreview = businessAvailabilityAll.slice(0, 3);
 
   const requestKind = getDefaultRequestKindForIndustry(templateSlug);
   const locationType = getDefaultLocationTypeForIndustry(templateSlug);
@@ -102,9 +110,37 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
     return effectiveServices.find((service) => service.id === form.serviceId)?.name;
   }
 
-  function selectedStaff(): StaffMember | undefined {
-    return selectableStaff.find((staff) => staff.id === form.preferredStaffId);
-  }
+  const selectedStaffMember = useMemo(
+    () => selectableStaff.find((staff) => staff.id === form.preferredStaffId),
+    [form.preferredStaffId, selectableStaff],
+  );
+
+  const preferredSlots = useMemo<AppointmentSlotPreference[]>(() => {
+    if (!appointmentStyle || !form.preferredDate) {
+      return [];
+    }
+    const staffAvailability = selectedStaffMember?.id
+      ? getStaffAvailability(templateSlug, selectedStaffMember.id)
+      : [];
+    return buildPreferredAppointmentSlots({
+      selectedDate: form.preferredDate,
+      industrySlug: templateSlug,
+      businessAvailabilityWindows: businessAvailabilityAll,
+      selectedStaffAvailabilityWindows: staffAvailability,
+      selectedStaffId: selectedStaffMember?.id,
+      selectedStaffName: selectedStaffMember?.displayName,
+      serviceDurationMinutes: 45,
+    });
+  }, [appointmentStyle, form.preferredDate, templateSlug, businessAvailabilityAll, selectedStaffMember]);
+
+  const slotGroups = useMemo(
+    () => ({
+      [DayPeriod.MORNING]: preferredSlots.filter((slot) => slot.period === DayPeriod.MORNING),
+      [DayPeriod.AFTERNOON]: preferredSlots.filter((slot) => slot.period === DayPeriod.AFTERNOON),
+      [DayPeriod.EVENING]: preferredSlots.filter((slot) => slot.period === DayPeriod.EVENING),
+    }),
+    [preferredSlots],
+  );
 
   return (
     <section className="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -120,7 +156,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
       <p className="mt-1 text-xs text-slate-600">{availabilityHint(templateSlug)}</p>
       {appointmentStyle ? (
         <p className="mt-1 text-xs text-slate-600">
-          For appointment-style industries, service, preferred date, and preferred time are captured to support allocation.
+          Choose a preferred time. The business will confirm availability.
         </p>
       ) : null}
       {appointmentStyle && businessAvailabilityPreview.length > 0 ? (
@@ -137,7 +173,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
       ) : null}
       {appointmentStyle && businessAvailabilityPreview.length === 0 ? (
         <p className="mt-1 text-xs text-slate-600">
-          Availability windows are confirmed by the business after review. Live slot booking is not enabled in this demo.
+          The business will confirm the final appointment time. Live slot booking/conflict checking is not enabled in this demo.
         </p>
       ) : null}
       {!customerSelectableByDefault ? (
@@ -176,8 +212,6 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
             return;
           }
 
-          const preferredStaff = selectedStaff();
-
           createLocalCustomerRequest({
             templateSlug,
             customerName: form.customerName,
@@ -197,8 +231,8 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
             pickupAddress: form.pickupAddress || undefined,
             destinationAddress: form.destinationAddress || undefined,
             notes: form.notes || undefined,
-            preferredStaffId: preferredStaff?.id,
-            preferredStaffName: preferredStaff?.displayName,
+            preferredStaffId: selectedStaffMember?.id,
+            preferredStaffName: selectedStaffMember?.displayName,
             communicationChannels: [CustomerRequestCommunicationChannel.EMAIL],
           });
           setSubmitted(true);
@@ -215,7 +249,52 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
           ))}
         </select>
         <input type="date" className="rounded-md border border-slate-300 px-2 py-1 text-sm" value={form.preferredDate} onChange={(event) => setForm((c) => ({ ...c, preferredDate: event.target.value }))} />
-        <input type="time" className="rounded-md border border-slate-300 px-2 py-1 text-sm" value={form.preferredTime} onChange={(event) => setForm((c) => ({ ...c, preferredTime: event.target.value }))} />
+        {appointmentStyle ? (
+          <div className="sm:col-span-2 rounded-md border border-slate-200 bg-white p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Preferred time</p>
+            {!form.preferredDate ? (
+              <p className="mt-1 text-xs text-slate-600">Choose a preferred date first to see suggested time tiles.</p>
+            ) : null}
+            {form.preferredDate ? (
+              <div className="mt-2 space-y-3">
+                {[
+                  { key: DayPeriod.MORNING, label: "Morning" },
+                  { key: DayPeriod.AFTERNOON, label: "Afternoon" },
+                  { key: DayPeriod.EVENING, label: "Evening" },
+                ].map((group) => (
+                  <div key={group.key}>
+                    <p className="text-xs font-medium text-slate-700">{group.label}</p>
+                    <div className="mt-1 flex flex-wrap gap-2">
+                      {slotGroups[group.key].length === 0 ? (
+                        <span className="text-xs text-slate-500">No preferred slots in this period.</span>
+                      ) : (
+                        slotGroups[group.key].map((slot) => (
+                          <button
+                            key={slot.id}
+                            type="button"
+                            className={`rounded-md border px-2 py-1 text-xs font-medium ${
+                              form.preferredTime === slot.startTime
+                                ? "border-sky-700 bg-sky-700 text-white"
+                                : "border-slate-300 bg-slate-100 text-slate-900 hover:bg-slate-200"
+                            }`}
+                            onClick={() => setForm((c) => ({ ...c, preferredTime: slot.startTime }))}
+                          >
+                            {slot.label}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+            <p className="mt-2 text-xs text-slate-600">
+              Selected preferred time: <span className="font-semibold text-slate-900">{form.preferredTime || "None selected"}</span>
+            </p>
+          </div>
+        ) : (
+          <input type="time" className="rounded-md border border-slate-300 px-2 py-1 text-sm" value={form.preferredTime} onChange={(event) => setForm((c) => ({ ...c, preferredTime: event.target.value }))} />
+        )}
 
         {selectableStaff.length > 0 ? (
           <select

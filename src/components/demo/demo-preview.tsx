@@ -20,6 +20,16 @@ type DemoPreviewProps = {
   draft: DemoCustomisationDraft;
 };
 
+function isLightHexColor(value: string): boolean {
+  const hex = value.replace("#", "");
+  if (!/^[0-9a-fA-F]{6}$/.test(hex)) return false;
+  const r = Number.parseInt(hex.slice(0, 2), 16);
+  const g = Number.parseInt(hex.slice(2, 4), 16);
+  const b = Number.parseInt(hex.slice(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.62;
+}
+
 function resolveActiveServices(template: WebsiteTemplate, draftServices: DemoSiteService[]): DemoSiteService[] {
   if (typeof window === "undefined") {
     return draftServices;
@@ -41,6 +51,7 @@ function resolveActiveServices(template: WebsiteTemplate, draftServices: DemoSit
 export function DemoPreview({ template, draft }: DemoPreviewProps) {
   const { config } = draft;
   const appointmentStyle = isAppointmentStyleIndustry(template.slug);
+  const accentTextClass = isLightHexColor(config.accentColor) ? "text-slate-950" : "text-white";
   const [requestServices] = useState<DemoSiteService[]>(() => resolveActiveServices(template, config.services));
   const localStaff = useMemo<StaffMember[]>(() => {
     if (typeof window === "undefined") {
@@ -56,7 +67,11 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
         <h1 className="mt-6 text-4xl font-bold tracking-tight">{config.heroHeadline}</h1>
         <p className="mt-3 max-w-2xl text-slate-200">{config.heroSubheading}</p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <button className="rounded-xl px-4 py-2 text-sm font-semibold text-white" style={{ backgroundColor: config.accentColor }} type="button">
+          <button
+            className={`rounded-xl border border-black/10 px-4 py-2 text-sm font-semibold ${accentTextClass}`}
+            style={{ backgroundColor: config.accentColor }}
+            type="button"
+          >
             {config.ctaLabel}
           </button>
           <Link href={`/demo/${template.slug}/customise`} className={secondaryButtonClass}>

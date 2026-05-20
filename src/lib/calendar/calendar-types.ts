@@ -50,6 +50,25 @@ export type ServiceSchedulingRule = {
   notes?: string;
 };
 
+export type StaffBreakWindow = {
+  id: string;
+  staffId: string;
+  weekday: Weekday;
+  startTime: string;
+  endTime: string;
+  label?: string;
+  active: boolean;
+};
+
+export type StaffRotaDay = {
+  staffId: string;
+  weekday: Weekday;
+  working: boolean;
+  startTime?: string;
+  endTime?: string;
+  breaks: StaffBreakWindow[];
+};
+
 export type CalendarPreviewItem = {
   id: string;
   industrySlug: WebsiteTemplateSlug;

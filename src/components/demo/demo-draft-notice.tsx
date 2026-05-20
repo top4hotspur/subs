@@ -23,7 +23,7 @@ export function DemoDraftNotice({ templateSlug }: DemoDraftNoticeProps) {
   }
 
   return (
-    <div className="mb-4 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800">
+    <div className="mb-3 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800">
       You have a customised demo draft in this browser. {" "}
       <Link href={`/demo/${templateSlug}/customise`} className="font-semibold underline">
         Continue editing

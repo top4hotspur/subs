@@ -1,40 +1,39 @@
-﻿# Subs Product Flow
+# Subs Product Flow
 
 ## Current v1 flow
-1. Industry page -> demo -> customise draft
-2. Setup request submission (local)
-3. Mock account/admin lifecycle
+1. Homepage -> industry page -> demo page -> customise draft.
+2. Customer starts setup and submits a local mock setup request.
+3. Mock customer/admin pages show request lifecycle, services, staff, availability, notifications, and analytics previews.
 
-## UI display consistency layer
-Status labels, option labels, tones, and small formatting helpers are centralized in:
-- `src/lib/ui/display-labels.ts`
+## Demo and preview clarity
+- Demo pages now keep control panels compact and show a clear divider before preview content:
+  - "Website preview starts here"
+- Active/default draft switching remains available, but visual priority is on the website preview.
 
-Customer request status badge shared component:
-- `src/components/requests/request-status-badge.tsx`
+## Appointment workflow (local mock)
+- First deep appointment workflow is for:
+  - `barbers`
+  - `hairdressers`
+  - `nail-salon`
+- Preferred time uses morning/afternoon/evening tile selection.
+- Tiles are preference hints, not guaranteed live availability.
 
-This keeps wording/tone consistent across setup/customer/admin/calendar/notification screens.
+## Future appointment requirements (not implemented)
+Real appointment slot availability will later require:
+- logged-in customer profile prefill
+- business opening hours
+- staff rota / working days
+- staff break windows
+- service duration and buffers
+- existing booking conflict checks
+- admin setting for whether customers can select staff
 
-## Scope
-Local/static/mock only. No backend integrations added.
+## UI display consistency
+- Shared labels/formatters live in:
+  - `src/lib/ui/display-labels.ts`
+- Shared customer-request badge lives in:
+  - `src/components/requests/request-status-badge.tsx`
 
-
-## Admin Analytics Preview (Local Mock)
-- /admin now includes a local analytics and income preview to demonstrate future owner reportingn- Industry filter supports All industries or per-industry dashboard viewsn- This remains informational/local only and does not represent real financial processing
-
-
-## Customer-facing UI system (v1 polish)
-- Public pages now use a neutral tile/card style with dark hero panels, rounded surfaces, and clear CTA hierarchy
-- Industry and demo experiences are visually aligned so the demo feels like a real customer website
-- This remains a hosted demo/local mock foundation with unchanged backend constraints
-
-
-## Visual consistency across public journey
-- Homepage now matches the modern neutral design system used by industry, demo, and setup pages.
-- Public flow remains: homepage -> industry page -> demo/customise -> setup request, with unchanged local/mock behavior.
-
-
-## Setup UX clarification (local mock)
-- Customer contact details in setup are now customer-entered fields and no longer prefilled with demo contact values.
-- Domain name ideas can be submitted when customers ask us to register/manage a domain; no live availability lookup is performed in this version.
-- Setup confirmation empty-state now explains browser-local storage limits and offers restart/recovery actions.
-
+## Scope guardrails
+This remains local/static/mock only.
+No AWS resources, Stripe, real auth, real DB/API, or real external messaging/calendar integrations are implemented.

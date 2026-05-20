@@ -14,6 +14,8 @@ Includes:
 - `BusinessAvailabilityWindow`
 - `StaffAvailabilityWindow`
 - `ServiceSchedulingRule`
+- `StaffBreakWindow` (placeholder for future rota/break logic)
+- `StaffRotaDay` (placeholder for future rota/day modeling)
 - `CalendarPreviewItem`
 
 ## Industry scheduling defaults
@@ -64,10 +66,21 @@ Seeding:
 
 ## Not implemented yet
 - no conflict-checking engine
-- no real slot generation
+- no guaranteed slot generation from booking conflicts
 - no external calendar sync (Google/Outlook)
 - no DB/API persistence
 - no real-time dispatch or optimization
+
+## Appointment availability rules (future)
+For real appointment booking, slot availability must eventually combine:
+- business opening windows
+- staff rota/working days
+- staff breaks
+- service duration and buffers
+- existing bookings at the same time
+- whether customer staff selection is enabled by admin
+
+Current implementation only offers preferred-slot suggestions and clearly marks that final confirmation comes from the business.
 
 ## Future direction
 Later backend work can persist availability by site + staff, add conflict checks, and build slot availability and assignment workflows on top of this model.

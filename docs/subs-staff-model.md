@@ -43,3 +43,9 @@ See:
 - DB/API persistence
 - conflict checking and auto-assignment logic
 
+## Appointment staff rules (future)
+- Customer can only choose staff when business/admin enables customer staff choice.
+- Chosen staff must be working for the selected date/time.
+- Chosen staff must not already have another booking at that time.
+- Staff rota and break windows must be applied before exposing final available slots.
+
