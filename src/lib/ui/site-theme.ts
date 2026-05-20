@@ -8,7 +8,7 @@
   mutedText: "text-slate-600",
   darkPanel: "bg-slate-900 text-white",
   ctaPrimary: "bg-sky-700 text-white hover:bg-sky-800",
-  ctaSecondary: "bg-white text-slate-900 border border-slate-300 hover:bg-slate-100",
+  ctaSecondary: "bg-white text-slate-950 border border-slate-300 hover:bg-slate-100",
 };
 
 export const siteSurfaceClass = `${siteTheme.cardBg} ${siteTheme.cardBorder} ${siteTheme.cardShadow} rounded-3xl`;

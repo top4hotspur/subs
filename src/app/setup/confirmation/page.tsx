@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { SetupStatusBadge } from "@/components/setup/setup-status-badge";
 import { setupStatusDescription } from "@/lib/setup/status";
-import { getLocalSetupRequest } from "@/lib/setup/local-setup-requests";
+import { getLocalSetupRequest, listLocalSetupRequests } from "@/lib/setup/local-setup-requests";
 import { LocalSetupRequest } from "@/lib/sites/types";
 import { outlineButtonClass, primaryButtonClass } from "@/lib/ui/button-styles";
 import {
@@ -25,14 +25,41 @@ function readRequestFromLocation(): LocalSetupRequest | null {
 
 export default function SetupConfirmationPage() {
   const [request] = useState<LocalSetupRequest | null>(() => readRequestFromLocation());
+  const [recentRequests] = useState<LocalSetupRequest[]>(() =>
+    typeof window === "undefined" ? [] : listLocalSetupRequests().slice(0, 5),
+  );
 
   if (!request) {
     return (
       <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h1 className="text-3xl font-bold text-slate-900">Setup request not found</h1>
-          <p className="mt-3 text-slate-600">We could not find this local mock setup request in your browser.</p>
-          <Link href="/" className="mt-5 inline-flex text-sm font-medium text-sky-700 hover:text-sky-900">Back to homepage</Link>
+          <h1 className="text-3xl font-bold text-slate-900">Setup request not found in this browser</h1>
+          <p className="mt-3 text-slate-600">
+            This demo stores setup requests locally in your browser. If you opened this link in a different browser,
+            cleared site data, or the request was not saved, we cannot load that mock request.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link href="/setup/barbers" className={primaryButtonClass}>Start setup again</Link>
+            <Link href="/account" className={outlineButtonClass}>Go to customer portal</Link>
+            <Link href="/" className={outlineButtonClass}>Back to homepage</Link>
+          </div>
+          {recentRequests.length > 0 ? (
+            <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-slate-900">Recent local setup requests in this browser</p>
+              <ul className="mt-2 space-y-2 text-sm text-slate-700">
+                {recentRequests.map((item) => (
+                  <li key={item.id}>
+                    <Link
+                      href={`/setup/confirmation?requestId=${encodeURIComponent(item.id)}`}
+                      className="text-sky-700 hover:text-sky-900"
+                    >
+                      {item.businessName} ({item.templateSlug}) - {formatGbp(item.setupTotalGbp)} setup
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </div>
       </main>
     );

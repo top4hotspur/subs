@@ -30,3 +30,10 @@ Run these checks on the hosted environment after deployment.
 ## Notes
 - All persistence in this version is browser-local only (localStorage).
 - This is a hosted demo/local mock platform foundation, not production persistence.
+
+## Setup UX and CTA readability checks
+- Confirm hero CTA labels remain clearly readable on dark panels (no low-contrast text).
+- In setup form, customer contact name/email/phone should start blank (except true local saved data) and must not prefill demo contact details.
+- For domain setup, confirm existing domain, planned domain (optional), and domain ideas (multi-line) inputs show correctly for each option.
+- Confirm setup confirmation empty-state explains browser-local storage behavior and provides recovery actions.
+

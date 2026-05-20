@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { getWebsiteSubscriptionOffer } from "@/lib/pricing/subscription-offer";
 import { createLocalSetupRequest } from "@/lib/setup/local-setup-requests";
@@ -73,8 +73,6 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
     businessName: readBusinessNameFromActiveDraft(template),
     demoDraftId: draftContext.demoDraftId,
     demoDraftName: draftContext.demoDraftName,
-    contactEmail: template.defaultConfig.contact.email,
-    contactPhone: template.defaultConfig.contact.phone,
   });
   const [errors, setErrors] = useState<string[]>([]);
 
@@ -88,25 +86,6 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
       ? offer.whatsappAddonMonthlyFeeGbp
       : 0);
   const setupTotal = offer.setupFeeGbp + domainFee;
-
-  const summaryLines = useMemo(
-    () => [
-      `Industry: ${template.name}`,
-      `Business name: ${draft.businessName || "-"}`,
-      `Demo draft: ${draft.demoDraftName || "Template defaults"}`,
-      `Domain option: ${domainOptionLabel(draft.domainOption)}`,
-      `Communication: ${communicationOptionLabel(draft.communicationOption)}`,
-      `Setup total: ${formatGbp(setupTotal)}`,
-      `Monthly total: ${formatGbp(monthlyFee)}`,
-      `Email included: Yes`,
-      `WhatsApp add-on: ${
-        draft.communicationOption === CommunicationOption.EMAIL_AND_WHATSAPP
-          ? "Yes"
-          : "No"
-      }`,
-    ],
-    [template.name, draft, setupTotal, monthlyFee],
-  );
 
   function validate(): string[] {
     const issues: string[] = [];
@@ -135,7 +114,7 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
       draft.domainOption === DomainOption.WE_REGISTER_DOMAIN &&
       !draft.desiredDomain?.trim()
     ) {
-      issues.push("Desired domain is required when we register/manage domain.");
+      issues.push("Domain name ideas are required when we register/manage domain.");
     }
 
     return issues;
@@ -227,10 +206,13 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
 
           {draft.domainOption === DomainOption.EXISTING_DOMAIN ? (
             <label className="block text-sm font-medium text-slate-700">
-              Existing domain
+              Your existing domain
+              <p className="mt-1 text-xs font-normal text-slate-600">
+                Enter the domain you already own. We will tell you what DNS/nameserver changes are needed.
+              </p>
               <input
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-                placeholder="example.com"
+                placeholder="example.co.uk"
                 value={draft.existingDomain ?? ""}
                 onChange={(event) =>
                   setDraft((c) => ({ ...c, existingDomain: event.target.value }))
@@ -239,12 +221,32 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
             </label>
           ) : null}
 
-          {draft.domainOption === DomainOption.WE_REGISTER_DOMAIN ? (
+          {draft.domainOption === DomainOption.CUSTOMER_BUYS_DOMAIN ? (
             <label className="block text-sm font-medium text-slate-700">
-              Desired domain
+              Planned domain
+              <p className="mt-1 text-xs font-normal text-slate-600">
+                Optional — tell us the domain you plan to buy or have already found.
+              </p>
               <input
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-                placeholder="yourbusiness.co.uk"
+                placeholder="example.co.uk"
+                value={draft.desiredDomain ?? ""}
+                onChange={(event) =>
+                  setDraft((c) => ({ ...c, desiredDomain: event.target.value }))
+                }
+              />
+            </label>
+          ) : null}
+
+          {draft.domainOption === DomainOption.WE_REGISTER_DOMAIN ? (
+            <label className="block text-sm font-medium text-slate-700">
+              Domain name ideas
+              <p className="mt-1 text-xs font-normal text-slate-600">
+                Give us a few options you would be happy with. We will check availability before confirming.
+              </p>
+              <textarea
+                className="mt-1 min-h-24 w-full rounded-lg border border-slate-300 px-3 py-2"
+                placeholder={"firstchoice.co.uk\nsecondchoice.com\nmybusinessname.co.uk"}
                 value={draft.desiredDomain ?? ""}
                 onChange={(event) =>
                   setDraft((c) => ({ ...c, desiredDomain: event.target.value }))
@@ -255,7 +257,10 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
         </section>
 
         <section className="space-y-3 rounded-xl border border-slate-200 p-4">
-          <h2 className="text-lg font-semibold text-slate-900">Communication option</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Customer communications</h2>
+          <p className="text-sm text-slate-600">
+            Email confirmations are included. Add WhatsApp if you want customer updates sent by WhatsApp as well.
+          </p>
           <label className="block text-sm text-slate-700">
             <input
               type="radio"
@@ -266,7 +271,7 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
                 setDraft((c) => ({ ...c, communicationOption: CommunicationOption.EMAIL_ONLY }))
               }
             />
-            Email only (included)
+            Email only — included
           </label>
           <label className="block text-sm text-slate-700">
             <input
@@ -278,7 +283,7 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
                 setDraft((c) => ({ ...c, communicationOption: CommunicationOption.EMAIL_AND_WHATSAPP }))
               }
             />
-            Email + WhatsApp (+{formatGbp(offer.whatsappAddonMonthlyFeeGbp)}/month)
+            Email + WhatsApp — +{formatGbp(offer.whatsappAddonMonthlyFeeGbp)}/month
           </label>
         </section>
 
@@ -298,6 +303,7 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
             Contact email
             <input
               className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              placeholder="your@email.com"
               value={draft.contactEmail ?? ""}
               onChange={(event) =>
                 setDraft((c) => ({ ...c, contactEmail: event.target.value }))
@@ -308,6 +314,7 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
             Contact phone
             <input
               className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              placeholder="07123 456789"
               value={draft.contactPhone ?? ""}
               onChange={(event) =>
                 setDraft((c) => ({ ...c, contactPhone: event.target.value }))
@@ -347,6 +354,22 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
         <h2 className="text-lg font-semibold text-slate-900">Live setup summary</h2>
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
           <p>
+            <span className="font-semibold">Industry:</span> {template.name}
+          </p>
+          <p>
+            <span className="font-semibold">Business name:</span> {draft.businessName || "-"}
+          </p>
+          <p>
+            <span className="font-semibold">Demo draft:</span> {draft.demoDraftName || "Template defaults"}
+          </p>
+          <p>
+            <span className="font-semibold">Domain option:</span> {domainOptionLabel(draft.domainOption)}
+          </p>
+          <p>
+            <span className="font-semibold">Customer communications:</span> {communicationOptionLabel(draft.communicationOption)}
+          </p>
+          <hr className="my-2 border-slate-200" />
+          <p>
             <span className="font-semibold">Setup fee:</span> {formatGbp(offer.setupFeeGbp)}
           </p>
           <p>
@@ -368,11 +391,6 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
               : "No"}
           </p>
         </div>
-        <ul className="list-disc space-y-1 pl-5 text-sm text-slate-600">
-          {summaryLines.map((line) => (
-            <li key={line}>{line}</li>
-          ))}
-        </ul>
       </aside>
     </div>
   );

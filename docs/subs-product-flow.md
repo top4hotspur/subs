@@ -32,3 +32,9 @@ Local/static/mock only. No backend integrations added.
 - Homepage now matches the modern neutral design system used by industry, demo, and setup pages.
 - Public flow remains: homepage -> industry page -> demo/customise -> setup request, with unchanged local/mock behavior.
 
+
+## Setup UX clarification (local mock)
+- Customer contact details in setup are now customer-entered fields and no longer prefilled with demo contact values.
+- Domain name ideas can be submitted when customers ask us to register/manage a domain; no live availability lookup is performed in this version.
+- Setup confirmation empty-state now explains browser-local storage limits and offers restart/recovery actions.
+

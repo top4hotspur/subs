@@ -44,3 +44,9 @@ Planned later-phase workflow:
 3. Persisted setup requests and provisioning states.
 4. Customer portal for billing and support.
 5. Admin portal for setup operations and template management.
+
+## Domain and communication wording updates
+- Domain options now capture: existing domain, optional planned domain (customer buys), or multi-line domain ideas (we register/manage).
+- Communication section is now labelled **Customer communications** with clearer wording: Email only (included) or Email + WhatsApp (+GBP10/month).
+- No domain availability checks or real messaging integrations are implemented in this mock flow.
+
