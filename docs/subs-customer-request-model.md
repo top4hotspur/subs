@@ -17,6 +17,13 @@ Completion still stamps local:
 
 No real messaging/delivery is implemented.
 
+## Local appointment conflict behavior
+- Appointment slot availability checks can use existing browser-local customer requests.
+- Slot blocking is staff-specific and industry-specific.
+- Requests in `CANCELLED` and `NO_SHOW` are ignored for blocking.
+- Tentative and active workflow statuses are treated as blocking in this local mock until released by admin workflow.
+- This is not backend-safe concurrency; future production behavior requires server validation + transactional persistence.
+
 
 ## Analytics Relationship
 - Customer requests are now also used as a local analytics source for conversion, service demand, and estimated income summaries in /admin

@@ -81,9 +81,10 @@ Preferred slot tiles can use:
 - staff rota day windows when a staff member is selected
 - break windows to avoid suggesting times inside breaks
 - business availability fallback when no staff rota/day window exists
+- local request conflict checks to flag already-booked staff slots as unavailable
 
 This is still local/mock preferred-slot behavior only.
-No real conflict-checking against existing appointments is performed.
+Conflict checks are browser-local only and do not provide backend-grade concurrency protection.
 
 ## Not implemented yet
 - no conflict-checking engine
@@ -91,6 +92,7 @@ No real conflict-checking against existing appointments is performed.
 - no external calendar sync (Google/Outlook)
 - no DB/API persistence
 - no real-time dispatch or optimization
+- no server-side transaction/locking to prevent double booking across devices
 
 ## Appointment availability rules (future)
 For real appointment booking, slot availability must eventually combine:

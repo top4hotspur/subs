@@ -6,6 +6,8 @@ import {
   StaffAvailabilityWindow,
   Weekday,
 } from "@/lib/calendar/calendar-types";
+import { isSlotBlockedByExistingRequest } from "@/lib/calendar/local-appointment-conflicts";
+import { CustomerRequest } from "@/lib/requests/request-types";
 import { WebsiteTemplateSlug } from "@/lib/sites/types";
 
 export enum DayPeriod {
@@ -25,6 +27,9 @@ export type AppointmentSlotPreference = {
   staffId?: string;
   staffName?: string;
   availableLike: boolean;
+  blocked?: boolean;
+  blockedReason?: string;
+  conflictRequestId?: string;
   note?: string;
 };
 
@@ -34,6 +39,7 @@ type BuildPreferredAppointmentSlotsOptions = {
   businessAvailabilityWindows: BusinessAvailabilityWindow[];
   selectedStaffAvailabilityWindows?: StaffAvailabilityWindow[];
   selectedStaffRotaDays?: StaffRotaDay[];
+  existingRequests?: CustomerRequest[];
   serviceDurationMinutes?: number;
   selectedStaffId?: string;
   selectedStaffName?: string;
@@ -86,9 +92,11 @@ export function buildPreferredAppointmentSlots(
 ): AppointmentSlotPreference[] {
   const {
     selectedDate,
+    industrySlug,
     businessAvailabilityWindows,
     selectedStaffAvailabilityWindows = [],
     selectedStaffRotaDays = [],
+    existingRequests = [],
     serviceDurationMinutes = 45,
     selectedStaffId,
     selectedStaffName,
@@ -128,19 +136,34 @@ export function buildPreferredAppointmentSlots(
         : businessAvailabilityWindows.filter((window) => window.active && window.weekday === weekday);
 
   if (sourceWindows.length === 0) {
-    return GENERIC_SLOTS.map((time, index) => ({
-      id: `generic_${selectedDate}_${index}`,
-      label: time,
-      date: selectedDate,
-      startTime: time,
-      endTime: addMinutes(time, serviceDurationMinutes),
-      period: getDayPeriodForTime(time),
-      source: "generic",
-      staffId: selectedStaffId,
-      staffName: selectedStaffName,
-      availableLike: false,
-      note: "Preferred slot only. Final time is confirmed by the business.",
-    }));
+    return GENERIC_SLOTS.map((time, index) => {
+      const endTime = addMinutes(time, serviceDurationMinutes);
+      const conflict = isSlotBlockedByExistingRequest({
+        industrySlug,
+        staffId: selectedStaffId,
+        date: selectedDate,
+        startTime: time,
+        endTime,
+        existingRequests,
+      });
+
+      return {
+        id: `generic_${selectedDate}_${index}`,
+        label: time,
+        date: selectedDate,
+        startTime: time,
+        endTime,
+        period: getDayPeriodForTime(time),
+        source: "generic" as const,
+        staffId: selectedStaffId,
+        staffName: selectedStaffName,
+        availableLike: false,
+        blocked: conflict.blocked,
+        blockedReason: conflict.blocked ? "Already booked" : undefined,
+        conflictRequestId: conflict.blockingRequest?.id,
+        note: "Preferred slot only. Final time is confirmed by the business.",
+      };
+    });
   }
 
   const slots: AppointmentSlotPreference[] = [];
@@ -148,6 +171,7 @@ export function buildPreferredAppointmentSlots(
     const start = toMinutes(window.startTime);
     const end = toMinutes(window.endTime);
     const step = 60;
+
     for (let cursor = start; cursor + serviceDurationMinutes <= end; cursor += step) {
       const hh = String(Math.floor(cursor / 60)).padStart(2, "0");
       const mm = String(cursor % 60).padStart(2, "0");
@@ -157,6 +181,15 @@ export function buildPreferredAppointmentSlots(
       if (rotaDay?.breaks?.length && overlapsBreak(startTime, endTime, rotaDay.breaks)) {
         continue;
       }
+
+      const conflict = isSlotBlockedByExistingRequest({
+        industrySlug,
+        staffId: selectedStaffId,
+        date: selectedDate,
+        startTime,
+        endTime,
+        existingRequests,
+      });
 
       slots.push({
         id: `${window.id}_${index}_${cursor}`,
@@ -172,6 +205,9 @@ export function buildPreferredAppointmentSlots(
         staffId: selectedStaffId,
         staffName: selectedStaffName,
         availableLike: true,
+        blocked: conflict.blocked,
+        blockedReason: conflict.blocked ? "Already booked" : undefined,
+        conflictRequestId: conflict.blockingRequest?.id,
         note: "Preferred slot only. Final time is confirmed by the business.",
       });
     }

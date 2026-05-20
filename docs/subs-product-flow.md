@@ -18,6 +18,7 @@
 - Preferred time uses morning/afternoon/evening tile selection.
 - Tiles are preference hints, not guaranteed live availability.
 - When staff is selected, local rota and break windows can shape preferred slot suggestions.
+- Local mock conflict checks can disable slots already tied to another local request for the same staff member/time.
 
 ## Future appointment requirements (not implemented)
 Real appointment slot availability will later require:
@@ -38,3 +39,4 @@ Real appointment slot availability will later require:
 ## Scope guardrails
 This remains local/static/mock only.
 No AWS resources, Stripe, real auth, real DB/API, or real external messaging/calendar integrations are implemented.
+Current conflict checks are browser-local only and do not provide backend-grade locking/concurrency guarantees.

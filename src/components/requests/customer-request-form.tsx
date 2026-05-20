@@ -23,7 +23,10 @@ import {
   getRequestActionLabelForIndustry,
   getSuggestedRequestFieldsForIndustry,
 } from "@/lib/requests/industry-request-defaults";
-import { createLocalCustomerRequest } from "@/lib/requests/local-customer-requests";
+import {
+  createLocalCustomerRequest,
+  listLocalCustomerRequests,
+} from "@/lib/requests/local-customer-requests";
 import {
   CustomerRequestCommunicationChannel,
   CustomerRequestKind,
@@ -77,6 +80,10 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
     [templateSlug],
   );
   const businessAvailabilityPreview = businessAvailabilityAll.slice(0, 3);
+  const existingRequests = useMemo(
+    () => (typeof window === "undefined" ? [] : listLocalCustomerRequests()),
+    [],
+  );
 
   const requestKind = getDefaultRequestKindForIndustry(templateSlug);
   const locationType = getDefaultLocationTypeForIndustry(templateSlug);
@@ -134,9 +141,10 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
       selectedStaffRotaDays: staffRotaDays,
       selectedStaffId: selectedStaffMember?.id,
       selectedStaffName: selectedStaffMember?.displayName,
+      existingRequests,
       serviceDurationMinutes: 45,
     });
-  }, [appointmentStyle, form.preferredDate, templateSlug, businessAvailabilityAll, selectedStaffMember]);
+  }, [appointmentStyle, form.preferredDate, templateSlug, businessAvailabilityAll, selectedStaffMember, existingRequests]);
 
   const slotGroups = useMemo(
     () => ({
@@ -162,6 +170,11 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
       {appointmentStyle ? (
         <p className="mt-1 text-xs text-slate-600">
           Choose a preferred time. The business will confirm availability.
+        </p>
+      ) : null}
+      {appointmentStyle && !selectedStaffMember ? (
+        <p className="mt-1 text-xs text-slate-600">
+          Final availability will be confirmed by the business.
         </p>
       ) : null}
       {appointmentStyle && businessAvailabilityPreview.length > 0 ? (
@@ -277,14 +290,20 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
                           <button
                             key={slot.id}
                             type="button"
+                            disabled={Boolean(slot.blocked)}
                             className={`rounded-md border px-2 py-1 text-xs font-medium ${
                               form.preferredTime === slot.startTime
                                 ? "border-sky-700 bg-sky-700 text-white"
-                                : "border-slate-300 bg-slate-100 text-slate-900 hover:bg-slate-200"
+                                : slot.blocked
+                                  ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+                                  : "border-slate-300 bg-slate-100 text-slate-900 hover:bg-slate-200"
                             }`}
-                            onClick={() => setForm((c) => ({ ...c, preferredTime: slot.startTime }))}
+                            onClick={() => {
+                              if (slot.blocked) return;
+                              setForm((c) => ({ ...c, preferredTime: slot.startTime }));
+                            }}
                           >
-                            {slot.label}
+                            {slot.label} {slot.blocked ? "· Already booked" : ""}
                           </button>
                         ))
                       )}

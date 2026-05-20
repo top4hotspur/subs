@@ -8,6 +8,7 @@ import {
   updateLocalSetupRequestStatus,
 } from "@/lib/setup/local-setup-requests";
 import { LocalAnalyticsDashboard } from "@/components/analytics/local-analytics-dashboard";
+import { isSlotBlockedByExistingRequest } from "@/lib/calendar/local-appointment-conflicts";
 import {
   assignLocalCustomerRequestStaff,
   listLocalCustomerRequests,
@@ -69,6 +70,14 @@ function formatDateTime(date?: string, time?: string): string {
   if (!date && !time) return "TBC";
   if (date && time) return `${date} at ${time}`;
   return date ?? time ?? "TBC";
+}
+
+function plusMinutes(time: string, minutesToAdd: number): string {
+  const [hours, minutes] = time.split(":").map(Number);
+  const total = hours * 60 + minutes + minutesToAdd;
+  const h = Math.floor(total / 60) % 24;
+  const m = total % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
 export default function AdminPage() {
@@ -338,6 +347,18 @@ export default function AdminPage() {
                   template.eventType === NotificationEventType.REVIEW_REQUEST &&
                   template.channel === NotificationChannel.EMAIL,
               );
+              const assignmentConflict =
+                request.assignedStaffId && request.preferredDate && request.preferredTime && requestSlug
+                  ? isSlotBlockedByExistingRequest({
+                      industrySlug: requestSlug,
+                      staffId: request.assignedStaffId,
+                      date: request.preferredDate,
+                      startTime: request.preferredTime,
+                      endTime: plusMinutes(request.preferredTime, request.estimatedDurationMinutes ?? 45),
+                      existingRequests: customerRequests,
+                      excludeRequestId: request.id,
+                    })
+                  : { blocked: false as const };
 
               return (
                 <article key={request.id} className="rounded-xl border border-slate-200 p-4">
@@ -369,6 +390,11 @@ export default function AdminPage() {
                     </div>
                   ) : null}
                   <p className="mt-2 text-xs text-slate-600">{customerRequestStatusDescription(request.status)}</p>
+                  {assignmentConflict.blocked ? (
+                    <p className="mt-2 text-xs font-medium text-amber-700">
+                      Warning: assigned staff appears to have another local request at this time.
+                    </p>
+                  ) : null}
 
                   <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
                     {selectableStaff.length > 0 ? (
