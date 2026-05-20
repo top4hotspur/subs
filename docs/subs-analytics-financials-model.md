@@ -50,3 +50,10 @@ Move calculations to backend services and persistent storage:
 - Historical trend reporting and exports
 
 Until then, this remains local/static/mock for product demonstration only.
+
+## Local trend views and CSV export
+- Admin analytics now includes local request trend views for the last 7 days and last 30 days using browser-stored request timestamps.
+- Daily trend buckets include totals and internal status/service/staff counts for mock reporting purposes.
+- CSV export is browser-generated only (no backend): customer requests CSV and setup requests CSV.
+- This is not real accounting, tax, payment reconciliation, or audited reporting.
+

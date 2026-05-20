@@ -135,6 +135,14 @@ export default function AdminPage() {
     [customerRequests, analyticsIndustryFilter],
   );
 
+  const analyticsSetupRequests = useMemo(
+    () =>
+      analyticsIndustryFilter === "ALL"
+        ? setupRequests
+        : setupRequests.filter((request) => request.templateSlug === analyticsIndustryFilter),
+    [setupRequests, analyticsIndustryFilter],
+  );
+
   const analyticsStaff = useMemo(() => {
     if (analyticsIndustryFilter === "ALL") {
       return WEBSITE_TEMPLATE_SLUGS.flatMap((slug) => staffByIndustry[slug] ?? []);
@@ -285,6 +293,7 @@ export default function AdminPage() {
         <LocalAnalyticsDashboard
           industrySlug={analyticsIndustryFilter === "ALL" ? undefined : analyticsIndustryFilter}
           requests={analyticsRequests}
+          setupRequests={analyticsSetupRequests}
           services={analyticsServices}
           staffMembers={analyticsStaff}
         />

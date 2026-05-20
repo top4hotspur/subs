@@ -146,3 +146,81 @@ export function buildLocalAnalyticsSummary(
     generatedAtIso: new Date().toISOString(),
   };
 }
+
+export type DailyTrendBucket = {
+  dayLabel: string;
+  dateKey: string;
+  total: number;
+  statusCounts: Record<CustomerRequestStatus, number>;
+  serviceCounts: Record<string, number>;
+  staffCounts: Record<string, number>;
+};
+
+function toDateKey(value: string): string {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "invalid";
+  return d.toISOString().slice(0, 10);
+}
+
+function toDayLabel(dateKey: string): string {
+  if (dateKey === "invalid") return "Invalid";
+  const d = new Date(`${dateKey}T00:00:00`);
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+}
+
+function emptyStatusCounts(): Record<CustomerRequestStatus, number> {
+  return Object.values(CustomerRequestStatus).reduce((acc, status) => {
+    acc[status] = 0;
+    return acc;
+  }, {} as Record<CustomerRequestStatus, number>);
+}
+
+function buildTrendBuckets(
+  requests: CustomerRequest[],
+  days: number,
+): DailyTrendBucket[] {
+  const now = new Date();
+  const windowStart = new Date(now);
+  windowStart.setDate(windowStart.getDate() - (days - 1));
+  windowStart.setHours(0, 0, 0, 0);
+
+  const seeded: Record<string, DailyTrendBucket> = {};
+  for (let i = 0; i < days; i += 1) {
+    const date = new Date(windowStart);
+    date.setDate(windowStart.getDate() + i);
+    const dateKey = date.toISOString().slice(0, 10);
+    seeded[dateKey] = {
+      dayLabel: toDayLabel(dateKey),
+      dateKey,
+      total: 0,
+      statusCounts: emptyStatusCounts(),
+      serviceCounts: {},
+      staffCounts: {},
+    };
+  }
+
+  requests.forEach((request) => {
+    const dateKey = toDateKey(request.createdAtIso);
+    const bucket = seeded[dateKey];
+    if (!bucket) return;
+    bucket.total += 1;
+    bucket.statusCounts[request.status] += 1;
+    if (request.serviceName) {
+      bucket.serviceCounts[request.serviceName] = (bucket.serviceCounts[request.serviceName] ?? 0) + 1;
+    }
+    const staffName = request.assignedStaffName?.trim();
+    if (staffName) {
+      bucket.staffCounts[staffName] = (bucket.staffCounts[staffName] ?? 0) + 1;
+    }
+  });
+
+  return Object.values(seeded).sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+}
+
+export function buildLast7DaysTrend(requests: CustomerRequest[]): DailyTrendBucket[] {
+  return buildTrendBuckets(requests, 7);
+}
+
+export function buildLast30DaysTrend(requests: CustomerRequest[]): DailyTrendBucket[] {
+  return buildTrendBuckets(requests, 30);
+}

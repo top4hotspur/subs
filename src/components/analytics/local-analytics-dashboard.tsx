@@ -1,16 +1,28 @@
 "use client";
 
 import { useMemo } from "react";
-import { buildLocalAnalyticsSummary } from "@/lib/analytics/local-analytics";
+import {
+  buildLast30DaysTrend,
+  buildLast7DaysTrend,
+  buildLocalAnalyticsSummary,
+  DailyTrendBucket,
+} from "@/lib/analytics/local-analytics";
+import {
+  customerRequestsToCsv,
+  downloadCsv,
+  setupRequestsToCsv,
+} from "@/lib/export/local-csv";
 import { CustomerRequest } from "@/lib/requests/request-types";
 import { SiteServiceItem } from "@/lib/sites/site-settings-types";
-import { WebsiteTemplateSlug } from "@/lib/sites/types";
+import { LocalSetupRequest, WebsiteTemplateSlug } from "@/lib/sites/types";
 import { StaffMember } from "@/lib/staff/staff-types";
+import { smallButtonClass, secondaryButtonClass } from "@/lib/ui/button-styles";
 import { formatGbp, formatIsoDateTime } from "@/lib/ui/display-labels";
 
 type LocalAnalyticsDashboardProps = {
   industrySlug?: WebsiteTemplateSlug;
   requests: CustomerRequest[];
+  setupRequests?: LocalSetupRequest[];
   services?: SiteServiceItem[];
   staffMembers?: StaffMember[];
 };
@@ -18,6 +30,7 @@ type LocalAnalyticsDashboardProps = {
 export function LocalAnalyticsDashboard({
   industrySlug,
   requests,
+  setupRequests = [],
   services = [],
   staffMembers = [],
 }: LocalAnalyticsDashboardProps) {
@@ -33,6 +46,28 @@ export function LocalAnalyticsDashboard({
   );
 
   const completedOrConfirmed = summary.completedRequests + summary.confirmedRequests;
+  const last7Days = useMemo(() => buildLast7DaysTrend(requests), [requests]);
+  const last30Days = useMemo(() => buildLast30DaysTrend(requests), [requests]);
+
+  function renderTrendBars(data: DailyTrendBucket[]) {
+    const maxCount = Math.max(...data.map((bucket) => bucket.total), 1);
+    return (
+      <div className="mt-2 space-y-2">
+        {data.map((bucket) => (
+          <div key={bucket.dateKey} className="grid grid-cols-[70px_1fr_40px] items-center gap-2 text-xs">
+            <span className="text-slate-600">{bucket.dayLabel}</span>
+            <div className="h-3 rounded bg-slate-200">
+              <div
+                className="h-3 rounded bg-sky-600"
+                style={{ width: `${Math.max((bucket.total / maxCount) * 100, bucket.total > 0 ? 10 : 0)}%` }}
+              />
+            </div>
+            <span className="text-right text-slate-700">{bucket.total}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   if (summary.totalRequests === 0) {
     return (
@@ -52,6 +87,22 @@ export function LocalAnalyticsDashboard({
       <p className="mt-2 text-sm text-slate-600">
         Demo summary derived from local mock requests, services, and staff.
       </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button
+          type="button"
+          className={`${secondaryButtonClass} ${smallButtonClass}`}
+          onClick={() => downloadCsv("customer-requests.csv", customerRequestsToCsv(requests))}
+        >
+          Export customer requests CSV
+        </button>
+        <button
+          type="button"
+          className={`${secondaryButtonClass} ${smallButtonClass}`}
+          onClick={() => downloadCsv("setup-requests.csv", setupRequestsToCsv(setupRequests))}
+        >
+          Export setup requests CSV
+        </button>
+      </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <article className="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -81,6 +132,17 @@ export function LocalAnalyticsDashboard({
           <p><span className="font-semibold">Pending/unpaid:</span> {formatGbp(summary.financialSummary.unpaidOrPendingGbp)}</p>
         </div>
       </article>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <article className="rounded-xl border border-slate-200 p-4">
+          <h3 className="text-sm font-semibold text-slate-900">Last 7 days</h3>
+          {renderTrendBars(last7Days)}
+        </article>
+        <article className="rounded-xl border border-slate-200 p-4">
+          <h3 className="text-sm font-semibold text-slate-900">Last 30 days</h3>
+          {renderTrendBars(last30Days)}
+        </article>
+      </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <article className="rounded-xl border border-slate-200 p-4">
