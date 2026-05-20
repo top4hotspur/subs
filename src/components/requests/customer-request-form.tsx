@@ -6,6 +6,8 @@ import {
   shouldUseFixedSlotsByDefault,
   shouldUseFlexibleWindowsByDefault,
 } from "@/lib/calendar/industry-calendar-defaults";
+import { listLocalBusinessAvailability } from "@/lib/calendar/local-availability";
+import { isAppointmentStyleIndustry } from "@/lib/requests/appointment-industries";
 import {
   getDefaultLocationTypeForIndustry,
   getDefaultRequestKindForIndustry,
@@ -28,6 +30,7 @@ import {
   customerRequestKindLabel,
   customerRequestLocationTypeLabel,
   customerRequestPricingStatusLabel,
+  weekdayLabel,
 } from "@/lib/ui/display-labels";
 
 type CustomerRequestFormProps = {
@@ -56,11 +59,21 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
     () => (staffMembers ?? []).filter((staff) => staff.active && staff.customerSelectable),
     [staffMembers],
   );
+  const businessAvailabilityPreview = useMemo(
+    () =>
+      typeof window === "undefined"
+        ? []
+        : listLocalBusinessAvailability(templateSlug)
+            .filter((window) => window.active)
+            .slice(0, 3),
+    [templateSlug],
+  );
 
   const requestKind = getDefaultRequestKindForIndustry(templateSlug);
   const locationType = getDefaultLocationTypeForIndustry(templateSlug);
   const actionLabel = getRequestActionLabelForIndustry(templateSlug);
   const suggestions = getSuggestedRequestFieldsForIndustry(templateSlug).join(", ");
+  const appointmentStyle = isAppointmentStyleIndustry(templateSlug);
   const customerSelectableByDefault = shouldCustomersSelectStaffByDefault(templateSlug);
   const pricingStatusLabel = customerRequestPricingStatusLabel(
     requestKind === CustomerRequestKind.BOOKING_REQUEST
@@ -94,7 +107,9 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
 
   return (
     <section className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-      <h3 className="text-sm font-semibold text-slate-900">Example customer request</h3>
+      <h3 className="text-sm font-semibold text-slate-900">
+        {appointmentStyle ? "Book appointment request" : "Example customer request"}
+      </h3>
       <p className="mt-1 text-xs text-slate-600">
         {actionLabel}. Suggested fields: {suggestions}.
       </p>
@@ -102,6 +117,23 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
         Request type: {customerRequestKindLabel(requestKind)} • Location: {customerRequestLocationTypeLabel(locationType)}
       </p>
       <p className="mt-1 text-xs text-slate-600">{availabilityHint(templateSlug)}</p>
+      {appointmentStyle ? (
+        <p className="mt-1 text-xs text-slate-600">
+          For appointment-style industries, service, preferred date, and preferred time are captured to support allocation.
+        </p>
+      ) : null}
+      {appointmentStyle && businessAvailabilityPreview.length > 0 ? (
+        <div className="mt-2 rounded-md border border-slate-200 bg-white px-2 py-2 text-xs text-slate-600">
+          <p className="font-semibold text-slate-900">Availability hint</p>
+          <ul className="mt-1 space-y-1">
+            {businessAvailabilityPreview.map((window) => (
+              <li key={window.id}>
+                {weekdayLabel(window.weekday)}: {window.startTime}-{window.endTime}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       {!customerSelectableByDefault ? (
         <p className="mt-1 text-xs text-slate-600">The business will allocate the right team member.</p>
       ) : null}
@@ -123,6 +155,10 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
           event.preventDefault();
           if (!form.customerName || !form.customerEmail || !form.customerPhone) {
             setError("Name, email, and phone are required.");
+            return;
+          }
+          if (appointmentStyle && (!form.serviceId || !form.preferredDate || !form.preferredTime)) {
+            setError("Service, preferred date, and preferred time are required for appointment requests.");
             return;
           }
           if (locationType === CustomerRequestLocationType.ROUTE && (!form.pickupAddress || !form.destinationAddress)) {
@@ -204,11 +240,9 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
         <textarea className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2" placeholder="Notes" value={form.notes} onChange={(event) => setForm((c) => ({ ...c, notes: event.target.value }))} />
         {error ? <p className="text-xs text-rose-700 sm:col-span-2">{error}</p> : null}
         <button type="submit" className={`${primaryButtonClass} sm:col-span-2`}>
-          Save local request
+          {appointmentStyle ? "Save local appointment request" : "Save local request"}
         </button>
       </form>
     </section>
   );
 }
-
-

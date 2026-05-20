@@ -8,6 +8,7 @@ import { SiteCard } from "@/components/site-ui/site-card";
 import { SiteCtaPanel } from "@/components/site-ui/site-cta-panel";
 import { SiteFooterBlock } from "@/components/site-ui/site-footer-block";
 import { SiteServiceGrid } from "@/components/site-ui/site-service-grid";
+import { isAppointmentStyleIndustry } from "@/lib/requests/appointment-industries";
 import { getLocalCustomerSiteSettings } from "@/lib/sites/local-site-settings";
 import { listLocalStaff } from "@/lib/staff/local-staff";
 import { StaffMember } from "@/lib/staff/staff-types";
@@ -39,6 +40,7 @@ function resolveActiveServices(template: WebsiteTemplate, draftServices: DemoSit
 
 export function DemoPreview({ template, draft }: DemoPreviewProps) {
   const { config } = draft;
+  const appointmentStyle = isAppointmentStyleIndustry(template.slug);
   const [requestServices] = useState<DemoSiteService[]>(() => resolveActiveServices(template, config.services));
   const localStaff = useMemo<StaffMember[]>(() => {
     if (typeof window === "undefined") {
@@ -83,7 +85,12 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
           <p className="text-sm text-slate-600">Email is standard; WhatsApp messaging is optional via add-on.</p>
         </SiteCard>
 
-        <SiteCard title="Example customer request" subtitle="This is a local mock form only and does not send real requests.">
+        <SiteCard
+          title={appointmentStyle ? "Book an appointment" : "Example customer request"}
+          subtitle={appointmentStyle
+            ? "Appointment request prototype using local services, optional preferred staff, and preferred date/time."
+            : "This is a local mock form only and does not send real requests."}
+        >
           <CustomerRequestForm templateSlug={template.slug} services={requestServices} staffMembers={localStaff} />
         </SiteCard>
 

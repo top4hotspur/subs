@@ -14,6 +14,7 @@ import {
   seedLocalCustomerRequests,
   updateLocalCustomerRequestStatus,
 } from "@/lib/requests/local-customer-requests";
+import { isAppointmentStyleIndustry } from "@/lib/requests/appointment-industries";
 import {
   CustomerRequest,
   CustomerRequestStatus,
@@ -356,6 +357,17 @@ export default function AdminPage() {
                       <p><span className="font-semibold">Schedule note:</span> {request.assignedStaffName} is currently assigned.</p>
                     ) : null}
                   </div>
+                  {requestSlug && isAppointmentStyleIndustry(requestSlug) ? (
+                    <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                      <p className="font-semibold text-slate-900">Appointment workflow view</p>
+                      <p className="mt-1">
+                        Service: {request.serviceName || "TBC"} | Date: {request.preferredDate || "TBC"} | Time: {request.preferredTime || "TBC"}
+                      </p>
+                      <p className="mt-1">
+                        Preferred staff: {formatOptional(request.preferredStaffName, "No preference")} | Assigned: {formatOptional(request.assignedStaffName, "Unassigned")}
+                      </p>
+                    </div>
+                  ) : null}
                   <p className="mt-2 text-xs text-slate-600">{customerRequestStatusDescription(request.status)}</p>
 
                   <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
