@@ -47,4 +47,6 @@ Default theme remains neutral so it suits all 12 launch industries. Customer-spe
 ## Homepage alignment
 - src/components/marketing/marketing-home.tsx now uses site-ui primitives (SiteHero, SiteSection, SiteCard, SiteCtaPanel) for the same neutral card/tile language used on industry and demo pages.
 - Homepage hero, industry catalogue, pricing, how-it-works, trust messaging, and FAQ are visually consistent with the wider public journey.
+- Trust/capability now uses a softer checklist pattern (green tick markers, lighter rows) to avoid a heavy box-per-item look.
+- FAQ now uses a client-side accordion pattern with clickable question buttons and `aria-expanded` state.
 

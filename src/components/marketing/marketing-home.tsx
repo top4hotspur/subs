@@ -1,9 +1,10 @@
-﻿import Link from "next/link";
+import Link from "next/link";
+import { HomeFaqAccordion } from "@/components/marketing/home-faq-accordion";
+import { SimpleOfferCard } from "@/components/pricing/simple-offer-card";
 import { SiteCard } from "@/components/site-ui/site-card";
 import { SiteCtaPanel } from "@/components/site-ui/site-cta-panel";
 import { SiteHero } from "@/components/site-ui/site-hero";
 import { SiteSection } from "@/components/site-ui/site-section";
-import { SimpleOfferCard } from "@/components/pricing/simple-offer-card";
 import { listWebsiteTemplates } from "@/lib/sites/mock-repository";
 import { WebsiteTemplateSlug } from "@/lib/sites/types";
 import { outlineButtonClass, secondaryButtonClass } from "@/lib/ui/button-styles";
@@ -30,7 +31,10 @@ const trustPoints = [
   "Full website included",
   "Mobile-friendly design",
   "Customer enquiry and booking flow support",
-  "Admin tools planned in platform model",
+  "Business management tools",
+  "Staffing and allocation tools",
+  "Invoicing/payment tracking planned",
+  "Customer feedback and review request support",
   "Email notifications included",
   "Optional WhatsApp add-on",
   "Hosting and ongoing management",
@@ -145,22 +149,25 @@ export function MarketingHome() {
           </ol>
         </SiteSection>
 
-        <SiteSection title="Platform highlights" eyebrow="Trust and capability">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <SiteSection title="Everything your business website needs" eyebrow="Trust and capability">
+          <p className="text-slate-600">
+            A simple managed website package with the tools local service businesses need to get enquiries, bookings,
+            updates and repeat customers.
+          </p>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
             {trustPoints.map((point) => (
-              <div key={point} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm">
-                {point}
+              <div key={point} className="flex items-start gap-3 rounded-xl bg-white/70 px-3 py-2 text-sm text-slate-700">
+                <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                  ?
+                </span>
+                <span>{point}</span>
               </div>
             ))}
           </div>
         </SiteSection>
 
         <SiteSection title="Frequently asked questions" eyebrow="FAQ">
-          <div className="grid gap-4 md:grid-cols-2">
-            {faqs.map((faq) => (
-              <SiteCard key={faq.q} title={faq.q} subtitle={faq.a} />
-            ))}
-          </div>
+          <HomeFaqAccordion items={faqs} />
         </SiteSection>
 
         <SiteCtaPanel
