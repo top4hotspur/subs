@@ -24,6 +24,12 @@ This is preview/edit modeling only and does not send real messages.
 Implemented in:
 - `src/lib/notifications/notification-types.ts`
 
+Additional local metadata placeholders:
+- `provider` (`LOCAL` or `TWILIO`)
+- `providerTemplateId`
+- `providerApprovalStatus` (`NOT_SYNCED`, `DRAFT`, `SUBMITTED`, `APPROVED`, `REJECTED`)
+- `lastSyncedAtIso`
+
 ## Defaults
 Implemented in:
 - `src/lib/notifications/default-notification-templates.ts`
@@ -90,4 +96,10 @@ Not implemented in this phase:
 - delivery logs/retries
 - API/webhook orchestration
 - per-customer messaging preferences persistence in DB
+
+Future Twilio path:
+- local templates are designed to map to Twilio Content Templates later
+- backend credentials/workflows are required before any sync can happen
+- WhatsApp templates typically require provider approval before live sends
+- current UI only shows local metadata/status and does not sync/send
 

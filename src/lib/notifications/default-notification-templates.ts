@@ -154,6 +154,8 @@ export function buildDefaultNotificationTemplates(
       body: getDefaultTemplateBody(eventType, NotificationChannel.EMAIL, industrySlug),
       tone: NotificationTemplateTone.PROFESSIONAL,
       variables: defaultVariablesForEvent(eventType),
+      provider: "LOCAL",
+      providerApprovalStatus: "NOT_SYNCED",
       createdAtIso: now,
       updatedAtIso: now,
     };
@@ -167,6 +169,8 @@ export function buildDefaultNotificationTemplates(
       body: getDefaultTemplateBody(eventType, NotificationChannel.WHATSAPP, industrySlug),
       tone: NotificationTemplateTone.SHORT,
       variables: defaultVariablesForEvent(eventType),
+      provider: "TWILIO",
+      providerApprovalStatus: "NOT_SYNCED",
       createdAtIso: now,
       updatedAtIso: now,
     };

@@ -34,6 +34,10 @@ export type NotificationTemplate = {
   body: string;
   tone: NotificationTemplateTone;
   variables: string[];
+  providerTemplateId?: string;
+  providerApprovalStatus?: "NOT_SYNCED" | "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED";
+  provider?: "TWILIO" | "LOCAL";
+  lastSyncedAtIso?: string;
   createdAtIso: string;
   updatedAtIso: string;
 };

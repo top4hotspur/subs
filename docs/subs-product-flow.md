@@ -44,8 +44,19 @@ Current conflict checks are browser-local only and do not provide backend-grade 
 ## Admin settings structure
 `/admin/settings` is split into focused local sections (analytics, site settings, services, staff, availability, rota, closures, calendar preview, notifications) to avoid an unmanageable long page.
 
+Calendar preview now includes:
+- hourly staffing levels for a selected day
+- 14-day staffing forecast cards
+- an optional long-term day-grid view
+- local bookings bars for quick demand comparison
+
 ## Date formatting
 User-facing date displays are standardized to UK format (`dd/mm/yyyy` or `dd/mm/yyyy HH:mm`).
 
 ## Policy page placeholder
 Each industry now has a standard policy placeholder route at `/<industry>/policy` covering payment options, cancellation/refund wording, and communication notes.
+
+## Local CRM and notification-provider metadata
+- `/admin` includes a local CRM panel built from local request data.
+- Notification templates include local provider metadata placeholders for a future Twilio sync path.
+- No provider sync or message sending is implemented.

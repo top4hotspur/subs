@@ -21,6 +21,8 @@
 - availability/calendar window editor
 - request/job queue + assignment + status updates
 - notification template editor + preview
+- local CRM panel from request history
+- staffing forecast views (hourly + 14-day + long-term day grid)
 
 All of the above are localStorage-only.
 
@@ -30,6 +32,7 @@ Current notification template model supports:
 - email channel (included)
 - WhatsApp channel (optional add-on)
 - variable token replacement preview
+- provider metadata placeholders (`LOCAL` / `TWILIO`, approval status, sync timestamp placeholder)
 
 Not implemented yet:
 - real delivery providers

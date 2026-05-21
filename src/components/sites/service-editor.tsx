@@ -88,8 +88,11 @@ export function ServiceEditor({ services, roleDefinitions = [], onChange }: Serv
                   <input type="number" min={0} className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm" value={service.bufferAfterMinutes ?? ""} onChange={(e) => updateService(service.id, { bufferAfterMinutes: e.target.value ? Number(e.target.value) : undefined })} />
                   <span className="mt-1 block text-xs font-normal text-slate-500">Extra time blocked after this service before the next booking can start.</span>
                 </label>
-                <label className="text-sm font-medium text-slate-700">Price label fallback
+                <label className="text-sm font-medium text-slate-700">Manual price label
                   <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm" value={service.priceLabel ?? ""} onChange={(e) => updateService(service.id, { priceLabel: e.target.value })} />
+                  <span className="mt-1 block text-xs font-normal text-slate-500">
+                    Used when no numeric price is set, or when you want wording like &quot;Quote required&quot;, &quot;POA&quot; or &quot;From £25&quot;.
+                  </span>
                 </label>
               </div>
 

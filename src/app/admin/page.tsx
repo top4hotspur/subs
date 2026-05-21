@@ -41,6 +41,9 @@ import { getWebsiteTemplate } from "@/lib/sites/mock-repository";
 import { getLocalCustomerSiteSettings } from "@/lib/sites/local-site-settings";
 import { SetupStatusBadge } from "@/components/setup/setup-status-badge";
 import { RequestStatusBadge } from "@/components/requests/request-status-badge";
+import { CustomerCrmPanel } from "@/components/crm/customer-crm-panel";
+import { buildCustomersFromLocalRequests, listLocalCustomers } from "@/lib/crm/local-customers";
+import { CustomerRecord } from "@/lib/crm/customer-types";
 import {
   dangerButtonClass,
   outlineButtonClass,
@@ -87,6 +90,7 @@ export default function AdminPage() {
   const [customerRequests, setCustomerRequests] = useState<CustomerRequest[]>(() => listLocalCustomerRequests());
   const [staffInputs, setStaffInputs] = useState<Record<string, string>>({});
   const [analyticsIndustryFilter, setAnalyticsIndustryFilter] = useState<"ALL" | WebsiteTemplateSlug>("ALL");
+  const [customers, setCustomers] = useState<CustomerRecord[]>(() => listLocalCustomers());
 
   function refreshSetup(): void {
     setSetupRequests(listLocalSetupRequests());
@@ -104,6 +108,10 @@ export default function AdminPage() {
   function setCustomerStatus(id: string, status: CustomerRequestStatus): void {
     updateLocalCustomerRequestStatus(id, status);
     refreshCustomer();
+  }
+
+  function refreshCustomers(): void {
+    setCustomers(listLocalCustomers());
   }
 
   const staffByIndustry = useMemo<Record<WebsiteTemplateSlug, StaffMember[]>>(() => {
@@ -493,6 +501,18 @@ export default function AdminPage() {
             })}
           </div>
         )}
+      </section>
+
+      <section className="mt-8">
+        <CustomerCrmPanel
+          customers={customers}
+          requests={customerRequests}
+          onRefresh={refreshCustomers}
+          onBuildFromRequests={() => {
+            buildCustomersFromLocalRequests(customerRequests);
+            refreshCustomers();
+          }}
+        />
       </section>
     </main>
   );

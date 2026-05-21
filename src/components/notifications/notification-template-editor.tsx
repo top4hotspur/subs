@@ -162,6 +162,22 @@ export function NotificationTemplateEditor({
                       Enabled
                     </label>
                   </div>
+                  <div className="mt-2 rounded-md border border-slate-200 bg-slate-50 p-2 text-xs text-slate-700">
+                    <p>
+                      Provider: <span className="font-semibold">{template.provider ?? "LOCAL"}</span> | Status:{" "}
+                      <span className="font-semibold">{template.providerApprovalStatus ?? "NOT_SYNCED"}</span>
+                    </p>
+                    <p className="mt-1 text-slate-600">
+                      Twilio sync will be available after backend/provider setup.
+                    </p>
+                    <button
+                      type="button"
+                      disabled
+                      className={`mt-2 opacity-60 ${outlineButtonClass} ${smallButtonClass}`}
+                    >
+                      Sync to provider (coming soon)
+                    </button>
+                  </div>
 
                   {template.channel === "EMAIL" ? (
                     <label className="mt-2 block text-xs text-slate-700">

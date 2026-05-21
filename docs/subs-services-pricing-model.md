@@ -29,6 +29,7 @@ Helper:
 - availability editing for scheduling context
 - base-price entry and role-level price overrides
 - copy-base-price-to-roles workflow
+- manual price label wording for cases like `Quote required`, `POA`, or custom `From £x` text
 
 ## Availability/scheduling link
 Service durations and optional post-service buffer time now provide structure for future slot logic.
@@ -44,6 +45,7 @@ Customer request form uses active locally-edited services first, then falls back
 - If role/staff pricing varies: show `From £x`
 - If pricing is uniform: show exact `£x`
 - If `requiresQuote` is enabled: show `Quote required`
+- `Manual price label` is used when no numeric price is set, or when admin intentionally wants wording instead of a strict numeric value
 
 ## Not built yet
 - real payments/Stripe

@@ -29,3 +29,9 @@ No real messaging/delivery is implemented.
 - Customer requests are now also used as a local analytics source for conversion, service demand, and estimated income summaries in /admin
 - Request monetary fields (quotedPriceGbp, inalPriceGbp) are preferred when available for estimates
 
+## CRM relationship (local mock)
+- `/admin` includes a local CRM panel that can build customer records from browser-local requests.
+- Matching uses customer email first, then phone, then name as fallback.
+- Booking history is derived from the same local request set.
+- This is local-only preview behavior and not production-grade CRM persistence.
+

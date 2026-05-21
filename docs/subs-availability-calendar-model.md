@@ -78,6 +78,10 @@ Seeding:
 - Staff rota & breaks editor (working days + break windows per staff member)
 - Holidays and Closures editor (business closed dates + staff holiday dates)
 - Calendar preview (informational summary + mock upcoming items)
+  - hourly staffing bars for a selected day
+  - 14-day staffing forecast cards
+  - long-term day grid toggle with staff counts per day
+  - bookings bars for the same preview window
 
 ## Appointment slot usage (current mock)
 Preferred slot tiles can use:
@@ -108,3 +112,19 @@ For real appointment booking, slot availability must eventually combine:
 
 ## Future direction
 Later backend work can persist availability by site + staff, add conflict checks, and build slot availability and assignment workflows on top of this model.
+
+## Staffing forecast (local/mock)
+Implemented in:
+- `src/lib/calendar/staffing-forecast.ts`
+
+Helpers:
+- `buildHourlyStaffingForDate`
+- `buildStaffingForecast14Days`
+- `buildDailyStaffingSummary`
+- `countBookingsByDay`
+
+Current behavior:
+- uses local business availability as opening-window context
+- applies staff rota and break windows
+- applies staff holiday and business closure blocking
+- outputs local preview counts only (not guaranteed production availability)
