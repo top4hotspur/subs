@@ -40,3 +40,9 @@ Real appointment slot availability will later require:
 This remains local/static/mock only.
 No AWS resources, Stripe, real auth, real DB/API, or real external messaging/calendar integrations are implemented.
 Current conflict checks are browser-local only and do not provide backend-grade locking/concurrency guarantees.
+
+## Admin settings structure
+`/admin/settings` is split into focused local sections (analytics, site settings, services, staff, availability, rota, closures, calendar preview, notifications) to avoid an unmanageable long page.
+
+## Date formatting
+User-facing date displays are standardized to UK format (`dd/mm/yyyy` or `dd/mm/yyyy HH:mm`).

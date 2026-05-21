@@ -119,6 +119,23 @@ export function ServiceEditor({ services, onChange }: ServiceEditorProps) {
                   onChange={(event) => updateService(service.id, { category: event.target.value })}
                 />
               </label>
+              <label className="text-sm font-medium text-slate-700">
+                Buffer after service/job (minutes)
+                <input
+                  type="number"
+                  min={0}
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                  value={service.bufferAfterMinutes ?? ""}
+                  onChange={(event) =>
+                    updateService(service.id, {
+                      bufferAfterMinutes: event.target.value ? Number(event.target.value) : undefined,
+                    })
+                  }
+                />
+                <span className="mt-1 block text-xs font-normal text-slate-500">
+                  Extra time blocked after this service before the next booking can start.
+                </span>
+              </label>
             </div>
 
             <div className="mt-3 grid gap-2 sm:grid-cols-4">

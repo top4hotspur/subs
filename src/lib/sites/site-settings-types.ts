@@ -79,6 +79,8 @@ export type SiteServiceItem = {
   description: string;
   priceLabel?: string;
   durationMinutes?: number;
+  bufferBeforeMinutes?: number;
+  bufferAfterMinutes?: number;
   category?: string;
   bookable: boolean;
   requiresQuote: boolean;

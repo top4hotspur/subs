@@ -7,7 +7,7 @@ Current implementation is local/mock and browser-only.
 ## Core model
 `SiteServiceItem` fields:
 - `id`, `name`, `description`
-- `priceLabel`, `durationMinutes`, `category`
+- `priceLabel`, `durationMinutes`, `bufferAfterMinutes`, `bufferBeforeMinutes`, `category`
 - `bookable`, `requiresQuote`, `active`
 
 File:
@@ -26,7 +26,7 @@ Helper:
 - availability editing for scheduling context
 
 ## Availability/scheduling link
-Service durations and staff/business availability now provide structure for future slot logic.
+Service durations and optional post-service buffer time now provide structure for future slot logic.
 
 Availability keys:
 - `subs-business-availability:<industrySlug>`

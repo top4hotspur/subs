@@ -104,6 +104,7 @@ export function seedLocalStaff(industrySlug: WebsiteTemplateSlug, services?: { i
     id: generateId(),
     displayName: `${label} ${n}`,
     role,
+    roleLabel: `${label} ${n}`,
     email: undefined,
     phone: undefined,
     bio: `${label} ${n} profile placeholder.`,

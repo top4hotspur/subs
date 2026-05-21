@@ -6,6 +6,7 @@ import {
   StaffAvailabilityWindow,
   Weekday,
 } from "@/lib/calendar/calendar-types";
+import { BusinessClosureDate, StaffHolidayDate } from "@/lib/calendar/closure-types";
 import { isSlotBlockedByExistingRequest } from "@/lib/calendar/local-appointment-conflicts";
 import { CustomerRequest } from "@/lib/requests/request-types";
 import { WebsiteTemplateSlug } from "@/lib/sites/types";
@@ -39,6 +40,8 @@ type BuildPreferredAppointmentSlotsOptions = {
   businessAvailabilityWindows: BusinessAvailabilityWindow[];
   selectedStaffAvailabilityWindows?: StaffAvailabilityWindow[];
   selectedStaffRotaDays?: StaffRotaDay[];
+  businessClosures?: BusinessClosureDate[];
+  staffHolidays?: StaffHolidayDate[];
   existingRequests?: CustomerRequest[];
   serviceDurationMinutes?: number;
   selectedStaffId?: string;
@@ -96,6 +99,8 @@ export function buildPreferredAppointmentSlots(
     businessAvailabilityWindows,
     selectedStaffAvailabilityWindows = [],
     selectedStaffRotaDays = [],
+    businessClosures = [],
+    staffHolidays = [],
     existingRequests = [],
     serviceDurationMinutes = 45,
     selectedStaffId,
@@ -110,6 +115,19 @@ export function buildPreferredAppointmentSlots(
   if (!weekday) {
     return [];
   }
+
+  const businessClosed = businessClosures.some(
+    (closure) => closure.active && closure.date === selectedDate,
+  );
+
+  const staffOnHoliday =
+    selectedStaffId &&
+    staffHolidays.some(
+      (holiday) =>
+        holiday.active &&
+        holiday.staffId === selectedStaffId &&
+        holiday.date === selectedDate,
+    );
 
   const rotaDay = selectedStaffRotaDays.find((day) => day.weekday === weekday);
   const rotaWindows: StaffAvailabilityWindow[] =
@@ -158,8 +176,14 @@ export function buildPreferredAppointmentSlots(
         staffId: selectedStaffId,
         staffName: selectedStaffName,
         availableLike: false,
-        blocked: conflict.blocked,
-        blockedReason: conflict.blocked ? "Already booked" : undefined,
+        blocked: businessClosed || Boolean(staffOnHoliday) || conflict.blocked,
+        blockedReason: businessClosed
+          ? "Business closed"
+          : staffOnHoliday
+            ? "Staff holiday"
+            : conflict.blocked
+              ? "Already booked"
+              : undefined,
         conflictRequestId: conflict.blockingRequest?.id,
         note: "Preferred slot only. Final time is confirmed by the business.",
       };
@@ -205,8 +229,14 @@ export function buildPreferredAppointmentSlots(
         staffId: selectedStaffId,
         staffName: selectedStaffName,
         availableLike: true,
-        blocked: conflict.blocked,
-        blockedReason: conflict.blocked ? "Already booked" : undefined,
+        blocked: businessClosed || Boolean(staffOnHoliday) || conflict.blocked,
+        blockedReason: businessClosed
+          ? "Business closed"
+          : staffOnHoliday
+            ? "Staff holiday"
+            : conflict.blocked
+              ? "Already booked"
+              : undefined,
         conflictRequestId: conflict.blockingRequest?.id,
         note: "Preferred slot only. Final time is confirmed by the business.",
       });

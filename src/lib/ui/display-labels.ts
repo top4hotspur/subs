@@ -160,10 +160,30 @@ export function formatGbp(value: number): string {
 }
 
 export function formatIsoDateTime(value?: string): string {
+  return formatUkDateTime(value);
+}
+
+export function formatUkDate(value?: string): string {
   if (!value) return "-";
-  const date = new Date(value);
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
+  const date = dateOnly ? new Date(`${value}T00:00:00`) : new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString("en-GB");
+  return date.toLocaleDateString("en-GB");
+}
+
+export function formatUkDateTime(value?: string): string {
+  if (!value) return "-";
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
+  const date = dateOnly ? new Date(`${value}T00:00:00`) : new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  if (dateOnly) return date.toLocaleDateString("en-GB");
+  return date.toLocaleString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export function formatOptional(value?: string | null, fallback = "-"): string {

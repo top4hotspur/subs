@@ -14,6 +14,7 @@ Implemented in:
 
 ## Local storage
 - `subs-staff:<industrySlug>`
+- `subs-staff-roles:<industrySlug>`
 
 Helper:
 - `src/lib/staff/local-staff.ts`
@@ -34,10 +35,14 @@ See:
 - `docs/subs-availability-calendar-model.md`
 
 ## Current UI usage
-- `/admin/settings`: staff editor + availability editor
+- `/admin/settings`: staff role editor + staff editor + availability editor
 - `/admin/settings`: staff rota & breaks editor (local mock)
 - customer request form: optional preferred-staff selector
 - `/admin`: assignment dropdown when staff exists
+
+## Custom role definitions
+Each industry can define local role labels (for example Senior Barber, Dispatcher, Colourist) without changing platform enums.
+Staff records can also hold `roleLabel` for business-specific naming.
 
 ## Future work
 - role-based permissions

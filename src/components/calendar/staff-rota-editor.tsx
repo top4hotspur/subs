@@ -38,16 +38,19 @@ function emptyDay(staffId: string, weekday: Weekday): StaffRotaDay {
 
 export function StaffRotaEditor({ industrySlug, staffMembers }: StaffRotaEditorProps) {
   const [rotaDays, setRotaDays] = useState<StaffRotaDay[]>(() => listLocalStaffRota(industrySlug));
+  const [selectedStaffId, setSelectedStaffId] = useState<string>(staffMembers.find((staff) => staff.active)?.id ?? staffMembers[0]?.id ?? "");
 
-  const byStaff = useMemo(
+  const selectedStaff = useMemo(
+    () => staffMembers.find((staff) => staff.id === selectedStaffId) ?? null,
+    [staffMembers, selectedStaffId],
+  );
+
+  const selectedDays = useMemo(
     () =>
-      staffMembers.map((staff) => {
-        const staffDays = WEEKDAYS.map(
-          (weekday) => rotaDays.find((day) => day.staffId === staff.id && day.weekday === weekday) ?? emptyDay(staff.id, weekday),
-        );
-        return { staff, days: staffDays };
-      }),
-    [rotaDays, staffMembers],
+      selectedStaff
+        ? WEEKDAYS.map((weekday) => rotaDays.find((day) => day.staffId === selectedStaff.id && day.weekday === weekday) ?? emptyDay(selectedStaff.id, weekday))
+        : [],
+    [rotaDays, selectedStaff],
   );
 
   function replaceStaffDays(staffId: string, nextDays: StaffRotaDay[]) {
@@ -70,7 +73,7 @@ export function StaffRotaEditor({ industrySlug, staffMembers }: StaffRotaEditorP
   }
 
   function addBreak(staffId: string, weekday: Weekday) {
-    const target = rotaDays.find((day) => day.staffId === staffId && day.weekday === weekday) ?? {
+    const target = selectedDays.find((day) => day.weekday === weekday) ?? {
       ...emptyDay(staffId, weekday),
       working: true,
       startTime: "09:00",
@@ -92,14 +95,14 @@ export function StaffRotaEditor({ industrySlug, staffMembers }: StaffRotaEditorP
   }
 
   function updateBreak(staffId: string, weekday: Weekday, breakId: string, patch: Partial<StaffBreakWindow>) {
-    const target = rotaDays.find((day) => day.staffId === staffId && day.weekday === weekday) ?? emptyDay(staffId, weekday);
+    const target = selectedDays.find((day) => day.weekday === weekday) ?? emptyDay(staffId, weekday);
     const nextBreaks = target.breaks.map((item) => (item.id === breakId ? { ...item, ...patch } : item));
     updateDay(staffId, weekday, { breaks: nextBreaks });
   }
 
   function removeBreak(staffId: string, weekday: Weekday, breakId: string) {
     if (!window.confirm("Remove this break window?")) return;
-    const target = rotaDays.find((day) => day.staffId === staffId && day.weekday === weekday) ?? emptyDay(staffId, weekday);
+    const target = selectedDays.find((day) => day.weekday === weekday) ?? emptyDay(staffId, weekday);
     updateDay(staffId, weekday, { breaks: target.breaks.filter((item) => item.id !== breakId) });
   }
 
@@ -113,7 +116,7 @@ export function StaffRotaEditor({ industrySlug, staffMembers }: StaffRotaEditorP
         <div>
           <h2 className="text-lg font-semibold text-slate-900">Staff rota & breaks</h2>
           <p className="text-xs text-slate-600">
-            Local mock rota data for future appointment slot generation. Breaks represent blocked time windows.
+            Select one staff member to manage weekly rota and break windows.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -124,11 +127,7 @@ export function StaffRotaEditor({ industrySlug, staffMembers }: StaffRotaEditorP
           >
             Seed rota defaults
           </button>
-          <button
-            type="button"
-            className={`${outlineButtonClass} ${smallButtonClass}`}
-            onClick={reload}
-          >
+          <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={reload}>
             Reload rota
           </button>
           <button
@@ -145,26 +144,37 @@ export function StaffRotaEditor({ industrySlug, staffMembers }: StaffRotaEditorP
         </div>
       </div>
 
-      <p className="mb-4 text-xs text-slate-500">Browser-only mock data. No real conflict checks are performed yet.</p>
-
       {staffMembers.length === 0 ? (
         <p className="text-sm text-slate-600">No staff members yet. Add staff first, then seed/edit rota.</p>
       ) : (
-        <div className="space-y-4">
-          {byStaff.map(({ staff, days }) => (
-            <article key={staff.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <h3 className="mb-3 text-sm font-semibold text-slate-900">{staff.displayName}</h3>
+        <>
+          <label className="mb-4 block text-sm font-medium text-slate-700">
+            Staff member
+            <select
+              className="mt-1 w-full max-w-sm rounded-md border border-slate-300 px-2 py-2 text-sm"
+              value={selectedStaffId}
+              onChange={(event) => setSelectedStaffId(event.target.value)}
+            >
+              {staffMembers.map((staff) => (
+                <option key={staff.id} value={staff.id}>{staff.displayName}</option>
+              ))}
+            </select>
+          </label>
+
+          {selectedStaff ? (
+            <article className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <h3 className="mb-3 text-sm font-semibold text-slate-900">{selectedStaff.displayName}</h3>
               <div className="space-y-3">
-                {days.map((day) => (
-                  <div key={`${staff.id}_${day.weekday}`} className="rounded-lg border border-slate-200 bg-white p-3">
-                    <div className="grid gap-2 sm:grid-cols-[140px_auto_auto_auto] sm:items-center">
+                {selectedDays.map((day) => (
+                  <div key={`${selectedStaff.id}_${day.weekday}`} className="rounded-lg border border-slate-200 bg-white p-3">
+                    <div className="grid gap-2 sm:grid-cols-[130px_auto_auto_auto] sm:items-center">
                       <p className="text-xs font-semibold text-slate-700">{weekdayLabel(day.weekday)}</p>
                       <label className="inline-flex items-center gap-2 text-xs text-slate-700">
                         <input
                           type="checkbox"
                           checked={day.working}
                           onChange={(event) =>
-                            updateDay(staff.id, day.weekday, {
+                            updateDay(selectedStaff.id, day.weekday, {
                               working: event.target.checked,
                               startTime: event.target.checked ? (day.startTime ?? "09:00") : undefined,
                               endTime: event.target.checked ? (day.endTime ?? "17:00") : undefined,
@@ -178,14 +188,14 @@ export function StaffRotaEditor({ industrySlug, staffMembers }: StaffRotaEditorP
                         className="rounded-md border border-slate-300 px-2 py-1 text-xs"
                         value={day.startTime ?? ""}
                         disabled={!day.working}
-                        onChange={(event) => updateDay(staff.id, day.weekday, { startTime: event.target.value })}
+                        onChange={(event) => updateDay(selectedStaff.id, day.weekday, { startTime: event.target.value })}
                       />
                       <input
                         type="time"
                         className="rounded-md border border-slate-300 px-2 py-1 text-xs"
                         value={day.endTime ?? ""}
                         disabled={!day.working}
-                        onChange={(event) => updateDay(staff.id, day.weekday, { endTime: event.target.value })}
+                        onChange={(event) => updateDay(selectedStaff.id, day.weekday, { endTime: event.target.value })}
                       />
                     </div>
 
@@ -196,7 +206,7 @@ export function StaffRotaEditor({ industrySlug, staffMembers }: StaffRotaEditorP
                           type="button"
                           className={`${primaryButtonClass} ${smallButtonClass}`}
                           disabled={!day.working}
-                          onClick={() => addBreak(staff.id, day.weekday)}
+                          onClick={() => addBreak(selectedStaff.id, day.weekday)}
                         >
                           Add break
                         </button>
@@ -212,24 +222,24 @@ export function StaffRotaEditor({ industrySlug, staffMembers }: StaffRotaEditorP
                                 className="rounded-md border border-slate-300 px-2 py-1 text-xs"
                                 value={item.label ?? ""}
                                 placeholder="Break label"
-                                onChange={(event) => updateBreak(staff.id, day.weekday, item.id, { label: event.target.value })}
+                                onChange={(event) => updateBreak(selectedStaff.id, day.weekday, item.id, { label: event.target.value })}
                               />
                               <input
                                 type="time"
                                 className="rounded-md border border-slate-300 px-2 py-1 text-xs"
                                 value={item.startTime}
-                                onChange={(event) => updateBreak(staff.id, day.weekday, item.id, { startTime: event.target.value })}
+                                onChange={(event) => updateBreak(selectedStaff.id, day.weekday, item.id, { startTime: event.target.value })}
                               />
                               <input
                                 type="time"
                                 className="rounded-md border border-slate-300 px-2 py-1 text-xs"
                                 value={item.endTime}
-                                onChange={(event) => updateBreak(staff.id, day.weekday, item.id, { endTime: event.target.value })}
+                                onChange={(event) => updateBreak(selectedStaff.id, day.weekday, item.id, { endTime: event.target.value })}
                               />
                               <button
                                 type="button"
                                 className={`${dangerButtonClass} ${smallButtonClass}`}
-                                onClick={() => removeBreak(staff.id, day.weekday, item.id)}
+                                onClick={() => removeBreak(selectedStaff.id, day.weekday, item.id)}
                               >
                                 Remove
                               </button>
@@ -242,8 +252,10 @@ export function StaffRotaEditor({ industrySlug, staffMembers }: StaffRotaEditorP
                 ))}
               </div>
             </article>
-          ))}
-        </div>
+          ) : (
+            <p className="text-sm text-slate-600">Select a staff member to edit rota.</p>
+          )}
+        </>
       )}
 
       <div className="mt-4">

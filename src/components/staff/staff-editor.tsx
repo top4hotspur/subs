@@ -1,6 +1,7 @@
-﻿"use client";
+"use client";
 
 import { SiteServiceItem } from "@/lib/sites/site-settings-types";
+import { StaffRoleDefinition } from "@/lib/staff/staff-role-settings";
 import {
   StaffAvailabilityMode,
   StaffMember,
@@ -17,6 +18,7 @@ import { staffAvailabilityModeLabel, staffRoleLabel } from "@/lib/ui/display-lab
 type StaffEditorProps = {
   staff: StaffMember[];
   services: SiteServiceItem[];
+  roleDefinitions?: StaffRoleDefinition[];
   onChange: (staff: StaffMember[]) => void;
 };
 
@@ -29,6 +31,7 @@ function emptyStaff(): StaffMember {
     id: `staff-${Date.now()}`,
     displayName: "New team member",
     role: StaffRoleType.GENERAL_STAFF,
+    roleLabel: "General Staff",
     email: "",
     phone: "",
     bio: "",
@@ -42,7 +45,9 @@ function emptyStaff(): StaffMember {
   };
 }
 
-export function StaffEditor({ staff, services, onChange }: StaffEditorProps) {
+export function StaffEditor({ staff, services, roleDefinitions, onChange }: StaffEditorProps) {
+  const activeRoleDefs = (roleDefinitions ?? []).filter((role) => role.active);
+
   function updateMember(id: string, patch: Partial<StaffMember>) {
     onChange(
       staff.map((member) =>
@@ -113,15 +118,28 @@ export function StaffEditor({ staff, services, onChange }: StaffEditorProps) {
                 Role
                 <select
                   className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-                  value={member.role}
-                  onChange={(event) => updateMember(member.id, { role: event.target.value as StaffRoleType })}
+                  value={member.roleLabel ?? member.role}
+                  onChange={(event) => {
+                    const selected = event.target.value;
+                    const platformRole = allRoles.find((role) => role === selected as StaffRoleType) ?? StaffRoleType.GENERAL_STAFF;
+                    updateMember(member.id, { role: platformRole, roleLabel: selected });
+                  }}
                 >
+                  {activeRoleDefs.map((role) => (
+                    <option key={role.id} value={role.label}>{role.label}</option>
+                  ))}
                   {allRoles.map((role) => (
-                    <option key={role} value={role}>
-                      {staffRoleLabel(role)}
-                    </option>
+                    <option key={role} value={role}>{staffRoleLabel(role)}</option>
                   ))}
                 </select>
+              </label>
+              <label className="text-sm font-medium text-slate-700 sm:col-span-2">
+                Custom role label (optional)
+                <input
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+                  value={member.roleLabel ?? ""}
+                  onChange={(event) => updateMember(member.id, { roleLabel: event.target.value })}
+                />
               </label>
               <label className="text-sm font-medium text-slate-700">
                 Email
@@ -243,5 +261,3 @@ export function StaffEditor({ staff, services, onChange }: StaffEditorProps) {
     </section>
   );
 }
-
-

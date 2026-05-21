@@ -19,6 +19,7 @@ import {
   domainOptionLabel,
   formatGbp,
   formatIsoDateTime,
+  formatUkDate,
 } from "@/lib/ui/display-labels";
 
 export default function AccountPage() {
@@ -120,7 +121,7 @@ export default function AccountPage() {
                   <RequestStatusBadge status={request.status} compact />
                 </div>
                 <p className="mt-2 text-sm text-slate-600">{request.templateSlug} • {request.customerName}</p>
-                <p className="text-sm text-slate-600">Preferred: {request.preferredDate || "TBC"} {request.preferredTime || ""}</p>
+                <p className="text-sm text-slate-600">Preferred: {request.preferredDate ? formatUkDate(request.preferredDate) : "TBC"} {request.preferredTime || ""}</p>
               </article>
             ))}
           </div>

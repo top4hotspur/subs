@@ -43,6 +43,8 @@ Keys:
 - `subs-business-availability:<industrySlug>`
 - `subs-staff-availability:<industrySlug>`
 - `subs-staff-rota:<industrySlug>`
+- `subs-business-closures:<industrySlug>`
+- `subs-staff-holidays:<industrySlug>`
 
 ## Local helper behavior
 Availability functions:
@@ -74,6 +76,7 @@ Seeding:
 `/admin/settings` includes:
 - Availability editor (window CRUD for business/staff)
 - Staff rota & breaks editor (working days + break windows per staff member)
+- Holidays and Closures editor (business closed dates + staff holiday dates)
 - Calendar preview (informational summary + mock upcoming items)
 
 ## Appointment slot usage (current mock)

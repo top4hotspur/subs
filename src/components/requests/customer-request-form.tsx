@@ -15,6 +15,10 @@ import {
   getStaffAvailability,
   listLocalBusinessAvailability,
 } from "@/lib/calendar/local-availability";
+import {
+  listLocalBusinessClosures,
+  listLocalStaffHolidays,
+} from "@/lib/calendar/local-closures";
 import { getLocalStaffRotaForStaff } from "@/lib/calendar/local-staff-rota";
 import { isAppointmentStyleIndustry } from "@/lib/requests/appointment-industries";
 import {
@@ -34,6 +38,7 @@ import {
   CustomerRequestPricingStatus,
 } from "@/lib/requests/request-types";
 import { getWebsiteTemplate } from "@/lib/sites/mock-repository";
+import { getLocalCustomerSiteSettings } from "@/lib/sites/local-site-settings";
 import { DemoSiteService, WebsiteTemplateSlug } from "@/lib/sites/types";
 import { shouldCustomersSelectStaffByDefault } from "@/lib/staff/industry-staff-defaults";
 import { StaffMember } from "@/lib/staff/staff-types";
@@ -117,6 +122,13 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
   function selectedServiceName(): string | undefined {
     return effectiveServices.find((service) => service.id === form.serviceId)?.name;
   }
+  const selectedServiceSettings = useMemo(() => {
+    if (typeof window === "undefined" || !form.serviceId) return null;
+    const template = getWebsiteTemplate(templateSlug);
+    if (!template) return null;
+    const settings = getLocalCustomerSiteSettings(templateSlug, template);
+    return settings.services.find((service) => service.id === form.serviceId) ?? null;
+  }, [form.serviceId, templateSlug]);
 
   const selectedStaffMember = useMemo(
     () => selectableStaff.find((staff) => staff.id === form.preferredStaffId),
@@ -133,18 +145,24 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
     const staffRotaDays = selectedStaffMember?.id
       ? getLocalStaffRotaForStaff(templateSlug, selectedStaffMember.id)
       : [];
+    const businessClosures = listLocalBusinessClosures(templateSlug);
+    const staffHolidays = listLocalStaffHolidays(templateSlug);
     return buildPreferredAppointmentSlots({
       selectedDate: form.preferredDate,
       industrySlug: templateSlug,
       businessAvailabilityWindows: businessAvailabilityAll,
       selectedStaffAvailabilityWindows: staffAvailability,
       selectedStaffRotaDays: staffRotaDays,
+      businessClosures,
+      staffHolidays,
       selectedStaffId: selectedStaffMember?.id,
       selectedStaffName: selectedStaffMember?.displayName,
       existingRequests,
-      serviceDurationMinutes: 45,
+      serviceDurationMinutes:
+        (selectedServiceSettings?.durationMinutes ?? 45) +
+        (selectedServiceSettings?.bufferAfterMinutes ?? 0),
     });
-  }, [appointmentStyle, form.preferredDate, templateSlug, businessAvailabilityAll, selectedStaffMember, existingRequests]);
+  }, [appointmentStyle, form.preferredDate, templateSlug, businessAvailabilityAll, selectedStaffMember, existingRequests, selectedServiceSettings]);
 
   const slotGroups = useMemo(
     () => ({
@@ -191,7 +209,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
       ) : null}
       {appointmentStyle && businessAvailabilityPreview.length === 0 ? (
         <p className="mt-1 text-xs text-slate-600">
-          The business will confirm the final appointment time. Live slot booking/conflict checking is not enabled in this demo.
+          The business will confirm the final appointment time. This demo uses browser-local slot and conflict checks only.
         </p>
       ) : null}
       {!customerSelectableByDefault ? (

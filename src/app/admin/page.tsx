@@ -55,6 +55,7 @@ import {
   formatGbp,
   formatIsoDateTime,
   formatOptional,
+  formatUkDate,
   notificationEventTypeLabel,
 } from "@/lib/ui/display-labels";
 
@@ -68,8 +69,8 @@ function toSlug(value: string): WebsiteTemplateSlug | null {
 
 function formatDateTime(date?: string, time?: string): string {
   if (!date && !time) return "TBC";
-  if (date && time) return `${date} at ${time}`;
-  return date ?? time ?? "TBC";
+  if (date && time) return `${formatUkDate(date)} at ${time}`;
+  return date ? formatUkDate(date) : time ?? "TBC";
 }
 
 function plusMinutes(time: string, minutesToAdd: number): string {

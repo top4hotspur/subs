@@ -27,6 +27,7 @@ export type StaffMember = {
   id: string;
   displayName: string;
   role: StaffRoleType;
+  roleLabel?: string;
   email?: string;
   phone?: string;
   bio?: string;

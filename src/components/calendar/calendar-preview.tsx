@@ -18,6 +18,7 @@ import {
   availabilityWindowTypeLabel,
   customerRequestKindLabel,
   formatOptional,
+  formatUkDate,
   weekdayLabel,
 } from "@/lib/ui/display-labels";
 
@@ -118,7 +119,7 @@ export function CalendarPreview({ industrySlug, staffMembers, services }: Calend
           <ul className="mt-2 space-y-1 text-xs text-slate-700">
             {requestItems.map((item) => (
               <li key={item.id}>
-                {item.preferredDate || "Date TBC"} {item.preferredTime || "Time TBC"} - {item.customerName} ({formatOptional(item.serviceName, customerRequestKindLabel(item.kind))})
+                {item.preferredDate ? formatUkDate(item.preferredDate) : "Date TBC"} {item.preferredTime || "Time TBC"} - {item.customerName} ({formatOptional(item.serviceName, customerRequestKindLabel(item.kind))})
                 {item.assignedStaffName ? ` with ${item.assignedStaffName}` : ""}
               </li>
             ))}
