@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model TenantSite {
+  id                 String             @id @default(cuid())
+  slug               String             @unique
+  displayName        String
+  industrySlug       String?
+  status             String
+  domainPrimary      String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  setupRequests      SetupRequest[]
+  demoDraftSnapshots DemoDraftSnapshot[]
+}
+
+model DemoDraftSnapshot {
+  id                 String       @id @default(cuid())
+  tenantSiteId       String?
+  setupRequestId     String?      @unique
+  templateSlug       String
+  draftName          String?
+  draftJson          Json
+  source             String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  tenantSite         TenantSite?  @relation(fields: [tenantSiteId], references: [id])
+  setupRequest       SetupRequest?
+
+  @@index([tenantSiteId])
+}
+
+model SetupRequest {
+  id                  String             @id @default(cuid())
+  tenantSiteId        String?
+  demoDraftSnapshotId String?            @unique
+  industrySlug        String
+  businessName        String
+  contactName         String?
+  contactEmail        String?
+  contactPhone        String?
+  domainOption        String
+  existingDomain      String?
+  desiredDomain       String?
+  communicationOption String
+  setupTotalGbp       Int
+  monthlyTotalGbp     Int
+  status              String
+  notes               String?
+  rawPayload          Json?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  tenantSite          TenantSite?        @relation(fields: [tenantSiteId], references: [id])
+  demoDraftSnapshot   DemoDraftSnapshot? @relation(fields: [demoDraftSnapshotId], references: [id])
+  events              SetupRequestEvent[]
+
+  @@index([industrySlug])
+  @@index([status])
+  @@index([createdAt])
+  @@index([tenantSiteId])
+}
+
+model SetupRequestEvent {
+  id             String       @id @default(cuid())
+  setupRequestId String
+  eventType      String
+  message        String?
+  metadata       Json?
+  createdAt      DateTime     @default(now())
+  setupRequest   SetupRequest @relation(fields: [setupRequestId], references: [id], onDelete: Cascade)
+
+  @@index([setupRequestId])
+}
+
+model PlatformAdminUser {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  displayName String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

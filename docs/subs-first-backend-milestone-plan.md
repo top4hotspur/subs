@@ -315,3 +315,14 @@ Task 7: Docs + smoke test updates
 5. Auth hardening on admin route
 
 This sequence delivers real value early while minimizing migration risk.
+
+## Task 1 implementation status
+- Added foundation packages (no runtime wiring yet):
+  - `prisma` (dev dependency)
+  - `@prisma/client`
+  - `zod`
+- Added initial Prisma schema at `prisma/schema.prisma` using PostgreSQL provider and `DATABASE_URL` env reference.
+- Added Prisma client singleton helper at `src/lib/db/prisma.ts`.
+- Added setup persistence validation schemas at `src/lib/setup/setup-request-schema.ts`.
+- Added `.env.example` placeholder for `DATABASE_URL` and future auth envs.
+- No setup form, API route, or auth wiring has been implemented in Task 1.
