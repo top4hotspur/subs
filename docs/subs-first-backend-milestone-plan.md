@@ -1,0 +1,317 @@
+# Subs First Backend Milestone Plan
+
+## 1) Scope of first backend milestone
+
+### In scope
+- Persist setup requests to a real database.
+- Persist selected demo draft snapshot/context alongside setup request.
+- Add a basic platform admin view for persisted setup requests.
+- Keep current localStorage setup/demo flows working during migration.
+- Keep customer-facing setup submission public.
+
+### Out of scope
+- Full persistence for services/staff/rota/availability/calendar/customer requests.
+- Payments, messaging providers, domain automation.
+- Full tenant business-owner portal migration.
+
+---
+
+## 2) Proposed package choices (recommendation only, do not install yet)
+
+### ORM/query layer
+- **Recommendation: Prisma**
+- Why: quickest path for relational modeling, migrations, and Codex-safe incremental updates; strong TS DX for CRUD-heavy setup workflow.
+
+Alternative:
+- Drizzle is also viable and lightweight, but Prisma is faster for this milestone's schema + admin listing workflows.
+
+### Postgres driver/runtime
+- Use Prisma's Postgres support (driver handled by Prisma runtime).
+- If managed serverless Postgres requires pooling, plan for provider-specific pooled `DATABASE_URL`.
+
+### Auth package (later in milestone sequence)
+- **Recommendation: Auth.js / NextAuth** (`next-auth`)
+- Not required to wire fully on day 1 of this milestone; can protect platform admin view once DB flow is stable.
+
+### Validation
+- **Recommendation: Zod**
+- Use for setup request payload validation in server boundary/repository input parsing.
+
+---
+
+## 3) Environment variables (future)
+
+No secrets committed. Planned vars:
+- `DATABASE_URL`
+- `AUTH_SECRET` (or `NEXTAUTH_SECRET` depending on chosen auth setup)
+- `NEXTAUTH_URL` (if NextAuth naming used)
+- `PLATFORM_ADMIN_EMAIL_ALLOWLIST` (comma-separated allowlist for initial admin gating)
+- Optional dev flags:
+  - `USE_LOCAL_SETUP_FALLBACK=true|false`
+  - `DB_LOG_QUERIES=true|false`
+
+---
+
+## 4) Database schema v1 (initial)
+
+## Table: `tenant_sites`
+Purpose: future tenant container created from approved setup requests.
+
+Fields:
+- `id` (uuid, pk)
+- `slug` (text, unique)
+- `industry_slug` (text, indexed)
+- `business_name` (text)
+- `status` (text) // e.g. `ONBOARDING`, `ACTIVE`, `PAUSED`
+- `created_at` (timestamp)
+- `updated_at` (timestamp)
+
+Indexes:
+- unique(`slug`)
+- index(`industry_slug`)
+- index(`status`)
+
+Relationships:
+- one-to-many setup requests (optional once linked)
+
+Tenant scoping:
+- top-level tenant entity
+
+---
+
+## Table: `demo_draft_snapshots`
+Purpose: immutable or versioned snapshot of selected demo draft at setup submission.
+
+Fields:
+- `id` (uuid, pk)
+- `industry_slug` (text, indexed)
+- `template_slug` (text, indexed)
+- `draft_name` (text)
+- `snapshot_json` (jsonb) // safe subset of customisation data
+- `source` (text) // `LOCAL_BROWSER_MOCK` initially
+- `created_at` (timestamp)
+
+Indexes:
+- index(`industry_slug`)
+- index(`template_slug`)
+- index(`created_at`)
+
+Relationships:
+- one-to-many from setup requests via `demo_draft_snapshot_id`
+
+Tenant scoping:
+- pre-tenant onboarding artifact; not tenant-owned yet until linked to tenant/site
+
+---
+
+## Table: `setup_requests`
+Purpose: persisted onboarding/setup pipeline.
+
+Fields:
+- `id` (uuid, pk)
+- `public_reference` (text, unique) // short share-safe reference if needed
+- `tenant_site_id` (uuid, nullable, fk -> tenant_sites.id)
+- `industry_slug` (text, indexed)
+- `template_slug` (text)
+- `business_name` (text)
+- `domain_option` (text)
+- `existing_domain` (text, nullable)
+- `desired_domain` (text, nullable)
+- `domain_suggestions_text` (text, nullable)
+- `communication_option` (text)
+- `setup_total_gbp` (integer)
+- `monthly_total_gbp` (integer)
+- `status` (text, indexed)
+- `contact_name` (text, nullable)
+- `contact_email` (text, nullable, indexed)
+- `contact_phone` (text, nullable)
+- `notes` (text, nullable)
+- `demo_draft_snapshot_id` (uuid, nullable, fk -> demo_draft_snapshots.id)
+- `submitted_from` (text) // `WEB_PUBLIC_SETUP_FORM`
+- `created_at` (timestamp)
+- `updated_at` (timestamp)
+
+Indexes:
+- unique(`public_reference`)
+- index(`status`, `created_at` desc)
+- index(`industry_slug`, `created_at` desc)
+- index(`contact_email`)
+
+Relationships:
+- optional belongs-to tenant site
+- optional belongs-to demo draft snapshot
+- one-to-many setup request events
+
+Tenant scoping:
+- pre-tenant onboarding; tenant scoping applies once `tenant_site_id` is assigned
+
+---
+
+## Table: `setup_request_events` (recommended)
+Purpose: simple audit trail/status transitions.
+
+Fields:
+- `id` (uuid, pk)
+- `setup_request_id` (uuid, fk -> setup_requests.id, indexed)
+- `event_type` (text) // `CREATED`, `STATUS_CHANGED`, `NOTE_ADDED`, `LINKED_TENANT`
+- `from_status` (text, nullable)
+- `to_status` (text, nullable)
+- `actor_type` (text) // `PUBLIC`, `PLATFORM_ADMIN`, `SYSTEM`
+- `actor_ref` (text, nullable) // email/user id placeholder
+- `event_payload_json` (jsonb, nullable)
+- `created_at` (timestamp)
+
+Indexes:
+- index(`setup_request_id`, `created_at`)
+- index(`event_type`)
+
+---
+
+## Table: `platform_admin_users` (optional placeholder)
+Purpose: early allowlist/bootstrap before full RBAC.
+
+Fields:
+- `id` (uuid, pk)
+- `email` (text, unique)
+- `display_name` (text, nullable)
+- `active` (boolean)
+- `created_at` (timestamp)
+
+Can be replaced later by full `users` + `user_site_roles` model.
+
+---
+
+## LocalStorage migration field mapping (high level)
+- `subs-setup-requests` -> `setup_requests`
+- `subs-active-demo-draft:<industry>` + `subs-demo-draft:<id>` snapshot -> `demo_draft_snapshots`
+- local setup status history (implicit) -> `setup_request_events`
+
+---
+
+## 5) API/server actions plan
+
+Recommended pattern:
+- Route handlers for explicit setup submission + admin reads.
+- Repository/service layer for DB operations and tenant/status guardrails.
+- Optional server actions for same-origin UI mutations later.
+
+Planned operations:
+1. `createSetupRequest(input, demoDraftSnapshot?)`
+2. `listSetupRequests(filters)` (platform admin)
+3. `getSetupRequestById(idOrPublicReference)`
+4. `updateSetupRequestStatus(id, nextStatus)` (platform admin)
+5. `attachDemoDraftSnapshot(setupRequestId, snapshot)`
+6. Later: `createTenantSiteFromSetupRequest(setupRequestId)`
+
+---
+
+## 6) Auth plan for milestone 1
+
+Minimal auth recommendation:
+- Protect **platform admin persisted queue view** first.
+- Keep public setup submission endpoint/page open (rate-limited/captcha later if needed).
+
+Phase approach:
+1. No business owner auth required for first persistence cut.
+2. Platform admin guard via allowlisted email + Auth.js session once auth is wired.
+3. Keep `/setup/[industry]` public and unchanged from customer perspective.
+
+---
+
+## 7) Migration strategy from localStorage
+
+Current:
+- Setup form writes to localStorage only.
+
+Milestone behavior:
+1. Setup form attempts backend persist first.
+2. On success, still optionally mirror to localStorage (short-term continuity).
+3. On backend failure, fallback to localStorage with clear UX note (temporary).
+4. Confirmation page load order:
+   - backend by `requestId` (or `publicReference`)
+   - fallback localStorage if backend not found/unavailable
+5. Existing `/account` and `/admin` local mock sections can remain during transition.
+
+---
+
+## 8) Planned UI/code touchpoints (later implementation)
+
+Likely files:
+- `src/components/setup/setup-request-form.tsx`
+- `src/app/setup/confirmation/page.tsx`
+- `src/app/admin/page.tsx` (or new platform admin route)
+- `src/lib/setup/local-setup-requests.ts` (fallback/bridge mode)
+- new repo/db files, e.g.:
+  - `src/lib/db/client.ts`
+  - `src/lib/setup/setup-request-repository.ts`
+  - `src/lib/setup/setup-request-schema.ts`
+
+---
+
+## 9) Validation gates for every implementation task
+
+Required each task:
+- `npm run lint`
+- `npm run build`
+
+When Prisma/migrations are added later:
+- generate client
+- run migration
+- verify migration in clean environment
+
+---
+
+## 10) Suggested task breakdown (Codex-safe slices)
+
+Task 1: Dependency + DB foundation (no feature wiring)
+- Add Prisma + DB client scaffold + baseline schema models only.
+
+Task 2: Repository + validation layer
+- Add Zod input schemas and repository CRUD for setup request + demo snapshot.
+
+Task 3: Backend create/read operations
+- Add setup-request create + read boundary (route handler or action wrapper).
+
+Task 4: Setup form backend submit with local fallback
+- Update setup form to submit to backend first, fallback to local.
+
+Task 5: Confirmation backend read + fallback
+- Confirmation page attempts backend fetch, then local fallback.
+
+Task 6: Platform admin persisted setup queue
+- Add protected admin view for persisted setup request listing/status updates.
+
+Task 7: Docs + smoke test updates
+- Update hosted smoke test + migration notes.
+
+---
+
+## 11) Risks and rollback
+
+### Risks
+1. DB connection issues on hosted/serverless runtime.
+2. Connection pooling limits under serverless bursts.
+3. Auth gating accidentally blocking public setup flow.
+4. Tenant leakage if repository guards are weak.
+5. Partial migration causing split-brain between DB and localStorage.
+
+### Mitigations
+- Keep local fallback during initial rollout.
+- Add strict repository contracts requiring scope/status checks.
+- Start with admin-only protected read paths.
+- Log setup request create failures with correlation id.
+
+### Rollback strategy
+- Feature flag backend setup persistence.
+- If disabled, revert to local-only submission path without UI break.
+
+---
+
+## 12) Recommended execution order
+1. Schema + repository + create operation
+2. Setup form submit integration with fallback
+3. Confirmation backend lookup
+4. Admin persisted queue
+5. Auth hardening on admin route
+
+This sequence delivers real value early while minimizing migration risk.
