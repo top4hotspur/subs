@@ -72,6 +72,17 @@ export type CustomerRequest = {
   preferredVisitWindow?: string;
   photoNotes?: string;
   vehicleDetails?: string;
+  journeyType?: string;
+  returnJourneyRequired?: boolean;
+  returnDate?: string;
+  returnTime?: string;
+  passengerCount?: string;
+  luggageCount?: string;
+  flightNumber?: string;
+  childSeatNotes?: string;
+  accessibilityNotes?: string;
+  corporateAccountReference?: string;
+  stops?: string;
   preferredStaffId?: string;
   preferredStaffName?: string;
   assignedStaffId?: string;

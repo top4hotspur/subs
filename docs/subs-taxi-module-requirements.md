@@ -189,3 +189,10 @@ This requirement set maps to:
 - Industry/setup/demo pages and shared mock portal/admin views already present in Subs.
 
 No code or files are imported from any external taxi project.
+
+## Implementation status note
+- Local/mock taxi quote request flow is now wired in app code via:
+  - `src/lib/requests/taxi-request.ts`
+  - `src/components/requests/customer-request-form.tsx`
+  - taxi-specific admin queue display in `src/app/admin/page.tsx`
+- This remains browser-local only and does not include maps, pricing engine, or dispatch integrations.

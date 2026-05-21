@@ -17,6 +17,7 @@ import {
 } from "@/lib/requests/local-customer-requests";
 import { isAppointmentStyleIndustry } from "@/lib/requests/appointment-industries";
 import { flexibleJobAdminLabel, isFlexibleJobIndustry } from "@/lib/requests/flexible-job-industries";
+import { isTaxiIndustry, taxiAdminLabel } from "@/lib/requests/taxi-request";
 import {
   CustomerRequest,
   CustomerRequestStatus,
@@ -445,6 +446,32 @@ export default function AdminPage() {
                       </p>
                       <p className="mt-1">
                         Assigned staff: {formatOptional(request.assignedStaffName, "Unassigned")}
+                      </p>
+                    </div>
+                  ) : null}
+                  {requestSlug && isTaxiIndustry(requestSlug) ? (
+                    <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                      <p className="font-semibold text-slate-900">{taxiAdminLabel()}</p>
+                      <p className="mt-1">
+                        Journey type: {request.journeyType || "Not set"} | Pickup: {request.pickupAddress || "TBC"} | Destination: {request.destinationAddress || "TBC"}
+                      </p>
+                      <p className="mt-1">
+                        Pickup: {formatDateTime(request.preferredDate, request.preferredTime)} | Return:{" "}
+                        {request.returnJourneyRequired
+                          ? formatDateTime(request.returnDate, request.returnTime)
+                          : "No return journey requested"}
+                      </p>
+                      <p className="mt-1">
+                        Passengers: {request.passengerCount || "Not set"} | Luggage: {request.luggageCount || "Not set"} | Flight: {request.flightNumber || "N/A"}
+                      </p>
+                      <p className="mt-1">
+                        Accessibility: {request.accessibilityNotes || "None"} | Child seat: {request.childSeatNotes || "None"}
+                      </p>
+                      <p className="mt-1">
+                        Corporate ref: {request.corporateAccountReference || "None"} | Stops: {request.stops || "None"}
+                      </p>
+                      <p className="mt-1">
+                        Assigned staff/driver: {formatOptional(request.assignedStaffName, "Unassigned")}
                       </p>
                     </div>
                   ) : null}

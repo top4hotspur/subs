@@ -80,3 +80,9 @@ Each industry now has a standard policy placeholder route at `/<industry>/policy
 - Requests capture address/location, preferred date/window, frequency, and optional access/property/vehicle/photo notes.
 - Admin queue includes a flexible-job specific review block for these industries.
 
+## Taxi workflow (local mock)
+- Taxi/private-hire now uses a dedicated local quote/request intake flow.
+- Requests capture journey type, pickup/destination, pickup timing, optional return timing, passenger/luggage, and airport/corporate/accessibility notes.
+- Admin queue renders taxi-specific request detail for review and assignment.
+- No maps, route pricing engine, dispatch integration, or backend persistence is implemented.
+

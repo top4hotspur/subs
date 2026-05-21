@@ -27,10 +27,12 @@ export const websiteTemplates: Record<WebsiteTemplate["slug"], WebsiteTemplate> 
         "Fast pickups, fixed-fare journeys, and professional drivers across your local area.",
       ctaLabel: "Book Your Ride",
       services: [
-        { id: "airport", name: "Airport transfers" },
-        { id: "local", name: "Local and long-distance journeys" },
-        { id: "corporate", name: "Corporate account travel" },
-        { id: "event", name: "Event and station pickups" },
+        { id: "local-private-hire", name: "Local taxi/private hire" },
+        { id: "airport-transfers", name: "Airport transfers" },
+        { id: "corporate-tour-operator", name: "Corporate & tour operator bookings" },
+        { id: "golf-transfers", name: "Golf transfers" },
+        { id: "tourist-tours", name: "Tourist tours" },
+        { id: "event-transport", name: "Event transport" },
       ],
       openingHours: { summary: "Open 24 hours" },
       contact: {

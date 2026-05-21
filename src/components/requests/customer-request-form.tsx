@@ -34,6 +34,13 @@ import {
   isFlexibleJobIndustry,
 } from "@/lib/requests/flexible-job-industries";
 import {
+  isTaxiIndustry,
+  taxiJourneyTypeOptions,
+  taxiLuggageOptions,
+  taxiPassengerOptions,
+  taxiRequestHeading,
+} from "@/lib/requests/taxi-request";
+import {
   getDefaultLocationTypeForIndustry,
   getDefaultRequestKindForIndustry,
   getRequestActionLabelForIndustry,
@@ -108,6 +115,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
   const suggestions = getSuggestedRequestFieldsForIndustry(templateSlug).join(", ");
   const appointmentStyle = isAppointmentStyleIndustry(templateSlug);
   const flexibleJobStyle = isFlexibleJobIndustry(templateSlug);
+  const taxiStyle = isTaxiIndustry(templateSlug);
   const customerSelectableByDefault = shouldCustomersSelectStaffByDefault(templateSlug);
   const pricingStatusLabel = customerRequestPricingStatusLabel(
     requestKind === CustomerRequestKind.BOOKING_REQUEST
@@ -124,6 +132,9 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
   const flexibleAddressLabel = flexibleJobAddressLabel(templateSlug);
   const frequencyOptions = flexibleJobFrequencyOptions(templateSlug);
   const isDogGrooming = templateSlug === "dog-grooming";
+  const taxiJourneyTypes = taxiJourneyTypeOptions();
+  const taxiPassengers = taxiPassengerOptions();
+  const taxiLuggage = taxiLuggageOptions();
 
   const [form, setForm] = useState({
     customerName: "",
@@ -142,6 +153,17 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
     preferredVisitWindow: "",
     photoNotes: "",
     vehicleDetails: "",
+    journeyType: "",
+    returnJourneyRequired: false,
+    returnDate: "",
+    returnTime: "",
+    passengerCount: "",
+    luggageCount: "",
+    flightNumber: "",
+    childSeatNotes: "",
+    accessibilityNotes: "",
+    corporateAccountReference: "",
+    stops: "",
     petName: "",
     petBreed: "",
     dogSize: "",
@@ -221,7 +243,13 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
   return (
     <section className="rounded-xl border border-slate-200 bg-slate-50 p-4">
       <h3 className="text-sm font-semibold text-slate-900">
-        {appointmentStyle ? appointmentHeading : flexibleJobStyle ? flexibleHeading : "Example customer request"}
+        {appointmentStyle
+          ? appointmentHeading
+          : flexibleJobStyle
+            ? flexibleHeading
+            : taxiStyle
+              ? taxiRequestHeading()
+              : "Example customer request"}
       </h3>
       <p className="mt-1 text-xs text-slate-600">
         {actionLabel}. Suggested fields: {suggestions}.
@@ -245,6 +273,11 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
       ) : null}
       {templateSlug === "massage" ? (
         <p className="mt-1 text-xs text-slate-600">Add any relevant session preferences in notes.</p>
+      ) : null}
+      {taxiStyle ? (
+        <p className="mt-1 text-xs text-slate-600">
+          Share pickup, destination, and journey details. The operator will confirm fare and booking.
+        </p>
       ) : null}
       {appointmentStyle && !selectedStaffMember ? (
         <p className="mt-1 text-xs text-slate-600">
@@ -315,6 +348,14 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
             setError("Add a preferred date or preferred visit window.");
             return;
           }
+          if (taxiStyle && (!form.pickupAddress || !form.destinationAddress || !form.preferredDate || !form.preferredTime || !form.journeyType)) {
+            setError("Pickup, destination, pickup date/time, and journey type are required for taxi requests.");
+            return;
+          }
+          if (taxiStyle && !form.customerEmail && !form.customerPhone) {
+            setError("Provide either an email or a phone number for taxi requests.");
+            return;
+          }
 
           createLocalCustomerRequest({
             templateSlug,
@@ -342,6 +383,17 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
             preferredVisitWindow: flexibleJobStyle ? form.preferredVisitWindow || undefined : undefined,
             photoNotes: flexibleJobStyle ? form.photoNotes || undefined : undefined,
             vehicleDetails: flexibleJobStyle ? form.vehicleDetails || undefined : undefined,
+            journeyType: taxiStyle ? form.journeyType || undefined : undefined,
+            returnJourneyRequired: taxiStyle ? form.returnJourneyRequired : undefined,
+            returnDate: taxiStyle && form.returnJourneyRequired ? form.returnDate || undefined : undefined,
+            returnTime: taxiStyle && form.returnJourneyRequired ? form.returnTime || undefined : undefined,
+            passengerCount: taxiStyle ? form.passengerCount || undefined : undefined,
+            luggageCount: taxiStyle ? form.luggageCount || undefined : undefined,
+            flightNumber: taxiStyle ? form.flightNumber || undefined : undefined,
+            childSeatNotes: taxiStyle ? form.childSeatNotes || undefined : undefined,
+            accessibilityNotes: taxiStyle ? form.accessibilityNotes || undefined : undefined,
+            corporateAccountReference: taxiStyle ? form.corporateAccountReference || undefined : undefined,
+            stops: taxiStyle ? form.stops || undefined : undefined,
             preferredStaffId: selectedStaffMember?.id,
             preferredStaffName: selectedStaffMember?.displayName,
             communicationChannels: [CustomerRequestCommunicationChannel.EMAIL],
@@ -411,6 +463,13 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
               Selected preferred time: <span className="font-semibold text-slate-900">{form.preferredTime || "None selected"}</span>
             </p>
           </div>
+        ) : flexibleJobStyle ? (
+          <input
+            className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+            placeholder="Preferred time window (optional)"
+            value={form.preferredVisitWindow}
+            onChange={(event) => setForm((c) => ({ ...c, preferredVisitWindow: event.target.value }))}
+          />
         ) : (
           <input type="time" className="rounded-md border border-slate-300 px-2 py-1 text-sm" value={form.preferredTime} onChange={(event) => setForm((c) => ({ ...c, preferredTime: event.target.value }))} />
         )}
@@ -436,6 +495,107 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
             <input className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2" placeholder="Destination address" value={form.destinationAddress} onChange={(event) => setForm((c) => ({ ...c, destinationAddress: event.target.value }))} />
           </>
         ) : null}
+        {taxiStyle ? (
+          <>
+            <select
+              className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+              value={form.journeyType}
+              onChange={(event) => setForm((c) => ({ ...c, journeyType: event.target.value }))}
+            >
+              <option value="">Journey type</option>
+              {taxiJourneyTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+            <label className="flex items-center gap-2 rounded-md border border-slate-300 px-2 py-1 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                checked={form.returnJourneyRequired}
+                onChange={(event) =>
+                  setForm((c) => ({
+                    ...c,
+                    returnJourneyRequired: event.target.checked,
+                    returnDate: event.target.checked ? c.returnDate : "",
+                    returnTime: event.target.checked ? c.returnTime : "",
+                  }))
+                }
+              />
+              Return journey required
+            </label>
+            {form.returnJourneyRequired ? (
+              <>
+                <input
+                  type="date"
+                  className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  value={form.returnDate}
+                  onChange={(event) => setForm((c) => ({ ...c, returnDate: event.target.value }))}
+                />
+                <input
+                  type="time"
+                  className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  value={form.returnTime}
+                  onChange={(event) => setForm((c) => ({ ...c, returnTime: event.target.value }))}
+                />
+              </>
+            ) : null}
+            <select
+              className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+              value={form.passengerCount}
+              onChange={(event) => setForm((c) => ({ ...c, passengerCount: event.target.value }))}
+            >
+              <option value="">Passengers (optional)</option>
+              {taxiPassengers.map((count) => (
+                <option key={count} value={count}>
+                  {count}
+                </option>
+              ))}
+            </select>
+            <select
+              className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+              value={form.luggageCount}
+              onChange={(event) => setForm((c) => ({ ...c, luggageCount: event.target.value }))}
+            >
+              <option value="">Luggage (optional)</option>
+              {taxiLuggage.map((count) => (
+                <option key={count} value={count}>
+                  {count}
+                </option>
+              ))}
+            </select>
+            <input
+              className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+              placeholder="Flight number (airport transfers)"
+              value={form.flightNumber}
+              onChange={(event) => setForm((c) => ({ ...c, flightNumber: event.target.value }))}
+            />
+            <input
+              className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+              placeholder="Corporate account reference (optional)"
+              value={form.corporateAccountReference}
+              onChange={(event) => setForm((c) => ({ ...c, corporateAccountReference: event.target.value }))}
+            />
+            <input
+              className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2"
+              placeholder="Child seat notes (optional)"
+              value={form.childSeatNotes}
+              onChange={(event) => setForm((c) => ({ ...c, childSeatNotes: event.target.value }))}
+            />
+            <input
+              className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2"
+              placeholder="Accessibility notes (optional)"
+              value={form.accessibilityNotes}
+              onChange={(event) => setForm((c) => ({ ...c, accessibilityNotes: event.target.value }))}
+            />
+            <input
+              className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2"
+              placeholder="Stops or multi-stop notes (optional)"
+              value={form.stops}
+              onChange={(event) => setForm((c) => ({ ...c, stops: event.target.value }))}
+            />
+          </>
+        ) : null}
 
         {locationType === CustomerRequestLocationType.CUSTOMER_ADDRESS ? (
           <input className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2" placeholder={flexibleJobStyle ? flexibleAddressLabel : "Service address"} value={form.customerAddress} onChange={(event) => setForm((c) => ({ ...c, customerAddress: event.target.value }))} />
@@ -455,12 +615,6 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
                 </option>
               ))}
             </select>
-            <input
-              className="rounded-md border border-slate-300 px-2 py-1 text-sm"
-              placeholder="Preferred visit window (optional)"
-              value={form.preferredVisitWindow}
-              onChange={(event) => setForm((c) => ({ ...c, preferredVisitWindow: event.target.value }))}
-            />
             <input
               className="rounded-md border border-slate-300 px-2 py-1 text-sm"
               placeholder="Property type (optional)"
@@ -505,7 +659,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
         <textarea className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2" placeholder="Notes" value={form.notes} onChange={(event) => setForm((c) => ({ ...c, notes: event.target.value }))} />
         {error ? <p className="text-xs text-rose-700 sm:col-span-2">{error}</p> : null}
         <button type="submit" className={`${primaryButtonClass} sm:col-span-2`}>
-          {appointmentStyle ? "Save local appointment request" : "Save local request"}
+          {appointmentStyle ? "Save local appointment request" : taxiStyle ? "Save local taxi request" : "Save local request"}
         </button>
       </form>
     </section>

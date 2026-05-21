@@ -59,3 +59,14 @@ For window-cleaning, cleaners, gardeners, and mobile-valeting, requests can incl
 - photoNotes
 - vehicleDetails
 
+## Taxi request fields (local mock)
+Taxi/private-hire requests can additionally include:
+- journeyType
+- returnJourneyRequired, returnDate, returnTime
+- passengerCount, luggageCount
+- flightNumber
+- childSeatNotes
+- accessibilityNotes
+- corporateAccountReference
+- stops
+
