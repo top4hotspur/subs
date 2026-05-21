@@ -166,6 +166,11 @@ const BLOCKING_STATUSES: CustomerRequestStatus[] = [
   CustomerRequestStatus.COMPLETED,
 ];
 
+export function getRequestCalendarDate(request: CustomerRequest): string {
+  if (request.preferredDate) return request.preferredDate;
+  return request.createdAtIso.slice(0, 10);
+}
+
 export function countBookingsByDay(
   industrySlug: WebsiteTemplateSlug,
   requests: CustomerRequest[],
@@ -174,14 +179,14 @@ export function countBookingsByDay(
 ): Array<{ date: string; count: number }> {
   const start = new Date(`${startDate}T00:00:00`);
   const filtered = requests.filter(
-    (r) => r.templateSlug === industrySlug && r.preferredDate && BLOCKING_STATUSES.includes(r.status),
+    (r) => r.templateSlug === industrySlug && BLOCKING_STATUSES.includes(r.status),
   );
 
   return Array.from({ length: days }, (_, i) => {
     const d = new Date(start);
     d.setDate(start.getDate() + i);
     const date = d.toISOString().slice(0, 10);
-    const count = filtered.filter((r) => r.preferredDate === date).length;
+    const count = filtered.filter((r) => getRequestCalendarDate(r) === date).length;
     return { date, count };
   });
 }

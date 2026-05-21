@@ -128,3 +128,15 @@ Current behavior:
 - applies staff rota and break windows
 - applies staff holiday and business closure blocking
 - outputs local preview counts only (not guaranteed production availability)
+
+
+## 30-day Calendar Inspection View
+- Calendar preview now shows a rolling 30-day grid per industry.
+- Each day tile shows UK date, available staff count, and booking/request count.
+- Day tiles are clickable and open a detail panel for that date.
+- Detail panel includes customer/time/service/status/assigned staff/preferred staff/notes.
+- Includes custom date inspection so admins can inspect dates outside the visible 30-day window.
+- Navigation supports Previous 30 days, Next 30 days, and Today.
+- Booking counts use preferredDate, with createdAtIso date fallback when preferredDate is missing.
+- Cancelled and no-show requests are excluded from booking counts, but still visible in day detail.
+

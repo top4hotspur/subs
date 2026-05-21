@@ -61,3 +61,11 @@ Each industry now has a standard policy placeholder route at `/<industry>/policy
 - Notification templates include local provider metadata placeholders for a future Twilio sync path.
 - No provider sync or message sending is implemented.
 
+
+
+## Calendar Inspection (Local Mock)
+- /admin/settings calendar preview now provides a 30-day day-tile inspection view.
+- Admin can click a day to inspect staffing and request detail.
+- Admin can inspect any custom date outside the visible 30-day window.
+- This remains browser-local mock data only (no backend calendar sync, no conflict locking guarantees).
+
