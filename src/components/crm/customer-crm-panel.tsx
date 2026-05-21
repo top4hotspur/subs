@@ -52,6 +52,16 @@ export function CustomerCrmPanel({
       });
   }, [customers, searchQuery, industryFilter, requests]);
 
+  const crmCounts = useMemo(() => {
+    const total = filteredCustomers.length;
+    const completed = filteredCustomers.filter((customer) => customer.totalCompletedBookings > 0).length;
+    const open = filteredCustomers.filter((customer) => {
+      const history = getCustomerBookingHistory(customer.id, requests);
+      return history.some((item) => !["COMPLETED", "CANCELLED", "NO_SHOW"].includes(item.status));
+    }).length;
+    return { total, completed, open };
+  }, [filteredCustomers, requests]);
+
   const selectedCustomer =
     filteredCustomers.find((c) => c.id === selectedCustomerId) ?? filteredCustomers[0] ?? null;
   const [notes, setNotes] = useState(selectedCustomer?.notes ?? "");
@@ -119,6 +129,18 @@ export function CustomerCrmPanel({
             Export customers CSV
           </button>
         </div>
+      </div>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        <p className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700">
+          Total customers: <span className="font-semibold">{crmCounts.total}</span>
+        </p>
+        <p className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700">
+          With completed bookings: <span className="font-semibold">{crmCounts.completed}</span>
+        </p>
+        <p className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700">
+          With open requests: <span className="font-semibold">{crmCounts.open}</span>
+        </p>
       </div>
 
       {filteredCustomers.length === 0 ? (

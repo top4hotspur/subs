@@ -16,7 +16,7 @@ export default function AdminCrmPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-      <h1 className="text-3xl font-bold text-slate-900">Mock Admin CRM</h1>
+      <h1 className="text-3xl font-bold text-slate-900">Customer CRM (mock)</h1>
       <p className="mt-2 text-sm text-slate-600">
         Local browser-only CRM preview. No real backend, auth, or database persistence is configured.
       </p>
