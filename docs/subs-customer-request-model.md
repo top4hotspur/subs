@@ -3,6 +3,14 @@
 ## Purpose
 Shared enquiry/booking/job model across industries with local mock persistence.
 
+Appointment-style booking flow currently covers:
+- `barbers`
+- `hairdressers`
+- `nail-salon`
+- `beauticians`
+- `massage`
+- `dog-grooming`
+
 ## UI consistency
 Customer request status and labels are now centralized:
 - `src/lib/ui/display-labels.ts`
@@ -16,6 +24,11 @@ Completion still stamps local:
 - `reviewRequestSentAtIso`
 
 No real messaging/delivery is implemented.
+
+## Optional intake details
+- `CustomerRequest.extraDetails?: Record<string, string>` is available for lightweight local/mock intake metadata.
+- Current use:
+  - dog grooming optional pet intake (pet name, breed, dog size, temperament notes).
 
 ## Local appointment conflict behavior
 - Appointment slot availability checks can use existing browser-local customer requests.

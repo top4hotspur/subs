@@ -48,6 +48,16 @@ export function getSuggestedRequestFieldsForIndustry(
       return ["pickup", "destination", "date/time", "passengers", "luggage"];
     case "driving-instructors":
       return ["pickup area", "lesson type", "availability", "customer details"];
+    case "dog-grooming":
+      return [
+        "service",
+        "date/time",
+        "pet name",
+        "breed",
+        "dog size",
+        "temperament notes",
+        "customer details",
+      ];
     case "window-cleaning":
     case "cleaners":
     case "gardeners":
@@ -71,6 +81,12 @@ export function getRequestActionLabelForIndustry(
       return "Request a quote";
     case "driving-instructors":
       return "Enquire about lessons";
+    case "beauticians":
+      return "Book treatment";
+    case "massage":
+      return "Book massage session";
+    case "dog-grooming":
+      return "Book grooming appointment";
     default:
       return "Book an appointment";
   }

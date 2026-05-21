@@ -9,6 +9,9 @@ No real auth, database, APIs, payment, or conflict-checking engine is active.
   - `barbers`
   - `hairdressers`
   - `nail-salon`
+  - `beauticians`
+  - `massage`
+  - `dog-grooming`
 - Form requires:
   - service
   - preferred date
@@ -21,6 +24,11 @@ No real auth, database, APIs, payment, or conflict-checking engine is active.
 - If a preferred staff member is selected and local rota exists, tiles can be generated from that staff member's rota day and break windows.
 - Local conflict checks now mark preferred slots as unavailable when the selected staff member already has another local request at the same time.
 - The UI explicitly states that the business confirms final availability.
+- Dog grooming includes optional pet intake fields:
+  - pet name
+  - breed
+  - dog size
+  - temperament/handling notes
 
 ## Staff choice behavior
 - Customer-side staff selection only shows staff where:
@@ -48,6 +56,7 @@ No real auth, database, APIs, payment, or conflict-checking engine is active.
 ## Completion/review messaging
 Completion and review messaging are still local/mock status outcomes only.
 No real message sending is performed in this phase.
+No sensitive medical/health workflow is implemented.
 
 ## Local storage keys used
 - `subs-customer-requests`

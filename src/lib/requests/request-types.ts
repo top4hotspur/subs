@@ -65,6 +65,7 @@ export type CustomerRequest = {
   pickupAddress?: string;
   destinationAddress?: string;
   notes?: string;
+  extraDetails?: Record<string, string>;
   preferredStaffId?: string;
   preferredStaffName?: string;
   assignedStaffId?: string;

@@ -22,6 +22,11 @@ import {
 import { getLocalStaffRotaForStaff } from "@/lib/calendar/local-staff-rota";
 import { isAppointmentStyleIndustry } from "@/lib/requests/appointment-industries";
 import {
+  getAppointmentActionHeading,
+  getAppointmentServiceLabel,
+  getAppointmentStaffLabel,
+} from "@/lib/requests/appointment-industries";
+import {
   getDefaultLocationTypeForIndustry,
   getDefaultRequestKindForIndustry,
   getRequestActionLabelForIndustry,
@@ -101,7 +106,12 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
       ? CustomerRequestPricingStatus.PRICE_CONFIRMED
       : CustomerRequestPricingStatus.QUOTE_REQUIRED,
   );
-  const preferredStaffLabel = appointmentStyle ? "Preferred barber/stylist (optional)" : "Preferred staff member (optional)";
+  const preferredStaffLabel = appointmentStyle
+    ? getAppointmentStaffLabel(templateSlug)
+    : "Preferred staff member (optional)";
+  const appointmentHeading = getAppointmentActionHeading(templateSlug);
+  const appointmentServiceLabel = getAppointmentServiceLabel(templateSlug);
+  const isDogGrooming = templateSlug === "dog-grooming";
 
   const [form, setForm] = useState({
     customerName: "",
@@ -114,6 +124,10 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
     pickupAddress: "",
     destinationAddress: "",
     preferredStaffId: "",
+    petName: "",
+    petBreed: "",
+    dogSize: "",
+    temperamentNotes: "",
     notes: "",
   });
   const [submitted, setSubmitted] = useState(false);
@@ -129,6 +143,19 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
     const settings = getLocalCustomerSiteSettings(templateSlug, template);
     return settings.services.find((service) => service.id === form.serviceId) ?? null;
   }, [form.serviceId, templateSlug]);
+
+  const dogExtraDetails = useMemo(() => {
+    if (!isDogGrooming) return undefined;
+    const details = Object.fromEntries(
+      Object.entries({
+        petName: form.petName,
+        breed: form.petBreed,
+        dogSize: form.dogSize,
+        temperamentNotes: form.temperamentNotes,
+      }).filter(([, value]) => value.trim().length > 0),
+    );
+    return Object.keys(details).length > 0 ? details : undefined;
+  }, [isDogGrooming, form.petName, form.petBreed, form.dogSize, form.temperamentNotes]);
 
   const selectedStaffMember = useMemo(
     () => selectableStaff.find((staff) => staff.id === form.preferredStaffId),
@@ -176,7 +203,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
   return (
     <section className="rounded-xl border border-slate-200 bg-slate-50 p-4">
       <h3 className="text-sm font-semibold text-slate-900">
-        {appointmentStyle ? "Book appointment request" : "Example customer request"}
+        {appointmentStyle ? appointmentHeading : "Example customer request"}
       </h3>
       <p className="mt-1 text-xs text-slate-600">
         {actionLabel}. Suggested fields: {suggestions}.
@@ -189,6 +216,12 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
         <p className="mt-1 text-xs text-slate-600">
           Choose a preferred time. The business will confirm availability.
         </p>
+      ) : null}
+      {templateSlug === "beauticians" ? (
+        <p className="mt-1 text-xs text-slate-600">Add any relevant treatment preferences in notes.</p>
+      ) : null}
+      {templateSlug === "massage" ? (
+        <p className="mt-1 text-xs text-slate-600">Add any relevant session preferences in notes.</p>
       ) : null}
       {appointmentStyle && !selectedStaffMember ? (
         <p className="mt-1 text-xs text-slate-600">
@@ -267,6 +300,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
             pickupAddress: form.pickupAddress || undefined,
             destinationAddress: form.destinationAddress || undefined,
             notes: form.notes || undefined,
+            extraDetails: dogExtraDetails,
             preferredStaffId: selectedStaffMember?.id,
             preferredStaffName: selectedStaffMember?.displayName,
             communicationChannels: [CustomerRequestCommunicationChannel.EMAIL],
@@ -279,7 +313,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
         <input className="rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="Customer email" value={form.customerEmail} onChange={(event) => setForm((c) => ({ ...c, customerEmail: event.target.value }))} />
         <input className="rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="Customer phone" value={form.customerPhone} onChange={(event) => setForm((c) => ({ ...c, customerPhone: event.target.value }))} />
         <select className="rounded-md border border-slate-300 px-2 py-1 text-sm" value={form.serviceId} onChange={(event) => setForm((c) => ({ ...c, serviceId: event.target.value }))}>
-          <option value="">{appointmentStyle ? "Select appointment service" : "Select service"}</option>
+          <option value="">{appointmentStyle ? appointmentServiceLabel : "Select service"}</option>
           {effectiveServices.map((service) => (
             <option key={service.id} value={service.id}>{service.name}</option>
           ))}
@@ -362,6 +396,15 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
 
         {locationType === CustomerRequestLocationType.CUSTOMER_ADDRESS ? (
           <input className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2" placeholder="Service address" value={form.customerAddress} onChange={(event) => setForm((c) => ({ ...c, customerAddress: event.target.value }))} />
+        ) : null}
+
+        {isDogGrooming ? (
+          <>
+            <input className="rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="Pet name (optional)" value={form.petName} onChange={(event) => setForm((c) => ({ ...c, petName: event.target.value }))} />
+            <input className="rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="Breed (optional)" value={form.petBreed} onChange={(event) => setForm((c) => ({ ...c, petBreed: event.target.value }))} />
+            <input className="rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="Dog size (optional)" value={form.dogSize} onChange={(event) => setForm((c) => ({ ...c, dogSize: event.target.value }))} />
+            <input className="rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="Temperament / handling notes (optional)" value={form.temperamentNotes} onChange={(event) => setForm((c) => ({ ...c, temperamentNotes: event.target.value }))} />
+          </>
         ) : null}
 
         <textarea className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2" placeholder="Notes" value={form.notes} onChange={(event) => setForm((c) => ({ ...c, notes: event.target.value }))} />

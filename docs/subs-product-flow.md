@@ -11,14 +11,18 @@
 - Active/default draft switching remains available, but visual priority is on the website preview.
 
 ## Appointment workflow (local mock)
-- First deep appointment workflow is for:
+- Shared appointment workflow currently covers:
   - `barbers`
   - `hairdressers`
   - `nail-salon`
+  - `beauticians`
+  - `massage`
+  - `dog-grooming`
 - Preferred time uses morning/afternoon/evening tile selection.
 - Tiles are preference hints, not guaranteed live availability.
 - When staff is selected, local rota and break windows can shape preferred slot suggestions.
 - Local mock conflict checks can disable slots already tied to another local request for the same staff member/time.
+- Dog grooming intake includes optional local pet details (name, breed, size, temperament notes).
 
 ## Future appointment requirements (not implemented)
 Real appointment slot availability will later require:
@@ -57,7 +61,7 @@ User-facing date displays are standardized to UK format (`dd/mm/yyyy` or `dd/mm/
 Each industry now has a standard policy placeholder route at `/<industry>/policy` covering payment options, cancellation/refund wording, and communication notes.
 
 ## Local CRM and notification-provider metadata
-- `/admin/crm includes a dedicated local CRM panel built from local request data.
+- `/admin/crm` includes a dedicated local CRM panel built from local request data.
 - Notification templates include local provider metadata placeholders for a future Twilio sync path.
 - No provider sync or message sending is implemented.
 

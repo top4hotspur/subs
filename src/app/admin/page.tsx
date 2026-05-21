@@ -404,13 +404,27 @@ export default function AdminPage() {
                   </div>
                   {requestSlug && isAppointmentStyleIndustry(requestSlug) ? (
                     <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-                      <p className="font-semibold text-slate-900">Appointment workflow view</p>
+                      <p className="font-semibold text-slate-900">
+                        {requestSlug === "beauticians"
+                          ? "Treatment workflow view"
+                          : requestSlug === "massage"
+                            ? "Massage session workflow view"
+                            : requestSlug === "dog-grooming"
+                              ? "Grooming appointment workflow view"
+                              : "Appointment workflow view"}
+                      </p>
                       <p className="mt-1">
                         Service: {request.serviceName || "TBC"} | Date: {request.preferredDate || "TBC"} | Time: {request.preferredTime || "TBC"}
                       </p>
                       <p className="mt-1">
                         Preferred staff: {formatOptional(request.preferredStaffName, "No preference")} | Assigned: {formatOptional(request.assignedStaffName, "Unassigned")}
                       </p>
+                      {requestSlug === "dog-grooming" && request.extraDetails ? (
+                        <p className="mt-1">
+                          Pet: {formatOptional(request.extraDetails.petName, "N/A")} | Breed: {formatOptional(request.extraDetails.breed, "N/A")} | Size: {formatOptional(request.extraDetails.dogSize, "N/A")}
+                          {request.extraDetails.temperamentNotes ? ` | Notes: ${request.extraDetails.temperamentNotes}` : ""}
+                        </p>
+                      ) : null}
                     </div>
                   ) : null}
                   <p className="mt-2 text-xs text-slate-600">{customerRequestStatusDescription(request.status)}</p>

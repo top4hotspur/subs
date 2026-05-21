@@ -150,10 +150,10 @@ export const websiteTemplates: Record<WebsiteTemplate["slug"], WebsiteTemplate> 
         "Present your specialist treatments and grow high-value repeat bookings.",
       ctaLabel: "Book a Treatment",
       services: [
-        { id: "facials", name: "Advanced facials" },
-        { id: "lashes", name: "Lash and brow styling" },
-        { id: "wax", name: "Waxing services" },
-        { id: "packages", name: "Bridal beauty packages" },
+        { id: "facial-treatment", name: "Facial treatment" },
+        { id: "brow-shaping", name: "Brow shaping" },
+        { id: "lash-lift", name: "Lash lift" },
+        { id: "waxing", name: "Waxing" },
       ],
       openingHours: { summary: "Mon-Sat: 10:00-19:00" },
       contact: {
@@ -234,10 +234,10 @@ export const websiteTemplates: Record<WebsiteTemplate["slug"], WebsiteTemplate> 
         "Help new clients discover your treatments and book sessions quickly.",
       ctaLabel: "Book a Session",
       services: [
-        { id: "deep", name: "Deep tissue massage" },
-        { id: "sports", name: "Sports recovery massage" },
-        { id: "relax", name: "Relaxation massage" },
-        { id: "aroma", name: "Aromatherapy massage" },
+        { id: "massage-30", name: "30-minute massage" },
+        { id: "massage-60", name: "60-minute massage" },
+        { id: "deep-tissue", name: "Deep tissue massage" },
+        { id: "relaxation", name: "Relaxation massage" },
       ],
       openingHours: { summary: "Mon-Fri: 9:00-20:00, Sat: 10:00-16:00" },
       contact: {
@@ -318,10 +318,10 @@ export const websiteTemplates: Record<WebsiteTemplate["slug"], WebsiteTemplate> 
         "Show dog owners your grooming packages, care approach, and easy booking options.",
       ctaLabel: "Book Grooming Session",
       services: [
-        { id: "full", name: "Full groom packages" },
-        { id: "bath", name: "Bath and brush service" },
-        { id: "nails", name: "Nail clipping and paw care" },
-        { id: "puppy", name: "Puppy intro grooms" },
+        { id: "small-groom", name: "Small dog groom" },
+        { id: "large-groom", name: "Large dog groom" },
+        { id: "bath-brush", name: "Bath and brush" },
+        { id: "nail-trim", name: "Nail trim" },
       ],
       openingHours: { summary: "Tue-Sat: 9:00-18:00" },
       contact: {
