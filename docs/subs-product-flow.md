@@ -98,3 +98,9 @@ Each industry now has a standard policy placeholder route at `/<industry>/policy
 - Calendar preview now defaults to a compact 7-day view with daily staffing/bookings bars.
 - 30-day view is optional via explicit toggle.
 - Clickable day tiles and inspect-date detail include hourly staffing and hourly bookings.
+
+## Setup persistence transition (Task 4)
+- Setup form now attempts backend persistence first via `/api/setup-requests`.
+- If backend persistence is unavailable (missing `DATABASE_URL`, `503`, network failure), flow falls back to browser-local setup request creation.
+- Confirmation page is source-aware and can resolve either backend-saved or local-saved setup requests.
+- Auth is still not enabled; temporary route guard applies only to admin list/update endpoints.

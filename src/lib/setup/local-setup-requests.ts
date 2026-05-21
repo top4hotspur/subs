@@ -16,6 +16,7 @@ type CreateLocalSetupRequestInput = SetupRequestDraft & {
   monthlyTotalGbp: number;
   createdAtIso?: string;
   status?: SubscriptionSetupStatus;
+  id?: string;
 };
 
 function generateId(): string {
@@ -72,7 +73,7 @@ export function createLocalSetupRequest(
 
   const request: LocalSetupRequest = {
     ...input,
-    id: generateId(),
+    id: input.id ?? generateId(),
     createdAtIso: input.createdAtIso ?? new Date().toISOString(),
     status: input.status ?? SubscriptionSetupStatus.SETUP_REVIEW_REQUESTED,
   };

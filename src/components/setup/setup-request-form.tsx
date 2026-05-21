@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { getWebsiteSubscriptionOffer } from "@/lib/pricing/subscription-offer";
 import { createLocalSetupRequest } from "@/lib/setup/local-setup-requests";
+import { createSetupRequestSchema } from "@/lib/setup/setup-request-schema";
+import { submitSetupRequestToBackend } from "@/lib/setup/setup-request-backend-client";
+import { mapDraftToBackendPayload } from "@/lib/setup/setup-request-mappers";
 import {
   getActiveLocalDemoDraftId,
   getLocalDemoDraft,
@@ -75,6 +78,7 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
     demoDraftName: draftContext.demoDraftName,
   });
   const [errors, setErrors] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
   const domainFee =
     draft.domainOption === DomainOption.WE_REGISTER_DOMAIN
@@ -124,7 +128,7 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
     <div className="grid gap-8 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
       <form
         className="space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault();
 
           const validationIssues = validate();
@@ -132,16 +136,62 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
           if (validationIssues.length > 0) {
             return;
           }
+          setSubmitting(true);
 
-          const created = createLocalSetupRequest({
-            ...draft,
-            setupTotalGbp: setupTotal,
-            monthlyTotalGbp: monthlyFee,
-            createdAtIso: new Date().toISOString(),
-            status: SubscriptionSetupStatus.SETUP_REVIEW_REQUESTED,
-          });
+          const backendPayload = createSetupRequestSchema.parse(
+            mapDraftToBackendPayload(draft, {
+              setupTotalGbp: setupTotal,
+              monthlyTotalGbp: monthlyFee,
+            }),
+          );
+          const backendResult = await submitSetupRequestToBackend(backendPayload);
 
-          router.push(`/setup/confirmation?requestId=${encodeURIComponent(created.id)}`);
+          if (backendResult.ok) {
+            createLocalSetupRequest({
+              ...draft,
+              id: backendResult.setupRequest.id,
+              setupTotalGbp: setupTotal,
+              monthlyTotalGbp: monthlyFee,
+              createdAtIso: backendResult.setupRequest.createdAt,
+              status: SubscriptionSetupStatus.SETUP_REVIEW_REQUESTED,
+            });
+            router.push(
+              `/setup/confirmation?requestId=${encodeURIComponent(backendResult.setupRequest.id)}&source=backend`,
+            );
+            return;
+          }
+
+          if (
+            backendResult.status === 0 ||
+            backendResult.status === 503 ||
+            backendResult.error === "BACKEND_PERSISTENCE_NOT_CONFIGURED" ||
+            backendResult.error === "NETWORK_ERROR"
+          ) {
+            const created = createLocalSetupRequest({
+              ...draft,
+              setupTotalGbp: setupTotal,
+              monthlyTotalGbp: monthlyFee,
+              createdAtIso: new Date().toISOString(),
+              status: SubscriptionSetupStatus.SETUP_REVIEW_REQUESTED,
+            });
+            router.push(
+              `/setup/confirmation?requestId=${encodeURIComponent(created.id)}&source=local`,
+            );
+            return;
+          }
+
+          if (backendResult.status === 400) {
+            setErrors([
+              "Backend validation failed. Please review your details and try again.",
+            ]);
+            setSubmitting(false);
+            return;
+          }
+
+          setErrors([
+            "We could not save your setup request to the backend right now. Please try again.",
+          ]);
+          setSubmitting(false);
         }}
       >
         <section className="space-y-3 rounded-xl border border-slate-200 p-4">
@@ -345,8 +395,9 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
         <button
           type="submit"
           className={primaryButtonClass}
+          disabled={submitting}
         >
-          Request setup review
+          {submitting ? "Saving..." : "Request setup review"}
         </button>
       </form>
 

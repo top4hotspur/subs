@@ -75,3 +75,11 @@ Invoke-RestMethod -Method PATCH -Uri "http://localhost:3000/api/setup-requests/<
 - No tenant/business owner authorization model yet.
 - No UI wiring yet.
 - No migrations run as part of this task.
+
+## UI-to-backend handoff checks (Task 4)
+- Submit `/setup/<industry>` and verify backend-first attempt:
+  - when backend is configured and reachable, confirmation URL includes `source=backend`.
+  - when backend is unavailable or returns `BACKEND_PERSISTENCE_NOT_CONFIGURED`, confirmation URL includes `source=local`.
+- Confirm `/setup/confirmation` loads backend request when `source=backend` and falls back to local if unavailable.
+- Confirm `/setup/confirmation` empty state says: "Setup request not found in this browser or backend." when neither source can resolve.
+- No auth is required yet for customer-side setup submission/read by opaque id.

@@ -361,3 +361,14 @@ This sequence delivers real value early while minimizing migration risk.
 - No setup form/confirmation UI wiring yet.
 - No auth integration yet.
 - No migrations run.
+
+## Task 4 implementation status
+- Added browser backend client helper: `src/lib/setup/setup-request-backend-client.ts`.
+- Setup form now attempts backend `POST /api/setup-requests` first.
+- Setup form falls back to localStorage creation when backend is unavailable (`503`/network/not configured).
+- Confirmation page now supports source-aware lookup using query params:
+  - `source=backend`: backend first, then local fallback
+  - `source=local` or missing: local first, then backend fallback
+- Added mapping helpers in `src/lib/setup/setup-request-mappers.ts` for consistent display shape.
+- No auth wiring added.
+- No migrations run.
