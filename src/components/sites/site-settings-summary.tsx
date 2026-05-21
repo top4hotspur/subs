@@ -31,6 +31,8 @@ export function SiteSettingsSummary({ settings }: SiteSettingsSummaryProps) {
         </div>
         <div className="space-y-2 text-sm text-slate-700">
           <p><span className="font-semibold">Notifications:</span> Email {settings.notifications.emailNotificationsEnabled ? "enabled" : "disabled"}, WhatsApp {settings.notifications.whatsappAddonEnabled ? "enabled" : "disabled"}</p>
+          <p><span className="font-semibold">Payments:</span> Card {settings.paymentSettings.cardPaymentsEnabled ? "enabled" : "disabled"}, Cash {settings.paymentSettings.cashPaymentsEnabled ? "enabled" : "disabled"}</p>
+          <p><span className="font-semibold">Cancellation window:</span> {settings.cancellationPolicy.cancellationWindowHours} hours</p>
           <p><span className="font-semibold">Legal pages:</span> Terms {settings.legal.termsEnabled ? "on" : "off"}, Privacy {settings.legal.privacyEnabled ? "on" : "off"}, Cookies {settings.legal.cookiesEnabled ? "on" : "off"}</p>
           <p><span className="font-semibold">Analytics:</span> {settings.analytics.analyticsEnabled ? "Enabled (placeholder)" : "Disabled"}</p>
         </div>

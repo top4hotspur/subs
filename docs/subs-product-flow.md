@@ -46,3 +46,6 @@ Current conflict checks are browser-local only and do not provide backend-grade 
 
 ## Date formatting
 User-facing date displays are standardized to UK format (`dd/mm/yyyy` or `dd/mm/yyyy HH:mm`).
+
+## Policy page placeholder
+Each industry now has a standard policy placeholder route at `/<industry>/policy` covering payment options, cancellation/refund wording, and communication notes.

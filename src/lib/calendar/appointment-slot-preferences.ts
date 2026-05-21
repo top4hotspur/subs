@@ -83,6 +83,20 @@ function overlapsBreak(startTime: string, endTime: string, breaks: StaffBreakWin
   });
 }
 
+function overlapsWindow(
+  startTime: string,
+  endTime: string,
+  windowStart?: string,
+  windowEnd?: string,
+): boolean {
+  if (!windowStart || !windowEnd) return true;
+  const start = toMinutes(startTime);
+  const end = toMinutes(endTime);
+  const wStart = toMinutes(windowStart);
+  const wEnd = toMinutes(windowEnd);
+  return start < wEnd && end > wStart;
+}
+
 export function getDayPeriodForTime(time: string): DayPeriod {
   const minutes = toMinutes(time);
   if (minutes < 12 * 60) return DayPeriod.MORNING;
@@ -116,17 +130,21 @@ export function buildPreferredAppointmentSlots(
     return [];
   }
 
-  const businessClosed = businessClosures.some(
-    (closure) => closure.active && closure.date === selectedDate,
-  );
+  const isBlockedByBusinessClosure = (startTime: string, endTime: string) =>
+    businessClosures.some((closure) => {
+      if (!closure.active || closure.date !== selectedDate) return false;
+      if (closure.allDay) return true;
+      return overlapsWindow(startTime, endTime, closure.startTime, closure.endTime);
+    });
 
-  const staffOnHoliday =
-    selectedStaffId &&
-    staffHolidays.some(
-      (holiday) =>
-        holiday.active &&
-        holiday.staffId === selectedStaffId &&
-        holiday.date === selectedDate,
+  const isBlockedByStaffHoliday = (startTime: string, endTime: string) =>
+    Boolean(
+      selectedStaffId &&
+        staffHolidays.some((holiday) => {
+          if (!holiday.active || holiday.staffId !== selectedStaffId || holiday.date !== selectedDate) return false;
+          if (holiday.allDay) return true;
+          return overlapsWindow(startTime, endTime, holiday.startTime, holiday.endTime);
+        }),
     );
 
   const rotaDay = selectedStaffRotaDays.find((day) => day.weekday === weekday);
@@ -165,6 +183,8 @@ export function buildPreferredAppointmentSlots(
         existingRequests,
       });
 
+      const businessClosed = isBlockedByBusinessClosure(time, endTime);
+      const staffOnHoliday = isBlockedByStaffHoliday(time, endTime);
       return {
         id: `generic_${selectedDate}_${index}`,
         label: time,
@@ -215,6 +235,8 @@ export function buildPreferredAppointmentSlots(
         existingRequests,
       });
 
+      const businessClosed = isBlockedByBusinessClosure(startTime, endTime);
+      const staffOnHoliday = isBlockedByStaffHoliday(startTime, endTime);
       slots.push({
         id: `${window.id}_${index}_${cursor}`,
         label: startTime,

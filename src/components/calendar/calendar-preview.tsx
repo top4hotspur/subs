@@ -49,12 +49,32 @@ export function CalendarPreview({ industrySlug, staffMembers, services }: Calend
     () =>
       listLocalCustomerRequests()
         .filter((request) => request.templateSlug === industrySlug)
-        .slice(0, 4),
+        .slice(0, 8),
     [industrySlug],
   );
 
   const activeServices = services.filter((service) => service.active);
   const activeStaff = staffMembers.filter((staff) => staff.active);
+
+  const staffingByDay = useMemo(() => {
+    const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+    const counts = days.map((day) => ({
+      day,
+      count: staffWindows.filter((window) => window.weekday === day).length,
+    }));
+    const max = Math.max(1, ...counts.map((item) => item.count));
+    return counts.map((item) => ({ ...item, width: `${Math.round((item.count / max) * 100)}%` }));
+  }, [staffWindows]);
+
+  const bookingsByStatus = useMemo(() => {
+    const map = new Map<string, number>();
+    requestItems.forEach((item) => {
+      map.set(item.status, (map.get(item.status) ?? 0) + 1);
+    });
+    const rows = Array.from(map.entries()).map(([status, count]) => ({ status, count }));
+    const max = Math.max(1, ...rows.map((row) => row.count), 1);
+    return rows.map((row) => ({ ...row, width: `${Math.round((row.count / max) * 100)}%` }));
+  }, [requestItems]);
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -107,6 +127,46 @@ export function CalendarPreview({ industrySlug, staffMembers, services }: Calend
         </article>
       </div>
 
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <article className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <h4 className="text-sm font-semibold text-slate-900">Staffing levels</h4>
+          <div className="mt-2 space-y-2">
+            {staffingByDay.map((item) => (
+              <div key={item.day}>
+                <div className="mb-1 flex items-center justify-between text-xs text-slate-700">
+                  <span>{item.day.charAt(0).toUpperCase() + item.day.slice(1)}</span>
+                  <span>{item.count}</span>
+                </div>
+                <div className="h-2 rounded bg-slate-200">
+                  <div className="h-2 rounded bg-sky-600" style={{ width: item.width }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <article className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <h4 className="text-sm font-semibold text-slate-900">Bookings</h4>
+          <div className="mt-2 space-y-2">
+            {bookingsByStatus.length === 0 ? (
+              <p className="text-xs text-slate-600">No bookings yet.</p>
+            ) : (
+              bookingsByStatus.map((item) => (
+                <div key={item.status}>
+                  <div className="mb-1 flex items-center justify-between text-xs text-slate-700">
+                    <span>{item.status.replaceAll("_", " ")}</span>
+                    <span>{item.count}</span>
+                  </div>
+                  <div className="h-2 rounded bg-slate-200">
+                    <div className="h-2 rounded bg-emerald-600" style={{ width: item.width }} />
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </article>
+      </div>
+
       <article className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
         <h4 className="text-sm font-semibold text-slate-900">Example upcoming items</h4>
         {requestItems.length === 0 ? (
@@ -129,5 +189,4 @@ export function CalendarPreview({ industrySlug, staffMembers, services }: Calend
     </section>
   );
 }
-
 

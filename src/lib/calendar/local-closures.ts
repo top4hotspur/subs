@@ -1,4 +1,4 @@
-import { BusinessClosureDate, StaffHolidayDate } from "@/lib/calendar/closure-types";
+﻿import { BusinessClosureDate, StaffHolidayDate } from "@/lib/calendar/closure-types";
 import { WebsiteTemplateSlug } from "@/lib/sites/types";
 
 function businessKey(slug: WebsiteTemplateSlug): string {
@@ -102,3 +102,4 @@ export function clearLocalClosures(industrySlug: WebsiteTemplateSlug): void {
   window.localStorage.removeItem(businessKey(industrySlug));
   window.localStorage.removeItem(staffKey(industrySlug));
 }
+

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
@@ -7,6 +7,7 @@ import { CalendarPreview } from "@/components/calendar/calendar-preview";
 import { HolidaysClosuresEditor } from "@/components/calendar/holidays-closures-editor";
 import { NotificationTemplateEditor } from "@/components/notifications/notification-template-editor";
 import { ServiceEditor } from "@/components/sites/service-editor";
+import { PaymentPolicyEditor } from "@/components/sites/payment-policy-editor";
 import { SiteSettingsSummary } from "@/components/sites/site-settings-summary";
 import { StaffEditor } from "@/components/staff/staff-editor";
 import { StaffRoleEditor } from "@/components/staff/staff-role-editor";
@@ -238,8 +239,19 @@ export default function AdminSettingsPage() {
           ) : null}
 
           {activeSection === "site" ? <SiteSettingsSummary settings={settings} /> : null}
+          {activeSection === "site" ? (
+            <div className="mt-6">
+              <PaymentPolicyEditor
+                settings={settings}
+                onChange={(next) => {
+                  setSettings(next);
+                  setStatusText("Payment/cancellation settings updated locally.");
+                }}
+              />
+            </div>
+          ) : null}
 
-          {activeSection === "services" ? <ServiceEditor services={settings.services} onChange={updateServices} /> : null}
+          {activeSection === "services" ? <ServiceEditor services={settings.services} roleDefinitions={roles} onChange={updateServices} /> : null}
 
           {activeSection === "staff" ? (
             <div className="space-y-6">
@@ -319,3 +331,4 @@ export default function AdminSettingsPage() {
     </main>
   );
 }
+

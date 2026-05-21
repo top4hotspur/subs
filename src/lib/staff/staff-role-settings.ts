@@ -1,4 +1,4 @@
-import { WebsiteTemplateSlug } from "@/lib/sites/types";
+﻿import { WebsiteTemplateSlug } from "@/lib/sites/types";
 
 export type StaffRoleDefinition = {
   id: string;
@@ -78,3 +78,4 @@ export function resetLocalStaffRoles(industrySlug: WebsiteTemplateSlug): StaffRo
   const seeded = buildSeed(industrySlug);
   return saveLocalStaffRoles(industrySlug, seeded);
 }
+

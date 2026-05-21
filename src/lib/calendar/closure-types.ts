@@ -1,4 +1,4 @@
-import { WebsiteTemplateSlug } from "@/lib/sites/types";
+﻿import { WebsiteTemplateSlug } from "@/lib/sites/types";
 
 export type BusinessClosureDate = {
   id: string;
@@ -25,3 +25,4 @@ export type StaffHolidayDate = {
   createdAtIso: string;
   updatedAtIso: string;
 };
+

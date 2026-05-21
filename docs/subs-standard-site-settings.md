@@ -19,8 +19,16 @@ Key groups:
 - services (`SiteServiceItem[]`)
 - legal (`SiteLegalSettings`)
 - notifications (`SiteNotificationSettings`)
+- payment settings (`SitePaymentSettings`)
+- cancellation policy (`SiteCancellationPolicySettings`)
 - SEO (`SiteSeoSettings`)
 - analytics (`SiteAnalyticsSettings`)
+
+## Payment and cancellation defaults
+- Card/pre-payment path is enabled by default.
+- Cash payments are optional and admin-enabled.
+- Default cancellation policy uses a 24-hour full-refund window.
+- No real payment/refund integrations are active in this local/mock phase.
 
 ## Notifications and templates
 - Email notifications are included by default.

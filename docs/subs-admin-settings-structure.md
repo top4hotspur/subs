@@ -19,3 +19,5 @@
 - Only the active section is rendered.
 - All data remains browser-local and mock-only.
 - No backend/auth/API integration is implemented.
+- Staff setup now uses business-configured role definitions.
+- Notification templates are split by channel (Email / WhatsApp).

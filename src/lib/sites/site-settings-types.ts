@@ -77,10 +77,21 @@ export type SiteServiceItem = {
   id: string;
   name: string;
   description: string;
+  basePriceGbp?: number;
   priceLabel?: string;
   durationMinutes?: number;
   bufferBeforeMinutes?: number;
   bufferAfterMinutes?: number;
+  rolePriceOverrides?: {
+    roleId?: string;
+    roleLabel: string;
+    priceGbp: number;
+  }[];
+  staffPriceOverrides?: {
+    staffId: string;
+    staffName: string;
+    priceGbp: number;
+  }[];
   category?: string;
   bookable: boolean;
   requiresQuote: boolean;
@@ -124,6 +135,20 @@ export type SiteAnalyticsSettings = {
   trackBookingConversions: boolean;
 };
 
+export type SitePaymentSettings = {
+  cardPaymentsEnabled: boolean;
+  cashPaymentsEnabled: boolean;
+  requirePrepaymentForBookings: boolean;
+  cashNoShowWarningEnabled: boolean;
+};
+
+export type SiteCancellationPolicySettings = {
+  cancellationWindowHours: number;
+  fullRefundBeforeWindow: boolean;
+  noRefundWithinWindow: boolean;
+  policyText?: string;
+};
+
 export type CustomerSiteSettings = {
   id: string;
   templateSlug: WebsiteTemplateSlug;
@@ -134,6 +159,8 @@ export type CustomerSiteSettings = {
   services: SiteServiceItem[];
   legal: SiteLegalSettings;
   notifications: SiteNotificationSettings;
+  paymentSettings: SitePaymentSettings;
+  cancellationPolicy: SiteCancellationPolicySettings;
   seo: SiteSeoSettings;
   analytics: SiteAnalyticsSettings;
   createdAtIso: string;

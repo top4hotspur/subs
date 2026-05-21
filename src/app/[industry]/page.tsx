@@ -91,6 +91,9 @@ export default async function IndustryPage({ params }: IndustryPageProps) {
               <li>I will buy my own domain and point it to you</li>
               <li>I want you to register/manage a domain for me</li>
             </ol>
+            <Link href={`/${template.slug}/policy`} className="mt-3 inline-flex text-sm font-medium text-sky-700 hover:text-sky-900">
+              View standard policy page
+            </Link>
           </SiteCard>
           <SiteCard title="What happens next" subtitle="Simple managed onboarding process.">
             <ol className="list-decimal space-y-2 pl-5 text-sm text-slate-600">

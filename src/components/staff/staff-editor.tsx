@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { SiteServiceItem } from "@/lib/sites/site-settings-types";
 import { StaffRoleDefinition } from "@/lib/staff/staff-role-settings";
@@ -13,7 +13,7 @@ import {
   primaryButtonClass,
   secondaryButtonClass,
 } from "@/lib/ui/button-styles";
-import { staffAvailabilityModeLabel, staffRoleLabel } from "@/lib/ui/display-labels";
+import { staffRoleLabel } from "@/lib/ui/display-labels";
 
 type StaffEditorProps = {
   staff: StaffMember[];
@@ -23,7 +23,7 @@ type StaffEditorProps = {
 };
 
 const allRoles = Object.values(StaffRoleType);
-const allAvailabilityModes = Object.values(StaffAvailabilityMode);
+
 
 function emptyStaff(): StaffMember {
   const now = new Date().toISOString();
@@ -125,12 +125,15 @@ export function StaffEditor({ staff, services, roleDefinitions, onChange }: Staf
                     updateMember(member.id, { role: platformRole, roleLabel: selected });
                   }}
                 >
-                  {activeRoleDefs.map((role) => (
-                    <option key={role.id} value={role.label}>{role.label}</option>
-                  ))}
-                  {allRoles.map((role) => (
-                    <option key={role} value={role}>{staffRoleLabel(role)}</option>
-                  ))}
+                  {activeRoleDefs.length > 0 ? (
+                    activeRoleDefs.map((role) => (
+                      <option key={role.id} value={role.label}>{role.label}</option>
+                    ))
+                  ) : (
+                    Object.values(StaffRoleType).map((role) => (
+                      <option key={role} value={role}>{staffRoleLabel(role)}</option>
+                    ))
+                  )}
                 </select>
               </label>
               <label className="text-sm font-medium text-slate-700 sm:col-span-2">
@@ -157,24 +160,9 @@ export function StaffEditor({ staff, services, roleDefinitions, onChange }: Staf
                   onChange={(event) => updateMember(member.id, { phone: event.target.value })}
                 />
               </label>
-              <label className="text-sm font-medium text-slate-700 sm:col-span-2">
-                Availability
-                <select
-                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-                  value={member.availabilityMode}
-                  onChange={(event) =>
-                    updateMember(member.id, {
-                      availabilityMode: event.target.value as StaffAvailabilityMode,
-                    })
-                  }
-                >
-                  {allAvailabilityModes.map((mode) => (
-                    <option key={mode} value={mode}>
-                      {staffAvailabilityModeLabel(mode)}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <p className="text-xs text-slate-500 sm:col-span-2">
+                Working hours, breaks and holidays are managed in Availability & scheduling / Staff rota & breaks.
+              </p>
               <label className="text-sm font-medium text-slate-700 sm:col-span-2">
                 Bio
                 <textarea
@@ -261,3 +249,4 @@ export function StaffEditor({ staff, services, roleDefinitions, onChange }: Staf
     </section>
   );
 }
+

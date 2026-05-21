@@ -83,8 +83,13 @@ export function buildDefaultCustomerSiteSettings(template: WebsiteTemplate): Cus
       id: service.id,
       name: service.name,
       description: service.description ?? `Professional ${service.name.toLowerCase()} service.`,
+      basePriceGbp: undefined,
       priceLabel: service.priceLabel,
       durationMinutes: undefined,
+      bufferBeforeMinutes: undefined,
+      bufferAfterMinutes: undefined,
+      rolePriceOverrides: [],
+      staffPriceOverrides: [],
       category: template.category,
       bookable: true,
       requiresQuote: /quote|consultation/i.test(template.defaultConfig.ctaLabel),
@@ -105,6 +110,19 @@ export function buildDefaultCustomerSiteSettings(template: WebsiteTemplate): Cus
       bookingReminderEnabled: true,
       completionMessageEnabled: true,
       reviewRequestEnabled: true,
+    },
+    paymentSettings: {
+      cardPaymentsEnabled: true,
+      cashPaymentsEnabled: false,
+      requirePrepaymentForBookings: true,
+      cashNoShowWarningEnabled: true,
+    },
+    cancellationPolicy: {
+      cancellationWindowHours: 24,
+      fullRefundBeforeWindow: true,
+      noRefundWithinWindow: true,
+      policyText:
+        "Bookings can be cancelled up to 24 hours in advance for a full refund. No refund is available after this notice period.",
     },
     seo: {
       title: `${template.defaultConfig.businessName} | ${template.category}`,

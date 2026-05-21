@@ -8,6 +8,9 @@ Current implementation is local/mock and browser-only.
 `SiteServiceItem` fields:
 - `id`, `name`, `description`
 - `priceLabel`, `durationMinutes`, `bufferAfterMinutes`, `bufferBeforeMinutes`, `category`
+- `basePriceGbp`
+- `rolePriceOverrides[]`
+- `staffPriceOverrides[]` (placeholder/local)
 - `bookable`, `requiresQuote`, `active`
 
 File:
@@ -24,6 +27,8 @@ Helper:
 - service CRUD and activation
 - staff linking to services
 - availability editing for scheduling context
+- base-price entry and role-level price overrides
+- copy-base-price-to-roles workflow
 
 ## Availability/scheduling link
 Service durations and optional post-service buffer time now provide structure for future slot logic.
@@ -34,6 +39,11 @@ Availability keys:
 
 ## Request form integration
 Customer request form uses active locally-edited services first, then falls back to template defaults.
+
+## Public price display behavior
+- If role/staff pricing varies: show `From £x`
+- If pricing is uniform: show exact `£x`
+- If `requiresQuote` is enabled: show `Quote required`
 
 ## Not built yet
 - real payments/Stripe

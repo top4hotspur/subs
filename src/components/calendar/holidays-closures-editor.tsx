@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import { BusinessClosureDate, StaffHolidayDate } from "@/lib/calendar/closure-types";
@@ -164,6 +164,18 @@ export function HolidaysClosuresEditor({ industrySlug, staffMembers }: Props) {
               const next = staffHolidays.filter((h) => h.id !== item.id);
               setStaffHolidays(saveLocalStaffHolidays(industrySlug, next));
             }}>Remove</button>
+            {!item.allDay ? (
+              <>
+                <input type="time" className="rounded-md border border-slate-300 px-2 py-1 text-xs" value={item.startTime ?? ""} onChange={(e) => {
+                  const next = staffHolidays.map((h) => h.id === item.id ? { ...h, startTime: e.target.value, updatedAtIso: new Date().toISOString() } : h);
+                  setStaffHolidays(saveLocalStaffHolidays(industrySlug, next));
+                }} />
+                <input type="time" className="rounded-md border border-slate-300 px-2 py-1 text-xs" value={item.endTime ?? ""} onChange={(e) => {
+                  const next = staffHolidays.map((h) => h.id === item.id ? { ...h, endTime: e.target.value, updatedAtIso: new Date().toISOString() } : h);
+                  setStaffHolidays(saveLocalStaffHolidays(industrySlug, next));
+                }} />
+              </>
+            ) : null}
             {item.date ? <p className="text-xs text-slate-500 sm:col-span-6">{staffMap.get(item.staffId) ?? "Staff"}: {formatUkDate(item.date)}</p> : null}
           </div>
         ))}
@@ -171,3 +183,4 @@ export function HolidaysClosuresEditor({ industrySlug, staffMembers }: Props) {
     </section>
   );
 }
+
