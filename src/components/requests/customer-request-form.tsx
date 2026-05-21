@@ -27,6 +27,13 @@ import {
   getAppointmentStaffLabel,
 } from "@/lib/requests/appointment-industries";
 import {
+  flexibleJobAddressLabel,
+  flexibleJobFrequencyOptions,
+  flexibleJobHeading,
+  flexibleJobServiceLabel,
+  isFlexibleJobIndustry,
+} from "@/lib/requests/flexible-job-industries";
+import {
   getDefaultLocationTypeForIndustry,
   getDefaultRequestKindForIndustry,
   getRequestActionLabelForIndustry,
@@ -100,6 +107,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
   const actionLabel = getRequestActionLabelForIndustry(templateSlug);
   const suggestions = getSuggestedRequestFieldsForIndustry(templateSlug).join(", ");
   const appointmentStyle = isAppointmentStyleIndustry(templateSlug);
+  const flexibleJobStyle = isFlexibleJobIndustry(templateSlug);
   const customerSelectableByDefault = shouldCustomersSelectStaffByDefault(templateSlug);
   const pricingStatusLabel = customerRequestPricingStatusLabel(
     requestKind === CustomerRequestKind.BOOKING_REQUEST
@@ -111,6 +119,10 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
     : "Preferred staff member (optional)";
   const appointmentHeading = getAppointmentActionHeading(templateSlug);
   const appointmentServiceLabel = getAppointmentServiceLabel(templateSlug);
+  const flexibleHeading = flexibleJobHeading(templateSlug);
+  const flexibleServiceLabel = flexibleJobServiceLabel(templateSlug);
+  const flexibleAddressLabel = flexibleJobAddressLabel(templateSlug);
+  const frequencyOptions = flexibleJobFrequencyOptions(templateSlug);
   const isDogGrooming = templateSlug === "dog-grooming";
 
   const [form, setForm] = useState({
@@ -124,6 +136,12 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
     pickupAddress: "",
     destinationAddress: "",
     preferredStaffId: "",
+    frequency: "",
+    propertyType: "",
+    accessNotes: "",
+    preferredVisitWindow: "",
+    photoNotes: "",
+    vehicleDetails: "",
     petName: "",
     petBreed: "",
     dogSize: "",
@@ -203,7 +221,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
   return (
     <section className="rounded-xl border border-slate-200 bg-slate-50 p-4">
       <h3 className="text-sm font-semibold text-slate-900">
-        {appointmentStyle ? appointmentHeading : "Example customer request"}
+        {appointmentStyle ? appointmentHeading : flexibleJobStyle ? flexibleHeading : "Example customer request"}
       </h3>
       <p className="mt-1 text-xs text-slate-600">
         {actionLabel}. Suggested fields: {suggestions}.
@@ -215,6 +233,11 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
       {appointmentStyle ? (
         <p className="mt-1 text-xs text-slate-600">
           Choose a preferred time. The business will confirm availability.
+        </p>
+      ) : null}
+      {flexibleJobStyle ? (
+        <p className="mt-1 text-xs text-slate-600">
+          Add a preferred date or visit window. The business will confirm the final schedule.
         </p>
       ) : null}
       {templateSlug === "beauticians" ? (
@@ -264,8 +287,8 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
         className="mt-3 grid gap-2 sm:grid-cols-2"
         onSubmit={(event) => {
           event.preventDefault();
-          if (!form.customerName || !form.customerEmail || !form.customerPhone) {
-            setError("Name, email, and phone are required.");
+          if (!form.customerName || (!form.customerEmail && !form.customerPhone)) {
+            setError("Name and either email or phone are required.");
             return;
           }
           if (appointmentStyle && (!form.serviceId || !form.preferredDate || !form.preferredTime)) {
@@ -278,6 +301,18 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
           }
           if (locationType === CustomerRequestLocationType.CUSTOMER_ADDRESS && !form.customerAddress) {
             setError("Address is required for this request type.");
+            return;
+          }
+          if (flexibleJobStyle && !form.serviceId) {
+            setError("Service is required for this request type.");
+            return;
+          }
+          if (flexibleJobStyle && !form.customerAddress) {
+            setError("Address/location is required for this request type.");
+            return;
+          }
+          if (flexibleJobStyle && !form.preferredDate && !form.preferredVisitWindow) {
+            setError("Add a preferred date or preferred visit window.");
             return;
           }
 
@@ -301,6 +336,12 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
             destinationAddress: form.destinationAddress || undefined,
             notes: form.notes || undefined,
             extraDetails: dogExtraDetails,
+            frequency: flexibleJobStyle ? form.frequency || undefined : undefined,
+            propertyType: flexibleJobStyle ? form.propertyType || undefined : undefined,
+            accessNotes: flexibleJobStyle ? form.accessNotes || undefined : undefined,
+            preferredVisitWindow: flexibleJobStyle ? form.preferredVisitWindow || undefined : undefined,
+            photoNotes: flexibleJobStyle ? form.photoNotes || undefined : undefined,
+            vehicleDetails: flexibleJobStyle ? form.vehicleDetails || undefined : undefined,
             preferredStaffId: selectedStaffMember?.id,
             preferredStaffName: selectedStaffMember?.displayName,
             communicationChannels: [CustomerRequestCommunicationChannel.EMAIL],
@@ -313,7 +354,9 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
         <input className="rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="Customer email" value={form.customerEmail} onChange={(event) => setForm((c) => ({ ...c, customerEmail: event.target.value }))} />
         <input className="rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="Customer phone" value={form.customerPhone} onChange={(event) => setForm((c) => ({ ...c, customerPhone: event.target.value }))} />
         <select className="rounded-md border border-slate-300 px-2 py-1 text-sm" value={form.serviceId} onChange={(event) => setForm((c) => ({ ...c, serviceId: event.target.value }))}>
-          <option value="">{appointmentStyle ? appointmentServiceLabel : "Select service"}</option>
+          <option value="">
+            {appointmentStyle ? appointmentServiceLabel : flexibleJobStyle ? flexibleServiceLabel : "Select service"}
+          </option>
           {effectiveServices.map((service) => (
             <option key={service.id} value={service.id}>{service.name}</option>
           ))}
@@ -395,7 +438,59 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
         ) : null}
 
         {locationType === CustomerRequestLocationType.CUSTOMER_ADDRESS ? (
-          <input className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2" placeholder="Service address" value={form.customerAddress} onChange={(event) => setForm((c) => ({ ...c, customerAddress: event.target.value }))} />
+          <input className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2" placeholder={flexibleJobStyle ? flexibleAddressLabel : "Service address"} value={form.customerAddress} onChange={(event) => setForm((c) => ({ ...c, customerAddress: event.target.value }))} />
+        ) : null}
+
+        {flexibleJobStyle ? (
+          <>
+            <select
+              className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+              value={form.frequency}
+              onChange={(event) => setForm((c) => ({ ...c, frequency: event.target.value }))}
+            >
+              <option value="">Frequency (optional)</option>
+              {frequencyOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+            <input
+              className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+              placeholder="Preferred visit window (optional)"
+              value={form.preferredVisitWindow}
+              onChange={(event) => setForm((c) => ({ ...c, preferredVisitWindow: event.target.value }))}
+            />
+            <input
+              className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+              placeholder="Property type (optional)"
+              value={form.propertyType}
+              onChange={(event) => setForm((c) => ({ ...c, propertyType: event.target.value }))}
+            />
+            {templateSlug === "mobile-valeting" ? (
+              <input
+                className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+                placeholder="Vehicle details (optional)"
+                value={form.vehicleDetails}
+                onChange={(event) => setForm((c) => ({ ...c, vehicleDetails: event.target.value }))}
+              />
+            ) : null}
+            <input
+              className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2"
+              placeholder="Access notes (optional)"
+              value={form.accessNotes}
+              onChange={(event) => setForm((c) => ({ ...c, accessNotes: event.target.value }))}
+            />
+            <input
+              className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2"
+              placeholder="Photo notes (optional)"
+              value={form.photoNotes}
+              onChange={(event) => setForm((c) => ({ ...c, photoNotes: event.target.value }))}
+            />
+            <p className="text-xs text-slate-600 sm:col-span-2">
+              Photo upload will be supported later; describe anything useful for now.
+            </p>
+          </>
         ) : null}
 
         {isDogGrooming ? (

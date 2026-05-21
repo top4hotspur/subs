@@ -66,6 +66,12 @@ export type CustomerRequest = {
   destinationAddress?: string;
   notes?: string;
   extraDetails?: Record<string, string>;
+  frequency?: string;
+  propertyType?: string;
+  accessNotes?: string;
+  preferredVisitWindow?: string;
+  photoNotes?: string;
+  vehicleDetails?: string;
   preferredStaffId?: string;
   preferredStaffName?: string;
   assignedStaffId?: string;

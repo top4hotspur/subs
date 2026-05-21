@@ -1,4 +1,4 @@
-﻿# Subs Customer Request Model
+# Subs Customer Request Model
 
 ## Purpose
 Shared enquiry/booking/job model across industries with local mock persistence.
@@ -47,4 +47,15 @@ No real messaging/delivery is implemented.
 - Matching uses customer email first, then phone, then name as fallback.
 - Booking history is derived from the same local request set.
 - This is local-only preview behavior and not production-grade CRM persistence.
+
+
+
+## Flexible job fields (local mock)
+For window-cleaning, cleaners, gardeners, and mobile-valeting, requests can include:
+- frequency
+- propertyType
+- accessNotes
+- preferredVisitWindow
+- photoNotes
+- vehicleDetails
 

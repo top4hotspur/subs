@@ -73,3 +73,10 @@ Each industry now has a standard policy placeholder route at `/<industry>/policy
 - Admin can inspect any custom date outside the visible 30-day window.
 - This remains browser-local mock data only (no backend calendar sync, no conflict locking guarantees).
 
+
+
+## Flexible job workflow (local mock)
+- Window cleaning, cleaners, gardeners, and mobile valeting now use a shared flexible job/quote request flow.
+- Requests capture address/location, preferred date/window, frequency, and optional access/property/vehicle/photo notes.
+- Admin queue includes a flexible-job specific review block for these industries.
+

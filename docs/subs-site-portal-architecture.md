@@ -54,3 +54,9 @@ Move to DB/API/auth:
 - Future architecture should move this logic to backend analytics services with tenant-scoped data access
 
 
+
+
+## Flexible job architecture note
+- Flexible-job industries share one request model with optional job-context fields instead of separate per-industry schemas.
+- Future backend work should add quote lifecycle state, route planning, and workload/capacity controls on top of this shared model.
+

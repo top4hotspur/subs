@@ -16,6 +16,7 @@ import {
   updateLocalCustomerRequestStatus,
 } from "@/lib/requests/local-customer-requests";
 import { isAppointmentStyleIndustry } from "@/lib/requests/appointment-industries";
+import { flexibleJobAdminLabel, isFlexibleJobIndustry } from "@/lib/requests/flexible-job-industries";
 import {
   CustomerRequest,
   CustomerRequestStatus,
@@ -425,6 +426,26 @@ export default function AdminPage() {
                           {request.extraDetails.temperamentNotes ? ` | Notes: ${request.extraDetails.temperamentNotes}` : ""}
                         </p>
                       ) : null}
+                    </div>
+                  ) : null}
+                  {requestSlug && isFlexibleJobIndustry(requestSlug) ? (
+                    <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                      <p className="font-semibold text-slate-900">{flexibleJobAdminLabel(requestSlug)}</p>
+                      <p className="mt-1">
+                        Service: {request.serviceName || "TBC"} | Address/location: {request.customerAddress || "TBC"}
+                      </p>
+                      <p className="mt-1">
+                        Frequency: {request.frequency || "Not set"} | Preferred date: {request.preferredDate || "TBC"} | Visit window: {request.preferredVisitWindow || "Not set"}
+                      </p>
+                      <p className="mt-1">
+                        Property type: {request.propertyType || "Not set"} | Vehicle details: {request.vehicleDetails || "N/A"}
+                      </p>
+                      <p className="mt-1">
+                        Access notes: {request.accessNotes || "None"} | Photo notes: {request.photoNotes || "None"}
+                      </p>
+                      <p className="mt-1">
+                        Assigned staff: {formatOptional(request.assignedStaffName, "Unassigned")}
+                      </p>
                     </div>
                   ) : null}
                   <p className="mt-2 text-xs text-slate-600">{customerRequestStatusDescription(request.status)}</p>

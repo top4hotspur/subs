@@ -276,10 +276,10 @@ export const websiteTemplates: Record<WebsiteTemplate["slug"], WebsiteTemplate> 
         "Promote your service coverage, reliability, and repeat-clean options.",
       ctaLabel: "Request a Quote",
       services: [
-        { id: "residential", name: "Residential window cleaning" },
-        { id: "commercial", name: "Commercial contracts" },
-        { id: "gutter", name: "Gutter and fascia cleaning" },
-        { id: "solar", name: "Solar panel cleaning" },
+        { id: "standard-window", name: "Standard window clean" },
+        { id: "conservatory", name: "Conservatory clean" },
+        { id: "gutter-fascia", name: "Gutter/fascia clean" },
+        { id: "regular-round", name: "Regular round" },
       ],
       openingHours: { summary: "Mon-Fri: 8:00-18:00, Sat: 8:00-14:00" },
       contact: {
@@ -402,10 +402,10 @@ export const websiteTemplates: Record<WebsiteTemplate["slug"], WebsiteTemplate> 
         "Promote your package options, local availability, and high-quality detailing.",
       ctaLabel: "Get Valeting Quote",
       services: [
-        { id: "mini", name: "Mini valet package" },
-        { id: "full", name: "Full valet package" },
-        { id: "detail", name: "Interior deep clean" },
-        { id: "ceramic", name: "Ceramic protection add-on" },
+        { id: "mini-valet", name: "Mini valet" },
+        { id: "full-valet", name: "Full valet" },
+        { id: "interior-clean", name: "Interior clean" },
+        { id: "exterior-wash", name: "Exterior wash" },
       ],
       openingHours: { summary: "Mon-Sat: 8:00-18:00" },
       contact: {
@@ -444,10 +444,10 @@ export const websiteTemplates: Record<WebsiteTemplate["slug"], WebsiteTemplate> 
         "Showcase your cleaning packages and win consistent local contracts.",
       ctaLabel: "Request Cleaning Quote",
       services: [
-        { id: "domestic", name: "Domestic regular cleans" },
-        { id: "deep", name: "Deep cleaning visits" },
-        { id: "end", name: "End-of-tenancy cleaning" },
-        { id: "commercial", name: "Commercial office cleaning" },
+        { id: "regular-clean", name: "Regular clean" },
+        { id: "deep-clean", name: "Deep clean" },
+        { id: "end-tenancy", name: "End-of-tenancy clean" },
+        { id: "one-off-clean", name: "One-off clean" },
       ],
       openingHours: { summary: "Mon-Sat: 7:30-18:30" },
       contact: {
@@ -486,10 +486,10 @@ export const websiteTemplates: Record<WebsiteTemplate["slug"], WebsiteTemplate> 
         "Position your business for ongoing garden care clients and larger landscaping projects.",
       ctaLabel: "Book Garden Visit",
       services: [
-        { id: "maintenance", name: "Regular garden maintenance" },
-        { id: "hedge", name: "Hedge and shrub trimming" },
-        { id: "lawn", name: "Lawn treatment and care" },
-        { id: "landscape", name: "Landscaping and redesign projects" },
+        { id: "lawn-cutting", name: "Lawn cutting" },
+        { id: "hedge-trimming", name: "Hedge trimming" },
+        { id: "garden-tidy", name: "Garden tidy" },
+        { id: "regular-maintenance", name: "Regular maintenance" },
       ],
       openingHours: { summary: "Mon-Fri: 8:00-17:30, Sat: 8:00-13:00" },
       contact: {
