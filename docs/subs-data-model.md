@@ -1,4 +1,4 @@
-﻿# Subs Data Model
+# Subs Data Model
 
 ## Core domains
 - Templates: static industry template catalogue (`WebsiteTemplate`)
@@ -36,4 +36,11 @@ Current persistence is intentionally browser-only mock storage.
 ## Local Analytics and Financials Preview
 - Added browser-only analytics types and local summary builder under src/lib/analytics
 - Metrics are derived from local requests, services, and staff data (no API/database)n- Income values are estimates only and should not be treated as accounting records
+
+
+
+## Local CRM
+- Customer CRM model is browser-local and available at /admin/crm.
+- Matching priority: email, then phone, then name.
+- Source keys: subs-customer-requests and subs-crm-customers.
 

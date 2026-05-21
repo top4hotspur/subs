@@ -57,6 +57,7 @@ User-facing date displays are standardized to UK format (`dd/mm/yyyy` or `dd/mm/
 Each industry now has a standard policy placeholder route at `/<industry>/policy` covering payment options, cancellation/refund wording, and communication notes.
 
 ## Local CRM and notification-provider metadata
-- `/admin` includes a local CRM panel built from local request data.
+- `/admin/crm includes a dedicated local CRM panel built from local request data.
 - Notification templates include local provider metadata placeholders for a future Twilio sync path.
 - No provider sync or message sending is implemented.
+

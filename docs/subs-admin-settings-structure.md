@@ -22,4 +22,5 @@
 - Staff setup now uses business-configured role definitions.
 - Notification templates are split by channel (Email / WhatsApp).
 - Calendar preview now includes hourly staffing, 14-day forecast, and a long-term day-grid toggle.
-- CRM is available in `/admin` as a local customer panel built from local requests.
+- CRM is available in `/admin/crm` as a dedicated local customer panel built from local requests.
+

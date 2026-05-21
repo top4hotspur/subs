@@ -1,4 +1,5 @@
-﻿import { CustomerRequest } from "@/lib/requests/request-types";
+import { CustomerBookingHistoryItem, CustomerRecord } from "@/lib/crm/customer-types";
+import { CustomerRequest } from "@/lib/requests/request-types";
 import { LocalSetupRequest } from "@/lib/sites/types";
 
 export function escapeCsvValue(value: unknown): string {
@@ -86,6 +87,58 @@ export function setupRequestsToCsv(requests: LocalSetupRequest[]): string {
     request.contactEmail ?? "",
     request.contactPhone ?? "",
     request.notes ?? "",
+  ]);
+
+  return rowsToCsv(headers, rows);
+}
+
+export function crmCustomersToCsv(customers: CustomerRecord[]): string {
+  const headers = [
+    "name",
+    "email",
+    "phone",
+    "total_bookings",
+    "total_completed_bookings",
+    "last_booking_at",
+    "tags",
+    "notes",
+  ];
+
+  const rows = customers.map((customer) => [
+    customer.name,
+    customer.email,
+    customer.phone,
+    customer.totalBookings,
+    customer.totalCompletedBookings,
+    customer.lastBookingAtIso ?? "",
+    customer.tags.join(" | "),
+    customer.notes ?? "",
+  ]);
+
+  return rowsToCsv(headers, rows);
+}
+
+export function customerHistoryToCsv(history: CustomerBookingHistoryItem[]): string {
+  const headers = [
+    "request_id",
+    "industry",
+    "service_name",
+    "status",
+    "preferred_date",
+    "preferred_time",
+    "final_price_gbp",
+    "created_at",
+  ];
+
+  const rows = history.map((item) => [
+    item.requestId,
+    item.industrySlug,
+    item.serviceName ?? "",
+    item.status,
+    item.preferredDate ?? "",
+    item.preferredTime ?? "",
+    item.finalPriceGbp ?? "",
+    item.createdAtIso,
   ]);
 
   return rowsToCsv(headers, rows);

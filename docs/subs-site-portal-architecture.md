@@ -1,4 +1,4 @@
-﻿# Subs Site Portal Architecture (Future)
+# Subs Site Portal Architecture (Future)
 
 ## Two-layer site model
 ### Customer/user layer
@@ -21,7 +21,7 @@
 - availability/calendar window editor
 - request/job queue + assignment + status updates
 - notification template editor + preview
-- local CRM panel from request history
+- dedicated local CRM page (/admin/crm) from request history
 - staffing forecast views (hourly + 14-day + long-term day grid)
 
 All of the above are localStorage-only.
@@ -52,4 +52,5 @@ Move to DB/API/auth:
 - The admin layer now includes a local analytics/financial preview built from browser-stored requests/services/staff
 - No external analytics provider, accounting connector, or payment settlement integration exists yet
 - Future architecture should move this logic to backend analytics services with tenant-scoped data access
+
 

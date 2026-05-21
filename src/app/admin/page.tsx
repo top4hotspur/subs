@@ -41,9 +41,7 @@ import { getWebsiteTemplate } from "@/lib/sites/mock-repository";
 import { getLocalCustomerSiteSettings } from "@/lib/sites/local-site-settings";
 import { SetupStatusBadge } from "@/components/setup/setup-status-badge";
 import { RequestStatusBadge } from "@/components/requests/request-status-badge";
-import { CustomerCrmPanel } from "@/components/crm/customer-crm-panel";
-import { buildCustomersFromLocalRequests, listLocalCustomers } from "@/lib/crm/local-customers";
-import { CustomerRecord } from "@/lib/crm/customer-types";
+import { listLocalCustomers } from "@/lib/crm/local-customers";
 import {
   dangerButtonClass,
   outlineButtonClass,
@@ -90,7 +88,6 @@ export default function AdminPage() {
   const [customerRequests, setCustomerRequests] = useState<CustomerRequest[]>(() => listLocalCustomerRequests());
   const [staffInputs, setStaffInputs] = useState<Record<string, string>>({});
   const [analyticsIndustryFilter, setAnalyticsIndustryFilter] = useState<"ALL" | WebsiteTemplateSlug>("ALL");
-  const [customers, setCustomers] = useState<CustomerRecord[]>(() => listLocalCustomers());
 
   function refreshSetup(): void {
     setSetupRequests(listLocalSetupRequests());
@@ -108,10 +105,6 @@ export default function AdminPage() {
   function setCustomerStatus(id: string, status: CustomerRequestStatus): void {
     updateLocalCustomerRequestStatus(id, status);
     refreshCustomer();
-  }
-
-  function refreshCustomers(): void {
-    setCustomers(listLocalCustomers());
   }
 
   const staffByIndustry = useMemo<Record<WebsiteTemplateSlug, StaffMember[]>>(() => {
@@ -180,6 +173,8 @@ export default function AdminPage() {
     return Array.from(deduped.values());
   }, [analyticsIndustryFilter]);
 
+  const crmCustomerCount = listLocalCustomers().length;
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
       <h1 className="text-3xl font-bold text-slate-900">Mock Admin Portal</h1>
@@ -187,6 +182,11 @@ export default function AdminPage() {
       <div className="mt-3">
         <Link href="/admin/settings" className="text-sm font-medium text-sky-700 hover:text-sky-900">
           Open mock settings editor
+        </Link>
+      </div>
+      <div className="mt-2">
+        <Link href="/admin/crm" className="text-sm font-medium text-sky-700 hover:text-sky-900">
+          Open mock CRM
         </Link>
       </div>
 
@@ -197,6 +197,21 @@ export default function AdminPage() {
           page/section visibility, About/Terms/Privacy/Cookie content, services and pricing, notification settings,
           analytics, and later financial/income settings.
         </p>
+      </section>
+
+      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-900">Customer CRM</h2>
+        <p className="mt-2 text-sm text-slate-600">
+          Local CRM records are now in a dedicated page to keep this dashboard focused on queues and analytics.
+        </p>
+        <p className="mt-2 text-sm text-slate-700">
+          Current local customers: <span className="font-semibold">{crmCustomerCount}</span>
+        </p>
+        <div className="mt-3">
+          <Link href="/admin/crm" className={`${primaryButtonClass} ${smallButtonClass}`}>
+            Open CRM
+          </Link>
+        </div>
       </section>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -501,18 +516,6 @@ export default function AdminPage() {
             })}
           </div>
         )}
-      </section>
-
-      <section className="mt-8">
-        <CustomerCrmPanel
-          customers={customers}
-          requests={customerRequests}
-          onRefresh={refreshCustomers}
-          onBuildFromRequests={() => {
-            buildCustomersFromLocalRequests(customerRequests);
-            refreshCustomers();
-          }}
-        />
       </section>
     </main>
   );
