@@ -326,3 +326,24 @@ This sequence delivers real value early while minimizing migration risk.
 - Added setup persistence validation schemas at `src/lib/setup/setup-request-schema.ts`.
 - Added `.env.example` placeholder for `DATABASE_URL` and future auth envs.
 - No setup form, API route, or auth wiring has been implemented in Task 1.
+
+## Task 2 implementation status
+- Added repository module: `src/lib/setup/setup-request-repository.ts`.
+- Added repository operations:
+  - `createSetupRequest`
+  - `getSetupRequestById`
+  - `listSetupRequests`
+  - `updateSetupRequestStatus`
+  - `createSetupRequestEvent`
+  - `createDemoDraftSnapshot`
+  - `attachDemoDraftSnapshotToSetupRequest`
+- Expanded Zod validation schemas in `src/lib/setup/setup-request-schema.ts`:
+  - `createSetupRequestSchema`
+  - `updateSetupRequestStatusSchema`
+  - `listSetupRequestsSchema`
+  - `createDemoDraftSnapshotSchema`
+  - `createSetupRequestEventSchema`
+- Added inferred type exports in `src/lib/setup/setup-request-types.ts`.
+- Repository validates inputs with Zod and throws clear validation errors.
+- No API routes or UI wiring added in Task 2.
+- No migrations or DB provisioning performed.

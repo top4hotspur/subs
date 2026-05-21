@@ -1,30 +1,56 @@
 import { z } from "zod";
 
+const cuidString = z.string().cuid();
+const nonEmpty = z.string().trim().min(1);
+const jsonValue = z.unknown();
+
 export const createSetupRequestSchema = z.object({
-  tenantSiteId: z.string().cuid().optional(),
-  demoDraftSnapshotId: z.string().cuid().optional(),
-  industrySlug: z.string().min(1),
-  businessName: z.string().min(1),
-  contactName: z.string().min(1).optional(),
+  tenantSiteId: cuidString.optional(),
+  demoDraftSnapshotId: cuidString.optional(),
+  industrySlug: nonEmpty,
+  businessName: nonEmpty,
+  contactName: nonEmpty.optional(),
   contactEmail: z.string().email().optional(),
-  contactPhone: z.string().min(3).optional(),
-  domainOption: z.string().min(1),
-  existingDomain: z.string().min(1).optional(),
-  desiredDomain: z.string().min(1).optional(),
-  communicationOption: z.string().min(1),
+  contactPhone: z.string().trim().min(3).optional(),
+  domainOption: nonEmpty,
+  existingDomain: nonEmpty.optional(),
+  desiredDomain: nonEmpty.optional(),
+  communicationOption: nonEmpty,
   setupTotalGbp: z.number().int().nonnegative(),
   monthlyTotalGbp: z.number().int().nonnegative(),
-  status: z.string().min(1),
+  status: nonEmpty,
   notes: z.string().optional(),
-  rawPayload: z.record(z.string(), z.unknown()).or(z.array(z.unknown())).optional(),
+  rawPayload: jsonValue.optional(),
 });
 
 export const updateSetupRequestStatusSchema = z.object({
-  setupRequestId: z.string().cuid(),
-  status: z.string().min(1),
+  setupRequestId: cuidString,
+  status: nonEmpty,
   message: z.string().optional(),
-  metadata: z.record(z.string(), z.unknown()).or(z.array(z.unknown())).optional(),
+  metadata: jsonValue.optional(),
 });
 
-export type CreateSetupRequestInput = z.infer<typeof createSetupRequestSchema>;
-export type UpdateSetupRequestStatusInput = z.infer<typeof updateSetupRequestStatusSchema>;
+export const listSetupRequestsSchema = z.object({
+  tenantSiteId: cuidString.optional(),
+  industrySlug: nonEmpty.optional(),
+  status: nonEmpty.optional(),
+  contactEmail: z.string().email().optional(),
+  take: z.number().int().min(1).max(200).optional().default(50),
+  skip: z.number().int().min(0).optional().default(0),
+});
+
+export const createDemoDraftSnapshotSchema = z.object({
+  tenantSiteId: cuidString.optional(),
+  setupRequestId: cuidString.optional(),
+  templateSlug: nonEmpty,
+  draftName: z.string().trim().min(1).optional(),
+  draftJson: jsonValue,
+  source: z.string().trim().min(1).optional(),
+});
+
+export const createSetupRequestEventSchema = z.object({
+  setupRequestId: cuidString,
+  eventType: nonEmpty,
+  message: z.string().optional(),
+  metadata: jsonValue.optional(),
+});
