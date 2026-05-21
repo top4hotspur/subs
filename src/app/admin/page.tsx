@@ -8,6 +8,7 @@ import {
   updateLocalSetupRequestStatus,
 } from "@/lib/setup/local-setup-requests";
 import { LocalAnalyticsDashboard } from "@/components/analytics/local-analytics-dashboard";
+import { StaffAssistedBookingForm } from "@/components/admin/staff-assisted-booking-form";
 import { isSlotBlockedByExistingRequest } from "@/lib/calendar/local-appointment-conflicts";
 import {
   assignLocalCustomerRequestStaff,
@@ -335,6 +336,10 @@ export default function AdminPage() {
         />
       </section>
 
+      <section className="mt-8">
+        <StaffAssistedBookingForm onCreated={refreshCustomer} />
+      </section>
+
       <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-semibold text-slate-900">Mock customer requests/jobs</h2>
@@ -400,6 +405,18 @@ export default function AdminPage() {
                     <p><span className="font-semibold">Preferred date/time:</span> {formatDateTime(request.preferredDate, request.preferredTime)}</p>
                     <p><span className="font-semibold">Preferred staff:</span> {formatOptional(request.preferredStaffName)}</p>
                     <p><span className="font-semibold">Assigned staff:</span> {request.assignedStaffName || "Unassigned"}</p>
+                    {request.createdByStaff ? (
+                      <p><span className="font-semibold">Created by:</span> Staff-assisted booking</p>
+                    ) : null}
+                    {request.customerRegistrationRequired ? (
+                      <p><span className="font-semibold">Registration:</span> Required</p>
+                    ) : null}
+                    {request.paymentRequired ? (
+                      <p><span className="font-semibold">Payment:</span> Required</p>
+                    ) : null}
+                    {request.mockRegistrationPaymentLink ? (
+                      <p className="sm:col-span-2"><span className="font-semibold">Mock registration/payment link:</span> {request.mockRegistrationPaymentLink}</p>
+                    ) : null}
                     {request.assignedStaffName ? (
                       <p><span className="font-semibold">Schedule note:</span> {request.assignedStaffName} is currently assigned.</p>
                     ) : null}

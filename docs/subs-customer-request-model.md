@@ -70,3 +70,14 @@ Taxi/private-hire requests can additionally include:
 - corporateAccountReference
 - stops
 
+
+## Staff-assisted booking metadata (local mock)
+For phone-in/admin-created bookings, optional fields include:
+- createdByStaff
+- customerRegistrationRequired
+- paymentRequired
+- mockRegistrationPaymentLink
+- registrationCompletedAtIso
+- paymentCompletedAtIso
+
+These fields are local/mock only and do not trigger real auth, payment, or messaging workflows.

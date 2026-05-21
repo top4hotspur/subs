@@ -86,3 +86,15 @@ Each industry now has a standard policy placeholder route at `/<industry>/policy
 - Admin queue renders taxi-specific request detail for review and assignment.
 - No maps, route pricing engine, dispatch integration, or backend persistence is implemented.
 
+
+## Staff-assisted booking flow (local mock)
+- Admin includes a staff-assisted booking panel for appointment industries.
+- Intended use case: customer phones the business; staff creates booking on their behalf.
+- Created booking stores local mock flags for registration/payment required and a mock completion link.
+- UI shows a mock email preview only.
+- No real account creation, password setup, payment collection, or email sending is implemented.
+
+## Calendar preview UX (local mock)
+- Calendar preview now defaults to a compact 7-day view with daily staffing/bookings bars.
+- 30-day view is optional via explicit toggle.
+- Clickable day tiles and inspect-date detail include hourly staffing and hourly bookings.

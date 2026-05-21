@@ -1,4 +1,4 @@
-﻿import { WebsiteTemplateSlug } from "@/lib/sites/types";
+import { WebsiteTemplateSlug } from "@/lib/sites/types";
 
 export enum CustomerRequestKind {
   ENQUIRY = "ENQUIRY",
@@ -89,10 +89,15 @@ export type CustomerRequest = {
   assignedStaffName?: string;
   quotedPriceGbp?: number;
   finalPriceGbp?: number;
+  createdByStaff?: boolean;
+  customerRegistrationRequired?: boolean;
+  paymentRequired?: boolean;
+  mockRegistrationPaymentLink?: string;
+  registrationCompletedAtIso?: string;
+  paymentCompletedAtIso?: string;
   communicationChannels: CustomerRequestCommunicationChannel[];
   completionMessageSentAtIso?: string;
   reviewRequestSentAtIso?: string;
   createdAtIso: string;
   updatedAtIso: string;
 };
-

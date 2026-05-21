@@ -140,3 +140,17 @@ Current behavior:
 - Booking counts use preferredDate, with createdAtIso date fallback when preferredDate is missing.
 - Cancelled and no-show requests are excluded from booking counts, but still visible in day detail.
 
+
+## Calendar preview UX update (local mock)
+- Default calendar summary view is now 7 days (compact).
+- 30-day view is hidden by default and can be toggled on demand.
+- Navigation supports: Previous 7 days, Next 7 days, Today.
+- Both 7-day and 30-day day tiles are clickable.
+- Selected day detail includes:
+  - staff available count
+  - booking/request count
+  - closure warning (if present)
+  - staff level by hour
+  - appointments/bookings by hour
+  - request detail list (time, customer, service/type, status, assigned/preferred staff, notes)
+- Inspect date input allows detail lookup outside visible windows.
