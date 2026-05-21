@@ -347,3 +347,17 @@ This sequence delivers real value early while minimizing migration risk.
 - Repository validates inputs with Zod and throws clear validation errors.
 - No API routes or UI wiring added in Task 2.
 - No migrations or DB provisioning performed.
+
+## Task 3 implementation status
+- Added server env/config helper: `src/lib/config/server-env.ts`.
+- Added route handlers:
+  - `src/app/api/setup-requests/route.ts` (`POST`, `GET`)
+  - `src/app/api/setup-requests/[id]/route.ts` (`GET`, `PATCH`)
+- Implemented temporary admin guard for list/update using:
+  - `PLATFORM_ADMIN_EMAILS`
+  - `x-platform-admin-email` header
+- Added backend-not-configured behavior (`503`, `BACKEND_PERSISTENCE_NOT_CONFIGURED`) when `DATABASE_URL` is absent.
+- Added backend route smoke test doc: `docs/subs-backend-route-smoke-test.md`.
+- No setup form/confirmation UI wiring yet.
+- No auth integration yet.
+- No migrations run.
