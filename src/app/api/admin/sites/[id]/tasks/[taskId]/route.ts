@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
-import { hasPlatformAdminAccess } from "@/lib/admin/temp-admin-guard";
+import { isPlatformAdminSession } from "@/lib/auth/platform-admin";
 import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
 import {
   createSiteStatusEvent,
@@ -20,7 +20,7 @@ export async function PATCH(
   context: { params: Promise<{ id: string; taskId: string }> },
 ) {
   if (!isBackendPersistenceConfigured()) return backendNotConfigured();
-  if (!hasPlatformAdminAccess(request)) {
+  if (!(await isPlatformAdminSession())) {
     return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
   }
 

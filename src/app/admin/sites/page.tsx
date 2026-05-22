@@ -15,8 +15,8 @@ import {
   smallButtonClass,
 } from "@/lib/ui/button-styles";
 import { formatGbp, formatOptional, formatUkDateTime } from "@/lib/ui/display-labels";
+import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
 
-const ADMIN_EMAIL_KEY = "subs-platform-admin-email";
 const TASK_STATUS_OPTIONS = ["TODO", "IN_PROGRESS", "DONE", "BLOCKED", "SKIPPED"];
 
 type TaskGroupKey =
@@ -80,10 +80,6 @@ export default function AdminSitesPage() {
     return new URLSearchParams(window.location.search).get("siteId")?.trim() ?? "";
   });
 
-  const [adminEmail, setAdminEmail] = useState(() => {
-    if (typeof window === "undefined") return "";
-    return window.localStorage.getItem(ADMIN_EMAIL_KEY) ?? "";
-  });
   const [setupRequestId, setSetupRequestId] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -143,16 +139,10 @@ export default function AdminSitesPage() {
   }, [detail]);
 
   async function loadSites(): Promise<void> {
-    if (!adminEmail.trim()) {
-      setMessage("Enter a platform admin email first.");
-      return;
-    }
-
     setLoading(true);
     setMessage(null);
-    window.localStorage.setItem(ADMIN_EMAIL_KEY, adminEmail.trim());
 
-    const result = await listAdminTenantSites(adminEmail.trim());
+    const result = await listAdminTenantSites();
     if (!result.ok) {
       setSites([]);
       setDetail(null);
@@ -168,7 +158,7 @@ export default function AdminSitesPage() {
 
     if (targetSite) {
       setSelectedSiteId(targetSite.id);
-      await loadSiteDetail(targetSite.id, adminEmail.trim());
+      await loadSiteDetail(targetSite.id);
     } else {
       setSelectedSiteId("");
       setDetail(null);
@@ -177,11 +167,8 @@ export default function AdminSitesPage() {
     setLoading(false);
   }
 
-  async function loadSiteDetail(siteId: string, explicitEmail?: string): Promise<void> {
-    const email = explicitEmail ?? adminEmail.trim();
-    if (!email) return;
-
-    const result = await getAdminTenantSiteDetail(email, siteId);
+  async function loadSiteDetail(siteId: string): Promise<void> {
+    const result = await getAdminTenantSiteDetail(siteId);
     if (!result.ok) {
       setMessage(toMessage(result.error, result.status));
       return;
@@ -199,16 +186,12 @@ export default function AdminSitesPage() {
   }
 
   async function startSiteSetup(): Promise<void> {
-    if (!adminEmail.trim()) {
-      setMessage("Enter a platform admin email first.");
-      return;
-    }
     if (!setupRequestId.trim()) {
       setMessage("Enter a setup request id.");
       return;
     }
 
-    const result = await createAdminTenantSiteFromSetupRequest(adminEmail.trim(), setupRequestId.trim());
+    const result = await createAdminTenantSiteFromSetupRequest(setupRequestId.trim());
     if (!result.ok) {
       setMessage(toMessage(result.error, result.status));
       return;
@@ -221,7 +204,7 @@ export default function AdminSitesPage() {
     );
 
     await loadSites();
-    await loadSiteDetail(result.tenantSite.id, adminEmail.trim());
+    await loadSiteDetail(result.tenantSite.id);
   }
 
   async function saveTaskStatus(taskId: string): Promise<void> {
@@ -229,7 +212,7 @@ export default function AdminSitesPage() {
     const status = taskDrafts[taskId];
     if (!status) return;
 
-    const result = await updateAdminSiteTaskStatus(adminEmail.trim(), selectedSiteId, taskId, status);
+    const result = await updateAdminSiteTaskStatus(selectedSiteId, taskId, status);
     if (!result.ok) {
       setMessage(toMessage(result.error, result.status));
       return;
@@ -245,31 +228,25 @@ export default function AdminSitesPage() {
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Subscriber sites</h1>
           <p className="mt-2 text-sm text-slate-600">
-            Persisted provisioning model only. No AWS/domain automation is triggered.
+            Persisted provisioning model. Platform-admin session required.
           </p>
         </div>
         <Link href="/admin" className={`${outlineButtonClass} ${smallButtonClass}`}>
           Back to admin
         </Link>
+        <AdminLogoutButton />
       </div>
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <label className="block text-sm font-medium text-slate-800">Platform admin email</label>
+        <p className="text-sm text-slate-600">Authenticated platform-admin session required.</p>
         <div className="mt-2 flex flex-wrap gap-2">
-          <input
-            type="email"
-            value={adminEmail}
-            onChange={(event) => setAdminEmail(event.target.value)}
-            placeholder="admin@example.com"
-            className="min-w-[260px] flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
-          />
           <button
             type="button"
             className={`${primaryButtonClass} ${smallButtonClass}`}
             onClick={loadSites}
             disabled={loading}
           >
-            {loading ? "Loading..." : "Load sites"}
+            {loading ? "Loading..." : "Load subscriber sites"}
           </button>
         </div>
 

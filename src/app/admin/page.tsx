@@ -9,6 +9,7 @@ import {
 } from "@/lib/setup/local-setup-requests";
 import { LocalAnalyticsDashboard } from "@/components/analytics/local-analytics-dashboard";
 import { StaffAssistedBookingForm } from "@/components/admin/staff-assisted-booking-form";
+import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
 import { isSlotBlockedByExistingRequest } from "@/lib/calendar/local-appointment-conflicts";
 import {
   assignLocalCustomerRequestStaff,
@@ -180,7 +181,10 @@ export default function AdminPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-      <h1 className="text-3xl font-bold text-slate-900">Mock Admin Portal</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-3xl font-bold text-slate-900">Mock Admin Portal</h1>
+        <AdminLogoutButton />
+      </div>
       <p className="mt-3 text-slate-600">Local-only queue preview. Auth/backends are not implemented yet.</p>
       <div className="mt-3">
         <Link href="/admin/settings" className="text-sm font-medium text-sky-700 hover:text-sky-900">

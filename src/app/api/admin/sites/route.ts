@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
-import { hasPlatformAdminAccess } from "@/lib/admin/temp-admin-guard";
+import { isPlatformAdminSession } from "@/lib/auth/platform-admin";
 import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
 import {
   createTenantSiteFromSetupRequest,
@@ -20,7 +20,7 @@ function backendNotConfigured() {
 
 export async function GET(request: NextRequest) {
   if (!isBackendPersistenceConfigured()) return backendNotConfigured();
-  if (!hasPlatformAdminAccess(request)) {
+  if (!(await isPlatformAdminSession())) {
     return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
   }
 
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   if (!isBackendPersistenceConfigured()) return backendNotConfigured();
-  if (!hasPlatformAdminAccess(request)) {
+  if (!(await isPlatformAdminSession())) {
     return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
   }
 

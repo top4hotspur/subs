@@ -149,3 +149,19 @@ Operational flow now includes:
 
 No domain/DNS automation is performed; domain panel remains manual tracking only.
 
+
+## Auth-protected admin API note
+
+- Temporary `x-platform-admin-email` guard has been replaced for admin routes.
+- Admin API access now requires authenticated platform-admin session (Auth.js).
+- `POST /api/setup-requests` remains public for prospect setup submissions.
+- `GET /api/setup-requests/:id` remains public by opaque id for confirmation flow (future hardening planned).
+
+## Admin API authentication update
+
+- `GET /api/setup-requests` and admin mutation routes now require authenticated platform-admin session.
+- Session check is based on Auth.js + email allowlist.
+- Temporary `x-platform-admin-email` header flow has been removed from active admin path.
+- Public routes preserved:
+  - `POST /api/setup-requests`
+  - `GET /api/setup-requests/:id` (opaque-id confirmation, future hardening planned)

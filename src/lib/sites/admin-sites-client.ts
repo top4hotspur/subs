@@ -47,15 +47,12 @@ async function parseJsonSafe(response: Response): Promise<unknown> {
   }
 }
 
-export async function listAdminTenantSites(
-  adminEmail: string,
-): Promise<ClientResult<{ sites: AdminTenantSiteSummary[] }>> {
+export async function listAdminTenantSites(): Promise<ClientResult<{ sites: AdminTenantSiteSummary[] }>> {
   try {
     const response = await fetch("/api/admin/sites?take=100", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "x-platform-admin-email": adminEmail,
       },
     });
     const body = (await parseJsonSafe(response)) as
@@ -76,7 +73,6 @@ export async function listAdminTenantSites(
 }
 
 export async function createAdminTenantSiteFromSetupRequest(
-  adminEmail: string,
   setupRequestId: string,
 ): Promise<ClientResult<{ tenantSite: AdminTenantSiteSummary; created: boolean }>> {
   try {
@@ -84,7 +80,6 @@ export async function createAdminTenantSiteFromSetupRequest(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-platform-admin-email": adminEmail,
       },
       body: JSON.stringify({ setupRequestId }),
     });
@@ -112,7 +107,6 @@ export async function createAdminTenantSiteFromSetupRequest(
 }
 
 export async function getAdminTenantSiteDetail(
-  adminEmail: string,
   id: string,
 ): Promise<
   ClientResult<{
@@ -153,7 +147,6 @@ export async function getAdminTenantSiteDetail(
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "x-platform-admin-email": adminEmail,
       },
     });
     const body = (await parseJsonSafe(response)) as
@@ -190,7 +183,6 @@ export async function getAdminTenantSiteDetail(
 }
 
 export async function updateAdminSiteTaskStatus(
-  adminEmail: string,
   siteId: string,
   taskId: string,
   status: string,
@@ -202,7 +194,6 @@ export async function updateAdminSiteTaskStatus(
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "x-platform-admin-email": adminEmail,
         },
         body: JSON.stringify({ status }),
       },

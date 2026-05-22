@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
-import { getOptionalServerEnv, isBackendPersistenceConfigured } from "@/lib/config/server-env";
+import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
+import { isPlatformAdminSession } from "@/lib/auth/platform-admin";
 import {
   createSetupRequest,
   listSetupRequests,
@@ -15,37 +16,6 @@ function backendNotConfigured() {
     { ok: false, error: "BACKEND_PERSISTENCE_NOT_CONFIGURED" },
     { status: 503 },
   );
-}
-
-function parsePlatformAdminEmails(): string[] {
-  const raw = getOptionalServerEnv("PLATFORM_ADMIN_EMAILS");
-  if (!raw) {
-    return [];
-  }
-  return raw
-    .split(",")
-    .map((item) => item.trim().toLowerCase())
-    .filter(Boolean);
-}
-
-function hasAdminAccess(request: NextRequest): boolean {
-  // Temporary guard until Auth.js is introduced.
-  // Uses x-platform-admin-email header only for local/dev smoke testing.
-  const headerEmail = request.headers
-    .get("x-platform-admin-email")
-    ?.trim()
-    .toLowerCase();
-
-  if (!headerEmail) {
-    return false;
-  }
-
-  const allowlist = parsePlatformAdminEmails();
-  if (allowlist.length === 0) {
-    return false;
-  }
-
-  return allowlist.includes(headerEmail);
 }
 
 export async function POST(request: NextRequest) {
@@ -89,7 +59,7 @@ export async function GET(request: NextRequest) {
     return backendNotConfigured();
   }
 
-  if (!hasAdminAccess(request)) {
+  if (!(await isPlatformAdminSession())) {
     return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
   }
 

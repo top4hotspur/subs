@@ -420,3 +420,22 @@ No Auth.js or infrastructure automation added in this task.
 - Result:
   - provisioning migration `20260522145243_add_site_provisioning` applied successfully.
   - database schema reported up to date by `npx prisma migrate status`.
+
+## Platform admin authentication update (Auth.js)
+
+- Added first-pass Auth.js/NextAuth platform-admin authentication.
+- Admin pages now require login via `/admin/login`.
+- Credentials bootstrap uses:
+  - allowlisted email (`PLATFORM_ADMIN_EMAILS`)
+  - temporary access code (`PLATFORM_ADMIN_ACCESS_CODE`)
+- Public setup submission remains open (`POST /api/setup-requests`).
+- Admin APIs now use authenticated session checks (no header-based admin spoofing).
+
+## Platform admin authentication (first pass)
+
+- Admin pages now require Auth.js login at `/admin/login`.
+- Credentials login uses:
+  - allowlisted admin email (`PLATFORM_ADMIN_EMAILS`)
+  - temporary access code (`PLATFORM_ADMIN_ACCESS_CODE`)
+- This replaces manual header-based admin UI access.
+- Public setup submission remains open (`POST /api/setup-requests`).

@@ -60,7 +60,6 @@ function buildQuery(options?: ListBackendSetupRequestsOptions): string {
 }
 
 export async function listBackendSetupRequests(
-  adminEmail: string,
   options?: ListBackendSetupRequestsOptions,
 ): Promise<AdminSetupRequestClientResult<{ setupRequests: BackendSetupRequestRecord[] }>> {
   try {
@@ -68,7 +67,6 @@ export async function listBackendSetupRequests(
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "x-platform-admin-email": adminEmail,
       },
     });
     const body = (await parseJsonSafe(response)) as
@@ -118,7 +116,6 @@ export async function getBackendSetupRequest(
 }
 
 export async function updateBackendSetupRequestStatus(
-  adminEmail: string,
   id: string,
   status: string,
 ): Promise<AdminSetupRequestClientResult<{ setupRequest: BackendSetupRequestRecord }>> {
@@ -127,7 +124,6 @@ export async function updateBackendSetupRequestStatus(
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        "x-platform-admin-email": adminEmail,
       },
       body: JSON.stringify({ status }),
     });

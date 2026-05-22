@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   BackendSetupRequestRecord,
@@ -28,8 +28,8 @@ import {
   smallButtonClass,
 } from "@/lib/ui/button-styles";
 import { createAdminTenantSiteFromSetupRequest } from "@/lib/sites/admin-sites-client";
+import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
 
-const ADMIN_EMAIL_KEY = "subs-platform-admin-email";
 const STATUS_OPTIONS: SubscriptionSetupStatus[] = [
   SubscriptionSetupStatus.SETUP_REVIEW_REQUESTED,
   SubscriptionSetupStatus.DOMAIN_DETAILS_REQUIRED,
@@ -68,10 +68,6 @@ function parseCommunicationValue(value: string): CommunicationOption {
 }
 
 export default function AdminSetupRequestsPage() {
-  const [adminEmail, setAdminEmail] = useState(() => {
-    if (typeof window === "undefined") return "";
-    return window.localStorage.getItem(ADMIN_EMAIL_KEY) ?? "";
-  });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [requests, setRequests] = useState<BackendSetupRequestRecord[]>([]);
@@ -84,30 +80,17 @@ export default function AdminSetupRequestsPage() {
     created: boolean;
   } | null>(null);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!window.localStorage.getItem(ADMIN_EMAIL_KEY) && adminEmail) {
-      window.localStorage.setItem(ADMIN_EMAIL_KEY, adminEmail);
-    }
-  }, [adminEmail]);
-
   const selectedRequest = useMemo(
     () => requests.find((request) => request.id === selectedId) ?? detail,
     [requests, selectedId, detail],
   );
 
   async function loadRequests(): Promise<void> {
-    if (!adminEmail.trim()) {
-      setMessage("Enter a platform admin email first.");
-      return;
-    }
-
     setLoading(true);
     setMessage(null);
     setSiteSetupResult(null);
-    window.localStorage.setItem(ADMIN_EMAIL_KEY, adminEmail.trim());
 
-    const result = await listBackendSetupRequests(adminEmail.trim(), { take: 100 });
+    const result = await listBackendSetupRequests({ take: 100 });
     if (!result.ok) {
       setRequests([]);
       setDetail(null);
@@ -148,12 +131,7 @@ export default function AdminSetupRequestsPage() {
   async function saveStatus(requestId: string): Promise<void> {
     const nextStatus = statusDrafts[requestId];
     if (!nextStatus) return;
-    if (!adminEmail.trim()) {
-      setMessage("Enter a platform admin email before updating status.");
-      return;
-    }
-
-    const result = await updateBackendSetupRequestStatus(adminEmail.trim(), requestId, nextStatus);
+    const result = await updateBackendSetupRequestStatus(requestId, nextStatus);
     if (!result.ok) {
       setMessage(toMessage(result.error, result.status));
       return;
@@ -170,12 +148,7 @@ export default function AdminSetupRequestsPage() {
   }
 
   async function startSiteSetup(requestId: string): Promise<void> {
-    if (!adminEmail.trim()) {
-      setMessage("Enter a platform admin email before starting site setup.");
-      return;
-    }
-
-    const result = await createAdminTenantSiteFromSetupRequest(adminEmail.trim(), requestId);
+    const result = await createAdminTenantSiteFromSetupRequest(requestId);
     if (!result.ok) {
       setMessage(toMessage(result.error, result.status));
       setSiteSetupResult(null);
@@ -196,24 +169,20 @@ export default function AdminSetupRequestsPage() {
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Platform setup requests</h1>
           <p className="mt-2 text-sm text-slate-600">
-            Uses backend when configured. Temporary admin header until Auth.js is added.
+            Uses persisted backend setup requests. Platform-admin login required.
           </p>
         </div>
         <Link href="/admin" className={`${outlineButtonClass} ${smallButtonClass}`}>
           Back to admin
         </Link>
+        <AdminLogoutButton />
       </div>
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <label className="block text-sm font-medium text-slate-800">Platform admin email</label>
-        <div className="mt-2 flex flex-wrap gap-2">
-          <input
-            type="email"
-            className="min-w-[260px] flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
-            placeholder="admin@example.com"
-            value={adminEmail}
-            onChange={(event) => setAdminEmail(event.target.value)}
-          />
+        <p className="text-sm text-slate-600">
+          Authenticated platform-admin session required.
+        </p>
+        <div className="mt-2">
           <button
             type="button"
             className={`${primaryButtonClass} ${smallButtonClass}`}

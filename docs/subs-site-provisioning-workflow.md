@@ -55,3 +55,15 @@ This workflow turns a persisted setup request into a persisted subscriber site r
 - `/admin/sites` supports `?siteId=<id>`.
 - When provided, the page auto-selects that site after loading persisted site list.
 
+
+## Provisioning admin security update
+
+- `/admin/setup-requests` and `/admin/sites` now require platform-admin session.
+- Setup request "Start site setup" still creates/links tenant site, but via authenticated admin APIs.
+- Domain/DNS tracking remains manual; no automation added.
+
+## Security note for provisioning admin flow
+
+- Start site setup and provisioning updates now require authenticated platform-admin session.
+- `/admin/sites?siteId=<id>` deep-link behavior remains in place after authenticated navigation.
+- No real domain automation, Stripe, or messaging integration in this milestone.

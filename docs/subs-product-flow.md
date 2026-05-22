@@ -132,3 +132,17 @@ Still mock for infrastructure:
   - subscription placeholder panel
   - site status timeline
 
+
+## Product flow auth refinement
+
+- Public prospect journey stays unauthenticated (industry/demo/setup submission).
+- Platform admin journey now starts at `/admin/login`.
+- Admin queues/pages and admin APIs are session-protected.
+- Future milestones will split roles for business owner, staff, and end customer.
+
+## Auth flow in product journey
+
+- Prospect/customer journey remains public through demo/setup submission.
+- Platform admin journey is now authenticated via `/admin/login`.
+- Admin queues (`/admin/setup-requests`, `/admin/sites`, `/admin/settings`, `/admin/crm`) are session-protected.
+- Future milestones will add business-owner, staff, and customer role-specific auth.
