@@ -225,3 +225,8 @@ Still mock for infrastructure:
 - Business admin demo now supports add/remove for services and staff.
 - Staff available weekdays now control rota eligibility in the local editor.
 
+
+## Business admin compact controls
+- /demo/[industry]/admin now uses compact service and staff cards to reduce long-scroll editing.
+- Staff role/position options are business-defined and reused in staff dropdown selection.
+

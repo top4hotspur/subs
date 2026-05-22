@@ -78,3 +78,10 @@ Business admin can:
 - Rota editor enforces weekday availability by disabling non-available days.
 - Voucher settings now show explicit currency labels for value ranges and postage.
 
+
+## Compact business-admin UX (demo)
+- Services are now managed as compact cards with expand/collapse editing.
+- Service cards include duration minutes and buffer-after values used by booking slot suggestions.
+- Staff position uses a dropdown populated from business-created positions.
+- Staff is managed in compact cards with day-availability summary and expandable details.
+

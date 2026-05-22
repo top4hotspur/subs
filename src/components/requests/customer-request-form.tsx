@@ -260,6 +260,12 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
               : "Request service"}
       </h3>
       <p className="mt-1 text-xs text-slate-600">{actionLabel}.</p>
+      {appointmentStyle && selectedServiceSettings?.durationMinutes ? (
+        <p className="mt-1 text-xs text-slate-600">
+          Selected service duration: {selectedServiceSettings.durationMinutes} minutes
+          {selectedServiceSettings.bufferAfterMinutes ? ` + ${selectedServiceSettings.bufferAfterMinutes} minute buffer` : ""}
+        </p>
+      ) : null}
       {appointmentStyle && businessAvailabilityPreview.length > 0 ? (
         <div className="mt-2 rounded-md border border-slate-200 bg-white px-2 py-2 text-xs text-slate-600">
           <p className="font-semibold text-slate-900">Opening hours</p>
@@ -566,6 +572,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
     </section>
   );
 }
+
 
 
 

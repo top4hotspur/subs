@@ -39,6 +39,7 @@ function emptyDay(staffId: string, weekday: Weekday): StaffRotaDay {
 export function StaffRotaEditor({ industrySlug, staffMembers }: StaffRotaEditorProps) {
   const [rotaDays, setRotaDays] = useState<StaffRotaDay[]>(() => listLocalStaffRota(industrySlug));
   const [selectedStaffId, setSelectedStaffId] = useState<string>(staffMembers.find((staff) => staff.active)?.id ?? staffMembers[0]?.id ?? "");
+  const [expandedBreakWeekdays, setExpandedBreakWeekdays] = useState<Weekday[]>([]);
 
   const selectedStaff = useMemo(
     () => staffMembers.find((staff) => staff.id === selectedStaffId) ?? null,
@@ -52,6 +53,12 @@ export function StaffRotaEditor({ industrySlug, staffMembers }: StaffRotaEditorP
         : [],
     [rotaDays, selectedStaff],
   );
+
+  function toggleBreaks(weekday: Weekday): void {
+    setExpandedBreakWeekdays((current) =>
+      current.includes(weekday) ? current.filter((day) => day !== weekday) : [...current, weekday],
+    );
+  }
 
   function isWeekdayAllowed(weekday: Weekday): boolean {
     if (!selectedStaff?.availableWeekdays || selectedStaff.availableWeekdays.length === 0) return true;
@@ -97,6 +104,7 @@ export function StaffRotaEditor({ industrySlug, staffMembers }: StaffRotaEditorP
     };
 
     updateDay(staffId, weekday, { working: true, breaks: [...target.breaks, nextBreak] });
+    setExpandedBreakWeekdays((current) => (current.includes(weekday) ? current : [...current, weekday]));
   }
 
   function updateBreak(staffId: string, weekday: Weekday, breakId: string, patch: Partial<StaffBreakWindow>) {
@@ -116,25 +124,12 @@ export function StaffRotaEditor({ industrySlug, staffMembers }: StaffRotaEditorP
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold text-slate-900">Staff rota & breaks</h2>
-          <p className="text-xs text-slate-600">
-            Select one staff member to manage weekly rota and break windows.
-          </p>
-        </div>
+    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold text-slate-900">Staff rota & breaks</h2>
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            className={`${secondaryButtonClass} ${smallButtonClass}`}
-            onClick={() => setRotaDays(seedLocalStaffRota(industrySlug, staffMembers))}
-          >
-            Seed rota defaults
-          </button>
-          <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={reload}>
-            Reload rota
-          </button>
+          <button type="button" className={`${secondaryButtonClass} ${smallButtonClass}`} onClick={() => setRotaDays(seedLocalStaffRota(industrySlug, staffMembers))}>Seed</button>
+          <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={reload}>Reload</button>
           <button
             type="button"
             className={`${dangerButtonClass} ${smallButtonClass}`}
@@ -144,22 +139,18 @@ export function StaffRotaEditor({ industrySlug, staffMembers }: StaffRotaEditorP
               reload();
             }}
           >
-            Clear rota
+            Clear
           </button>
         </div>
       </div>
 
       {staffMembers.length === 0 ? (
-        <p className="text-sm text-slate-600">No staff members yet. Add staff first, then seed/edit rota.</p>
+        <p className="text-sm text-slate-600">No staff members yet. Add staff first.</p>
       ) : (
         <>
-          <label className="mb-4 block text-sm font-medium text-slate-700">
+          <label className="mb-3 block text-xs font-medium text-slate-700">
             Staff member
-            <select
-              className="mt-1 w-full max-w-sm rounded-md border border-slate-300 px-2 py-2 text-sm"
-              value={selectedStaffId}
-              onChange={(event) => setSelectedStaffId(event.target.value)}
-            >
+            <select className="mt-1 w-full max-w-sm rounded-md border border-slate-300 px-2 py-2 text-sm" value={selectedStaffId} onChange={(event) => setSelectedStaffId(event.target.value)}>
               {staffMembers.map((staff) => (
                 <option key={staff.id} value={staff.id}>{staff.displayName}</option>
               ))}
@@ -167,116 +158,56 @@ export function StaffRotaEditor({ industrySlug, staffMembers }: StaffRotaEditorP
           </label>
 
           {selectedStaff ? (
-            <article className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <h3 className="mb-1 text-sm font-semibold text-slate-900">{selectedStaff.displayName}</h3>
-              <p className="mb-3 text-xs text-slate-600">
-                Available days: {(selectedStaff.availableWeekdays ?? WEEKDAYS).map((day) => weekdayLabel(day)).join(", ")}
-              </p>
-              <div className="space-y-3">
-                {selectedDays.map((day) => {
-                  const allowed = isWeekdayAllowed(day.weekday);
-                  return (
-                    <div key={`${selectedStaff.id}_${day.weekday}`} className={`rounded-lg border p-3 ${allowed ? "border-slate-200 bg-white" : "border-slate-200 bg-slate-100"}`}>
-                      <div className="grid gap-2 sm:grid-cols-[130px_auto_auto_auto] sm:items-center">
-                        <p className="text-xs font-semibold text-slate-700">{weekdayLabel(day.weekday)}</p>
-                        <label className="inline-flex items-center gap-2 text-xs text-slate-700">
-                          <input
-                            type="checkbox"
-                            checked={day.working}
-                            disabled={!allowed}
-                            onChange={(event) =>
-                              updateDay(selectedStaff.id, day.weekday, {
-                                working: event.target.checked,
-                                startTime: event.target.checked ? (day.startTime ?? "09:00") : undefined,
-                                endTime: event.target.checked ? (day.endTime ?? "17:00") : undefined,
-                              })
-                            }
-                          />
-                          Working
-                        </label>
-                        <input
-                          type="time"
-                          className="rounded-md border border-slate-300 px-2 py-1 text-xs"
-                          value={day.startTime ?? ""}
-                          disabled={!day.working || !allowed}
-                          onChange={(event) => updateDay(selectedStaff.id, day.weekday, { startTime: event.target.value })}
-                        />
-                        <input
-                          type="time"
-                          className="rounded-md border border-slate-300 px-2 py-1 text-xs"
-                          value={day.endTime ?? ""}
-                          disabled={!day.working || !allowed}
-                          onChange={(event) => updateDay(selectedStaff.id, day.weekday, { endTime: event.target.value })}
-                        />
-                      </div>
-                      {!allowed ? <p className="mt-2 text-xs text-amber-700">Unavailable day for this staff member.</p> : null}
+            <div className="space-y-2">
+              {selectedDays.map((day) => {
+                const allowed = isWeekdayAllowed(day.weekday);
+                const showBreaks = expandedBreakWeekdays.includes(day.weekday);
+                return (
+                  <div key={`${selectedStaff.id}_${day.weekday}`} className={`rounded-md border p-2 ${allowed ? "border-slate-200 bg-white" : "border-slate-200 bg-slate-100"}`}>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-[110px_auto_auto_auto_auto] sm:items-center">
+                      <p className="text-xs font-semibold text-slate-700">{weekdayLabel(day.weekday)}</p>
+                      <label className="text-xs text-slate-700">
+                        <input type="checkbox" className="mr-1" checked={day.working} disabled={!allowed} onChange={(event) => updateDay(selectedStaff.id, day.weekday, { working: event.target.checked, startTime: event.target.checked ? (day.startTime ?? "09:00") : undefined, endTime: event.target.checked ? (day.endTime ?? "17:00") : undefined })} />
+                        Working
+                      </label>
+                      <input type="time" className="rounded-md border border-slate-300 px-2 py-1 text-xs" value={day.startTime ?? ""} disabled={!day.working || !allowed} onChange={(event) => updateDay(selectedStaff.id, day.weekday, { startTime: event.target.value })} />
+                      <input type="time" className="rounded-md border border-slate-300 px-2 py-1 text-xs" value={day.endTime ?? ""} disabled={!day.working || !allowed} onChange={(event) => updateDay(selectedStaff.id, day.weekday, { endTime: event.target.value })} />
+                      <button type="button" className="text-xs font-semibold text-sky-700" disabled={!day.working || !allowed} onClick={() => toggleBreaks(day.weekday)}>
+                        {showBreaks ? "Hide breaks" : "Show breaks"}
+                      </button>
+                    </div>
 
-                      <div className="mt-2 rounded-md border border-slate-200 bg-slate-50 p-2">
-                        <div className="mb-2 flex items-center justify-between gap-2">
-                          <p className="text-xs font-medium text-slate-700">Break windows</p>
-                          <button
-                            type="button"
-                            className={`${primaryButtonClass} ${smallButtonClass}`}
-                            disabled={!day.working || !allowed}
-                            onClick={() => addBreak(selectedStaff.id, day.weekday)}
-                          >
+                    {!allowed ? <p className="mt-1 text-xs text-amber-700">This staff member is not available for this day.</p> : null}
+
+                    {showBreaks ? (
+                      <div className="mt-2 space-y-1 rounded-md border border-slate-200 bg-slate-50 p-2">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-medium text-slate-700">Breaks</p>
+                          <button type="button" className={`${primaryButtonClass} ${smallButtonClass}`} disabled={!day.working || !allowed} onClick={() => addBreak(selectedStaff.id, day.weekday)}>
                             Add break
                           </button>
                         </div>
-
-                        {day.breaks.length === 0 ? (
-                          <p className="text-xs text-slate-500">No breaks for this day.</p>
-                        ) : (
-                          <div className="space-y-2">
-                            {day.breaks.map((item) => (
-                              <div key={item.id} className="grid gap-2 rounded-md border border-slate-200 bg-white p-2 sm:grid-cols-[1fr_auto_auto_auto]">
-                                <input
-                                  className="rounded-md border border-slate-300 px-2 py-1 text-xs"
-                                  value={item.label ?? ""}
-                                  placeholder="Break label"
-                                  onChange={(event) => updateBreak(selectedStaff.id, day.weekday, item.id, { label: event.target.value })}
-                                />
-                                <input
-                                  type="time"
-                                  className="rounded-md border border-slate-300 px-2 py-1 text-xs"
-                                  value={item.startTime}
-                                  onChange={(event) => updateBreak(selectedStaff.id, day.weekday, item.id, { startTime: event.target.value })}
-                                />
-                                <input
-                                  type="time"
-                                  className="rounded-md border border-slate-300 px-2 py-1 text-xs"
-                                  value={item.endTime}
-                                  onChange={(event) => updateBreak(selectedStaff.id, day.weekday, item.id, { endTime: event.target.value })}
-                                />
-                                <button
-                                  type="button"
-                                  className={`${dangerButtonClass} ${smallButtonClass}`}
-                                  onClick={() => removeBreak(selectedStaff.id, day.weekday, item.id)}
-                                >
-                                  Remove
-                                </button>
-                              </div>
-                            ))}
+                        {day.breaks.length === 0 ? <p className="text-xs text-slate-500">No breaks set.</p> : null}
+                        {day.breaks.map((item) => (
+                          <div key={item.id} className="grid grid-cols-1 gap-1 rounded border border-slate-200 bg-white p-2 sm:grid-cols-[1fr_auto_auto_auto]">
+                            <input className="rounded border border-slate-300 px-2 py-1 text-xs" value={item.label ?? ""} placeholder="Label" onChange={(event) => updateBreak(selectedStaff.id, day.weekday, item.id, { label: event.target.value })} />
+                            <input type="time" className="rounded border border-slate-300 px-2 py-1 text-xs" value={item.startTime} onChange={(event) => updateBreak(selectedStaff.id, day.weekday, item.id, { startTime: event.target.value })} />
+                            <input type="time" className="rounded border border-slate-300 px-2 py-1 text-xs" value={item.endTime} onChange={(event) => updateBreak(selectedStaff.id, day.weekday, item.id, { endTime: event.target.value })} />
+                            <button type="button" className="text-xs font-semibold text-rose-700" onClick={() => removeBreak(selectedStaff.id, day.weekday, item.id)}>Remove</button>
                           </div>
-                        )}
+                        ))}
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </article>
-          ) : (
-            <p className="text-sm text-slate-600">Select a staff member to edit rota.</p>
-          )}
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
         </>
       )}
 
-      <div className="mt-4">
-        <button
-          type="button"
-          className={primaryButtonClass}
-          onClick={() => setRotaDays(saveLocalStaffRota(industrySlug, rotaDays))}
-        >
+      <div className="mt-3">
+        <button type="button" className={primaryButtonClass} onClick={() => setRotaDays(saveLocalStaffRota(industrySlug, rotaDays))}>
           Save rota
         </button>
       </div>

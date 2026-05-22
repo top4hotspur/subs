@@ -160,3 +160,8 @@ Current behavior:
 - It combines business opening windows, rota, closures, holidays, and local request conflicts.
 - Fully booked days are marked unavailable and disabled in booking UI.
 
+
+## Rota compactness and duration linkage
+- Rota editor remains single-staff focused with compact weekday rows and collapsible break editors.
+- Service duration/buffer values from business admin are fed into local slot suggestion generation.
+

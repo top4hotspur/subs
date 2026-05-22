@@ -93,3 +93,8 @@ for browser-local issue/check/redeem demo workflows.
 - Staff can now be added/removed with super-user and weekday-availability flags.
 - Gift voucher setting inputs now clearly indicate GBP values (£).
 
+
+## Compact editor layout updates
+- Services now support compact card editing with durationMinutes and ufferAfterMinutes in the demo admin UI.
+- Staff now uses business-created position dropdowns, replacing free-text as the primary position control.
+
