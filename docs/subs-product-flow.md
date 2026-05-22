@@ -172,10 +172,14 @@ Still mock for infrastructure:
 ## Platform admin navigation clarity
 
 - `/admin` is the **Platform Admin Dashboard** for MyExperiment.club operations.
+- Shared pill-style admin navigation is available across admin pages for consistent routing between dashboard, setup requests, subscriber sites, sales pipeline, and business-site settings demo.
 - Dashboard sections are split as:
   - Platform operations: persisted setup requests, subscriber sites, sales pipeline, customer CRM.
   - Demo/site-owner tools: business site settings demo.
 - `/admin/settings` route remains in place for compatibility, but is explicitly labeled as a subscriber/business-owner settings preview and may move later to a subscriber-scoped settings route.
+- Site-scoped settings entry now exists via subscriber records:
+  - `/admin/sites/[siteId]/settings`
+  - used as the contextual path for business-site settings in provisioning flow.
 
 ## Demo to setup sales journey polish
 

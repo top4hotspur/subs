@@ -29,6 +29,7 @@ import {
 } from "@/lib/ui/button-styles";
 import { createAdminTenantSiteFromSetupRequest } from "@/lib/sites/admin-sites-client";
 import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
+import { AdminPillNav } from "@/components/admin/admin-pill-nav";
 
 const STATUS_OPTIONS: SubscriptionSetupStatus[] = [
   SubscriptionSetupStatus.SETUP_REVIEW_REQUESTED,
@@ -177,6 +178,7 @@ export default function AdminSetupRequestsPage() {
         </Link>
         <AdminLogoutButton />
       </div>
+      <AdminPillNav />
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <p className="text-sm text-slate-600">

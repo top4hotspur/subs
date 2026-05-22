@@ -106,8 +106,10 @@ Add these checks after backend envs are configured:
 - On `/admin`, confirm dashboard wording clearly separates:
   - Platform operations (setup requests, subscriber sites, sales pipeline, CRM)
   - Demo/site-owner tools (Business site settings demo)
+- Confirm pill-style admin navigation appears on admin pages and highlights the active area.
 - Open `/admin/settings` and confirm:
   - heading is `Business Site Settings Demo`
   - note states this is not platform-wide settings
   - note indicates route may later move to a subscriber/business-owner area
+- Open `/admin/sites`, select a site, click `Manage business site settings`, and confirm `/admin/sites/[siteId]/settings` loads with site-specific heading/context.
 

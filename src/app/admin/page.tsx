@@ -10,6 +10,7 @@ import {
 import { LocalAnalyticsDashboard } from "@/components/analytics/local-analytics-dashboard";
 import { StaffAssistedBookingForm } from "@/components/admin/staff-assisted-booking-form";
 import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
+import { AdminPillNav } from "@/components/admin/admin-pill-nav";
 import { isSlotBlockedByExistingRequest } from "@/lib/calendar/local-appointment-conflicts";
 import {
   assignLocalCustomerRequestStaff,
@@ -188,6 +189,7 @@ export default function AdminPage() {
       <p className="mt-3 text-slate-600">
         Platform operations for MyExperiment.club. Subscriber/business-owner site settings are shown separately as a demo tool.
       </p>
+      <AdminPillNav />
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">Platform operations</h2>

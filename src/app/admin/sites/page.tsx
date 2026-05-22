@@ -16,6 +16,7 @@ import {
 } from "@/lib/ui/button-styles";
 import { formatGbp, formatOptional, formatUkDateTime } from "@/lib/ui/display-labels";
 import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
+import { AdminPillNav } from "@/components/admin/admin-pill-nav";
 
 const TASK_STATUS_OPTIONS = ["TODO", "IN_PROGRESS", "DONE", "BLOCKED", "SKIPPED"];
 
@@ -236,6 +237,7 @@ export default function AdminSitesPage() {
         </Link>
         <AdminLogoutButton />
       </div>
+      <AdminPillNav />
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <p className="text-sm text-slate-600">Authenticated platform-admin session required.</p>
@@ -322,6 +324,14 @@ export default function AdminSitesPage() {
                 <p><span className="font-semibold">Primary domain:</span> {formatOptional(selectedSite.domainPrimary)}</p>
                 <p><span className="font-semibold">WhatsApp add-on:</span> {selectedSite.whatsappAddonEnabled ? "Enabled" : "Disabled"}</p>
                 <p><span className="font-semibold">Created:</span> {formatUkDateTime(selectedSite.createdAt)}</p>
+              </div>
+              <div>
+                <Link
+                  href={`/admin/sites/${encodeURIComponent(selectedSite.id)}/settings`}
+                  className={`${primaryButtonClass} ${smallButtonClass}`}
+                >
+                  Manage business site settings
+                </Link>
               </div>
 
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">

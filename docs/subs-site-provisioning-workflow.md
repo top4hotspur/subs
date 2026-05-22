@@ -55,6 +55,13 @@ This workflow turns a persisted setup request into a persisted subscriber site r
 - `/admin/sites` supports `?siteId=<id>`.
 - When provided, the page auto-selects that site after loading persisted site list.
 
+## Site-scoped business settings handoff
+
+- Selected subscriber sites now include a direct action to open:
+  - `/admin/sites/[siteId]/settings`
+- This route is labeled as business/subscriber settings context for that site.
+- Current implementation still uses local/mock settings tooling; persisted per-site settings storage remains a later milestone.
+
 
 ## Provisioning admin security update
 

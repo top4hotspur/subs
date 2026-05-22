@@ -25,6 +25,7 @@ import {
 } from "@/lib/ui/button-styles";
 import { formatUkDate, formatUkDateTime } from "@/lib/ui/display-labels";
 import { WEBSITE_TEMPLATE_SLUGS } from "@/lib/sites/types";
+import { AdminPillNav } from "@/components/admin/admin-pill-nav";
 
 const STATUSES = [
   "NEW",
@@ -473,6 +474,7 @@ export default function AdminSalesPage() {
           Back to admin
         </Link>
       </div>
+      <AdminPillNav />
 
       <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
         Real sending is not enabled. Use template preview/copy/mark-sent only. Live sending requires provider setup,
@@ -692,4 +694,3 @@ export default function AdminSalesPage() {
     </main>
   );
 }
-

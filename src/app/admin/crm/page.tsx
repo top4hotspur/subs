@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AdminPillNav } from "@/components/admin/admin-pill-nav";
 import { CustomerCrmPanel } from "@/components/crm/customer-crm-panel";
 import { buildCustomersFromLocalRequests, listLocalCustomers } from "@/lib/crm/local-customers";
 import { listLocalCustomerRequests } from "@/lib/requests/local-customer-requests";
@@ -20,6 +21,7 @@ export default function AdminCrmPage() {
       <p className="mt-2 text-sm text-slate-600">
         Local browser-only CRM preview. No real backend, auth, or database persistence is configured.
       </p>
+      <AdminPillNav />
 
       <div className="mt-6">
         <CustomerCrmPanel
