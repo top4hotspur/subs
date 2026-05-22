@@ -3,6 +3,7 @@
 ## Purpose
 `/admin/settings` is now split into focused sections to avoid a single long scrolling editor.
 This page represents **business site settings** for an individual subscriber website, not platform-level admin settings.
+UI wording in admin now calls this area **Business Site Settings Demo**.
 
 ## Sections
 - Analytics and financials
@@ -25,4 +26,5 @@ This page represents **business site settings** for an individual subscriber web
 - Notification templates are split by channel (Email / WhatsApp).
 - Calendar preview now includes hourly staffing, 14-day forecast, and a long-term day-grid toggle.
 - CRM is available in `/admin/crm` as a dedicated local customer panel built from local requests.
+- `/admin/settings` route is preserved for compatibility and may later move under a subscriber/site-scoped settings route.
 

@@ -101,3 +101,13 @@ Add these checks after backend envs are configured:
 - On failed login, the page should show a clear error (for example: "Login failed. Check your admin email and access code.").
 - `GET /api/admin-auth-health` should report auth/env readiness booleans without exposing secret values.
 
+## Hosted smoke additions: platform vs business settings wording
+
+- On `/admin`, confirm dashboard wording clearly separates:
+  - Platform operations (setup requests, subscriber sites, sales pipeline, CRM)
+  - Demo/site-owner tools (Business site settings demo)
+- Open `/admin/settings` and confirm:
+  - heading is `Business Site Settings Demo`
+  - note states this is not platform-wide settings
+  - note indicates route may later move to a subscriber/business-owner area
+

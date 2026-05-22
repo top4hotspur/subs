@@ -182,59 +182,63 @@ export default function AdminPage() {
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-bold text-slate-900">Mock Admin Portal</h1>
+        <h1 className="text-3xl font-bold text-slate-900">Platform Admin Dashboard</h1>
         <AdminLogoutButton />
       </div>
-      <p className="mt-3 text-slate-600">Local-only queue preview. Auth/backends are not implemented yet.</p>
-      <div className="mt-3">
-        <Link href="/admin/settings" className="text-sm font-medium text-sky-700 hover:text-sky-900">
-          Open business site settings (mock)
-        </Link>
-      </div>
-      <div className="mt-2">
-        <Link href="/admin/crm" className="text-sm font-medium text-sky-700 hover:text-sky-900">
-          Open mock CRM
-        </Link>
-      </div>
-      <div className="mt-2">
-        <Link href="/admin/sites" className="text-sm font-medium text-sky-700 hover:text-sky-900">
-          Open persisted subscriber sites
-        </Link>
-      </div>
-      <div className="mt-2">
-        <Link href="/admin/sales" className="text-sm font-medium text-sky-700 hover:text-sky-900">
-          Open sales pipeline
-        </Link>
-      </div>
-      <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Link href="/admin/setup-requests" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-slate-900">Persisted setup requests</p>
-          <p className="mt-1 text-xs text-slate-600">Backend setup queue</p>
-        </Link>
-        <Link href="/admin/sites" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-slate-900">Subscriber sites</p>
-          <p className="mt-1 text-xs text-slate-600">Provisioning and domain tracking</p>
-        </Link>
-        <Link href="/admin/crm" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-slate-900">CRM</p>
-          <p className="mt-1 text-xs text-slate-600">Customers and booking history</p>
-        </Link>
-        <Link href="/admin/settings" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-slate-900">Business site settings</p>
-          <p className="mt-1 text-xs text-slate-600">Individual subscriber website settings demo</p>
-        </Link>
-        <Link href="/admin/sales" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-slate-900">Sales Pipeline</p>
-          <p className="mt-1 text-xs text-slate-600">Prospect outreach and follow-up queue</p>
-        </Link>
+      <p className="mt-3 text-slate-600">
+        Platform operations for MyExperiment.club. Subscriber/business-owner site settings are shown separately as a demo tool.
+      </p>
+
+      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-900">Platform operations</h2>
+        <p className="mt-2 text-sm text-slate-600">
+          Setup requests, subscriber sites, sales pipeline, and platform CRM.
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Link href="/admin/setup-requests" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-slate-900">Persisted setup requests</p>
+            <p className="mt-1 text-xs text-slate-600">Backend setup queue</p>
+          </Link>
+          <Link href="/admin/sites" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-slate-900">Subscriber sites</p>
+            <p className="mt-1 text-xs text-slate-600">Provisioning and domain tracking</p>
+          </Link>
+          <Link href="/admin/sales" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-slate-900">Sales pipeline</p>
+            <p className="mt-1 text-xs text-slate-600">Prospect outreach and follow-up</p>
+          </Link>
+          <Link href="/admin/crm" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-slate-900">Customer CRM</p>
+            <p className="mt-1 text-xs text-slate-600">Customers and booking history</p>
+          </Link>
+        </div>
+      </section>
+
+      <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-900">Demo/site-owner tools</h2>
+        <p className="mt-2 text-sm text-slate-600">
+          Business site settings demo. In the live product this area belongs to each subscriber/business owner.
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <Link href="/admin/settings" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-slate-900">Business site settings demo</p>
+            <p className="mt-1 text-xs text-slate-600">
+              Preview the tools a subscriber will use to manage services, staff, availability and notifications.
+            </p>
+          </Link>
+        </div>
       </section>
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Business site settings scope</h2>
+        <h2 className="text-lg font-semibold text-slate-900">Persisted setup requests</h2>
         <p className="mt-2 text-sm text-slate-600">
-          These settings are for an individual customer website. Platform setup requests, subscriber sites, and sales pipeline
-          are managed separately.
+          Backend setup queue when database is configured.
         </p>
+        <div className="mt-3">
+          <Link href="/admin/setup-requests" className={`${primaryButtonClass} ${smallButtonClass}`}>
+            Open persisted setup queue
+          </Link>
+        </div>
       </section>
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -253,15 +257,15 @@ export default function AdminPage() {
       </section>
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Persisted setup requests</h2>
+        <h2 className="text-lg font-semibold text-slate-900">Business site settings scope</h2>
         <p className="mt-2 text-sm text-slate-600">
-          Backend setup queue when database is configured.
+          These are not platform-wide settings. Platform setup requests, subscriber sites, sales pipeline and provisioning are
+          managed from this platform admin dashboard.
         </p>
-        <div className="mt-3">
-          <Link href="/admin/setup-requests" className={`${primaryButtonClass} ${smallButtonClass}`}>
-            Open persisted setup queue
-          </Link>
-        </div>
+        <p className="mt-2 text-sm text-slate-600">
+          This route stays at <span className="font-mono">/admin/settings</span> for now and may move later to a subscriber-scoped
+          settings path.
+        </p>
       </section>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">

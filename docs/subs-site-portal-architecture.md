@@ -62,6 +62,11 @@ Move to DB/API/auth:
 - `/admin/settings` represents per-subscriber business site settings (services, staff, availability, templates).
 - Platform admin operations are handled separately via setup queue, subscriber sites, and sales pipeline routes.
 
+## Platform admin vs subscriber admin wording
+- `/admin` is treated as the platform operations area for MyExperiment.club.
+- `/admin/settings` is intentionally labeled **Business Site Settings Demo** to avoid implying global platform controls.
+- Future architecture should move these subscriber settings to a subscriber-scoped route (for example `/admin/sites/[siteId]/settings` or dedicated business-owner portal routes).
+
 
 ## Local Analytics Layer (Current Mock State)
 - The admin layer now includes a local analytics/financial preview built from browser-stored requests/services/staff

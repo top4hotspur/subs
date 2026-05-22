@@ -169,6 +169,14 @@ Still mock for infrastructure:
   - subscriber provisioning (`/admin/sites`)
   - sales pipeline (`/admin/sales`)
 
+## Platform admin navigation clarity
+
+- `/admin` is the **Platform Admin Dashboard** for MyExperiment.club operations.
+- Dashboard sections are split as:
+  - Platform operations: persisted setup requests, subscriber sites, sales pipeline, customer CRM.
+  - Demo/site-owner tools: business site settings demo.
+- `/admin/settings` route remains in place for compatibility, but is explicitly labeled as a subscriber/business-owner settings preview and may move later to a subscriber-scoped settings route.
+
 ## Demo to setup sales journey polish
 
 - Homepage industry cards now use `View demo site` wording.
