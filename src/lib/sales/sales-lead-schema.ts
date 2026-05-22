@@ -15,12 +15,16 @@ const leadStatuses = [
   "LOST",
   "DO_NOT_CONTACT",
 ] as const;
+const countries = ["England", "Scotland", "Wales", "Northern Ireland"] as const;
 
 export const salesLeadStatusSchema = z.enum(leadStatuses);
+export const salesLeadCountrySchema = z.enum(countries);
 
 export const createSalesLeadSchema = z.object({
   businessName: nonEmpty,
   location: optionalText,
+  country: salesLeadCountrySchema.optional(),
+  cityTown: optionalText,
   industrySlug: optionalText,
   industryLabel: optionalText,
   contactName: optionalText,
@@ -30,6 +34,8 @@ export const createSalesLeadSchema = z.object({
   source: optionalText,
   notes: z.string().optional(),
   lastContactedAt: isoDateString.optional(),
+  lastMarketingEmailAt: isoDateString.optional(),
+  emailSentCount: z.number().int().min(0).optional(),
   nextFollowUpAt: dateOnly.optional(),
 });
 
@@ -38,6 +44,8 @@ export const updateSalesLeadSchema = z
     id: cuidString,
     businessName: nonEmpty.optional(),
     location: optionalText,
+    country: salesLeadCountrySchema.optional().nullable(),
+    cityTown: optionalText,
     industrySlug: optionalText,
     industryLabel: optionalText,
     contactName: optionalText,
@@ -47,6 +55,8 @@ export const updateSalesLeadSchema = z
     source: optionalText,
     notes: z.string().optional(),
     lastContactedAt: isoDateString.optional().nullable(),
+    lastMarketingEmailAt: isoDateString.optional().nullable(),
+    emailSentCount: z.number().int().min(0).optional(),
     nextFollowUpAt: dateOnly.optional().nullable(),
   })
   .refine((value) => Object.keys(value).some((key) => key !== "id"), {
@@ -58,6 +68,8 @@ export const listSalesLeadsSchema = z.object({
   status: salesLeadStatusSchema.optional(),
   industrySlug: z.string().trim().optional(),
   location: z.string().trim().optional(),
+  country: salesLeadCountrySchema.optional(),
+  cityTown: z.string().trim().optional(),
   take: z.number().int().min(1).max(500).optional().default(200),
   skip: z.number().int().min(0).optional().default(0),
 });

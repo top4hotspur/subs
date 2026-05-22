@@ -52,8 +52,15 @@ Move to DB/API/auth:
 - Persisted entities:
   - `SalesLead`
   - `SalesLeadEvent`
-- This flow supports lead tracking, follow-up scheduling, CSV import/export, and email template preview/copy only.
+- This flow supports lead tracking, follow-up scheduling, country/city filters, CSV import/export, and outreach operations:
+  - email template preview/copy/mark-sent
+  - printable letters/flyers and envelopes
+  - bulk print packs (letters first, envelopes second)
 - No marketing email provider or unsubscribe enforcement is wired yet.
+
+## Platform settings vs business site settings
+- `/admin/settings` represents per-subscriber business site settings (services, staff, availability, templates).
+- Platform admin operations are handled separately via setup queue, subscriber sites, and sales pipeline routes.
 
 
 ## Local Analytics Layer (Current Mock State)

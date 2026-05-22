@@ -188,7 +188,7 @@ export default function AdminPage() {
       <p className="mt-3 text-slate-600">Local-only queue preview. Auth/backends are not implemented yet.</p>
       <div className="mt-3">
         <Link href="/admin/settings" className="text-sm font-medium text-sky-700 hover:text-sky-900">
-          Open mock settings editor
+          Open business site settings (mock)
         </Link>
       </div>
       <div className="mt-2">
@@ -220,8 +220,8 @@ export default function AdminPage() {
           <p className="mt-1 text-xs text-slate-600">Customers and booking history</p>
         </Link>
         <Link href="/admin/settings" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-slate-900">Admin settings</p>
-          <p className="mt-1 text-xs text-slate-600">Services, staff, availability, templates</p>
+          <p className="text-sm font-semibold text-slate-900">Business site settings</p>
+          <p className="mt-1 text-xs text-slate-600">Individual subscriber website settings demo</p>
         </Link>
         <Link href="/admin/sales" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-sm font-semibold text-slate-900">Sales Pipeline</p>
@@ -230,11 +230,10 @@ export default function AdminPage() {
       </section>
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Future site settings</h2>
+        <h2 className="text-lg font-semibold text-slate-900">Business site settings scope</h2>
         <p className="mt-2 text-sm text-slate-600">
-          In the live admin portal, business owners/admins will manage branding, business details, service areas,
-          page/section visibility, About/Terms/Privacy/Cookie content, services and pricing, notification settings,
-          analytics, and later financial/income settings.
+          These settings are for an individual customer website. Platform setup requests, subscriber sites, and sales pipeline
+          are managed separately.
         </p>
       </section>
 

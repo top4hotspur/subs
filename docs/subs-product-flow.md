@@ -154,7 +154,20 @@ Still mock for infrastructure:
 - This is for prospective business leads before they become subscribers.
 - Leads can be created manually or imported from CSV, then moved through outreach statuses.
 - Admin can preview/copy standardized outreach email templates and mark leads as contacted.
+- Sales pipeline now supports:
+  - country/city location filtering
+  - prepare email + copy + mark email sent
+  - print letter/flyer and envelope per lead
+  - bulk print batching (letters first, envelopes second)
 - No real email provider sending is enabled yet.
+
+## Platform vs site settings distinction
+
+- `/admin/settings` is a business site settings demo for individual subscriber websites.
+- Platform operations are managed in separate admin areas:
+  - setup queue (`/admin/setup-requests`)
+  - subscriber provisioning (`/admin/sites`)
+  - sales pipeline (`/admin/sales`)
 
 ## Demo to setup sales journey polish
 

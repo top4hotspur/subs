@@ -25,6 +25,8 @@ export async function GET(request: NextRequest) {
       status: search.get("status") ?? undefined,
       industrySlug: search.get("industrySlug") ?? undefined,
       location: search.get("location") ?? undefined,
+      country: search.get("country") ?? undefined,
+      cityTown: search.get("cityTown") ?? undefined,
       take: search.get("take") ? Number(search.get("take")) : undefined,
       skip: search.get("skip") ? Number(search.get("skip")) : undefined,
     });

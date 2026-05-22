@@ -41,13 +41,21 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     const { id } = await context.params;
     const body = await request.json();
 
-    if (body?.action === "MARK_CONTACTED") {
+    if (body?.action === "MARK_CONTACTED" || body?.action === "MARK_EMAIL_SENT") {
       const markInput = markSalesLeadContactedSchema.parse({
         id,
         message: body?.message,
-        status: body?.status,
+        status: body?.status ?? (body?.action === "MARK_EMAIL_SENT" ? "CONTACTED" : undefined),
       });
       const lead = await markSalesLeadContacted(markInput);
+      if (body?.action === "MARK_EMAIL_SENT") {
+        await createSalesLeadEvent({
+          salesLeadId: id,
+          eventType: "MARKETING_EMAIL_LOGGED",
+          message: body?.message ?? "Marketing email marked as sent (preview/copy workflow).",
+          metadata: { action: "MARK_EMAIL_SENT" },
+        });
+      }
       return NextResponse.json({ ok: true, lead });
     }
 
@@ -55,6 +63,8 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       id,
       businessName: body?.businessName,
       location: body?.location,
+      country: body?.country,
+      cityTown: body?.cityTown,
       industrySlug: body?.industrySlug,
       industryLabel: body?.industryLabel,
       contactName: body?.contactName,
@@ -64,6 +74,8 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       source: body?.source,
       notes: body?.notes,
       lastContactedAt: body?.lastContactedAt,
+      lastMarketingEmailAt: body?.lastMarketingEmailAt,
+      emailSentCount: body?.emailSentCount,
       nextFollowUpAt: body?.nextFollowUpAt,
     });
 

@@ -29,7 +29,9 @@ Status values:
 
 ## Fields captured
 - business name
-- location
+- country
+- city/town
+- address/area location notes
 - industry slug/label
 - contact name
 - email
@@ -38,6 +40,8 @@ Status values:
 - source
 - notes
 - last contacted date/time
+- last marketing email date/time
+- email sent count
 - next follow-up date
 
 ## CSV import
@@ -55,6 +59,9 @@ Also supports common aliases, for example:
 - Business Name / `business_name` / `businessName`
 - Telephone / `phone` / `tel`
 - Type / Industry / `industry`
+- Country / `country`
+- City / Town / `cityTown`
+- Location / `location`
 
 Flow:
 1. Upload CSV
@@ -65,6 +72,8 @@ Flow:
 ## CSV export
 Exports include:
 - business name
+- country
+- city/town
 - location
 - industry
 - contact name
@@ -74,6 +83,8 @@ Exports include:
 - source
 - notes
 - last contacted
+- last marketing email
+- email sent count
 - next follow-up
 
 Also supports event-history export for the selected lead.
@@ -93,6 +104,28 @@ Variables:
 - `{{demoLink}}`
 - `{{pricingSummary}}`
 - `{{senderName}}`
+
+Lead actions:
+- Prepare email
+- Copy email
+- Mark email sent (updates contact timestamp/status trail in persisted lead history)
+
+## Physical outreach printing
+
+Per-lead actions:
+- Print letter/flyer
+- Print envelope
+
+Bulk actions:
+- Select all visible
+- Clear selection
+- Print selected letters/flyers
+- Print selected envelopes
+- Print batch pack
+
+Batch pack print order:
+1. letters/flyers first
+2. envelopes second
 
 ## Compliance and sending boundaries
 No real sending is implemented.

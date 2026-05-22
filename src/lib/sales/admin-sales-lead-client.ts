@@ -13,6 +13,8 @@ export type SalesLeadDto = {
   id: string;
   businessName: string;
   location?: string | null;
+  country?: string | null;
+  cityTown?: string | null;
   industrySlug?: string | null;
   industryLabel?: string | null;
   contactName?: string | null;
@@ -22,6 +24,8 @@ export type SalesLeadDto = {
   source?: string | null;
   notes?: string | null;
   lastContactedAt?: string | null;
+  lastMarketingEmailAt?: string | null;
+  emailSentCount?: number;
   nextFollowUpAt?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -41,12 +45,16 @@ export async function listBackendSalesLeads(options?: {
   status?: string;
   industrySlug?: string;
   location?: string;
+  country?: string;
+  cityTown?: string;
 }) {
   const searchParams = new URLSearchParams();
   if (options?.search) searchParams.set("search", options.search);
   if (options?.status) searchParams.set("status", options.status);
   if (options?.industrySlug) searchParams.set("industrySlug", options.industrySlug);
   if (options?.location) searchParams.set("location", options.location);
+  if (options?.country) searchParams.set("country", options.country);
+  if (options?.cityTown) searchParams.set("cityTown", options.cityTown);
 
   try {
     const response = await fetch(`/api/admin/sales-leads?${searchParams.toString()}`, {
@@ -157,4 +165,10 @@ export async function markBackendSalesLeadContacted(
   status?: string,
 ): Promise<ClientResult<{ lead: SalesLeadDto }>> {
   return updateBackendSalesLead(id, { action: "MARK_CONTACTED", status });
+}
+
+export async function markBackendSalesLeadEmailSent(
+  id: string,
+): Promise<ClientResult<{ lead: SalesLeadDto }>> {
+  return updateBackendSalesLead(id, { action: "MARK_EMAIL_SENT" });
 }

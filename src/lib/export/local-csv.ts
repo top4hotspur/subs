@@ -149,6 +149,8 @@ export function salesLeadsToCsv(
   leads: Array<{
     businessName: string;
     location?: string | null;
+    country?: string | null;
+    cityTown?: string | null;
     industryLabel?: string | null;
     contactName?: string | null;
     email?: string | null;
@@ -157,11 +159,15 @@ export function salesLeadsToCsv(
     source?: string | null;
     notes?: string | null;
     lastContactedAt?: string | null;
+    lastMarketingEmailAt?: string | null;
+    emailSentCount?: number;
     nextFollowUpAt?: string | null;
   }>,
 ): string {
   const headers = [
     "business_name",
+    "country",
+    "city_town",
     "location",
     "industry",
     "contact_name",
@@ -171,11 +177,15 @@ export function salesLeadsToCsv(
     "source",
     "notes",
     "last_contacted_at",
+    "last_marketing_email_at",
+    "email_sent_count",
     "next_follow_up_at",
   ];
 
   const rows = leads.map((lead) => [
     lead.businessName,
+    lead.country ?? "",
+    lead.cityTown ?? "",
     lead.location ?? "",
     lead.industryLabel ?? "",
     lead.contactName ?? "",
@@ -185,6 +195,8 @@ export function salesLeadsToCsv(
     lead.source ?? "",
     lead.notes ?? "",
     lead.lastContactedAt ?? "",
+    lead.lastMarketingEmailAt ?? "",
+    lead.emailSentCount ?? 0,
     lead.nextFollowUpAt ?? "",
   ]);
 

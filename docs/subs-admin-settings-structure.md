@@ -2,6 +2,7 @@
 
 ## Purpose
 `/admin/settings` is now split into focused sections to avoid a single long scrolling editor.
+This page represents **business site settings** for an individual subscriber website, not platform-level admin settings.
 
 ## Sections
 - Analytics and financials
@@ -19,6 +20,7 @@
 - Only the active section is rendered.
 - All data remains browser-local and mock-only.
 - No backend/auth/API integration is implemented.
+- Platform admin operational flows are managed separately in `/admin`, `/admin/setup-requests`, `/admin/sites`, and `/admin/sales`.
 - Staff setup now uses business-configured role definitions.
 - Notification templates are split by channel (Email / WhatsApp).
 - Calendar preview now includes hourly staffing, 14-day forecast, and a long-term day-grid toggle.

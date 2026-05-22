@@ -168,6 +168,8 @@ model SalesLead {
   id              String           @id @default(cuid())
   businessName    String
   location        String?
+  country         String?
+  cityTown        String?
   industrySlug    String?
   industryLabel   String?
   contactName     String?
@@ -177,6 +179,8 @@ model SalesLead {
   source          String?
   notes           String?
   lastContactedAt DateTime?
+  lastMarketingEmailAt DateTime?
+  emailSentCount  Int              @default(0)
   nextFollowUpAt  DateTime?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
@@ -186,6 +190,8 @@ model SalesLead {
   @@index([industrySlug])
   @@index([businessName])
   @@index([location])
+  @@index([country])
+  @@index([cityTown])
   @@index([createdAt])
 }
 

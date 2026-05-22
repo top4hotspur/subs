@@ -39,6 +39,8 @@ export async function createSalesLead(input: CreateSalesLeadInput) {
     data: {
       businessName: parsed.businessName,
       location: parsed.location,
+      country: parsed.country,
+      cityTown: parsed.cityTown,
       industrySlug: parsed.industrySlug,
       industryLabel: parsed.industryLabel,
       contactName: parsed.contactName,
@@ -48,6 +50,8 @@ export async function createSalesLead(input: CreateSalesLeadInput) {
       source: parsed.source,
       notes: parsed.notes,
       lastContactedAt: parsed.lastContactedAt ? new Date(parsed.lastContactedAt) : undefined,
+      lastMarketingEmailAt: parsed.lastMarketingEmailAt ? new Date(parsed.lastMarketingEmailAt) : undefined,
+      emailSentCount: parsed.emailSentCount,
       nextFollowUpAt: parsed.nextFollowUpAt ? new Date(`${parsed.nextFollowUpAt}T00:00:00.000Z`) : undefined,
     },
   });
@@ -83,6 +87,8 @@ export async function listSalesLeads(options: Partial<ListSalesLeadsInput> = {})
       status: parsed.status,
       industrySlug: parsed.industrySlug,
       location: parsed.location,
+      country: parsed.country,
+      cityTown: parsed.cityTown,
       ...(query
         ? {
             OR: [
@@ -90,6 +96,7 @@ export async function listSalesLeads(options: Partial<ListSalesLeadsInput> = {})
               { contactName: { contains: query, mode: "insensitive" } },
               { email: { contains: query, mode: "insensitive" } },
               { phone: { contains: query, mode: "insensitive" } },
+              { cityTown: { contains: query, mode: "insensitive" } },
             ],
           }
         : {}),
@@ -116,6 +123,8 @@ export async function updateSalesLead(input: UpdateSalesLeadInput) {
     data: {
       businessName: parsed.businessName,
       location: parsed.location,
+      country: parsed.country === null ? null : parsed.country,
+      cityTown: parsed.cityTown,
       industrySlug: parsed.industrySlug,
       industryLabel: parsed.industryLabel,
       contactName: parsed.contactName,
@@ -130,6 +139,13 @@ export async function updateSalesLead(input: UpdateSalesLeadInput) {
           : parsed.lastContactedAt
             ? new Date(parsed.lastContactedAt)
             : undefined,
+      lastMarketingEmailAt:
+        parsed.lastMarketingEmailAt === null
+          ? null
+          : parsed.lastMarketingEmailAt
+            ? new Date(parsed.lastMarketingEmailAt)
+            : undefined,
+      emailSentCount: parsed.emailSentCount,
       nextFollowUpAt:
         parsed.nextFollowUpAt === null
           ? null
@@ -181,6 +197,8 @@ export async function markSalesLeadContacted(input: MarkSalesLeadContactedInput)
       data: {
         status: parsed.status ?? "CONTACTED",
         lastContactedAt: new Date(currentIso),
+        lastMarketingEmailAt: new Date(currentIso),
+        emailSentCount: { increment: 1 },
       },
     });
 
