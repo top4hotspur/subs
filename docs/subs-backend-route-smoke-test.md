@@ -96,3 +96,11 @@ Result: PASS (with Neon env loaded from local `.env`).
 Fallback check:
 - With `.env` temporarily removed, POST returned `503` with `BACKEND_PERSISTENCE_NOT_CONFIGURED`.
 - Confirms backend-off path is still available for localStorage fallback flows.
+
+## Amplify SSR runtime env note
+
+For Amplify-hosted Next.js SSR/API routes, setting environment variables in the Amplify console is not always sufficient by itself for runtime visibility.  
+During Amplify build, required server env vars should be written into `.env.production` so route handlers can read them at runtime:
+- `DATABASE_URL`
+- `DIRECT_DATABASE_URL`
+- `PLATFORM_ADMIN_EMAILS`

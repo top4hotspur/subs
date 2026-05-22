@@ -294,3 +294,6 @@ This runbook intentionally avoids provisioning or migration execution. It is a s
 Amplify note:
 - These local results do not automatically apply to hosted environments.
 - Amplify must define `DATABASE_URL`, `DIRECT_DATABASE_URL`, and `PLATFORM_ADMIN_EMAILS` for backend persistence to activate.
+
+Additional SSR/API runtime requirement:
+- In Amplify build, write these env vars into `.env.production` before `npm run build` so Next.js server routes can access them at runtime.

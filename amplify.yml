@@ -3,6 +3,10 @@ frontend:
   phases:
     preBuild:
       commands:
+        - rm -f .env.production
+        - echo "DATABASE_URL=$DATABASE_URL" >> .env.production
+        - echo "DIRECT_DATABASE_URL=$DIRECT_DATABASE_URL" >> .env.production
+        - echo "PLATFORM_ADMIN_EMAILS=$PLATFORM_ADMIN_EMAILS" >> .env.production
         - npm ci
     build:
       commands:
