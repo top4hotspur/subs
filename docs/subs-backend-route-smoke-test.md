@@ -1,4 +1,4 @@
-# Subs Backend Route Smoke Test (Task 3)
+﻿# Subs Backend Route Smoke Test (Task 3)
 
 ## Scope
 These smoke checks cover backend setup-request routes added in Task 3.
@@ -140,3 +140,12 @@ Result: PASS
 Migration state resolution used before this smoke test:
 - `prisma migrate resolve --applied 20260522122802_init_setup_persistence`
 - `prisma migrate deploy` (applied `20260522145243_add_site_provisioning`)
+
+## Provisioning route usage note
+
+Operational flow now includes:
+1. `POST /api/admin/sites` from `/admin/setup-requests` Start site setup action.
+2. Redirect/deep-link to `/admin/sites?siteId=<id>` for immediate checklist/domain/subscription review.
+
+No domain/DNS automation is performed; domain panel remains manual tracking only.
+

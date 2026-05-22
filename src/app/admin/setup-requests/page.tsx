@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -10,16 +10,16 @@ import {
 } from "@/lib/setup/admin-setup-request-client";
 import { setupStatusLabel } from "@/lib/setup/status";
 import {
-  DomainOption,
   CommunicationOption,
+  DomainOption,
   SubscriptionSetupStatus,
 } from "@/lib/sites/types";
 import {
   communicationOptionLabel,
   domainOptionLabel,
   formatGbp,
-  formatUkDateTime,
   formatOptional,
+  formatUkDateTime,
 } from "@/lib/ui/display-labels";
 import {
   dangerButtonClass,
@@ -78,6 +78,11 @@ export default function AdminSetupRequestsPage() {
   const [selectedId, setSelectedId] = useState<string>("");
   const [detail, setDetail] = useState<BackendSetupRequestRecord | null>(null);
   const [statusDrafts, setStatusDrafts] = useState<Record<string, string>>({});
+  const [siteSetupResult, setSiteSetupResult] = useState<{
+    siteId: string;
+    siteName: string;
+    created: boolean;
+  } | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -99,6 +104,7 @@ export default function AdminSetupRequestsPage() {
 
     setLoading(true);
     setMessage(null);
+    setSiteSetupResult(null);
     window.localStorage.setItem(ADMIN_EMAIL_KEY, adminEmail.trim());
 
     const result = await listBackendSetupRequests(adminEmail.trim(), { take: 100 });
@@ -147,21 +153,16 @@ export default function AdminSetupRequestsPage() {
       return;
     }
 
-    const result = await updateBackendSetupRequestStatus(
-      adminEmail.trim(),
-      requestId,
-      nextStatus,
-    );
+    const result = await updateBackendSetupRequestStatus(adminEmail.trim(), requestId, nextStatus);
     if (!result.ok) {
       setMessage(toMessage(result.error, result.status));
       return;
     }
 
+    setSiteSetupResult(null);
     setMessage(`Status updated to ${setupStatusLabel(result.setupRequest.status as SubscriptionSetupStatus)}.`);
     setRequests((current) =>
-      current.map((request) =>
-        request.id === requestId ? result.setupRequest : request,
-      ),
+      current.map((request) => (request.id === requestId ? result.setupRequest : request)),
     );
     if (selectedId === requestId) {
       setDetail(result.setupRequest);
@@ -173,16 +174,20 @@ export default function AdminSetupRequestsPage() {
       setMessage("Enter a platform admin email before starting site setup.");
       return;
     }
+
     const result = await createAdminTenantSiteFromSetupRequest(adminEmail.trim(), requestId);
     if (!result.ok) {
       setMessage(toMessage(result.error, result.status));
+      setSiteSetupResult(null);
       return;
     }
-    setMessage(
-      result.created
-        ? `Site setup started: ${result.tenantSite.displayName} (${result.tenantSite.id}).`
-        : `Site already exists: ${result.tenantSite.displayName} (${result.tenantSite.id}).`,
-    );
+
+    setSiteSetupResult({
+      siteId: result.tenantSite.id,
+      siteName: result.tenantSite.displayName,
+      created: result.created,
+    });
+    setMessage(result.created ? "Site setup started successfully." : "Site already exists for this setup request.");
   }
 
   return (
@@ -200,9 +205,7 @@ export default function AdminSetupRequestsPage() {
       </div>
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <label className="block text-sm font-medium text-slate-800">
-          Platform admin email
-        </label>
+        <label className="block text-sm font-medium text-slate-800">Platform admin email</label>
         <div className="mt-2 flex flex-wrap gap-2">
           <input
             type="email"
@@ -220,8 +223,27 @@ export default function AdminSetupRequestsPage() {
             {loading ? "Loading..." : "Load setup requests"}
           </button>
         </div>
-        {message ? (
-          <p className="mt-3 text-sm text-slate-700">{message}</p>
+
+        {message ? <p className="mt-3 text-sm text-slate-700">{message}</p> : null}
+
+        {siteSetupResult ? (
+          <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+            <p className="text-sm text-emerald-900">
+              {siteSetupResult.created ? "Created site" : "Site already exists"}: {" "}
+              <span className="font-semibold">{siteSetupResult.siteName}</span>
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Link
+                href={`/admin/sites?siteId=${encodeURIComponent(siteSetupResult.siteId)}`}
+                className={`${primaryButtonClass} ${smallButtonClass}`}
+              >
+                Open created site
+              </Link>
+              <Link href="/admin/sites" className={`${outlineButtonClass} ${smallButtonClass}`}>
+                Open subscriber sites
+              </Link>
+            </div>
+          </div>
         ) : null}
       </section>
 
@@ -229,9 +251,7 @@ export default function AdminSetupRequestsPage() {
         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900">Persisted queue</h2>
           {requests.length === 0 ? (
-            <p className="mt-3 text-sm text-slate-600">
-              No persisted setup requests loaded yet.
-            </p>
+            <p className="mt-3 text-sm text-slate-600">No persisted setup requests loaded yet.</p>
           ) : (
             <div className="mt-4 space-y-3">
               {requests.map((request) => (
@@ -249,9 +269,7 @@ export default function AdminSetupRequestsPage() {
                   <p className="mt-1 text-xs text-slate-600">
                     {request.industrySlug} · {setupStatusLabel(request.status as SubscriptionSetupStatus)}
                   </p>
-                  <p className="mt-1 text-xs text-slate-600">
-                    Created: {formatUkDateTime(request.createdAt)}
-                  </p>
+                  <p className="mt-1 text-xs text-slate-600">Created: {formatUkDateTime(request.createdAt)}</p>
                 </button>
               ))}
             </div>
@@ -261,9 +279,7 @@ export default function AdminSetupRequestsPage() {
         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900">Setup request detail</h2>
           {!selectedRequest ? (
-            <p className="mt-3 text-sm text-slate-600">
-              Select a request to view details.
-            </p>
+            <p className="mt-3 text-sm text-slate-600">Select a request to view details.</p>
           ) : (
             <div className="mt-3 space-y-4">
               <div className="grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
@@ -328,7 +344,7 @@ export default function AdminSetupRequestsPage() {
                     Start site setup
                   </button>
                   <Link
-                    href="/admin/sites"
+                    href={`/admin/sites${siteSetupResult ? `?siteId=${encodeURIComponent(siteSetupResult.siteId)}` : ""}`}
                     className={`${outlineButtonClass} ${smallButtonClass}`}
                   >
                     Open subscriber sites
@@ -342,3 +358,4 @@ export default function AdminSetupRequestsPage() {
     </main>
   );
 }
+

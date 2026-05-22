@@ -1,4 +1,4 @@
-type ClientFailure = {
+﻿type ClientFailure = {
   ok: false;
   error: string;
   status: number;
@@ -31,6 +31,12 @@ export type AdminTenantSiteSummary = {
     domainFeeGbp: number;
     whatsappAddonEnabled: boolean;
   }>;
+  setupRequest?: {
+    id: string;
+    domainOption?: string | null;
+    existingDomain?: string | null;
+    desiredDomain?: string | null;
+  } | null;
 };
 
 async function parseJsonSafe(response: Response): Promise<unknown> {
@@ -217,3 +223,4 @@ export async function updateAdminSiteTaskStatus(
     return { ok: false, error: "NETWORK_ERROR", status: 0 };
   }
 }
+

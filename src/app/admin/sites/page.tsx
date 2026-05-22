@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
@@ -19,6 +19,31 @@ import { formatGbp, formatOptional, formatUkDateTime } from "@/lib/ui/display-la
 const ADMIN_EMAIL_KEY = "subs-platform-admin-email";
 const TASK_STATUS_OPTIONS = ["TODO", "IN_PROGRESS", "DONE", "BLOCKED", "SKIPPED"];
 
+type TaskGroupKey =
+  | "setupReview"
+  | "businessDetails"
+  | "paymentSubscription"
+  | "domainDns"
+  | "siteConfiguration"
+  | "goLive";
+
+type SiteTask = {
+  id: string;
+  taskType: string;
+  status: string;
+  title: string;
+  notes?: string | null;
+};
+
+const TASK_GROUP_LABELS: Record<TaskGroupKey, string> = {
+  setupReview: "Setup review",
+  businessDetails: "Business details",
+  paymentSubscription: "Payment/subscription",
+  domainDns: "Domain/DNS",
+  siteConfiguration: "Site configuration",
+  goLive: "Go-live",
+};
+
 function toMessage(error: string, status: number): string {
   if (error === "BACKEND_PERSISTENCE_NOT_CONFIGURED" || status === 503) {
     return "Backend persistence is not configured for this environment yet.";
@@ -32,7 +57,29 @@ function toMessage(error: string, status: number): string {
   return `Request failed: ${error}`;
 }
 
+function groupTask(taskType: string): TaskGroupKey {
+  if (taskType === "REVIEW_SETUP") return "setupReview";
+  if (taskType === "CONFIRM_BUSINESS") return "businessDetails";
+  if (taskType === "CONFIRM_SUBSCRIPTION") return "paymentSubscription";
+  if (taskType === "CONFIRM_DOMAIN_OPTION" || taskType === "PREPARE_DNS") return "domainDns";
+  if (taskType === "PREPARE_SITE_SETTINGS") return "siteConfiguration";
+  return "goLive";
+}
+
+function getDomainOptionSummary(value?: string | null): string {
+  if (!value) return "Not set";
+  if (value === "EXISTING_DOMAIN") return "Existing domain";
+  if (value === "CUSTOMER_BUYS_DOMAIN") return "Customer buys domain";
+  if (value === "WE_REGISTER_DOMAIN") return "We register/manage domain";
+  return value;
+}
+
 export default function AdminSitesPage() {
+  const [siteIdFromQuery] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("siteId")?.trim() ?? "";
+  });
+
   const [adminEmail, setAdminEmail] = useState(() => {
     if (typeof window === "undefined") return "";
     return window.localStorage.getItem(ADMIN_EMAIL_KEY) ?? "";
@@ -52,13 +99,7 @@ export default function AdminSitesPage() {
       registrarNotes?: string | null;
       createdAt: string;
     }>;
-    tasks: Array<{
-      id: string;
-      taskType: string;
-      status: string;
-      title: string;
-      notes?: string | null;
-    }>;
+    tasks: SiteTask[];
     statusEvents: Array<{
       id: string;
       eventType: string;
@@ -81,14 +122,36 @@ export default function AdminSitesPage() {
     [sites, selectedSiteId, detail],
   );
 
+  const taskGroups = useMemo(() => {
+    if (!detail) return [] as Array<{ key: TaskGroupKey; label: string; tasks: SiteTask[] }>;
+    const grouped: Record<TaskGroupKey, typeof detail.tasks> = {
+      setupReview: [],
+      businessDetails: [],
+      paymentSubscription: [],
+      domainDns: [],
+      siteConfiguration: [],
+      goLive: [],
+    };
+    detail.tasks.forEach((task) => {
+      grouped[groupTask(task.taskType)].push(task);
+    });
+    return (Object.keys(grouped) as TaskGroupKey[]).map((key) => ({
+      key,
+      label: TASK_GROUP_LABELS[key],
+      tasks: grouped[key],
+    }));
+  }, [detail]);
+
   async function loadSites(): Promise<void> {
     if (!adminEmail.trim()) {
       setMessage("Enter a platform admin email first.");
       return;
     }
+
     setLoading(true);
     setMessage(null);
     window.localStorage.setItem(ADMIN_EMAIL_KEY, adminEmail.trim());
+
     const result = await listAdminTenantSites(adminEmail.trim());
     if (!result.ok) {
       setSites([]);
@@ -99,25 +162,31 @@ export default function AdminSitesPage() {
     }
 
     setSites(result.sites);
-    if (result.sites.length > 0) {
-      const first = result.sites[0];
-      setSelectedSiteId(first.id);
-      await loadSiteDetail(first.id, adminEmail.trim());
+
+    const queryMatch = siteIdFromQuery ? result.sites.find((site) => site.id === siteIdFromQuery) : null;
+    const targetSite = queryMatch ?? result.sites[0] ?? null;
+
+    if (targetSite) {
+      setSelectedSiteId(targetSite.id);
+      await loadSiteDetail(targetSite.id, adminEmail.trim());
     } else {
       setSelectedSiteId("");
       setDetail(null);
     }
+
     setLoading(false);
   }
 
   async function loadSiteDetail(siteId: string, explicitEmail?: string): Promise<void> {
     const email = explicitEmail ?? adminEmail.trim();
     if (!email) return;
+
     const result = await getAdminTenantSiteDetail(email, siteId);
     if (!result.ok) {
       setMessage(toMessage(result.error, result.status));
       return;
     }
+
     setSelectedSiteId(siteId);
     setDetail(result);
     setTaskDrafts((current) => {
@@ -138,22 +207,20 @@ export default function AdminSitesPage() {
       setMessage("Enter a setup request id.");
       return;
     }
-    setMessage(null);
-    const result = await createAdminTenantSiteFromSetupRequest(
-      adminEmail.trim(),
-      setupRequestId.trim(),
-    );
+
+    const result = await createAdminTenantSiteFromSetupRequest(adminEmail.trim(), setupRequestId.trim());
     if (!result.ok) {
       setMessage(toMessage(result.error, result.status));
       return;
     }
+
     setMessage(
       result.created
-        ? `Site created: ${result.tenantSite.displayName} (${result.tenantSite.id}).`
-        : `Site already exists: ${result.tenantSite.displayName} (${result.tenantSite.id}).`,
+        ? `Site created and linked: ${result.tenantSite.displayName}.`
+        : `Site already exists: ${result.tenantSite.displayName}.`,
     );
+
     await loadSites();
-    setSelectedSiteId(result.tenantSite.id);
     await loadSiteDetail(result.tenantSite.id, adminEmail.trim());
   }
 
@@ -161,11 +228,13 @@ export default function AdminSitesPage() {
     if (!selectedSiteId) return;
     const status = taskDrafts[taskId];
     if (!status) return;
+
     const result = await updateAdminSiteTaskStatus(adminEmail.trim(), selectedSiteId, taskId, status);
     if (!result.ok) {
       setMessage(toMessage(result.error, result.status));
       return;
     }
+
     setMessage(`Task updated: ${result.task.title} -> ${result.task.status}.`);
     await loadSiteDetail(selectedSiteId);
   }
@@ -194,7 +263,12 @@ export default function AdminSitesPage() {
             placeholder="admin@example.com"
             className="min-w-[260px] flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
           />
-          <button type="button" className={`${primaryButtonClass} ${smallButtonClass}`} onClick={loadSites} disabled={loading}>
+          <button
+            type="button"
+            className={`${primaryButtonClass} ${smallButtonClass}`}
+            onClick={loadSites}
+            disabled={loading}
+          >
             {loading ? "Loading..." : "Load sites"}
           </button>
         </div>
@@ -209,17 +283,22 @@ export default function AdminSitesPage() {
               placeholder="setup request id (cuid)"
               className="min-w-[280px] flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
             />
-            <button type="button" className={`${primaryButtonClass} ${smallButtonClass}`} onClick={startSiteSetup}>
+            <button
+              type="button"
+              className={`${primaryButtonClass} ${smallButtonClass}`}
+              onClick={startSiteSetup}
+            >
               Start site setup
             </button>
           </div>
         </div>
+
         {message ? <p className="mt-3 text-sm text-slate-700">{message}</p> : null}
       </section>
 
-      <section className="mt-6 grid gap-6 lg:grid-cols-[1.05fr_1fr]">
+      <section className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_1.2fr]">
         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Sites</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Subscriber sites</h2>
           {sites.length === 0 ? (
             <p className="mt-3 text-sm text-slate-600">No persisted sites loaded yet.</p>
           ) : (
@@ -236,13 +315,15 @@ export default function AdminSitesPage() {
                   }`}
                 >
                   <p className="font-semibold text-slate-900">{site.displayName}</p>
-                  <p className="mt-1 text-xs text-slate-600">
-                    {formatOptional(site.industrySlug)} | {formatOptional(site.provisioningStatus)}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-600">
-                    Domain: {formatOptional(site.domainStatus)} | Subscription: {formatOptional(site.subscriptionStatus)}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-600">Primary domain: {formatOptional(site.domainPrimary)}</p>
+                  <div className="mt-1 grid gap-1 text-xs text-slate-600">
+                    <p>Industry: {formatOptional(site.industrySlug)}</p>
+                    <p>Provisioning: {formatOptional(site.provisioningStatus)}</p>
+                    <p>Domain: {formatOptional(site.domainStatus)}</p>
+                    <p>Subscription: {formatOptional(site.subscriptionStatus)}</p>
+                    <p>Primary domain: {formatOptional(site.domainPrimary)}</p>
+                    <p>WhatsApp add-on: {site.whatsappAddonEnabled ? "Enabled" : "Disabled"}</p>
+                    <p>Created: {formatUkDateTime(site.createdAt)}</p>
+                  </div>
                 </button>
               ))}
             </div>
@@ -250,7 +331,7 @@ export default function AdminSitesPage() {
         </article>
 
         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Site detail</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Selected site details</h2>
           {!selectedSite || !detail ? (
             <p className="mt-3 text-sm text-slate-600">Select a site to inspect provisioning details.</p>
           ) : (
@@ -258,78 +339,84 @@ export default function AdminSitesPage() {
               <div className="grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
                 <p><span className="font-semibold">Business:</span> {selectedSite.displayName}</p>
                 <p><span className="font-semibold">Industry:</span> {formatOptional(selectedSite.industrySlug)}</p>
-                <p><span className="font-semibold">Provisioning:</span> {formatOptional(selectedSite.provisioningStatus)}</p>
+                <p><span className="font-semibold">Provisioning status:</span> {formatOptional(selectedSite.provisioningStatus)}</p>
                 <p><span className="font-semibold">Domain status:</span> {formatOptional(selectedSite.domainStatus)}</p>
                 <p><span className="font-semibold">Subscription status:</span> {formatOptional(selectedSite.subscriptionStatus)}</p>
                 <p><span className="font-semibold">Primary domain:</span> {formatOptional(selectedSite.domainPrimary)}</p>
+                <p><span className="font-semibold">WhatsApp add-on:</span> {selectedSite.whatsappAddonEnabled ? "Enabled" : "Disabled"}</p>
                 <p><span className="font-semibold">Created:</span> {formatUkDateTime(selectedSite.createdAt)}</p>
-                <p><span className="font-semibold">Site id:</span> {selectedSite.id}</p>
               </div>
 
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                <p className="text-sm font-semibold text-slate-900">Domain records</p>
+                <p className="text-sm font-semibold text-slate-900">Domain panel</p>
+                <div className="mt-2 grid gap-1 text-xs text-slate-700 sm:grid-cols-2">
+                  <p><span className="font-semibold">Domain option:</span> {getDomainOptionSummary(detail.site.setupRequest?.domainOption)}</p>
+                  <p><span className="font-semibold">Domain status:</span> {formatOptional(selectedSite.domainStatus)}</p>
+                  <p><span className="font-semibold">Existing domain:</span> {formatOptional(detail.site.setupRequest?.existingDomain)}</p>
+                  <p><span className="font-semibold">Desired domain:</span> {formatOptional(detail.site.setupRequest?.desiredDomain)}</p>
+                </div>
                 {detail.domains.length === 0 ? (
-                  <p className="mt-2 text-xs text-slate-600">No domain records yet.</p>
+                  <p className="mt-2 text-xs text-slate-600">No SiteDomain records yet.</p>
                 ) : (
                   <div className="mt-2 space-y-1 text-xs text-slate-700">
                     {detail.domains.map((domain) => (
                       <p key={domain.id}>
                         {domain.domain} ({domain.domainType}) - {domain.status}
+                        {domain.registrarNotes ? ` | ${domain.registrarNotes}` : ""}
                       </p>
                     ))}
                   </div>
                 )}
+                <p className="mt-2 text-xs text-slate-600">
+                  DNS/domain automation is not live yet. Use this checklist to track manual setup.
+                </p>
               </div>
 
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <p className="text-sm font-semibold text-slate-900">Provisioning checklist</p>
-                {detail.tasks.length === 0 ? (
+                {taskGroups.every((group) => group.tasks.length === 0) ? (
                   <p className="mt-2 text-xs text-slate-600">No tasks available.</p>
                 ) : (
-                  <div className="mt-2 space-y-2">
-                    {detail.tasks.map((task) => (
-                      <div key={task.id} className="rounded-md border border-slate-200 bg-white p-2">
-                        <p className="text-xs font-semibold text-slate-900">{task.title}</p>
-                        <p className="text-xs text-slate-600">Type: {task.taskType}</p>
-                        <div className="mt-1 flex flex-wrap gap-2">
-                          <select
-                            className="rounded-md border border-slate-300 px-2 py-1 text-xs"
-                            value={taskDrafts[task.id] ?? task.status}
-                            onChange={(event) =>
-                              setTaskDrafts((current) => ({ ...current, [task.id]: event.target.value }))
-                            }
-                          >
-                            {TASK_STATUS_OPTIONS.map((status) => (
-                              <option key={status} value={status}>
-                                {status}
-                              </option>
+                  <div className="mt-2 space-y-3">
+                    {taskGroups.map((group) => (
+                      <div key={group.key} className="rounded-lg border border-slate-200 bg-white p-2">
+                        <p className="text-xs font-semibold text-slate-900">{group.label}</p>
+                        {group.tasks.length === 0 ? (
+                          <p className="mt-1 text-xs text-slate-500">No tasks in this group.</p>
+                        ) : (
+                          <div className="mt-2 space-y-2">
+                            {group.tasks.map((task) => (
+                              <div key={task.id} className="rounded-md border border-slate-200 p-2">
+                                <p className="text-xs font-semibold text-slate-900">{task.title}</p>
+                                <p className="text-xs text-slate-600">Status: {task.status}</p>
+                                <p className="text-xs text-slate-600">Notes: {formatOptional(task.notes)}</p>
+                                <div className="mt-1 flex flex-wrap gap-2">
+                                  <select
+                                    className="rounded-md border border-slate-300 px-2 py-1 text-xs"
+                                    value={taskDrafts[task.id] ?? task.status}
+                                    onChange={(event) =>
+                                      setTaskDrafts((current) => ({ ...current, [task.id]: event.target.value }))
+                                    }
+                                  >
+                                    {TASK_STATUS_OPTIONS.map((status) => (
+                                      <option key={status} value={status}>
+                                        {status}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <button
+                                    type="button"
+                                    className={`${outlineButtonClass} ${smallButtonClass}`}
+                                    onClick={() => saveTaskStatus(task.id)}
+                                  >
+                                    Save
+                                  </button>
+                                </div>
+                              </div>
                             ))}
-                          </select>
-                          <button
-                            type="button"
-                            className={`${outlineButtonClass} ${smallButtonClass}`}
-                            onClick={() => saveTaskStatus(task.id)}
-                          >
-                            Save
-                          </button>
-                        </div>
+                          </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                <p className="text-sm font-semibold text-slate-900">Status events</p>
-                {detail.statusEvents.length === 0 ? (
-                  <p className="mt-2 text-xs text-slate-600">No events yet.</p>
-                ) : (
-                  <div className="mt-2 space-y-1 text-xs text-slate-700">
-                    {detail.statusEvents.slice(0, 8).map((event) => (
-                      <p key={event.id}>
-                        {formatUkDateTime(event.createdAt)} - {event.eventType}
-                        {event.message ? `: ${event.message}` : ""}
-                      </p>
                     ))}
                   </div>
                 )}
@@ -341,11 +428,28 @@ export default function AdminSitesPage() {
                   <p className="mt-2 text-xs text-slate-600">No subscription placeholder found.</p>
                 ) : (
                   <div className="mt-2 grid gap-1 text-xs text-slate-700 sm:grid-cols-2">
-                    <p>Status: {detail.subscription.status}</p>
-                    <p>Setup fee: {formatGbp(detail.subscription.setupFeeGbp)}</p>
-                    <p>Monthly fee: {formatGbp(detail.subscription.monthlyFeeGbp)}</p>
-                    <p>Domain fee: {formatGbp(detail.subscription.domainFeeGbp)}</p>
-                    <p>WhatsApp add-on: {detail.subscription.whatsappAddonEnabled ? "Enabled" : "Disabled"}</p>
+                    <p><span className="font-semibold">Status:</span> {detail.subscription.status}</p>
+                    <p><span className="font-semibold">Setup fee:</span> {formatGbp(detail.subscription.setupFeeGbp)}</p>
+                    <p><span className="font-semibold">Monthly fee:</span> {formatGbp(detail.subscription.monthlyFeeGbp)}</p>
+                    <p><span className="font-semibold">Domain fee:</span> {formatGbp(detail.subscription.domainFeeGbp)}</p>
+                    <p><span className="font-semibold">WhatsApp add-on:</span> {detail.subscription.whatsappAddonEnabled ? "Enabled" : "Disabled"}</p>
+                    <p><span className="font-semibold">Payment status:</span> Placeholder (no live payments yet)</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <p className="text-sm font-semibold text-slate-900">Status event timeline</p>
+                {detail.statusEvents.length === 0 ? (
+                  <p className="mt-2 text-xs text-slate-600">No events yet.</p>
+                ) : (
+                  <div className="mt-2 space-y-1 text-xs text-slate-700">
+                    {detail.statusEvents.map((event) => (
+                      <p key={event.id}>
+                        {formatUkDateTime(event.createdAt)} - {event.eventType}
+                        {event.message ? `: ${event.message}` : ""}
+                      </p>
+                    ))}
                   </div>
                 )}
               </div>
@@ -356,3 +460,4 @@ export default function AdminSitesPage() {
     </main>
   );
 }
+

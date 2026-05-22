@@ -1,4 +1,4 @@
-# Subs Site Provisioning Workflow (Persisted v1)
+﻿# Subs Site Provisioning Workflow (Persisted v1)
 
 This workflow turns a persisted setup request into a persisted subscriber site record.
 
@@ -42,3 +42,16 @@ This workflow turns a persisted setup request into a persisted subscriber site r
   - mark initial migration as applied with `prisma migrate resolve`
   - deploy pending provisioning migration with `prisma migrate deploy`
 - No reset/drop/destructive operations were used.
+
+## Admin UX update: setup request -> subscriber site deep link
+
+- `/admin/setup-requests` now shows a clear success panel after **Start site setup**.
+- The success panel includes direct navigation to the created/existing site using:
+  - `/admin/sites?siteId=<siteId>`
+- This removes manual copy/paste of site IDs during provisioning.
+
+## Admin sites query behavior
+
+- `/admin/sites` supports `?siteId=<id>`.
+- When provided, the page auto-selects that site after loading persisted site list.
+

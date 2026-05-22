@@ -1,4 +1,4 @@
-# Subs Hosted Smoke Test (Manual)
+﻿# Subs Hosted Smoke Test (Manual)
 
 Run these checks on the hosted environment after deployment.
 
@@ -64,3 +64,11 @@ Add these checks after backend envs are configured:
 - Load persisted setup requests.
 - Update one status and verify update persists.
 - If backend env is missing, verify clear error is shown (no local fallback on this page).
+
+## Hosted smoke additions: persisted provisioning UX
+
+- `/admin/setup-requests`: Start site setup should show success + direct button to `/admin/sites?siteId=<id>`.
+- `/admin/sites?siteId=<id>`: target site should auto-select after loading.
+- Verify grouped provisioning checklist updates still persist via backend task PATCH route.
+- Verify domain panel shows setup-request domain context and manual DNS note.
+

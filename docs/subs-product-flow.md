@@ -1,4 +1,4 @@
-# Subs Product Flow
+﻿# Subs Product Flow
 
 ## Current v1 flow
 1. Homepage -> industry page -> demo page -> customise draft.
@@ -121,3 +121,14 @@ Flow now includes a persisted subscriber-site creation stage:
 
 Still mock for infrastructure:
 - no AWS provisioning actions, no live domain automation.
+
+## Product flow refinement (persisted admin)
+
+- Platform admin can move from persisted setup request to subscriber site in one step:
+  - Start site setup -> open `/admin/sites?siteId=<id>`.
+- `/admin/sites` now acts as the central provisioning workspace with:
+  - grouped checklist tasks
+  - domain/DNS manual tracking panel
+  - subscription placeholder panel
+  - site status timeline
+

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
@@ -197,6 +197,24 @@ export default function AdminPage() {
           Open persisted subscriber sites
         </Link>
       </div>
+      <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Link href="/admin/setup-requests" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-sm font-semibold text-slate-900">Persisted setup requests</p>
+          <p className="mt-1 text-xs text-slate-600">Backend setup queue</p>
+        </Link>
+        <Link href="/admin/sites" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-sm font-semibold text-slate-900">Subscriber sites</p>
+          <p className="mt-1 text-xs text-slate-600">Provisioning and domain tracking</p>
+        </Link>
+        <Link href="/admin/crm" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-sm font-semibold text-slate-900">CRM</p>
+          <p className="mt-1 text-xs text-slate-600">Customers and booking history</p>
+        </Link>
+        <Link href="/admin/settings" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-sm font-semibold text-slate-900">Admin settings</p>
+          <p className="mt-1 text-xs text-slate-600">Services, staff, availability, templates</p>
+        </Link>
+      </section>
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">Future site settings</h2>
@@ -616,4 +634,5 @@ export default function AdminPage() {
     </main>
   );
 }
+
 
