@@ -105,3 +105,8 @@ See also:
 - Local profile data (subs-demo-customer-profile) is used to prefill booking contact fields.
 - Closures configured in business admin demo are reflected in day/slot availability.
 
+
+## Staff and business admin local controls
+- Staff portal manual booking captures payment-required vs payment-completed state for operational visibility.
+- Business admin demo includes service/staff lifecycle controls and weekday-availability constraints for rota setup.
+

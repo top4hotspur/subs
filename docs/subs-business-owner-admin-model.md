@@ -70,3 +70,11 @@ Business admin can:
 - Business admin demo includes editable service naming/description/pricing, staff details, rota, and closure management.
 - Role-level service pricing overrides can drive customer-facing From £x price labels.
 
+
+## Demo operational controls update
+- Staff manual bookings now capture local payment status (Payment Completed / Requires Payment).
+- Business admin can add/remove services and add/remove staff in local demo mode.
+- Staff records now include available working weekdays and a super-user toggle.
+- Rota editor enforces weekday availability by disabling non-available days.
+- Voucher settings now show explicit currency labels for value ranges and postage.
+

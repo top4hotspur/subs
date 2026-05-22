@@ -8,6 +8,7 @@ import {
   listLocalBusinessClosures,
   saveLocalBusinessClosures,
 } from "@/lib/calendar/local-closures";
+import { WEEKDAYS } from "@/lib/calendar/calendar-types";
 import {
   getLocalCustomerSiteSettings,
   saveLocalCustomerSiteSettings,
@@ -18,12 +19,13 @@ import {
   saveLocalStaff,
 } from "@/lib/staff/local-staff";
 import { listLocalStaffRoles } from "@/lib/staff/staff-role-settings";
+import { StaffAvailabilityMode, StaffRoleType, type StaffMember } from "@/lib/staff/staff-types";
 import {
   getLocalVoucherSettings,
   saveLocalVoucherSettings,
 } from "@/lib/vouchers/local-vouchers";
 import { VoucherDeliveryMethod } from "@/lib/vouchers/voucher-types";
-import { formatUkDate } from "@/lib/ui/display-labels";
+import { formatUkDate, weekdayLabel } from "@/lib/ui/display-labels";
 import { getPublicServicePriceLabel } from "@/lib/pricing/service-price-display";
 
 type DemoBusinessAdminPageProps = {
@@ -40,6 +42,14 @@ const permissionAreas = [
   "pages",
   "notifications",
 ] as const;
+
+function makeServiceId(): string {
+  return `service_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function makeStaffId(): string {
+  return `staff_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
 
 export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) {
   const initialSettings = useMemo(
@@ -68,6 +78,45 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
     setMessage("Business site settings saved.");
   }
 
+  function addService(): void {
+    setSettings((current) => ({
+      ...current,
+      services: [
+        ...current.services,
+        {
+          id: makeServiceId(),
+          name: "New service",
+          description: "",
+          basePriceGbp: 0,
+          durationMinutes: 45,
+          bookable: true,
+          requiresQuote: false,
+          active: true,
+        },
+      ],
+    }));
+  }
+
+  function addStaff(): void {
+    const now = new Date().toISOString();
+    const roleLabel = roleDefinitions[0]?.label ?? "Team Member";
+    const next: StaffMember = {
+      id: makeStaffId(),
+      displayName: "New staff member",
+      role: StaffRoleType.GENERAL_STAFF,
+      roleLabel,
+      serviceIds: settings.services.filter((service) => service.active).map((service) => service.id),
+      active: true,
+      customerSelectable: true,
+      isSuperUser: false,
+      availableWeekdays: ["monday", "tuesday", "wednesday", "thursday", "friday"],
+      availabilityMode: StaffAvailabilityMode.APPOINTMENT_ONLY,
+      createdAtIso: now,
+      updatedAtIso: now,
+    };
+    setStaffMembers((current) => [...current, next]);
+  }
+
   return (
     <main className="mx-auto max-w-6xl space-y-6 px-4 py-10 sm:px-6 lg:px-8">
       <section className="rounded-2xl border border-slate-200 bg-slate-900 p-5 text-white shadow-sm">
@@ -82,9 +131,29 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
       </section>
 
       <SiteCard title="Services and prices" subtitle="Edit names, descriptions and prices shown on the public site.">
+        <div className="mb-3">
+          <button type="button" className="rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800" onClick={addService}>
+            Add service
+          </button>
+        </div>
         <div className="space-y-3">
           {settings.services.map((service, index) => (
             <div key={service.id} className="rounded-md border border-slate-200 bg-white p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-xs font-semibold text-slate-700">Service #{index + 1}</p>
+                <button
+                  type="button"
+                  className="text-xs font-semibold text-rose-700"
+                  onClick={() =>
+                    setSettings((current) => ({
+                      ...current,
+                      services: current.services.filter((item) => item.id !== service.id),
+                    }))
+                  }
+                >
+                  Remove service
+                </button>
+              </div>
               <div className="grid gap-2 sm:grid-cols-2">
                 <input
                   className="rounded-md border border-slate-300 px-2 py-1 text-sm"
@@ -119,7 +188,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                 <textarea
                   className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2"
                   value={service.description}
-                  placeholder="Description"
+                  placeholder="Description (optional)"
                   onChange={(event) =>
                     setSettings((current) => {
                       const next = [...current.services];
@@ -137,7 +206,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                       const currentOverride = service.rolePriceOverrides?.find((item) => item.roleLabel === role.label);
                       return (
                         <label key={role.id} className="text-xs text-slate-700">
-                          {role.label}
+                          {role.label} (£)
                           <input
                             type="number"
                             min={0}
@@ -176,10 +245,25 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
       </SiteCard>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <SiteCard title="Staff" subtitle="Maintain team contact details and booking visibility.">
+        <SiteCard title="Staff" subtitle="Maintain team contact details, access level, and booking visibility.">
+          <div className="mb-3">
+            <button type="button" className="rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800" onClick={addStaff}>
+              Add staff member
+            </button>
+          </div>
           <div className="space-y-3">
             {staffMembers.map((staff, index) => (
               <div key={staff.id} className="rounded-md border border-slate-200 bg-white p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-xs font-semibold text-slate-700">Staff #{index + 1}</p>
+                  <button
+                    type="button"
+                    className="text-xs font-semibold text-rose-700"
+                    onClick={() => setStaffMembers((current) => current.filter((item) => item.id !== staff.id))}
+                  >
+                    Remove staff
+                  </button>
+                </div>
                 <div className="grid gap-2 sm:grid-cols-2">
                   <input
                     className="rounded-md border border-slate-300 px-2 py-1 text-sm"
@@ -246,6 +330,44 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                     />
                     Customer-selectable
                   </label>
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(staff.isSuperUser)}
+                      onChange={(event) => {
+                        const next = [...staffMembers];
+                        next[index] = { ...next[index], isSuperUser: event.target.checked };
+                        setStaffMembers(next);
+                      }}
+                    />
+                    Super user
+                  </label>
+                </div>
+                <div className="mt-2">
+                  <p className="text-xs font-semibold text-slate-700">Available working days</p>
+                  <div className="mt-1 grid grid-cols-2 gap-1 text-xs sm:grid-cols-4">
+                    {WEEKDAYS.map((day) => {
+                      const selected = (staff.availableWeekdays ?? []).includes(day);
+                      return (
+                        <label key={day} className="flex items-center gap-1 rounded border border-slate-200 bg-slate-50 px-2 py-1">
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={(event) => {
+                              const current = staff.availableWeekdays ?? [];
+                              const updated = event.target.checked
+                                ? [...current, day]
+                                : current.filter((item) => item !== day);
+                              const next = [...staffMembers];
+                              next[index] = { ...next[index], availableWeekdays: updated };
+                              setStaffMembers(next);
+                            }}
+                          />
+                          {weekdayLabel(day)}
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             ))}
@@ -309,7 +431,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
         </SiteCard>
       </div>
 
-      <SiteCard title="Staff rota" subtitle="Working hours and breaks for appointment availability.">
+      <SiteCard title="Staff rota" subtitle="Working hours and breaks for appointment availability. Staff can only be rota’d on selected available days.">
         <StaffRotaEditor industrySlug={template.slug} staffMembers={staffMembers} />
       </SiteCard>
 
@@ -337,28 +459,34 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
               Allow customer-entered voucher values
             </label>
             <div className="grid grid-cols-2 gap-2">
-              <input
-                type="number"
-                className="rounded-md border border-slate-300 px-2 py-1 text-sm"
-                value={voucherSettings.minValueGbp}
-                onChange={(event) =>
-                  setVoucherSettings((current) => ({
-                    ...current,
-                    minValueGbp: Number(event.target.value || 0),
-                  }))
-                }
-              />
-              <input
-                type="number"
-                className="rounded-md border border-slate-300 px-2 py-1 text-sm"
-                value={voucherSettings.maxValueGbp}
-                onChange={(event) =>
-                  setVoucherSettings((current) => ({
-                    ...current,
-                    maxValueGbp: Number(event.target.value || 0),
-                  }))
-                }
-              />
+              <label className="text-xs">
+                Min value (£)
+                <input
+                  type="number"
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  value={voucherSettings.minValueGbp}
+                  onChange={(event) =>
+                    setVoucherSettings((current) => ({
+                      ...current,
+                      minValueGbp: Number(event.target.value || 0),
+                    }))
+                  }
+                />
+              </label>
+              <label className="text-xs">
+                Max value (£)
+                <input
+                  type="number"
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  value={voucherSettings.maxValueGbp}
+                  onChange={(event) =>
+                    setVoucherSettings((current) => ({
+                      ...current,
+                      maxValueGbp: Number(event.target.value || 0),
+                    }))
+                  }
+                />
+              </label>
             </div>
             <div className="space-y-1 text-xs">
               {[VoucherDeliveryMethod.DIGITAL_EMAIL, VoucherDeliveryMethod.COLLECT_IN_STORE, VoucherDeliveryMethod.POST].map((method) => (
@@ -380,7 +508,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
               ))}
             </div>
             <label className="text-xs">
-              Postage charge
+              Postage charge (£)
               <input
                 type="number"
                 step="0.5"

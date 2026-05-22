@@ -1,3 +1,4 @@
+﻿import { Weekday } from "@/lib/calendar/calendar-types";
 import { WebsiteTemplateSlug } from "@/lib/sites/types";
 import {
   getDefaultStaffAvailabilityModeForIndustry,
@@ -28,6 +29,13 @@ function parse(raw: string | null): StaffMember[] {
   } catch {
     return [];
   }
+}
+
+function defaultAvailableWeekdays(industrySlug: WebsiteTemplateSlug): Weekday[] {
+  if (["barbers", "hairdressers", "beauticians", "nail-salon", "massage", "dog-grooming"].includes(industrySlug)) {
+    return ["tuesday", "wednesday", "thursday", "friday", "saturday"];
+  }
+  return ["monday", "tuesday", "wednesday", "thursday", "friday"];
 }
 
 export function listLocalStaff(industrySlug: WebsiteTemplateSlug): StaffMember[] {
@@ -99,6 +107,7 @@ export function seedLocalStaff(industrySlug: WebsiteTemplateSlug, services?: { i
   const label = getDefaultStaffLabelForIndustry(industrySlug);
   const serviceIds = (services ?? []).slice(0, 3).map((service) => service.id);
   const now = new Date().toISOString();
+  const weekdays = defaultAvailableWeekdays(industrySlug);
 
   const seeded: StaffMember[] = [1, 2, 3].map((n) => ({
     id: generateId(),
@@ -111,6 +120,8 @@ export function seedLocalStaff(industrySlug: WebsiteTemplateSlug, services?: { i
     serviceIds,
     active: true,
     customerSelectable,
+    isSuperUser: false,
+    availableWeekdays: weekdays,
     availabilityMode,
     notes: "Seeded local staff record",
     createdAtIso: now,

@@ -1,3 +1,5 @@
+﻿import { Weekday } from "@/lib/calendar/calendar-types";
+
 export enum StaffRoleType {
   OWNER = "OWNER",
   ADMIN = "ADMIN",
@@ -34,6 +36,8 @@ export type StaffMember = {
   serviceIds: string[];
   active: boolean;
   customerSelectable: boolean;
+  isSuperUser?: boolean;
+  availableWeekdays?: Weekday[];
   availabilityMode: StaffAvailabilityMode;
   notes?: string;
   createdAtIso: string;

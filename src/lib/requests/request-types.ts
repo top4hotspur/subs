@@ -1,4 +1,4 @@
-import { WebsiteTemplateSlug } from "@/lib/sites/types";
+﻿import { WebsiteTemplateSlug } from "@/lib/sites/types";
 
 export enum CustomerRequestKind {
   ENQUIRY = "ENQUIRY",
@@ -44,6 +44,11 @@ export enum CustomerRequestLocationType {
   ROUTE = "ROUTE",
   ONLINE = "ONLINE",
   PHONE = "PHONE",
+}
+
+export enum CustomerRequestPaymentStatus {
+  PAYMENT_COMPLETED = "PAYMENT_COMPLETED",
+  PAYMENT_REQUIRED = "PAYMENT_REQUIRED",
 }
 
 export type CustomerRequest = {
@@ -95,6 +100,7 @@ export type CustomerRequest = {
   mockRegistrationPaymentLink?: string;
   registrationCompletedAtIso?: string;
   paymentCompletedAtIso?: string;
+  paymentStatus?: CustomerRequestPaymentStatus;
   communicationChannels: CustomerRequestCommunicationChannel[];
   completionMessageSentAtIso?: string;
   reviewRequestSentAtIso?: string;

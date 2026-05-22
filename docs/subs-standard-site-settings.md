@@ -87,3 +87,9 @@ for browser-local issue/check/redeem demo workflows.
 - Service duration/buffer and role-price settings influence appointment demo slot behavior and customer-facing price labels.
 - Ad hoc business closures are managed locally and reduce open booking day availability in demo booking pages.
 
+
+## Local demo management enhancements
+- Services can now be added/removed in demo business admin.
+- Staff can now be added/removed with super-user and weekday-availability flags.
+- Gift voucher setting inputs now clearly indicate GBP values (£).
+

@@ -219,3 +219,9 @@ Still mock for infrastructure:
 - Customer profile details from /demo/[industry]/account prefill booking name/email/phone fields.
 - Business admin demo updates (services/staff/rota/closures) feed local booking availability behavior.
 
+
+## Demo business admin/staff controls polish
+- Manual staff bookings now include local payment status selection and display.
+- Business admin demo now supports add/remove for services and staff.
+- Staff available weekdays now control rota eligibility in the local editor.
+

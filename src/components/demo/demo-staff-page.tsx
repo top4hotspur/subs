@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { FormEvent, useMemo, useState } from "react";
 import { DemoSiteNav } from "@/components/demo/demo-site-nav";
@@ -11,6 +11,7 @@ import {
   CustomerRequestCommunicationChannel,
   CustomerRequestKind,
   CustomerRequestLocationType,
+  CustomerRequestPaymentStatus,
   CustomerRequestPricingStatus,
   CustomerRequestStatus,
 } from "@/lib/requests/request-types";
@@ -26,6 +27,12 @@ import {
 type DemoStaffPageProps = {
   template: WebsiteTemplate;
 };
+
+function paymentStatusLabel(status?: CustomerRequestPaymentStatus): string {
+  return status === CustomerRequestPaymentStatus.PAYMENT_COMPLETED
+    ? "Payment Completed"
+    : "Requires Payment";
+}
 
 export function DemoStaffPage({ template }: DemoStaffPageProps) {
   const requests = useMemo(
@@ -49,6 +56,7 @@ export function DemoStaffPage({ template }: DemoStaffPageProps) {
     serviceId: settings.services.find((service) => service.active)?.id ?? "",
     preferredDate: today,
     preferredTime: "10:00",
+    paymentStatus: CustomerRequestPaymentStatus.PAYMENT_REQUIRED,
   });
   const [bookingMessage, setBookingMessage] = useState<string | null>(null);
   const [voucherCode, setVoucherCode] = useState("");
@@ -68,17 +76,19 @@ export function DemoStaffPage({ template }: DemoStaffPageProps) {
       customerPhone: phoneBooking.customerPhone,
       kind: CustomerRequestKind.BOOKING_REQUEST,
       pricingStatus: CustomerRequestPricingStatus.PRICE_CONFIRMED,
+      paymentStatus: phoneBooking.paymentStatus,
+      paymentRequired: phoneBooking.paymentStatus === CustomerRequestPaymentStatus.PAYMENT_REQUIRED,
       serviceId: phoneBooking.serviceId,
       serviceName: service?.name,
       preferredDate: phoneBooking.preferredDate,
       preferredTime: phoneBooking.preferredTime,
       locationType: CustomerRequestLocationType.BUSINESS_PREMISES,
-      notes: "Staff telephone/walk-in booking",
+      notes: "Staff manual booking",
       status: CustomerRequestStatus.CONFIRMED,
       communicationChannels: [CustomerRequestCommunicationChannel.EMAIL],
       createdByStaff: true,
     });
-    setBookingMessage("Appointment created successfully.");
+    setBookingMessage("Manual booking created successfully.");
   }
 
   function checkOrRedeemVoucher(redeem: boolean): void {
@@ -105,7 +115,7 @@ export function DemoStaffPage({ template }: DemoStaffPageProps) {
         <p className="text-xs uppercase tracking-[0.16em] text-slate-300">Staff portal</p>
         <h1 className="mt-2 text-3xl font-bold">Staff operations</h1>
         <p className="mt-2 text-sm text-slate-200">
-          View appointments, manage rota visibility, create telephone bookings, and redeem vouchers.
+          View appointments, manage rota visibility, create manual bookings, and redeem vouchers.
         </p>
         <div className="mt-4">
           <DemoSiteNav templateSlug={template.slug} />
@@ -120,7 +130,8 @@ export function DemoStaffPage({ template }: DemoStaffPageProps) {
             <ul className="space-y-2 text-sm text-slate-700">
               {todayAppointments.map((request) => (
                 <li key={request.id}>
-                  {request.preferredTime || "Time TBC"} - {request.customerName} - {request.serviceName || "Service"}
+                  <div>{request.preferredTime || "Time TBC"} - {request.customerName} - {request.serviceName || "Service"}</div>
+                  <div className="text-xs font-semibold text-slate-600">{paymentStatusLabel(request.paymentStatus)}</div>
                 </li>
               ))}
             </ul>
@@ -133,8 +144,8 @@ export function DemoStaffPage({ template }: DemoStaffPageProps) {
             <ul className="space-y-2 text-sm text-slate-700">
               {upcomingAppointments.slice(0, 8).map((request) => (
                 <li key={request.id}>
-                  {formatUkDate(request.preferredDate || request.createdAtIso)} {request.preferredTime || ""} -{" "}
-                  {request.customerName}
+                  <div>{formatUkDate(request.preferredDate || request.createdAtIso)} {request.preferredTime || ""} - {request.customerName}</div>
+                  <div className="text-xs font-semibold text-slate-600">{paymentStatusLabel(request.paymentStatus)}</div>
                 </li>
               ))}
             </ul>
@@ -144,16 +155,16 @@ export function DemoStaffPage({ template }: DemoStaffPageProps) {
 
       <SiteCard title="Rota and team availability" subtitle="Current active staff and availability overview.">
         <ul className="space-y-2 text-sm text-slate-700">
-              {staff.map((member) => (
-                <li key={member.id}>
-                  {member.displayName} - {member.availabilityMode}
-                </li>
-              ))}
-            </ul>
+          {staff.map((member) => (
+            <li key={member.id}>
+              {member.displayName} - {member.availabilityMode}
+            </li>
+          ))}
+        </ul>
       </SiteCard>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <SiteCard title="Telephone / walk-in booking" subtitle="Create an appointment while speaking with the customer.">
+        <SiteCard title="Create manual booking" subtitle="Capture bookings while speaking with the customer.">
           <form className="grid gap-2" onSubmit={createPhoneBooking}>
             <input
               className="rounded-md border border-slate-300 px-2 py-1 text-sm"
@@ -194,8 +205,21 @@ export function DemoStaffPage({ template }: DemoStaffPageProps) {
                 onChange={(event) => setPhoneBooking((current) => ({ ...current, preferredTime: event.target.value }))}
               />
             </div>
+            <select
+              className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+              value={phoneBooking.paymentStatus}
+              onChange={(event) =>
+                setPhoneBooking((current) => ({
+                  ...current,
+                  paymentStatus: event.target.value as CustomerRequestPaymentStatus,
+                }))
+              }
+            >
+              <option value={CustomerRequestPaymentStatus.PAYMENT_COMPLETED}>Payment taken at booking</option>
+              <option value={CustomerRequestPaymentStatus.PAYMENT_REQUIRED}>Payment required on completion</option>
+            </select>
             <button type="submit" className="rounded-md bg-sky-700 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-800">
-              Save appointment
+              Save manual booking
             </button>
             {bookingMessage ? <p className="text-xs text-slate-600">{bookingMessage}</p> : null}
           </form>
