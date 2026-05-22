@@ -27,7 +27,7 @@ No upload is required for a presentable preview. `SiteBrandMark` provides an int
 
 ## CTA hierarchy
 - Primary CTA: high-contrast filled action (`Start setup` / conversion)
-- Secondary CTA: neutral filled/light action (`Customise my demo`)
+- Secondary CTA: neutral filled/light action (`Create my own site`)
 - Outline CTA: low-emphasis utility action (`View demo site`)
 
 ## Hero and section usage
@@ -49,4 +49,8 @@ Default theme remains neutral so it suits all 12 launch industries. Customer-spe
 - Homepage hero, industry catalogue, pricing, how-it-works, trust messaging, and FAQ are visually consistent with the wider public journey.
 - Trust/capability now uses a softer checklist pattern (green tick markers, lighter rows) to avoid a heavy box-per-item look.
 - FAQ now uses a client-side accordion pattern with clickable question buttons and `aria-expanded` state.
+- Homepage industry cards now trigger a split journey:
+  - open demo in new tab/window
+  - keep current tab on the matching industry sales page
+- Demo/customisation wording now uses `Create my own site` for clearer conversion intent.
 

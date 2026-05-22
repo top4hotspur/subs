@@ -8,7 +8,7 @@ import {
   getLocalDemoDraft,
 } from "@/lib/demo/local-demo-drafts";
 import { DemoCustomisationDraft, WebsiteTemplate } from "@/lib/sites/types";
-import { outlineButtonClass, primaryButtonClass, secondaryButtonClass, smallButtonClass } from "@/lib/ui/button-styles";
+import { primaryButtonClass, secondaryButtonClass, smallButtonClass } from "@/lib/ui/button-styles";
 
 type DemoPageClientProps = {
   template: WebsiteTemplate;
@@ -28,11 +28,8 @@ export function DemoPageClient({ template, defaultDraft }: DemoPageClientProps) 
 
     return getLocalDemoDraft(activeId);
   });
-  const [viewMode, setViewMode] = useState<"active" | "default">("active");
-
   const hasActiveDraft = Boolean(activeDraft);
-  const showingDefault = !hasActiveDraft || viewMode === "default";
-  const previewDraft = showingDefault ? defaultDraft : activeDraft!;
+  const previewDraft = hasActiveDraft ? activeDraft! : defaultDraft;
 
   return (
     <div className="space-y-4">
@@ -42,22 +39,15 @@ export function DemoPageClient({ template, defaultDraft }: DemoPageClientProps) 
             Showing your customised demo draft: {activeDraft?.draftName}
           </p>
           <p className="mt-1 text-sky-800">
-            You can switch between your active draft and the default template at any time.
+            Continue building your own version, then move into setup.
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             <Link href={`/demo/${template.slug}/customise`} className={`${primaryButtonClass} ${smallButtonClass}`}>
-              Continue editing
+              Create my own site
             </Link>
             <Link href={`/setup/${template.slug}`} className={`${secondaryButtonClass} ${smallButtonClass}`}>
               Start setup
             </Link>
-            <button
-              type="button"
-              className={`${outlineButtonClass} ${smallButtonClass}`}
-              onClick={() => setViewMode((mode) => (mode === "active" ? "default" : "active"))}
-            >
-              {showingDefault ? "View my active draft" : "View default template demo"}
-            </button>
           </div>
         </div>
       ) : (
@@ -67,7 +57,7 @@ export function DemoPageClient({ template, defaultDraft }: DemoPageClientProps) 
           </p>
           <div className="mt-2">
             <Link href={`/demo/${template.slug}/customise`} className={`${secondaryButtonClass} ${smallButtonClass}`}>
-              Customise my demo
+              Create my own site
             </Link>
           </div>
         </div>

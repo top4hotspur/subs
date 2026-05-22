@@ -11,10 +11,29 @@ Run these checks on the hosted environment after deployment.
 6. Click **Start setup** and confirm `/setup/barbers` loads.
 7. Submit setup form (mock) and confirm `/setup/confirmation` loads with request summary.
 
+## Demo-to-sales journey checks
+8. In homepage industry cards, confirm CTA label is `View demo site` (not `Explore ...`).
+9. Click homepage `View demo site` and confirm:
+   - `/demo/<industry>` opens in a new tab/window.
+   - current tab navigates to `/<industry>`.
+10. On industry page, confirm CTA labels include:
+    - `View demo site`
+    - `Create my own site`
+    - `Start setup`
+11. On `/demo/<industry>`, confirm:
+    - no visible `View default template demo` button
+    - `Create my own site` is shown where draft-edit action appears.
+12. On `/demo/<industry>/customise`, confirm:
+    - guided core-business-details section appears first
+    - services textarea supports comfortable multi-line entry
+    - CSV template download buttons exist
+    - CSV upload gives local preview behavior (no backend upload)
+    - next-stage panel shows `Continue to setup`
+
 ## Mock portal/admin flows
-8. Open `/account` and confirm local setup request appears.
-9. Open `/admin` and confirm setup queue and customer request queue render.
-10. Open `/admin/settings` and confirm settings page loads.
+13. Open `/account` and confirm local setup request appears.
+14. Open `/admin` and confirm setup queue and customer request queue render.
+15. Open `/admin/settings` and confirm settings page loads.
 
 ## Admin local editors
 11. In `/admin/settings`, verify services editor can add/edit/remove services locally.

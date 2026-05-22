@@ -47,7 +47,7 @@ export default async function IndustryPage({ params }: IndustryPageProps) {
               View demo site
             </Link>
             <Link href={`/demo/${template.slug}/customise`} className={secondaryButtonClass}>
-              Customise my demo
+              Create my own site
             </Link>
             <Link href={`/setup/${template.slug}`} className={primaryButtonClass}>
               Start setup
@@ -110,7 +110,7 @@ export default async function IndustryPage({ params }: IndustryPageProps) {
         title="Ready to personalise your site?"
         subtitle="Open your industry demo, customise it, then send your setup request."
         primaryHref={`/demo/${template.slug}/customise`}
-        primaryLabel="Customise my demo"
+        primaryLabel="Create my own site"
         secondaryHref={`/setup/${template.slug}`}
         secondaryLabel="Start setup"
       />

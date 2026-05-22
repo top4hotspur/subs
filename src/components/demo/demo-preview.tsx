@@ -75,7 +75,7 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
             {config.ctaLabel}
           </button>
           <Link href={`/demo/${template.slug}/customise`} className={secondaryButtonClass}>
-            Customise my demo
+            Create my own site
           </Link>
           <Link href={`/setup/${template.slug}`} className={primaryButtonClass}>
             Start setup
@@ -115,7 +115,7 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
           primaryHref={`/setup/${template.slug}`}
           primaryLabel="Start setup"
           secondaryHref={`/demo/${template.slug}/customise`}
-          secondaryLabel="Continue customising"
+          secondaryLabel="Create my own site"
         />
 
         <SiteFooterBlock

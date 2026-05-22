@@ -154,3 +154,15 @@ Still mock for infrastructure:
 - Leads can be created manually or imported from CSV, then moved through outreach statuses.
 - Admin can preview/copy standardized outreach email templates and mark leads as contacted.
 - No real email provider sending is enabled yet.
+
+## Demo to setup sales journey polish
+
+- Homepage industry cards now use `View demo site` wording.
+- Clicking homepage `View demo site` opens `/demo/<industry>` in a new tab/window while current tab moves to `/<industry>`.
+- Industry and demo CTA wording now standardizes around `View demo site`, `Create my own site`, and `Start setup`.
+- Demo control area no longer exposes a `View default template demo` customer toggle.
+- Customisation stage is now guided onboarding:
+  - core business details first
+  - clear checklist of what can be customised later
+  - fast setup templates for services/staff (CSV template download + local preview upload)
+  - explicit next-stage messaging to continue setup (`/setup/<industry>`)

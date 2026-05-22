@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { HomeFaqAccordion } from "@/components/marketing/home-faq-accordion";
+import { IndustryDemoCardCta } from "@/components/marketing/industry-demo-card";
 import { SimpleOfferCard } from "@/components/pricing/simple-offer-card";
 import { SiteCard } from "@/components/site-ui/site-card";
 import { SiteCtaPanel } from "@/components/site-ui/site-cta-panel";
@@ -120,9 +121,7 @@ export function MarketingHome() {
                             <li key={bullet}>{bullet}</li>
                           ))}
                         </ul>
-                        <Link href={`/${template.slug}`} className={`mt-4 ${secondaryButtonClass}`}>
-                          Explore {template.category}
-                        </Link>
+                        <IndustryDemoCardCta industrySlug={template.slug} />
                       </SiteCard>
                     );
                   })}

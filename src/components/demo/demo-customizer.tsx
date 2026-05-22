@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { ChangeEvent, useMemo, useRef, useState } from "react";
 import { DemoDraftPicker } from "@/components/demo/demo-draft-picker";
 import { DemoPreview } from "@/components/demo/demo-preview";
 import {
@@ -9,12 +9,28 @@ import {
   updateLocalDemoDraft,
 } from "@/lib/demo/local-demo-drafts";
 import { getDefaultDemoConfig } from "@/lib/sites/mock-repository";
-import { DemoCustomisationDraft, DemoSiteConfig, DemoSiteService, WebsiteTemplate } from "@/lib/sites/types";
-import { outlineButtonClass, primaryButtonClass, secondaryButtonClass } from "@/lib/ui/button-styles";
+import {
+  DemoCustomisationDraft,
+  DemoSiteConfig,
+  DemoSiteService,
+  WebsiteTemplate,
+} from "@/lib/sites/types";
+import {
+  outlineButtonClass,
+  primaryButtonClass,
+  secondaryButtonClass,
+  smallButtonClass,
+} from "@/lib/ui/button-styles";
 
 type DemoCustomizerProps = {
   template: WebsiteTemplate;
   initialDraft: DemoCustomisationDraft;
+};
+
+type CsvPreview = {
+  type: "services" | "staff";
+  rows: string[];
+  fileName: string;
 };
 
 function parseServices(input: string): DemoSiteService[] {
@@ -23,6 +39,29 @@ function parseServices(input: string): DemoSiteService[] {
     .map((service) => service.trim())
     .filter(Boolean)
     .map((name, index) => ({ id: `service-${index + 1}`, name }));
+}
+
+function parseSimpleCsv(text: string): string[] {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(1)
+    .map((line) => line.split(",")[0]?.replace(/^"|"$/g, "")?.trim())
+    .filter((value) => Boolean(value));
+}
+
+function downloadCsvTemplate(filename: string, csv: string): void {
+  if (typeof window === "undefined") return;
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(url);
 }
 
 function buildDemoSummary(template: WebsiteTemplate, draft: DemoCustomisationDraft): string {
@@ -61,6 +100,7 @@ export function DemoCustomizer({ template, initialDraft }: DemoCustomizerProps) 
   );
   const [isSaved, setIsSaved] = useState(false);
   const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
+  const [csvPreview, setCsvPreview] = useState<CsvPreview | null>(null);
   const savedTimerRef = useRef<number | null>(null);
 
   const servicesInput = draft.config.services.map((service) => service.name).join("\n");
@@ -87,6 +127,24 @@ export function DemoCustomizer({ template, initialDraft }: DemoCustomizerProps) 
     }
   }
 
+  async function handleCsvUpload(
+    event: ChangeEvent<HTMLInputElement>,
+    type: "services" | "staff",
+  ): Promise<void> {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const content = await file.text();
+    const values = parseSimpleCsv(content);
+    setCsvPreview({ type, rows: values, fileName: file.name });
+
+    if (type === "services" && values.length > 0) {
+      applyPatch({ config: { services: values.map((name, index) => ({ id: `csv-service-${index + 1}`, name })) } });
+    }
+
+    event.target.value = "";
+  }
+
   const config = draft.config;
 
   return (
@@ -94,9 +152,12 @@ export function DemoCustomizer({ template, initialDraft }: DemoCustomizerProps) 
       <aside className="space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">Customisation panel</h2>
-            <p className="text-sm text-slate-600">
-              Your changes are saved to this named demo in this browser only.
+            <h1 className="text-2xl font-bold text-slate-900">Create my own site</h1>
+            <p className="mt-1 text-sm text-slate-600">
+              Add the key details now. We will use these to prepare your website setup.
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              You can add services, prices, staff and opening details using templates or CSV to speed things up.
             </p>
           </div>
           <span className="text-xs font-medium text-emerald-700">
@@ -114,7 +175,8 @@ export function DemoCustomizer({ template, initialDraft }: DemoCustomizerProps) 
         />
 
         <section className="space-y-3 rounded-xl border border-slate-200 p-4">
-          <h3 className="text-sm font-semibold text-slate-900">Demo identity</h3>
+          <h2 className="text-sm font-semibold text-slate-900">Core business details</h2>
+
           <label className="block text-sm font-medium text-slate-700">
             Demo/site name
             <input
@@ -123,91 +185,237 @@ export function DemoCustomizer({ template, initialDraft }: DemoCustomizerProps) 
               onChange={(event) => applyPatch({ draftName: event.target.value })}
             />
           </label>
-          <p className="text-xs text-slate-500">Used only for your local mock demo instance.</p>
-        </section>
 
-        <div className="flex flex-wrap gap-2">
-          <button type="button" className={outlineButtonClass} onClick={() => {
-            const defaults = getDefaultDemoConfig(template.slug);
-            if (!defaults) return;
-            const updated = updateLocalDemoDraft(draft.id, { config: defaults });
-            if (updated) persistDraft(updated);
-          }}>
-            Reset this demo
-          </button>
-          <button type="button" className={secondaryButtonClass} onClick={async () => {
-            try {
-              await navigator.clipboard.writeText(summary);
-              setCopyState("copied");
-            } catch {
-              setCopyState("error");
-            }
-            window.setTimeout(() => setCopyState("idle"), 1500);
-          }}>
-            Copy demo summary
-          </button>
-          <Link href={`/setup/${template.slug}`} className={primaryButtonClass}>
-            Start setup
-          </Link>
-          <span className="text-xs text-slate-500">
-            {copyState === "copied" ? "Summary copied" : copyState === "error" ? "Copy failed" : " "}
-          </span>
-        </div>
-
-        <section className="space-y-3 rounded-xl border border-slate-200 p-4">
-          <h3 className="text-sm font-semibold text-slate-900">Brand</h3>
           <label className="block text-sm font-medium text-slate-700">
             Business name
-            <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" value={config.businessName} onChange={(event) => applyPatch({ config: { businessName: event.target.value } })} />
+            <input
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              value={config.businessName}
+              onChange={(event) =>
+                applyPatch({ config: { businessName: event.target.value } })
+              }
+            />
           </label>
+
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block text-sm font-medium text-slate-700">Primary colour
-              <input type="color" className="mt-1 h-10 w-full rounded-lg border border-slate-300 p-1" value={config.primaryColor} onChange={(event) => applyPatch({ config: { primaryColor: event.target.value } })} />
+            <label className="block text-sm font-medium text-slate-700">
+              Phone number
+              <input
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                value={config.contact.phone}
+                onChange={(event) =>
+                  applyPatch({
+                    config: { contact: { ...config.contact, phone: event.target.value } },
+                  })
+                }
+              />
             </label>
-            <label className="block text-sm font-medium text-slate-700">Accent colour
-              <input type="color" className="mt-1 h-10 w-full rounded-lg border border-slate-300 p-1" value={config.accentColor} onChange={(event) => applyPatch({ config: { accentColor: event.target.value } })} />
+            <label className="block text-sm font-medium text-slate-700">
+              Email
+              <input
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                value={config.contact.email}
+                onChange={(event) =>
+                  applyPatch({
+                    config: { contact: { ...config.contact, email: event.target.value } },
+                  })
+                }
+              />
             </label>
+          </div>
+
+          <label className="block text-sm font-medium text-slate-700">
+            Address / service area
+            <input
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              value={config.contact.address}
+              onChange={(event) =>
+                applyPatch({
+                  config: { contact: { ...config.contact, address: event.target.value } },
+                })
+              }
+            />
+          </label>
+
+          <label className="block text-sm font-medium text-slate-700">
+            Hero headline
+            <input
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              value={config.heroHeadline}
+              onChange={(event) =>
+                applyPatch({ config: { heroHeadline: event.target.value } })
+              }
+            />
+          </label>
+
+          <label className="block text-sm font-medium text-slate-700">
+            Hero subheading
+            <textarea
+              className="mt-1 min-h-24 w-full rounded-lg border border-slate-300 px-3 py-2"
+              value={config.heroSubheading}
+              onChange={(event) =>
+                applyPatch({ config: { heroSubheading: event.target.value } })
+              }
+            />
+          </label>
+        </section>
+
+        <section className="space-y-3 rounded-xl border border-slate-200 p-4">
+          <h2 className="text-sm font-semibold text-slate-900">Fast setup templates</h2>
+          <p className="text-xs text-slate-600">
+            Use CSV templates to speed up services/pricing and staff content.
+          </p>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <p className="text-sm font-medium text-slate-900">Services/products/pricing</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className={`${outlineButtonClass} ${smallButtonClass}`}
+                  onClick={() =>
+                    downloadCsvTemplate(
+                      "services-template.csv",
+                      "serviceName,priceLabel,description\nStandard Service,From GBP25,Short description",
+                    )
+                  }
+                >
+                  Download services CSV template
+                </button>
+                <label className={`${secondaryButtonClass} ${smallButtonClass} cursor-pointer`}>
+                  Upload services CSV
+                  <input
+                    type="file"
+                    accept=".csv,text/csv"
+                    className="hidden"
+                    onChange={(event) => {
+                      void handleCsvUpload(event, "services");
+                    }}
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <p className="text-sm font-medium text-slate-900">Staff/team</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className={`${outlineButtonClass} ${smallButtonClass}`}
+                  onClick={() =>
+                    downloadCsvTemplate(
+                      "staff-template.csv",
+                      "staffName,role,email,phone\nTeam Member,Owner,team@example.com,07123456789",
+                    )
+                  }
+                >
+                  Download staff CSV template
+                </button>
+                <label className={`${secondaryButtonClass} ${smallButtonClass} cursor-pointer`}>
+                  Upload staff CSV
+                  <input
+                    type="file"
+                    accept=".csv,text/csv"
+                    className="hidden"
+                    onChange={(event) => {
+                      void handleCsvUpload(event, "staff");
+                    }}
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {csvPreview ? (
+            <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700">
+              <p className="font-semibold">
+                {csvPreview.type === "services" ? "Services" : "Staff"} CSV preview ({csvPreview.fileName})
+              </p>
+              <p className="mt-1">Rows detected: {csvPreview.rows.length}</p>
+              <ul className="mt-1 list-disc pl-4">
+                {csvPreview.rows.slice(0, 6).map((row) => (
+                  <li key={row}>{row}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </section>
+
+        <section className="space-y-3 rounded-xl border border-slate-200 p-4">
+          <h2 className="text-sm font-semibold text-slate-900">Services preview</h2>
+          <p className="text-xs text-slate-600">One service per line. You can add as many as needed.</p>
+          <textarea
+            className="mt-1 min-h-44 w-full resize-y rounded-lg border border-slate-300 px-3 py-2"
+            value={servicesInput}
+            onChange={(event) =>
+              applyPatch({ config: { services: parseServices(event.target.value) } })
+            }
+            placeholder="Example:\nHaircut\nBeard trim\nSkin fade"
+          />
+        </section>
+
+        <section className="space-y-3 rounded-xl border border-slate-200 p-4">
+          <h2 className="text-sm font-semibold text-slate-900">What you can customise during setup</h2>
+          <div className="grid gap-2 text-xs text-slate-700 sm:grid-cols-2">
+            {[
+              "Services and pricing",
+              "Staff and roles",
+              "Opening hours and availability",
+              "Policies and FAQs",
+              "Gallery and reviews",
+              "Notification templates",
+            ].map((item) => (
+              <div key={item} className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1">
+                {item} - editable during setup
+              </div>
+            ))}
           </div>
         </section>
 
         <section className="space-y-3 rounded-xl border border-slate-200 p-4">
-          <h3 className="text-sm font-semibold text-slate-900">Contact</h3>
-          <label className="block text-sm font-medium text-slate-700">Phone number
-            <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" value={config.contact.phone} onChange={(event) => applyPatch({ config: { contact: { ...config.contact, phone: event.target.value } } })} />
-          </label>
-          <label className="block text-sm font-medium text-slate-700">Email
-            <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" value={config.contact.email} onChange={(event) => applyPatch({ config: { contact: { ...config.contact, email: event.target.value } } })} />
-          </label>
-          <label className="block text-sm font-medium text-slate-700">Address / location
-            <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" value={config.contact.address} onChange={(event) => applyPatch({ config: { contact: { ...config.contact, address: event.target.value } } })} />
-          </label>
-        </section>
-
-        <section className="space-y-3 rounded-xl border border-slate-200 p-4">
-          <h3 className="text-sm font-semibold text-slate-900">Homepage text</h3>
-          <label className="block text-sm font-medium text-slate-700">Hero headline
-            <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" value={config.heroHeadline} onChange={(event) => applyPatch({ config: { heroHeadline: event.target.value } })} />
-          </label>
-          <label className="block text-sm font-medium text-slate-700">Hero subheading
-            <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" value={config.heroSubheading} onChange={(event) => applyPatch({ config: { heroSubheading: event.target.value } })} />
-          </label>
-          <label className="block text-sm font-medium text-slate-700">Call-to-action label
-            <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" value={config.ctaLabel} onChange={(event) => applyPatch({ config: { ctaLabel: event.target.value } })} />
-          </label>
-        </section>
-
-        <section className="space-y-3 rounded-xl border border-slate-200 p-4">
-          <h3 className="text-sm font-semibold text-slate-900">Services</h3>
-          <label className="block text-sm font-medium text-slate-700">Services list (one per line)
-            <textarea className="mt-1 min-h-28 w-full rounded-lg border border-slate-300 px-3 py-2" value={servicesInput} onChange={(event) => applyPatch({ config: { services: parseServices(event.target.value) } })} />
-          </label>
-        </section>
-
-        <section className="space-y-3 rounded-xl border border-slate-200 p-4">
-          <h3 className="text-sm font-semibold text-slate-900">Opening hours</h3>
-          <label className="block text-sm font-medium text-slate-700">Hours summary
-            <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" value={config.openingHours.summary} onChange={(event) => applyPatch({ config: { openingHours: { summary: event.target.value } } })} />
-          </label>
+          <p className="text-sm font-semibold text-slate-900">Next: complete setup details</p>
+          <p className="text-xs text-slate-600">
+            Choose domain option, confirm customer communications, review setup/monthly pricing, and continue to payment when payments are enabled.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Link href={`/setup/${template.slug}`} className={primaryButtonClass}>
+              Continue to setup
+            </Link>
+            <button
+              type="button"
+              className={outlineButtonClass}
+              onClick={() => {
+                const defaults = getDefaultDemoConfig(template.slug);
+                if (!defaults) return;
+                const updated = updateLocalDemoDraft(draft.id, { config: defaults });
+                if (updated) persistDraft(updated);
+              }}
+            >
+              Reset this demo
+            </button>
+            <button
+              type="button"
+              className={secondaryButtonClass}
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(summary);
+                  setCopyState("copied");
+                } catch {
+                  setCopyState("error");
+                }
+                window.setTimeout(() => setCopyState("idle"), 1500);
+              }}
+            >
+              Copy demo summary
+            </button>
+            <span className="text-xs text-slate-500">
+              {copyState === "copied"
+                ? "Summary copied"
+                : copyState === "error"
+                  ? "Copy failed"
+                  : " "}
+            </span>
+          </div>
         </section>
       </aside>
 
