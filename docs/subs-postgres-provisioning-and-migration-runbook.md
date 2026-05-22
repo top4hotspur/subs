@@ -280,3 +280,17 @@ Result:
 
 ## Notes
 This runbook intentionally avoids provisioning or migration execution. It is a safe operational plan for the next implementation step.
+
+## Local Smoke Test Record (2026-05-22)
+
+- With `.env` present, setup request routes were exercised successfully:
+  - POST create
+  - GET by id
+  - admin GET list
+  - admin PATCH status
+- With `.env` temporarily removed, POST returned `503 BACKEND_PERSISTENCE_NOT_CONFIGURED` as expected.
+- `.env` was restored immediately after the fallback test.
+
+Amplify note:
+- These local results do not automatically apply to hosted environments.
+- Amplify must define `DATABASE_URL`, `DIRECT_DATABASE_URL`, and `PLATFORM_ADMIN_EMAILS` for backend persistence to activate.

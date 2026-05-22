@@ -372,3 +372,19 @@ This sequence delivers real value early while minimizing migration risk.
 - Added mapping helpers in `src/lib/setup/setup-request-mappers.ts` for consistent display shape.
 - No auth wiring added.
 - No migrations run.
+
+## Task 4 Smoke Test Status (2026-05-22)
+
+- Prisma validate: passed against local `.env` Neon configuration.
+- Prisma generate: passed.
+- Migration status: `init_setup_persistence` already exists and database reported "Already in sync".
+- Local API smoke test (dev server):
+  - `POST /api/setup-requests`: passed (record persisted).
+  - `GET /api/setup-requests/[id]`: passed.
+  - `GET /api/setup-requests` with `x-platform-admin-email`: passed.
+  - `PATCH /api/setup-requests/[id]` with `x-platform-admin-email`: passed (status updated to `REVIEWING`).
+- Fallback behavior verification:
+  - Temporary `.env` rename test caused API to return `503 BACKEND_PERSISTENCE_NOT_CONFIGURED`.
+  - This confirms backend-unavailable path remains active for frontend fallback handling.
+- Hosted reminder:
+  - Amplify-hosted runtime still requires its own env vars (`DATABASE_URL`, `DIRECT_DATABASE_URL`, `PLATFORM_ADMIN_EMAILS`) configured in Amplify environment settings.

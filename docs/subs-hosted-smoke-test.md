@@ -49,3 +49,9 @@ Run these checks on the hosted environment after deployment.
   - expected local fallback and confirmation still loads.
 - When backend is configured, confirm setup submission can resolve by backend id on confirmation page.
 - Confirm setup confirmation source text reflects save source (backend vs local browser).
+
+## Setup Persistence Smoke Test Note (2026-05-22)
+
+- Local dev smoke test confirms setup-request backend routes work when DB env vars are configured.
+- When backend env vars are unavailable, API returns `BACKEND_PERSISTENCE_NOT_CONFIGURED` and frontend fallback path remains relevant.
+- Hosted Amplify requires separate env var configuration; local `.env` does not propagate automatically.

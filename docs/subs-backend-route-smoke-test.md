@@ -83,3 +83,16 @@ Invoke-RestMethod -Method PATCH -Uri "http://localhost:3000/api/setup-requests/<
 - Confirm `/setup/confirmation` loads backend request when `source=backend` and falls back to local if unavailable.
 - Confirm `/setup/confirmation` empty state says: "Setup request not found in this browser or backend." when neither source can resolve.
 - No auth is required yet for customer-side setup submission/read by opaque id.
+
+## Executed Local Route Smoke Test (2026-05-22)
+
+Result: PASS (with Neon env loaded from local `.env`).
+
+- `POST /api/setup-requests`: created persisted record.
+- `GET /api/setup-requests/:id`: returned created record.
+- `GET /api/setup-requests` with `x-platform-admin-email`: returned list including created record.
+- `PATCH /api/setup-requests/:id` with `x-platform-admin-email`: updated status successfully.
+
+Fallback check:
+- With `.env` temporarily removed, POST returned `503` with `BACKEND_PERSISTENCE_NOT_CONFIGURED`.
+- Confirms backend-off path is still available for localStorage fallback flows.
