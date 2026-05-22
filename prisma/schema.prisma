@@ -9,16 +9,26 @@ datasource db {
 }
 
 model TenantSite {
-  id                 String             @id @default(cuid())
-  slug               String             @unique
-  displayName        String
-  industrySlug       String?
-  status             String
-  domainPrimary      String?
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-  setupRequests      SetupRequest[]
-  demoDraftSnapshots DemoDraftSnapshot[]
+  id                        String                 @id @default(cuid())
+  slug                      String                 @unique
+  displayName               String
+  industrySlug              String?
+  status                    String
+  domainPrimary             String?
+  setupRequestId            String?                @unique
+  provisioningStatus        String?
+  subscriptionStatus        String?
+  domainStatus              String?
+  whatsappAddonEnabled      Boolean                @default(false)
+  createdAt                 DateTime               @default(now())
+  updatedAt                 DateTime               @updatedAt
+  setupRequests             SetupRequest[]         @relation("TenantSiteSetupRequests")
+  demoDraftSnapshots        DemoDraftSnapshot[]
+  siteDomains               SiteDomain[]
+  provisioningTasks         SiteProvisioningTask[]
+  statusEvents              SiteStatusEvent[]
+  subscriptions             SubscriptionRecord[]
+  setupRequest              SetupRequest?          @relation("SetupRequestToTenantSite", fields: [setupRequestId], references: [id])
 }
 
 model DemoDraftSnapshot {
@@ -57,9 +67,11 @@ model SetupRequest {
   rawPayload          Json?
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
-  tenantSite          TenantSite?        @relation(fields: [tenantSiteId], references: [id])
+  tenantSite          TenantSite?        @relation("TenantSiteSetupRequests", fields: [tenantSiteId], references: [id])
   demoDraftSnapshot   DemoDraftSnapshot? @relation(fields: [demoDraftSnapshotId], references: [id])
   events              SetupRequestEvent[]
+  siteTenant          TenantSite?        @relation("SetupRequestToTenantSite")
+  provisioningTasks   SiteProvisioningTask[]
 
   @@index([industrySlug])
   @@index([status])
@@ -86,4 +98,68 @@ model PlatformAdminUser {
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model SiteDomain {
+  id             String     @id @default(cuid())
+  tenantSiteId   String
+  domain         String
+  domainType     String
+  status         String
+  registrarNotes String?
+  dnsInstructions Json?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  tenantSite     TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+
+  @@index([tenantSiteId])
+  @@index([domain])
+  @@unique([tenantSiteId, domain, domainType])
+}
+
+model SiteProvisioningTask {
+  id             String       @id @default(cuid())
+  tenantSiteId   String
+  setupRequestId String?
+  taskType       String
+  status         String
+  title          String
+  notes          String?
+  metadata       Json?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  tenantSite     TenantSite   @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  setupRequest   SetupRequest? @relation(fields: [setupRequestId], references: [id], onDelete: SetNull)
+
+  @@index([tenantSiteId])
+  @@index([setupRequestId])
+  @@index([status])
+}
+
+model SiteStatusEvent {
+  id           String     @id @default(cuid())
+  tenantSiteId String
+  eventType    String
+  message      String?
+  metadata     Json?
+  createdAt    DateTime   @default(now())
+  tenantSite   TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+
+  @@index([tenantSiteId])
+  @@index([createdAt])
+}
+
+model SubscriptionRecord {
+  id                  String     @id @default(cuid())
+  tenantSiteId        String
+  status              String
+  setupFeeGbp         Int
+  monthlyFeeGbp       Int
+  domainFeeGbp        Int
+  whatsappAddonEnabled Boolean   @default(false)
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+  tenantSite          TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+
+  @@index([tenantSiteId])
 }

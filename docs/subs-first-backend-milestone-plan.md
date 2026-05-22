@@ -400,3 +400,13 @@ Implemented `/admin/setup-requests` as a backend-only setup queue view.
 
 Auth note:
 - This is temporary until Auth.js role-based access is added.
+
+## Task 6 status: persisted site provisioning model
+
+Added persisted `TenantSite` provisioning workflow:
+- New provisioning/domain/subscription placeholder models in Prisma.
+- Repository/API for creating a tenant site from setup request.
+- New admin page `/admin/sites` for persisted subscriber-site queue and checklist updates.
+- `/admin/setup-requests` now includes **Start site setup** action.
+
+No Auth.js or infrastructure automation added in this task.

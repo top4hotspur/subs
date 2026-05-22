@@ -192,6 +192,11 @@ export default function AdminPage() {
           Open mock CRM
         </Link>
       </div>
+      <div className="mt-2">
+        <Link href="/admin/sites" className="text-sm font-medium text-sky-700 hover:text-sky-900">
+          Open persisted subscriber sites
+        </Link>
+      </div>
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">Future site settings</h2>

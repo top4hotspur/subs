@@ -27,6 +27,7 @@ import {
   primaryButtonClass,
   smallButtonClass,
 } from "@/lib/ui/button-styles";
+import { createAdminTenantSiteFromSetupRequest } from "@/lib/sites/admin-sites-client";
 
 const ADMIN_EMAIL_KEY = "subs-platform-admin-email";
 const STATUS_OPTIONS: SubscriptionSetupStatus[] = [
@@ -167,6 +168,23 @@ export default function AdminSetupRequestsPage() {
     }
   }
 
+  async function startSiteSetup(requestId: string): Promise<void> {
+    if (!adminEmail.trim()) {
+      setMessage("Enter a platform admin email before starting site setup.");
+      return;
+    }
+    const result = await createAdminTenantSiteFromSetupRequest(adminEmail.trim(), requestId);
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status));
+      return;
+    }
+    setMessage(
+      result.created
+        ? `Site setup started: ${result.tenantSite.displayName} (${result.tenantSite.id}).`
+        : `Site already exists: ${result.tenantSite.displayName} (${result.tenantSite.id}).`,
+    );
+  }
+
   return (
     <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -302,6 +320,19 @@ export default function AdminSetupRequestsPage() {
                   >
                     Mark cancelled
                   </button>
+                  <button
+                    type="button"
+                    className={`${outlineButtonClass} ${smallButtonClass}`}
+                    onClick={() => startSiteSetup(selectedRequest.id)}
+                  >
+                    Start site setup
+                  </button>
+                  <Link
+                    href="/admin/sites"
+                    className={`${outlineButtonClass} ${smallButtonClass}`}
+                  >
+                    Open subscriber sites
+                  </Link>
                 </div>
               </div>
             </div>

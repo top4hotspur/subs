@@ -1,0 +1,36 @@
+# Subs Site Provisioning Workflow (Persisted v1)
+
+This workflow turns a persisted setup request into a persisted subscriber site record.
+
+## Scope
+- Persisted model + admin workflow only.
+- No AWS provisioning, no domain automation, no website generation.
+- No Auth.js yet (temporary admin header guard).
+
+## Flow
+1. Setup request is submitted and persisted.
+2. Platform admin opens `/admin/setup-requests`.
+3. Platform admin clicks **Start site setup** for a setup request.
+4. Backend creates/returns a `TenantSite` linked to that setup request.
+5. Backend also creates:
+- subscription placeholder (`SubscriptionRecord`)
+- initial domain record when domain value exists
+- default provisioning checklist tasks
+- status event timeline entry
+6. Platform admin uses `/admin/sites` to monitor and update provisioning checklist task states.
+
+## Status and task model
+- Site status fields: provisioning status, domain status, subscription status.
+- Domain model tracks status and instructions metadata (persisted only).
+- Provisioning tasks are checklist items (`TODO`, `IN_PROGRESS`, `DONE`, `BLOCKED`, `SKIPPED`).
+
+## Temporary admin guard
+- API routes use `x-platform-admin-email` + `PLATFORM_ADMIN_EMAILS` allowlist.
+- This is temporary until Auth.js role-based protection is added.
+
+## Not implemented yet
+- Route53/Amplify/custom-domain automation.
+- Real customer website deployment/provisioning.
+- Stripe billing activation.
+- Email/Twilio notifications.
+- Auth.js role/session hardening.

@@ -112,3 +112,12 @@ Platform admins can now use `/admin/setup-requests` to view/update persisted set
 Notes:
 - Uses temporary admin email header until Auth.js is implemented.
 - This queue is backend-only and is intentionally separate from local/mock setup request tooling.
+
+## Persisted site provisioning step added
+
+Flow now includes a persisted subscriber-site creation stage:
+- setup request -> start site setup -> tenant site record + provisioning tasks.
+- admin manages this in `/admin/sites`.
+
+Still mock for infrastructure:
+- no AWS provisioning actions, no live domain automation.

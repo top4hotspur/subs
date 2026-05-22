@@ -114,3 +114,16 @@ Expected behavior:
 - Page loads persisted setup requests from backend API.
 - Status updates call PATCH backend route.
 - If backend is unavailable/misconfigured, page shows explicit error and does not use localStorage fallback.
+
+## Persisted site provisioning routes (temporary admin guard)
+
+Added backend admin provisioning routes:
+- `GET /api/admin/sites`
+- `POST /api/admin/sites` (create from setupRequestId)
+- `GET /api/admin/sites/:id`
+- `PATCH /api/admin/sites/:id`
+- `PATCH /api/admin/sites/:id/tasks/:taskId`
+
+Guard:
+- `x-platform-admin-email` must match `PLATFORM_ADMIN_EMAILS`.
+- Temporary until Auth.js.
