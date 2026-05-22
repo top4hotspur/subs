@@ -10,7 +10,7 @@ import { SiteServiceGrid } from "@/components/site-ui/site-service-grid";
 import { getBlueprintForTemplate } from "@/lib/industry/operations-repository";
 import { getWebsiteTemplate } from "@/lib/sites/mock-repository";
 import { isWebsiteTemplateSlug, WEBSITE_TEMPLATE_SLUGS } from "@/lib/sites/types";
-import { outlineButtonClass, primaryButtonClass, secondaryButtonClass } from "@/lib/ui/button-styles";
+import { primaryButtonClass, secondaryButtonClass } from "@/lib/ui/button-styles";
 
 type IndustryPageProps = {
   params: Promise<{ industry: string }>;
@@ -43,13 +43,13 @@ export default async function IndustryPage({ params }: IndustryPageProps) {
         helperText="The demo is the starting point. Your customisations are saved to your own draft in this browser."
         actions={(
           <>
-            <Link href={`/demo/${template.slug}`} target="_blank" rel="noreferrer" className={outlineButtonClass}>
+            <Link href={`/demo/${template.slug}`} target="_blank" rel="noreferrer" className={primaryButtonClass}>
               View demo site
             </Link>
             <Link href={`/demo/${template.slug}/customise`} className={secondaryButtonClass}>
               Create my own site
             </Link>
-            <Link href={`/setup/${template.slug}`} className={primaryButtonClass}>
+            <Link href={`/setup/${template.slug}`} className={secondaryButtonClass}>
               Start setup
             </Link>
           </>

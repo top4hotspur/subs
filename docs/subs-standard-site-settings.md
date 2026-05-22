@@ -59,3 +59,22 @@ Local key format:
 - Text-based brand mark fallback remains first-class when no logo is present
 - Customer colour customisation can be applied later without changing core local/mock platform behavior
 
+## Optional business pages and content modules (planned)
+Subscriber business admins are expected to enable/disable pages and sections such as:
+- About Us
+- Contact
+- Gallery
+- Reviews
+- Policies
+- Gift Vouchers
+
+Template-page model expectations (future):
+- page title
+- text/content blocks
+- image placeholders
+- CTA links
+
+Gift voucher model placeholders now exist in:
+- `src/lib/vouchers/voucher-types.ts`
+with settings for voucher enablement, delivery methods, value range, postage charge, and redemption tracking metadata.
+

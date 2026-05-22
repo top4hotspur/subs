@@ -20,16 +20,6 @@ type DemoPreviewProps = {
   draft: DemoCustomisationDraft;
 };
 
-function isLightHexColor(value: string): boolean {
-  const hex = value.replace("#", "");
-  if (!/^[0-9a-fA-F]{6}$/.test(hex)) return false;
-  const r = Number.parseInt(hex.slice(0, 2), 16);
-  const g = Number.parseInt(hex.slice(2, 4), 16);
-  const b = Number.parseInt(hex.slice(4, 6), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.62;
-}
-
 function resolveActiveServices(template: WebsiteTemplate, draftServices: DemoSiteService[]): DemoSiteService[] {
   if (typeof window === "undefined") {
     return draftServices;
@@ -51,7 +41,6 @@ function resolveActiveServices(template: WebsiteTemplate, draftServices: DemoSit
 export function DemoPreview({ template, draft }: DemoPreviewProps) {
   const { config } = draft;
   const appointmentStyle = isAppointmentStyleIndustry(template.slug);
-  const accentTextClass = isLightHexColor(config.accentColor) ? "text-slate-950" : "text-white";
   const [requestServices] = useState<DemoSiteService[]>(() => resolveActiveServices(template, config.services));
   const localStaff = useMemo<StaffMember[]>(() => {
     if (typeof window === "undefined") {
@@ -67,13 +56,7 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
         <h1 className="mt-6 text-4xl font-bold tracking-tight">{config.heroHeadline}</h1>
         <p className="mt-3 max-w-2xl text-slate-200">{config.heroSubheading}</p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <button
-            className={`rounded-xl border border-black/10 px-4 py-2 text-sm font-semibold ${accentTextClass}`}
-            style={{ backgroundColor: config.accentColor }}
-            type="button"
-          >
-            {config.ctaLabel}
-          </button>
+          <button className={primaryButtonClass} type="button">{config.ctaLabel}</button>
           <Link href={`/demo/${template.slug}/customise`} className={secondaryButtonClass}>
             Create my own site
           </Link>
@@ -85,7 +68,7 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
 
       <div className="space-y-6 px-6 py-8 sm:px-8">
         <SiteCard title="Services" subtitle="Tile-based service layout matching your selected industry template.">
-          <SiteServiceGrid services={config.services} />
+          <SiteServiceGrid services={requestServices} />
         </SiteCard>
 
         <div className="grid gap-4 lg:grid-cols-3">
@@ -96,9 +79,36 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
           <SiteCard title="Demo login placeholder" subtitle={`${template.demoLogin.email} / ${template.demoLogin.password}`} />
         </div>
 
+        <SiteCard
+          title="Customer and team portal layers (planned)"
+          subtitle="Live customer sites will have separate portal access for different users."
+        >
+          <ul className="list-disc space-y-2 pl-5 text-sm text-slate-600">
+            <li>Customer login: bookings, payments, vouchers, profile</li>
+            <li>Staff login: appointments, telephone/manual bookings, voucher check and redeem</li>
+            <li>Business admin login: services, staff, rota, pages, vouchers and financial reporting</li>
+          </ul>
+        </SiteCard>
+
         <SiteCard title="Future workflow support" subtitle="Bookings, quote requests, staff scheduling, completion updates, and review requests can be configured during setup.">
           <p className="text-sm text-slate-600">Email is standard; WhatsApp messaging is optional via add-on.</p>
         </SiteCard>
+
+        {appointmentStyle ? (
+          <SiteCard
+            title="Gift vouchers (planned module)"
+            subtitle="Business admin will be able to enable/disable vouchers and choose delivery methods."
+          >
+            <ul className="list-disc space-y-2 pl-5 text-sm text-slate-600">
+              <li>Choose voucher value and issue a unique voucher ID</li>
+              <li>Delivery methods: digital email, collect in store, post (with postage charge)</li>
+              <li>Staff can check, redeem, and log voucher usage details</li>
+            </ul>
+            <p className="mt-2 text-xs text-slate-500">
+              Payment and delivery integrations are not enabled in this local/mock version.
+            </p>
+          </SiteCard>
+        ) : null}
 
         <SiteCard
           title={appointmentStyle ? "Book an appointment" : "Example customer request"}

@@ -59,8 +59,10 @@ This workflow turns a persisted setup request into a persisted subscriber site r
 
 - Selected subscriber sites now include a direct action to open:
   - `/admin/sites/[siteId]/settings`
-- This route is labeled as business/subscriber settings context for that site.
+- This route is labeled as a **subscriber settings preview/support view** for that site.
 - Current implementation still uses local/mock settings tooling; persisted per-site settings storage remains a later milestone.
+- Platform admin is not the normal operator of subscriber site settings in the target architecture.
+- Live operational settings ownership belongs to the subscriber business admin portal.
 
 
 ## Provisioning admin security update

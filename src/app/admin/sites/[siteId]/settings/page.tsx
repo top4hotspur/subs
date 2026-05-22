@@ -63,10 +63,13 @@ export default function AdminSiteSettingsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">
-            Business Site Settings for {siteName ?? "Subscriber site"}
+            Subscriber Site Settings Preview for {siteName ?? "Subscriber site"}
           </h1>
           <p className="mt-2 text-sm text-slate-600">
-            This is the settings area a subscriber/business owner will eventually use for their own website.
+            This support/provisioning view shows the settings model for this subscriber site.
+          </p>
+          <p className="mt-1 text-sm text-slate-600">
+            In the live product, the business owner manages these settings from their own business admin portal.
           </p>
           <p className="mt-1 text-sm text-slate-600">
             Settings are still local/mock in this version unless otherwise stated.
@@ -107,4 +110,3 @@ export default function AdminSiteSettingsPage() {
     </main>
   );
 }
-

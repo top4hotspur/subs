@@ -61,11 +61,22 @@ Move to DB/API/auth:
 ## Platform settings vs business site settings
 - `/admin/settings` represents per-subscriber business site settings (services, staff, availability, templates).
 - Platform admin operations are handled separately via setup queue, subscriber sites, and sales pipeline routes.
+- Platform admin should not be treated as the day-to-day operator of subscriber business settings.
+- Subscriber business admin owns operational tools: services/prices, staff/users/permissions, rotas, holidays, bookings/customers, vouchers, pages/content, notifications, and financial views.
 
 ## Platform admin vs subscriber admin wording
 - `/admin` is treated as the platform operations area for MyExperiment.club.
 - `/admin/settings` is intentionally labeled **Business Site Settings Demo** to avoid implying global platform controls.
 - Future architecture should move these subscriber settings to a subscriber-scoped route (for example `/admin/sites/[siteId]/settings` or dedicated business-owner portal routes).
+- `/admin/sites/[siteId]/settings` is currently a support/provisioning preview and not a final business-owner operational portal.
+
+## Future portal layers (planned)
+- Customer login: bookings, payments, vouchers, profile.
+- Staff login: appointments, telephone/manual bookings, voucher check and redeem.
+- Business admin login: services, staff, rota, pages/content, vouchers, notifications, and financial controls.
+
+See also:
+- `docs/subs-business-owner-admin-model.md`
 
 
 ## Local Analytics Layer (Current Mock State)

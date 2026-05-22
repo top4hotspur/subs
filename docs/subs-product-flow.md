@@ -23,6 +23,7 @@
 - When staff is selected, local rota and break windows can shape preferred slot suggestions.
 - Local mock conflict checks can disable slots already tied to another local request for the same staff member/time.
 - Dog grooming intake includes optional local pet details (name, breed, size, temperament notes).
+- Appointment request flow now uses service tiles with visible service labels/pricing in demo forms to better mirror customer-facing live-site UX.
 
 ## Future appointment requirements (not implemented)
 Real appointment slot availability will later require:
@@ -168,6 +169,8 @@ Still mock for infrastructure:
   - setup queue (`/admin/setup-requests`)
   - subscriber provisioning (`/admin/sites`)
   - sales pipeline (`/admin/sales`)
+- `/admin/sites/[siteId]/settings` is a support/provisioning preview path and does not mean platform admin is the normal subscriber site operator.
+- Future live model separates platform admin from business-owner operational admin.
 
 ## Platform admin navigation clarity
 
@@ -192,3 +195,11 @@ Still mock for infrastructure:
   - clear checklist of what can be customised later
   - fast setup templates for services/staff (CSV template download + local preview upload)
   - explicit next-stage messaging to continue setup (`/setup/<industry>`)
+
+## Demo/live-site realism additions
+- Appointment-led demos now prioritize tile-based service selection with pricing labels before scheduling fields.
+- Demo preview includes planned portal-layer placeholders:
+  - Customer login
+  - Staff login
+  - Business admin login
+- Appointment-style demos now show a planned Gift Vouchers section with delivery-method options and local/mock disclaimer.

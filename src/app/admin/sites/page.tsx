@@ -330,8 +330,11 @@ export default function AdminSitesPage() {
                   href={`/admin/sites/${encodeURIComponent(selectedSite.id)}/settings`}
                   className={`${primaryButtonClass} ${smallButtonClass}`}
                 >
-                  Manage business site settings
+                  Open subscriber settings preview
                 </Link>
+                <p className="mt-2 text-xs text-slate-600">
+                  Business owners will manage these settings from their own site admin portal later.
+                </p>
               </div>
 
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">

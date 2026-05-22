@@ -35,5 +35,6 @@ UI wording in admin now calls this area **Business Site Settings Demo**.
 - CRM is available in `/admin/crm` as a dedicated local customer panel built from local requests.
 - `/admin/settings` route is preserved for compatibility and may later move under a subscriber/site-scoped settings route.
 - Site-scoped business settings entry now exists at `/admin/sites/[siteId]/settings`.
-- In this pass, `/admin/sites/[siteId]/settings` reuses the same local/mock settings tooling as the generic demo page and adds site context from persisted subscriber records.
+- In this pass, `/admin/sites/[siteId]/settings` is explicitly a support/provisioning preview that reuses local/mock settings tooling.
+- Platform admin is not the normal operational owner of subscriber business settings in the target architecture.
 

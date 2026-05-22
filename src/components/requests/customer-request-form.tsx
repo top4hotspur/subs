@@ -23,7 +23,6 @@ import { getLocalStaffRotaForStaff } from "@/lib/calendar/local-staff-rota";
 import { isAppointmentStyleIndustry } from "@/lib/requests/appointment-industries";
 import {
   getAppointmentActionHeading,
-  getAppointmentServiceLabel,
   getAppointmentStaffLabel,
 } from "@/lib/requests/appointment-industries";
 import {
@@ -68,6 +67,7 @@ import {
   customerRequestPricingStatusLabel,
   weekdayLabel,
 } from "@/lib/ui/display-labels";
+import { ServiceTileSelector } from "@/components/requests/service-tile-selector";
 
 type CustomerRequestFormProps = {
   templateSlug: WebsiteTemplateSlug;
@@ -126,7 +126,6 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
     ? getAppointmentStaffLabel(templateSlug)
     : "Preferred staff member (optional)";
   const appointmentHeading = getAppointmentActionHeading(templateSlug);
-  const appointmentServiceLabel = getAppointmentServiceLabel(templateSlug);
   const flexibleHeading = flexibleJobHeading(templateSlug);
   const flexibleServiceLabel = flexibleJobServiceLabel(templateSlug);
   const flexibleAddressLabel = flexibleJobAddressLabel(templateSlug);
@@ -405,14 +404,22 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
         <input className="rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="Customer name" value={form.customerName} onChange={(event) => setForm((c) => ({ ...c, customerName: event.target.value }))} />
         <input className="rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="Customer email" value={form.customerEmail} onChange={(event) => setForm((c) => ({ ...c, customerEmail: event.target.value }))} />
         <input className="rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="Customer phone" value={form.customerPhone} onChange={(event) => setForm((c) => ({ ...c, customerPhone: event.target.value }))} />
-        <select className="rounded-md border border-slate-300 px-2 py-1 text-sm" value={form.serviceId} onChange={(event) => setForm((c) => ({ ...c, serviceId: event.target.value }))}>
-          <option value="">
-            {appointmentStyle ? appointmentServiceLabel : flexibleJobStyle ? flexibleServiceLabel : "Select service"}
-          </option>
-          {effectiveServices.map((service) => (
-            <option key={service.id} value={service.id}>{service.name}</option>
-          ))}
-        </select>
+        {appointmentStyle ? (
+          <ServiceTileSelector
+            services={effectiveServices}
+            selectedServiceId={form.serviceId}
+            onSelectService={(serviceId) => setForm((c) => ({ ...c, serviceId }))}
+          />
+        ) : (
+          <select className="rounded-md border border-slate-300 px-2 py-1 text-sm" value={form.serviceId} onChange={(event) => setForm((c) => ({ ...c, serviceId: event.target.value }))}>
+            <option value="">
+              {flexibleJobStyle ? flexibleServiceLabel : "Select service"}
+            </option>
+            {effectiveServices.map((service) => (
+              <option key={service.id} value={service.id}>{service.name}</option>
+            ))}
+          </select>
+        )}
         <input type="date" className="rounded-md border border-slate-300 px-2 py-1 text-sm" value={form.preferredDate} onChange={(event) => setForm((c) => ({ ...c, preferredDate: event.target.value }))} />
         {appointmentStyle ? (
           <div className="sm:col-span-2 rounded-md border border-slate-200 bg-white p-3">
