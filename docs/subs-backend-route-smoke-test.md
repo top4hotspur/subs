@@ -104,3 +104,13 @@ During Amplify build, required server env vars should be written into `.env.prod
 - `DATABASE_URL`
 - `DIRECT_DATABASE_URL`
 - `PLATFORM_ADMIN_EMAILS`
+
+## Persisted admin queue check
+
+A dedicated backend queue page is available at `/admin/setup-requests`.
+
+Expected behavior:
+- Admin enters an allowlisted email used in `x-platform-admin-email`.
+- Page loads persisted setup requests from backend API.
+- Status updates call PATCH backend route.
+- If backend is unavailable/misconfigured, page shows explicit error and does not use localStorage fallback.

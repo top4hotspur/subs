@@ -388,3 +388,15 @@ This sequence delivers real value early while minimizing migration risk.
   - This confirms backend-unavailable path remains active for frontend fallback handling.
 - Hosted reminder:
   - Amplify-hosted runtime still requires its own env vars (`DATABASE_URL`, `DIRECT_DATABASE_URL`, `PLATFORM_ADMIN_EMAILS`) configured in Amplify environment settings.
+
+## Task 5 status: persisted admin setup queue
+
+Implemented `/admin/setup-requests` as a backend-only setup queue view.
+
+- Uses setup-request API routes (`GET /api/setup-requests`, `GET /api/setup-requests/:id`, `PATCH /api/setup-requests/:id`).
+- Uses temporary `x-platform-admin-email` header from page input (saved locally for convenience only).
+- Shows persisted setup request details and allows status updates.
+- Does not fall back to localStorage on this page; backend errors are shown explicitly (`BACKEND_PERSISTENCE_NOT_CONFIGURED`, `FORBIDDEN`, network error).
+
+Auth note:
+- This is temporary until Auth.js role-based access is added.

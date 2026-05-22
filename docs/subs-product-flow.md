@@ -104,3 +104,11 @@ Each industry now has a standard policy placeholder route at `/<industry>/policy
 - If backend persistence is unavailable (missing `DATABASE_URL`, `503`, network failure), flow falls back to browser-local setup request creation.
 - Confirmation page is source-aware and can resolve either backend-saved or local-saved setup requests.
 - Auth is still not enabled; temporary route guard applies only to admin list/update endpoints.
+
+## Setup queue visibility in hosted flow
+
+Platform admins can now use `/admin/setup-requests` to view/update persisted setup requests.
+
+Notes:
+- Uses temporary admin email header until Auth.js is implemented.
+- This queue is backend-only and is intentionally separate from local/mock setup request tooling.

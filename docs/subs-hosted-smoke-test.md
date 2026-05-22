@@ -55,3 +55,12 @@ Run these checks on the hosted environment after deployment.
 - Local dev smoke test confirms setup-request backend routes work when DB env vars are configured.
 - When backend env vars are unavailable, API returns `BACKEND_PERSISTENCE_NOT_CONFIGURED` and frontend fallback path remains relevant.
 - Hosted Amplify requires separate env var configuration; local `.env` does not propagate automatically.
+
+## Hosted check: persisted setup queue page
+
+Add these checks after backend envs are configured:
+- Open `/admin/setup-requests`.
+- Enter allowlisted admin email.
+- Load persisted setup requests.
+- Update one status and verify update persists.
+- If backend env is missing, verify clear error is shown (no local fallback on this page).

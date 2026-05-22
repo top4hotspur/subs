@@ -217,6 +217,18 @@ export default function AdminPage() {
         </div>
       </section>
 
+      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-900">Persisted setup requests</h2>
+        <p className="mt-2 text-sm text-slate-600">
+          Backend setup queue when database is configured.
+        </p>
+        <div className="mt-3">
+          <Link href="/admin/setup-requests" className={`${primaryButtonClass} ${smallButtonClass}`}>
+            Open persisted setup queue
+          </Link>
+        </div>
+      </section>
+
       <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p className="text-xs text-slate-600">Total</p><p className="text-xl font-semibold">{counts.total}</p></article>
         <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p className="text-xs text-slate-600">Review requested</p><p className="text-xl font-semibold">{counts.review}</p></article>
