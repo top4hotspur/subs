@@ -72,3 +72,11 @@ Add these checks after backend envs are configured:
 - Verify grouped provisioning checklist updates still persist via backend task PATCH route.
 - Verify domain panel shows setup-request domain context and manual DNS note.
 
+## Hosted smoke additions: admin auth
+
+- Logged out: opening `/admin` should redirect to `/admin/login`.
+- Login with allowlisted admin email + access code should load `/admin`.
+- `/admin/setup-requests` and `/admin/sites` should load without manual header input.
+- Logout should end session and redirect protected admin routes to `/admin/login`.
+- Public `/setup/barbers` should still work while logged out.
+

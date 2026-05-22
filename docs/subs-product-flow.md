@@ -144,7 +144,7 @@ Still mock for infrastructure:
 
 - Prospect/customer journey remains public through demo/setup submission.
 - Platform admin journey is now authenticated via `/admin/login`.
-- Admin queues (`/admin/setup-requests`, `/admin/sites`, `/admin/settings`, `/admin/crm`) are session-protected.
+- Admin queues (`/admin/setup-requests`, `/admin/sites`, `/admin/settings`, `/admin/crm`, `/admin/sales`) are session-protected.
 - Future milestones will add business-owner, staff, and customer role-specific auth.
 
 ## Sales pipeline flow (platform outreach)

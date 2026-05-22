@@ -439,3 +439,16 @@ No Auth.js or infrastructure automation added in this task.
   - temporary access code (`PLATFORM_ADMIN_ACCESS_CODE`)
 - This replaces manual header-based admin UI access.
 - Public setup submission remains open (`POST /api/setup-requests`).
+
+## Hosted auth readiness note
+
+- Amplify SSR/API runtime must receive auth and backend env vars through `.env.production` during build.
+- Required vars for hosted admin auth + backend routes:
+  - `DATABASE_URL`
+  - `DIRECT_DATABASE_URL`
+  - `PLATFORM_ADMIN_EMAILS`
+  - `AUTH_SECRET`
+  - `NEXTAUTH_SECRET`
+  - `NEXTAUTH_URL`
+  - `PLATFORM_ADMIN_ACCESS_CODE`
+- Hosted smoke checks now include login redirect/session/logout flow for `/admin`, `/admin/setup-requests`, and `/admin/sites`.
