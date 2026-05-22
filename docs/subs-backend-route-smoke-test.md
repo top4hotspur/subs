@@ -43,6 +43,8 @@ Public routes kept open:
 5. Confirm `/admin/sites` loads without manual header.
 6. Logout and confirm `/admin` redirects to `/admin/login`.
 7. Confirm public `/setup/barbers` still works without login.
+8. If login fails, confirm `/admin/login` shows a visible error message.
+9. Call `GET /api/admin-auth-health` and confirm env/auth readiness booleans are present.
 
 ## Hosted persisted queue checks
 - `/admin/setup-requests` loads persisted records.
@@ -60,3 +62,9 @@ For Amplify-hosted Next.js SSR/API routes, write required env vars into `.env.pr
 - `PLATFORM_ADMIN_ACCESS_CODE`
 
 No real secrets should be committed in repo files.
+
+## Auth diagnostics route
+
+- Route: `GET /api/admin-auth-health`
+- Purpose: safe hosted diagnostics for auth environment readiness.
+- Returns booleans/count/host metadata only; no secret values are returned.

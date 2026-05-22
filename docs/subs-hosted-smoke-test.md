@@ -98,4 +98,6 @@ Add these checks after backend envs are configured:
 - `/admin/setup-requests` and `/admin/sites` should load without manual header input.
 - Logout should end session and redirect protected admin routes to `/admin/login`.
 - Public `/setup/barbers` should still work while logged out.
+- On failed login, the page should show a clear error (for example: "Login failed. Check your admin email and access code.").
+- `GET /api/admin-auth-health` should report auth/env readiness booleans without exposing secret values.
 

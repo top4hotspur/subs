@@ -146,6 +146,7 @@ Still mock for infrastructure:
 - Platform admin journey is now authenticated via `/admin/login`.
 - Admin queues (`/admin/setup-requests`, `/admin/sites`, `/admin/settings`, `/admin/crm`, `/admin/sales`) are session-protected.
 - Future milestones will add business-owner, staff, and customer role-specific auth.
+- Hosted auth readiness can be checked safely via `/api/admin-auth-health` (booleans only, no secrets).
 
 ## Sales pipeline flow (platform outreach)
 

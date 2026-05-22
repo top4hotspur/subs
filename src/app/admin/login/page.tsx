@@ -5,6 +5,22 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { primaryButtonClass } from "@/lib/ui/button-styles";
 
+function toFriendlyLoginError(error: string | null | undefined): string {
+  if (!error) {
+    return "Login failed. Check your admin email and access code.";
+  }
+  if (error === "CredentialsSignin") {
+    return "Login failed. Check your admin email and access code.";
+  }
+  if (error === "Configuration") {
+    return "Login failed due to auth configuration. Please contact platform admin.";
+  }
+  if (error === "AccessDenied") {
+    return "Access denied for this account.";
+  }
+  return `Login failed: ${error}`;
+}
+
 export default function AdminLoginPage() {
   const router = useRouter();
   const [callbackUrl] = useState(() => {
@@ -23,19 +39,25 @@ export default function AdminLoginPage() {
     setError(null);
 
     const result = await signIn("credentials", {
-      email,
-      accessCode,
+      email: email.trim(),
+      accessCode: accessCode.trim(),
       redirect: false,
       callbackUrl,
     });
 
-    if (!result || result.error) {
-      setError("Invalid admin credentials.");
+    if (!result) {
+      setError("Login failed. No response from auth service.");
       setLoading(false);
       return;
     }
 
-    router.push(result.url || callbackUrl);
+    if (result.error || !result.ok) {
+      setError(toFriendlyLoginError(result.error));
+      setLoading(false);
+      return;
+    }
+
+    router.push(result.url || callbackUrl || "/admin");
     setLoading(false);
   }
 

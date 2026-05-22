@@ -452,3 +452,4 @@ No Auth.js or infrastructure automation added in this task.
   - `NEXTAUTH_URL`
   - `PLATFORM_ADMIN_ACCESS_CODE`
 - Hosted smoke checks now include login redirect/session/logout flow for `/admin`, `/admin/setup-requests`, and `/admin/sites`.
+- Hosted auth diagnostics route is available at `/api/admin-auth-health` to verify auth env presence safely.
