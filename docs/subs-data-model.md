@@ -10,6 +10,7 @@
 - Availability/calendar: business + staff windows + scheduling hints
 - Customer requests/jobs: shared enquiry/booking/job model (`CustomerRequest`)
 - Notification templates: editable message templates per industry/channel/event
+- Sales pipeline: prospect and outreach tracking (`SalesLead`, `SalesLeadEvent`)
 
 ## UI display helpers
 Centralized display formatting is defined in:
@@ -31,6 +32,12 @@ Request badge component:
 - `subs-notification-templates:<industrySlug>`
 
 Current persistence is intentionally browser-only mock storage.
+
+## Persisted sales pipeline (backend)
+- Sales pipeline data is persisted in Postgres for platform-admin workflows:
+  - `SalesLead`
+  - `SalesLeadEvent`
+- This model is distinct from local customer CRM (`subs-crm-customers`).
 
 
 ## Local Analytics and Financials Preview

@@ -146,3 +146,11 @@ Still mock for infrastructure:
 - Platform admin journey is now authenticated via `/admin/login`.
 - Admin queues (`/admin/setup-requests`, `/admin/sites`, `/admin/settings`, `/admin/crm`) are session-protected.
 - Future milestones will add business-owner, staff, and customer role-specific auth.
+
+## Sales pipeline flow (platform outreach)
+
+- A dedicated platform sales workflow now exists at `/admin/sales`.
+- This is for prospective business leads before they become subscribers.
+- Leads can be created manually or imported from CSV, then moved through outreach statuses.
+- Admin can preview/copy standardized outreach email templates and mark leads as contacted.
+- No real email provider sending is enabled yet.

@@ -1,5 +1,6 @@
 import { CustomerBookingHistoryItem, CustomerRecord } from "@/lib/crm/customer-types";
 import { CustomerRequest } from "@/lib/requests/request-types";
+import type { SalesLeadStatus } from "@/lib/sales/sales-lead-types";
 import { LocalSetupRequest } from "@/lib/sites/types";
 
 export function escapeCsvValue(value: unknown): string {
@@ -141,6 +142,60 @@ export function customerHistoryToCsv(history: CustomerBookingHistoryItem[]): str
     item.createdAtIso,
   ]);
 
+  return rowsToCsv(headers, rows);
+}
+
+export function salesLeadsToCsv(
+  leads: Array<{
+    businessName: string;
+    location?: string | null;
+    industryLabel?: string | null;
+    contactName?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    status: SalesLeadStatus | string;
+    source?: string | null;
+    notes?: string | null;
+    lastContactedAt?: string | null;
+    nextFollowUpAt?: string | null;
+  }>,
+): string {
+  const headers = [
+    "business_name",
+    "location",
+    "industry",
+    "contact_name",
+    "email",
+    "phone",
+    "status",
+    "source",
+    "notes",
+    "last_contacted_at",
+    "next_follow_up_at",
+  ];
+
+  const rows = leads.map((lead) => [
+    lead.businessName,
+    lead.location ?? "",
+    lead.industryLabel ?? "",
+    lead.contactName ?? "",
+    lead.email ?? "",
+    lead.phone ?? "",
+    lead.status,
+    lead.source ?? "",
+    lead.notes ?? "",
+    lead.lastContactedAt ?? "",
+    lead.nextFollowUpAt ?? "",
+  ]);
+
+  return rowsToCsv(headers, rows);
+}
+
+export function salesLeadHistoryToCsv(
+  events: Array<{ eventType: string; message?: string | null; createdAt: string }>,
+): string {
+  const headers = ["event_type", "message", "created_at"];
+  const rows = events.map((event) => [event.eventType, event.message ?? "", event.createdAt]);
   return rowsToCsv(headers, rows);
 }
 

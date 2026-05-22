@@ -201,6 +201,11 @@ export default function AdminPage() {
           Open persisted subscriber sites
         </Link>
       </div>
+      <div className="mt-2">
+        <Link href="/admin/sales" className="text-sm font-medium text-sky-700 hover:text-sky-900">
+          Open sales pipeline
+        </Link>
+      </div>
       <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Link href="/admin/setup-requests" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-sm font-semibold text-slate-900">Persisted setup requests</p>
@@ -217,6 +222,10 @@ export default function AdminPage() {
         <Link href="/admin/settings" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-sm font-semibold text-slate-900">Admin settings</p>
           <p className="mt-1 text-xs text-slate-600">Services, staff, availability, templates</p>
+        </Link>
+        <Link href="/admin/sales" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-sm font-semibold text-slate-900">Sales Pipeline</p>
+          <p className="mt-1 text-xs text-slate-600">Prospect outreach and follow-up queue</p>
         </Link>
       </section>
 

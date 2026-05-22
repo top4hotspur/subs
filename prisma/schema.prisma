@@ -163,3 +163,41 @@ model SubscriptionRecord {
 
   @@index([tenantSiteId])
 }
+
+model SalesLead {
+  id              String           @id @default(cuid())
+  businessName    String
+  location        String?
+  industrySlug    String?
+  industryLabel   String?
+  contactName     String?
+  email           String?
+  phone           String?
+  status          String
+  source          String?
+  notes           String?
+  lastContactedAt DateTime?
+  nextFollowUpAt  DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  events          SalesLeadEvent[]
+
+  @@index([status])
+  @@index([industrySlug])
+  @@index([businessName])
+  @@index([location])
+  @@index([createdAt])
+}
+
+model SalesLeadEvent {
+  id          String    @id @default(cuid())
+  salesLeadId String
+  eventType   String
+  message     String?
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+  salesLead   SalesLead @relation(fields: [salesLeadId], references: [id], onDelete: Cascade)
+
+  @@index([salesLeadId])
+  @@index([createdAt])
+}

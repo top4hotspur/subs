@@ -47,6 +47,14 @@ Move to DB/API/auth:
 - notification templates + events + delivery logs
 - role-based access and audit trails
 
+## Platform sales pipeline
+- Separate from `/admin/crm`, platform sales now has a dedicated `/admin/sales` area for outreach prospects.
+- Persisted entities:
+  - `SalesLead`
+  - `SalesLeadEvent`
+- This flow supports lead tracking, follow-up scheduling, CSV import/export, and email template preview/copy only.
+- No marketing email provider or unsubscribe enforcement is wired yet.
+
 
 ## Local Analytics Layer (Current Mock State)
 - The admin layer now includes a local analytics/financial preview built from browser-stored requests/services/staff

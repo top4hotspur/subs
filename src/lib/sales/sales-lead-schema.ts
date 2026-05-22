@@ -1,0 +1,76 @@
+﻿import { z } from "zod";
+
+const cuidString = z.string().cuid();
+const nonEmpty = z.string().trim().min(1);
+const optionalText = z.string().trim().min(1).optional();
+const isoDateString = z.string().datetime({ offset: true });
+const dateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const leadStatuses = [
+  "NEW",
+  "CONTACTED",
+  "INTERESTED",
+  "DEMO_SENT",
+  "FOLLOW_UP",
+  "WON",
+  "LOST",
+  "DO_NOT_CONTACT",
+] as const;
+
+export const salesLeadStatusSchema = z.enum(leadStatuses);
+
+export const createSalesLeadSchema = z.object({
+  businessName: nonEmpty,
+  location: optionalText,
+  industrySlug: optionalText,
+  industryLabel: optionalText,
+  contactName: optionalText,
+  email: z.string().email().optional(),
+  phone: z.string().trim().min(3).optional(),
+  status: salesLeadStatusSchema.default("NEW"),
+  source: optionalText,
+  notes: z.string().optional(),
+  lastContactedAt: isoDateString.optional(),
+  nextFollowUpAt: dateOnly.optional(),
+});
+
+export const updateSalesLeadSchema = z
+  .object({
+    id: cuidString,
+    businessName: nonEmpty.optional(),
+    location: optionalText,
+    industrySlug: optionalText,
+    industryLabel: optionalText,
+    contactName: optionalText,
+    email: z.string().email().optional(),
+    phone: z.string().trim().min(3).optional(),
+    status: salesLeadStatusSchema.optional(),
+    source: optionalText,
+    notes: z.string().optional(),
+    lastContactedAt: isoDateString.optional().nullable(),
+    nextFollowUpAt: dateOnly.optional().nullable(),
+  })
+  .refine((value) => Object.keys(value).some((key) => key !== "id"), {
+    message: "At least one field must be updated",
+  });
+
+export const listSalesLeadsSchema = z.object({
+  search: z.string().trim().optional(),
+  status: salesLeadStatusSchema.optional(),
+  industrySlug: z.string().trim().optional(),
+  location: z.string().trim().optional(),
+  take: z.number().int().min(1).max(500).optional().default(200),
+  skip: z.number().int().min(0).optional().default(0),
+});
+
+export const createSalesLeadEventSchema = z.object({
+  salesLeadId: cuidString,
+  eventType: nonEmpty,
+  message: z.string().optional(),
+  metadata: z.unknown().optional(),
+});
+
+export const markSalesLeadContactedSchema = z.object({
+  id: cuidString,
+  message: z.string().optional(),
+  status: salesLeadStatusSchema.optional(),
+});
