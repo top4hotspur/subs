@@ -82,3 +82,8 @@ Local mock voucher helpers now also exist in:
 - `src/lib/vouchers/local-vouchers.ts`
 for browser-local issue/check/redeem demo workflows.
 
+
+## Booking availability controls
+- Service duration/buffer and role-price settings influence appointment demo slot behavior and customer-facing price labels.
+- Ad hoc business closures are managed locally and reduce open booking day availability in demo booking pages.
+

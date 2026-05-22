@@ -211,3 +211,11 @@ Still mock for infrastructure:
 - Staff operations route: `/demo/[industry]/staff`.
 - Business owner admin route: `/demo/[industry]/admin`.
 - About/Contact page routes: `/demo/[industry]/about` and `/demo/[industry]/contact`.
+
+## Demo booking polish (local mock)
+- Appointment booking now starts with 14 upcoming open-day tiles before time selection.
+- Day tiles use availability color cues: green (high), orange (limited), red (under 5), grey (fully booked/disabled).
+- Booking copy is customer-facing and avoids internal request/debug terminology.
+- Customer profile details from /demo/[industry]/account prefill booking name/email/phone fields.
+- Business admin demo updates (services/staff/rota/closures) feed local booking availability behavior.
+

@@ -99,3 +99,9 @@ See also:
 - Flexible-job industries share one request model with optional job-context fields instead of separate per-industry schemas.
 - Future backend work should add quote lifecycle state, route planning, and workload/capacity controls on top of this shared model.
 
+
+## Demo booking and profile behavior (local mock)
+- Customer booking uses a dedicated date-tile selector across the next 14 open days.
+- Local profile data (subs-demo-customer-profile) is used to prefill booking contact fields.
+- Closures configured in business admin demo are reflected in day/slot availability.
+

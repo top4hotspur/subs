@@ -1,18 +1,30 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import { DemoSiteNav } from "@/components/demo/demo-site-nav";
 import { SiteCard } from "@/components/site-ui/site-card";
+import { StaffRotaEditor } from "@/components/calendar/staff-rota-editor";
+import {
+  listLocalBusinessClosures,
+  saveLocalBusinessClosures,
+} from "@/lib/calendar/local-closures";
 import {
   getLocalCustomerSiteSettings,
   saveLocalCustomerSiteSettings,
 } from "@/lib/sites/local-site-settings";
 import { WebsiteTemplate } from "@/lib/sites/types";
 import {
+  listLocalStaff,
+  saveLocalStaff,
+} from "@/lib/staff/local-staff";
+import { listLocalStaffRoles } from "@/lib/staff/staff-role-settings";
+import {
   getLocalVoucherSettings,
   saveLocalVoucherSettings,
 } from "@/lib/vouchers/local-vouchers";
 import { VoucherDeliveryMethod } from "@/lib/vouchers/voucher-types";
+import { formatUkDate } from "@/lib/ui/display-labels";
+import { getPublicServicePriceLabel } from "@/lib/pricing/service-price-display";
 
 type DemoBusinessAdminPageProps = {
   template: WebsiteTemplate;
@@ -38,14 +50,21 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
   const [voucherSettings, setVoucherSettings] = useState(
     getLocalVoucherSettings(template.slug),
   );
+  const [staffMembers, setStaffMembers] = useState(listLocalStaff(template.slug));
+  const [closures, setClosures] = useState(listLocalBusinessClosures(template.slug));
+  const roleDefinitions = useMemo(() => listLocalStaffRoles(template.slug).filter((role) => role.active), [template.slug]);
   const [superUserPermissions, setSuperUserPermissions] = useState<Record<string, boolean>>(
     Object.fromEntries(permissionAreas.map((area) => [area, true])),
   );
   const [message, setMessage] = useState<string | null>(null);
+  const [newClosureDate, setNewClosureDate] = useState("");
+  const [newClosureLabel, setNewClosureLabel] = useState("");
 
   function persistSettings(): void {
     saveLocalCustomerSiteSettings(settings);
     saveLocalVoucherSettings(template.slug, voucherSettings);
+    saveLocalStaff(template.slug, staffMembers);
+    saveLocalBusinessClosures(template.slug, closures);
     setMessage("Business site settings saved.");
   }
 
@@ -62,45 +81,237 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
         </div>
       </section>
 
+      <SiteCard title="Services and prices" subtitle="Edit names, descriptions and prices shown on the public site.">
+        <div className="space-y-3">
+          {settings.services.map((service, index) => (
+            <div key={service.id} className="rounded-md border border-slate-200 bg-white p-3">
+              <div className="grid gap-2 sm:grid-cols-2">
+                <input
+                  className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  value={service.name}
+                  onChange={(event) =>
+                    setSettings((current) => {
+                      const next = [...current.services];
+                      next[index] = { ...next[index], name: event.target.value };
+                      return { ...current, services: next };
+                    })
+                  }
+                />
+                <input
+                  type="number"
+                  min={0}
+                  step="1"
+                  className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  value={service.basePriceGbp ?? ""}
+                  placeholder="Base price (£)"
+                  onChange={(event) =>
+                    setSettings((current) => {
+                      const next = [...current.services];
+                      const value = event.target.value.trim();
+                      next[index] = {
+                        ...next[index],
+                        basePriceGbp: value ? Number(value) : undefined,
+                      };
+                      return { ...current, services: next };
+                    })
+                  }
+                />
+                <textarea
+                  className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2"
+                  value={service.description}
+                  placeholder="Description"
+                  onChange={(event) =>
+                    setSettings((current) => {
+                      const next = [...current.services];
+                      next[index] = { ...next[index], description: event.target.value };
+                      return { ...current, services: next };
+                    })
+                  }
+                />
+              </div>
+              {roleDefinitions.length > 0 ? (
+                <div className="mt-2 rounded-md border border-slate-200 bg-slate-50 p-2">
+                  <p className="text-xs font-semibold text-slate-700">Role pricing overrides</p>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    {roleDefinitions.map((role) => {
+                      const currentOverride = service.rolePriceOverrides?.find((item) => item.roleLabel === role.label);
+                      return (
+                        <label key={role.id} className="text-xs text-slate-700">
+                          {role.label}
+                          <input
+                            type="number"
+                            min={0}
+                            step="1"
+                            className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                            value={currentOverride?.priceGbp ?? ""}
+                            placeholder="Use base price"
+                            onChange={(event) => {
+                              const value = event.target.value.trim();
+                              setSettings((current) => {
+                                const next = [...current.services];
+                                const overrides = [...(next[index].rolePriceOverrides ?? [])].filter(
+                                  (item) => item.roleLabel !== role.label,
+                                );
+                                if (value) {
+                                  overrides.push({ roleId: role.id, roleLabel: role.label, priceGbp: Number(value) });
+                                }
+                                next[index] = {
+                                  ...next[index],
+                                  rolePriceOverrides: overrides.length > 0 ? overrides : undefined,
+                                };
+                                return { ...current, services: next };
+                              });
+                            }}
+                          />
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
+              <p className="mt-2 text-xs font-semibold text-slate-700">Public display: {getPublicServicePriceLabel(service) || "Quote required"}</p>
+            </div>
+          ))}
+        </div>
+      </SiteCard>
+
       <div className="grid gap-4 lg:grid-cols-2">
-        <SiteCard title="Services and prices" subtitle="Configure service list, pricing and booking durations.">
-          <ul className="space-y-2 text-sm text-slate-700">
-            {settings.services
-              .filter((service) => service.active)
-              .slice(0, 8)
-              .map((service) => (
-                <li key={service.id}>
-                  {service.name} - {service.priceLabel || (service.basePriceGbp ? `£${service.basePriceGbp}` : "Price set in editor")}
-                </li>
-              ))}
-          </ul>
+        <SiteCard title="Staff" subtitle="Maintain team contact details and booking visibility.">
+          <div className="space-y-3">
+            {staffMembers.map((staff, index) => (
+              <div key={staff.id} className="rounded-md border border-slate-200 bg-white p-3">
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <input
+                    className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+                    value={staff.displayName}
+                    onChange={(event) => {
+                      const next = [...staffMembers];
+                      next[index] = { ...next[index], displayName: event.target.value };
+                      setStaffMembers(next);
+                    }}
+                  />
+                  <input
+                    className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+                    placeholder="Position"
+                    value={staff.roleLabel ?? ""}
+                    onChange={(event) => {
+                      const next = [...staffMembers];
+                      next[index] = { ...next[index], roleLabel: event.target.value };
+                      setStaffMembers(next);
+                    }}
+                  />
+                  <input
+                    className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+                    placeholder="Phone"
+                    value={staff.phone ?? ""}
+                    onChange={(event) => {
+                      const next = [...staffMembers];
+                      next[index] = { ...next[index], phone: event.target.value || undefined };
+                      setStaffMembers(next);
+                    }}
+                  />
+                  <input
+                    className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+                    placeholder="Email"
+                    value={staff.email ?? ""}
+                    onChange={(event) => {
+                      const next = [...staffMembers];
+                      next[index] = { ...next[index], email: event.target.value || undefined };
+                      setStaffMembers(next);
+                    }}
+                  />
+                </div>
+                <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-700">
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      checked={staff.active}
+                      onChange={(event) => {
+                        const next = [...staffMembers];
+                        next[index] = { ...next[index], active: event.target.checked };
+                        setStaffMembers(next);
+                      }}
+                    />
+                    Active
+                  </label>
+                  <label className="flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      checked={staff.customerSelectable}
+                      onChange={(event) => {
+                        const next = [...staffMembers];
+                        next[index] = { ...next[index], customerSelectable: event.target.checked };
+                        setStaffMembers(next);
+                      }}
+                    />
+                    Customer-selectable
+                  </label>
+                </div>
+              </div>
+            ))}
+          </div>
         </SiteCard>
 
-        <SiteCard title="Staff and booking preferences" subtitle="Control staff selection and rota behaviour.">
-          <label className="flex items-center gap-2 text-sm text-slate-700">
+        <SiteCard title="Ad hoc closures" subtitle="Closure dates feed booking availability.">
+          <div className="grid gap-2 sm:grid-cols-2">
             <input
-              type="checkbox"
-              checked={settings.sectionVisibility.bookingCta.enabled}
-              onChange={(event) =>
-                setSettings((current) => ({
-                  ...current,
-                  sectionVisibility: {
-                    ...current.sectionVisibility,
-                    bookingCta: {
-                      ...current.sectionVisibility.bookingCta,
-                      enabled: event.target.checked,
-                    },
-                  },
-                }))
-              }
+              type="date"
+              className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+              value={newClosureDate}
+              onChange={(event) => setNewClosureDate(event.target.value)}
             />
-            Booking calls-to-action enabled
-          </label>
-          <p className="mt-2 text-xs text-slate-600">
-            Staff selection visibility is controlled by customer-selectable staff settings in team setup.
-          </p>
+            <input
+              className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+              placeholder="Closure label"
+              value={newClosureLabel}
+              onChange={(event) => setNewClosureLabel(event.target.value)}
+            />
+          </div>
+          <button
+            type="button"
+            className="mt-2 rounded-md bg-slate-800 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-900"
+            onClick={() => {
+              if (!newClosureDate) return;
+              setClosures((current) => [
+                ...current,
+                {
+                  id: `closure_${Date.now()}`,
+                  industrySlug: template.slug,
+                  date: newClosureDate,
+                  label: newClosureLabel || "Closed",
+                  allDay: true,
+                  active: true,
+                  createdAtIso: new Date().toISOString(),
+                  updatedAtIso: new Date().toISOString(),
+                },
+              ]);
+              setNewClosureDate("");
+              setNewClosureLabel("");
+            }}
+          >
+            Add closure
+          </button>
+          <ul className="mt-3 space-y-2 text-sm text-slate-700">
+            {closures.length === 0 ? <li>No closures added.</li> : null}
+            {closures.map((closure) => (
+              <li key={closure.id} className="flex items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-2 py-1">
+                <span>{formatUkDate(closure.date)} - {closure.label}</span>
+                <button
+                  type="button"
+                  className="text-xs font-semibold text-rose-700"
+                  onClick={() => setClosures((current) => current.filter((item) => item.id !== closure.id))}
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
         </SiteCard>
       </div>
+
+      <SiteCard title="Staff rota" subtitle="Working hours and breaks for appointment availability.">
+        <StaffRotaEditor industrySlug={template.slug} staffMembers={staffMembers} />
+      </SiteCard>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <SiteCard title="Gift vouchers" subtitle="Enable vouchers and configure delivery methods.">

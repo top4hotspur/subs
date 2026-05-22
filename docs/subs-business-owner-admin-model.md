@@ -65,3 +65,8 @@ Business admin can:
   - `/demo/[industry]/account`
   - `/demo/[industry]/staff`
   - `/demo/[industry]/admin`
+
+## Current demo controls
+- Business admin demo includes editable service naming/description/pricing, staff details, rota, and closure management.
+- Role-level service pricing overrides can drive customer-facing From £x price labels.
+

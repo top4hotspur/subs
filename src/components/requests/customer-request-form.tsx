@@ -8,9 +8,9 @@ import {
 } from "@/lib/calendar/industry-calendar-defaults";
 import {
   AppointmentSlotPreference,
-  buildPreferredAppointmentSlots,
   DayPeriod,
 } from "@/lib/calendar/appointment-slot-preferences";
+import { buildBookingDayAvailability } from "@/lib/calendar/booking-day-availability";
 import {
   getStaffAvailability,
   listLocalBusinessAvailability,
@@ -20,6 +20,7 @@ import {
   listLocalStaffHolidays,
 } from "@/lib/calendar/local-closures";
 import { getLocalStaffRotaForStaff } from "@/lib/calendar/local-staff-rota";
+import { getLocalCustomerProfile } from "@/lib/demo/local-customer-profile";
 import { isAppointmentStyleIndustry } from "@/lib/requests/appointment-industries";
 import {
   getAppointmentActionHeading,
@@ -35,15 +36,12 @@ import {
 import {
   isTaxiIndustry,
   taxiJourneyTypeOptions,
-  taxiLuggageOptions,
-  taxiPassengerOptions,
   taxiRequestHeading,
 } from "@/lib/requests/taxi-request";
 import {
   getDefaultLocationTypeForIndustry,
   getDefaultRequestKindForIndustry,
   getRequestActionLabelForIndustry,
-  getSuggestedRequestFieldsForIndustry,
 } from "@/lib/requests/industry-request-defaults";
 import {
   createLocalCustomerRequest,
@@ -61,12 +59,7 @@ import { DemoSiteService, WebsiteTemplateSlug } from "@/lib/sites/types";
 import { shouldCustomersSelectStaffByDefault } from "@/lib/staff/industry-staff-defaults";
 import { StaffMember } from "@/lib/staff/staff-types";
 import { primaryButtonClass } from "@/lib/ui/button-styles";
-import {
-  customerRequestKindLabel,
-  customerRequestLocationTypeLabel,
-  customerRequestPricingStatusLabel,
-  weekdayLabel,
-} from "@/lib/ui/display-labels";
+import { formatUkDate, weekdayLabel } from "@/lib/ui/display-labels";
 import { ServiceTileSelector } from "@/components/requests/service-tile-selector";
 
 type CustomerRequestFormProps = {
@@ -76,17 +69,25 @@ type CustomerRequestFormProps = {
   initialServiceId?: string;
 };
 
-function availabilityHint(slug: WebsiteTemplateSlug): string {
+function openingHoursHint(slug: WebsiteTemplateSlug): string {
   if (slug === "taxi") {
-    return "The operator will confirm journey timing and price.";
+    return "Journey times are confirmed by the operator after booking.";
   }
   if (shouldUseFlexibleWindowsByDefault(slug)) {
-    return "The business will confirm an available visit window.";
+    return "Visit windows are confirmed after the team reviews your request.";
   }
   if (shouldUseFixedSlotsByDefault(slug)) {
-    return "Preferred date/time helps the business confirm an available slot.";
+    return "Choose your preferred day and time from the available schedule.";
   }
-  return "The business will confirm timing after reviewing your request.";
+  return "The business confirms final timing after review.";
+}
+
+function availabilityClass(level: "HIGH" | "LIMITED" | "LOW" | "NONE", selected: boolean): string {
+  if (selected) return "border-sky-700 bg-sky-700 text-white";
+  if (level === "HIGH") return "border-emerald-300 bg-emerald-50 text-emerald-900";
+  if (level === "LIMITED") return "border-orange-300 bg-orange-50 text-orange-900";
+  if (level === "LOW") return "border-rose-300 bg-rose-50 text-rose-900";
+  return "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400";
 }
 
 export function CustomerRequestForm({ templateSlug, services, staffMembers, initialServiceId }: CustomerRequestFormProps) {
@@ -100,8 +101,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
     () =>
       typeof window === "undefined"
         ? []
-        : listLocalBusinessAvailability(templateSlug)
-            .filter((window) => window.active),
+        : listLocalBusinessAvailability(templateSlug).filter((window) => window.active),
     [templateSlug],
   );
   const businessAvailabilityPreview = businessAvailabilityAll.slice(0, 3);
@@ -113,16 +113,10 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
   const requestKind = getDefaultRequestKindForIndustry(templateSlug);
   const locationType = getDefaultLocationTypeForIndustry(templateSlug);
   const actionLabel = getRequestActionLabelForIndustry(templateSlug);
-  const suggestions = getSuggestedRequestFieldsForIndustry(templateSlug).join(", ");
   const appointmentStyle = isAppointmentStyleIndustry(templateSlug);
   const flexibleJobStyle = isFlexibleJobIndustry(templateSlug);
   const taxiStyle = isTaxiIndustry(templateSlug);
   const customerSelectableByDefault = shouldCustomersSelectStaffByDefault(templateSlug);
-  const pricingStatusLabel = customerRequestPricingStatusLabel(
-    requestKind === CustomerRequestKind.BOOKING_REQUEST
-      ? CustomerRequestPricingStatus.PRICE_CONFIRMED
-      : CustomerRequestPricingStatus.QUOTE_REQUIRED,
-  );
   const preferredStaffLabel = appointmentStyle
     ? getAppointmentStaffLabel(templateSlug)
     : "Preferred staff member (optional)";
@@ -133,13 +127,13 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
   const frequencyOptions = flexibleJobFrequencyOptions(templateSlug);
   const isDogGrooming = templateSlug === "dog-grooming";
   const taxiJourneyTypes = taxiJourneyTypeOptions();
-  const taxiPassengers = taxiPassengerOptions();
-  const taxiLuggage = taxiLuggageOptions();
 
-  const [form, setForm] = useState({
-    customerName: "",
-    customerEmail: "",
-    customerPhone: "",
+  const [form, setForm] = useState(() => {
+    const profile = getLocalCustomerProfile();
+    return {
+    customerName: profile.name,
+    customerEmail: profile.email,
+    customerPhone: profile.phone,
     serviceId: initialServiceId ?? "",
     preferredDate: "",
     preferredTime: "",
@@ -169,13 +163,16 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
     dogSize: "",
     temperamentNotes: "",
     notes: "",
+    };
   });
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+
   function selectedServiceName(): string | undefined {
     return effectiveServices.find((service) => service.id === form.serviceId)?.name;
   }
+
   const selectedServiceSettings = useMemo(() => {
     if (typeof window === "undefined" || !form.serviceId) return null;
     const template = getWebsiteTemplate(templateSlug);
@@ -202,26 +199,23 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
     [form.preferredStaffId, selectableStaff],
   );
 
-  const preferredSlots = useMemo<AppointmentSlotPreference[]>(() => {
-    if (!appointmentStyle || !form.preferredDate) {
-      return [];
-    }
+  const dayAvailability = useMemo(() => {
+    if (!appointmentStyle) return [];
     const staffAvailability = selectedStaffMember?.id
       ? getStaffAvailability(templateSlug, selectedStaffMember.id)
       : [];
     const staffRotaDays = selectedStaffMember?.id
       ? getLocalStaffRotaForStaff(templateSlug, selectedStaffMember.id)
       : [];
-    const businessClosures = listLocalBusinessClosures(templateSlug);
-    const staffHolidays = listLocalStaffHolidays(templateSlug);
-    return buildPreferredAppointmentSlots({
-      selectedDate: form.preferredDate,
+
+    return buildBookingDayAvailability({
       industrySlug: templateSlug,
+      daysToReturn: 14,
       businessAvailabilityWindows: businessAvailabilityAll,
       selectedStaffAvailabilityWindows: staffAvailability,
       selectedStaffRotaDays: staffRotaDays,
-      businessClosures,
-      staffHolidays,
+      businessClosures: listLocalBusinessClosures(templateSlug),
+      staffHolidays: listLocalStaffHolidays(templateSlug),
       selectedStaffId: selectedStaffMember?.id,
       selectedStaffName: selectedStaffMember?.displayName,
       existingRequests,
@@ -229,7 +223,21 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
         (selectedServiceSettings?.durationMinutes ?? 45) +
         (selectedServiceSettings?.bufferAfterMinutes ?? 0),
     });
-  }, [appointmentStyle, form.preferredDate, templateSlug, businessAvailabilityAll, selectedStaffMember, existingRequests, selectedServiceSettings]);
+  }, [
+    appointmentStyle,
+    businessAvailabilityAll,
+    existingRequests,
+    selectedServiceSettings,
+    selectedStaffMember,
+    templateSlug,
+  ]);
+
+  const preferredSlots = useMemo<AppointmentSlotPreference[]>(() => {
+    if (!appointmentStyle || !form.preferredDate) {
+      return [];
+    }
+    return dayAvailability.find((day) => day.date === form.preferredDate)?.slots ?? [];
+  }, [appointmentStyle, dayAvailability, form.preferredDate]);
 
   const slotGroups = useMemo(
     () => ({
@@ -249,44 +257,12 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
             ? flexibleHeading
             : taxiStyle
               ? taxiRequestHeading()
-              : "Example customer request"}
+              : "Request service"}
       </h3>
-      <p className="mt-1 text-xs text-slate-600">
-        {actionLabel}. Suggested fields: {suggestions}.
-      </p>
-      <p className="mt-1 text-xs text-slate-600">
-        Request type: {customerRequestKindLabel(requestKind)} • Location: {customerRequestLocationTypeLabel(locationType)}
-      </p>
-      <p className="mt-1 text-xs text-slate-600">{availabilityHint(templateSlug)}</p>
-      {appointmentStyle ? (
-        <p className="mt-1 text-xs text-slate-600">
-          Choose a preferred time. The business will confirm availability.
-        </p>
-      ) : null}
-      {flexibleJobStyle ? (
-        <p className="mt-1 text-xs text-slate-600">
-          Add a preferred date or visit window. The business will confirm the final schedule.
-        </p>
-      ) : null}
-      {templateSlug === "beauticians" ? (
-        <p className="mt-1 text-xs text-slate-600">Add any relevant treatment preferences in notes.</p>
-      ) : null}
-      {templateSlug === "massage" ? (
-        <p className="mt-1 text-xs text-slate-600">Add any relevant session preferences in notes.</p>
-      ) : null}
-      {taxiStyle ? (
-        <p className="mt-1 text-xs text-slate-600">
-          Share pickup, destination, and journey details. The operator will confirm fare and booking.
-        </p>
-      ) : null}
-      {appointmentStyle && !selectedStaffMember ? (
-        <p className="mt-1 text-xs text-slate-600">
-          Final availability will be confirmed by the business.
-        </p>
-      ) : null}
+      <p className="mt-1 text-xs text-slate-600">{actionLabel}.</p>
       {appointmentStyle && businessAvailabilityPreview.length > 0 ? (
         <div className="mt-2 rounded-md border border-slate-200 bg-white px-2 py-2 text-xs text-slate-600">
-          <p className="font-semibold text-slate-900">Availability hint</p>
+          <p className="font-semibold text-slate-900">Opening hours</p>
           <ul className="mt-1 space-y-1">
             {businessAvailabilityPreview.map((window) => (
               <li key={window.id}>
@@ -297,9 +273,19 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
         </div>
       ) : null}
       {appointmentStyle && businessAvailabilityPreview.length === 0 ? (
-        <p className="mt-1 text-xs text-slate-600">
-          The business will confirm the final appointment time. This demo uses browser-local slot and conflict checks only.
-        </p>
+        <p className="mt-1 text-xs text-slate-600">Opening hours vary by day. Please choose your preferred date and time.</p>
+      ) : null}
+      {flexibleJobStyle ? (
+        <p className="mt-1 text-xs text-slate-600">Choose your preferred date or visit window.</p>
+      ) : null}
+      {templateSlug === "beauticians" ? (
+        <p className="mt-1 text-xs text-slate-600">Add any relevant treatment preferences in notes.</p>
+      ) : null}
+      {templateSlug === "massage" ? (
+        <p className="mt-1 text-xs text-slate-600">Add any relevant session preferences in notes.</p>
+      ) : null}
+      {taxiStyle ? (
+        <p className="mt-1 text-xs text-slate-600">Share pickup, destination, and journey details so we can confirm your booking.</p>
       ) : null}
       {!customerSelectableByDefault ? (
         <p className="mt-1 text-xs text-slate-600">The business will allocate the right team member.</p>
@@ -307,7 +293,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
 
       {submitted ? (
         <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
-          Request saved in this browser. In the live version this would create a customer request record with pricing status {pricingStatusLabel}.
+          Your request has been saved.
           <div className="mt-2">
             <Link href="/account" className="font-semibold underline">
               View in customer account
@@ -325,7 +311,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
             return;
           }
           if (appointmentStyle && (!form.serviceId || !form.preferredDate || !form.preferredTime)) {
-            setError("Service, preferred date, and preferred time are required for appointment requests.");
+            setError("Service, preferred date, and preferred time are required.");
             return;
           }
           if (locationType === CustomerRequestLocationType.ROUTE && (!form.pickupAddress || !form.destinationAddress)) {
@@ -349,11 +335,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
             return;
           }
           if (taxiStyle && (!form.pickupAddress || !form.destinationAddress || !form.preferredDate || !form.preferredTime || !form.journeyType)) {
-            setError("Pickup, destination, pickup date/time, and journey type are required for taxi requests.");
-            return;
-          }
-          if (taxiStyle && !form.customerEmail && !form.customerPhone) {
-            setError("Provide either an email or a phone number for taxi requests.");
+            setError("Pickup, destination, pickup date/time, and journey type are required.");
             return;
           }
 
@@ -409,24 +391,54 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
           <ServiceTileSelector
             services={effectiveServices}
             selectedServiceId={form.serviceId}
-            onSelectService={(serviceId) => setForm((c) => ({ ...c, serviceId }))}
+            onSelectService={(serviceId) => setForm((c) => ({ ...c, serviceId, preferredDate: "", preferredTime: "" }))}
           />
         ) : (
           <select className="rounded-md border border-slate-300 px-2 py-1 text-sm" value={form.serviceId} onChange={(event) => setForm((c) => ({ ...c, serviceId: event.target.value }))}>
-            <option value="">
-              {flexibleJobStyle ? flexibleServiceLabel : "Select service"}
-            </option>
+            <option value="">{flexibleJobStyle ? flexibleServiceLabel : "Select service"}</option>
             {effectiveServices.map((service) => (
               <option key={service.id} value={service.id}>{service.name}</option>
             ))}
           </select>
         )}
-        <input type="date" className="rounded-md border border-slate-300 px-2 py-1 text-sm" value={form.preferredDate} onChange={(event) => setForm((c) => ({ ...c, preferredDate: event.target.value }))} />
+
         {appointmentStyle ? (
           <div className="sm:col-span-2 rounded-md border border-slate-200 bg-white p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Preferred time</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Choose a day</p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              {dayAvailability.map((day) => {
+                const selected = form.preferredDate === day.date;
+                return (
+                  <button
+                    key={day.date}
+                    type="button"
+                    disabled={day.blocked}
+                    className={`rounded-md border p-2 text-left text-xs ${availabilityClass(day.level, selected)}`}
+                    onClick={() => {
+                      if (day.blocked) return;
+                      setForm((c) => ({ ...c, preferredDate: day.date, preferredTime: "" }));
+                    }}
+                  >
+                    <p className="font-semibold">{weekdayLabel(day.weekday)}</p>
+                    <p>{formatUkDate(day.date)}</p>
+                    <div className={`mt-1 h-1.5 w-full rounded ${day.level === "HIGH" ? "bg-emerald-500" : day.level === "LIMITED" ? "bg-orange-500" : day.level === "LOW" ? "bg-rose-500" : "bg-slate-300"}`} />
+                    <p className="mt-1 text-[11px] font-medium">
+                      {day.blocked ? day.blockedLabel : `${day.availableSlotCount} slots`}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <input type="date" className="rounded-md border border-slate-300 px-2 py-1 text-sm" value={form.preferredDate} onChange={(event) => setForm((c) => ({ ...c, preferredDate: event.target.value }))} />
+        )}
+
+        {appointmentStyle ? (
+          <div className="sm:col-span-2 rounded-md border border-slate-200 bg-white p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Choose a time</p>
             {!form.preferredDate ? (
-              <p className="mt-1 text-xs text-slate-600">Choose a preferred date first to see suggested time tiles.</p>
+              <p className="mt-1 text-xs text-slate-600">Select a day to view available times.</p>
             ) : null}
             {form.preferredDate ? (
               <div className="mt-2 space-y-3">
@@ -439,7 +451,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
                     <p className="text-xs font-medium text-slate-700">{group.label}</p>
                     <div className="mt-1 flex flex-wrap gap-2">
                       {slotGroups[group.key].length === 0 ? (
-                        <span className="text-xs text-slate-500">No preferred slots in this period.</span>
+                        <span className="text-xs text-slate-500">No times available in this period.</span>
                       ) : (
                         slotGroups[group.key].map((slot) => (
                           <button
@@ -458,7 +470,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
                               setForm((c) => ({ ...c, preferredTime: slot.startTime }));
                             }}
                           >
-                            {slot.label} {slot.blocked ? "· Already booked" : ""}
+                            {slot.label} {slot.blocked ? "· Unavailable" : ""}
                           </button>
                         ))
                       )}
@@ -467,9 +479,6 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
                 ))}
               </div>
             ) : null}
-            <p className="mt-2 text-xs text-slate-600">
-              Selected preferred time: <span className="font-semibold text-slate-900">{form.preferredTime || "None selected"}</span>
-            </p>
           </div>
         ) : flexibleJobStyle ? (
           <input
@@ -486,13 +495,11 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
           <select
             className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2"
             value={form.preferredStaffId}
-            onChange={(event) => setForm((c) => ({ ...c, preferredStaffId: event.target.value }))}
+            onChange={(event) => setForm((c) => ({ ...c, preferredStaffId: event.target.value, preferredDate: "", preferredTime: "" }))}
           >
             <option value="">{preferredStaffLabel}</option>
             {selectableStaff.map((staff) => (
-              <option key={staff.id} value={staff.id}>
-                {staff.displayName}
-              </option>
+              <option key={staff.id} value={staff.id}>{staff.displayName}</option>
             ))}
           </select>
         ) : null}
@@ -503,105 +510,19 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
             <input className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2" placeholder="Destination address" value={form.destinationAddress} onChange={(event) => setForm((c) => ({ ...c, destinationAddress: event.target.value }))} />
           </>
         ) : null}
+
         {taxiStyle ? (
           <>
-            <select
-              className="rounded-md border border-slate-300 px-2 py-1 text-sm"
-              value={form.journeyType}
-              onChange={(event) => setForm((c) => ({ ...c, journeyType: event.target.value }))}
-            >
+            <select className="rounded-md border border-slate-300 px-2 py-1 text-sm" value={form.journeyType} onChange={(event) => setForm((c) => ({ ...c, journeyType: event.target.value }))}>
               <option value="">Journey type</option>
               {taxiJourneyTypes.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
+                <option key={type} value={type}>{type}</option>
               ))}
             </select>
             <label className="flex items-center gap-2 rounded-md border border-slate-300 px-2 py-1 text-sm text-slate-700">
-              <input
-                type="checkbox"
-                checked={form.returnJourneyRequired}
-                onChange={(event) =>
-                  setForm((c) => ({
-                    ...c,
-                    returnJourneyRequired: event.target.checked,
-                    returnDate: event.target.checked ? c.returnDate : "",
-                    returnTime: event.target.checked ? c.returnTime : "",
-                  }))
-                }
-              />
+              <input type="checkbox" checked={form.returnJourneyRequired} onChange={(event) => setForm((c) => ({ ...c, returnJourneyRequired: event.target.checked }))} />
               Return journey required
             </label>
-            {form.returnJourneyRequired ? (
-              <>
-                <input
-                  type="date"
-                  className="rounded-md border border-slate-300 px-2 py-1 text-sm"
-                  value={form.returnDate}
-                  onChange={(event) => setForm((c) => ({ ...c, returnDate: event.target.value }))}
-                />
-                <input
-                  type="time"
-                  className="rounded-md border border-slate-300 px-2 py-1 text-sm"
-                  value={form.returnTime}
-                  onChange={(event) => setForm((c) => ({ ...c, returnTime: event.target.value }))}
-                />
-              </>
-            ) : null}
-            <select
-              className="rounded-md border border-slate-300 px-2 py-1 text-sm"
-              value={form.passengerCount}
-              onChange={(event) => setForm((c) => ({ ...c, passengerCount: event.target.value }))}
-            >
-              <option value="">Passengers (optional)</option>
-              {taxiPassengers.map((count) => (
-                <option key={count} value={count}>
-                  {count}
-                </option>
-              ))}
-            </select>
-            <select
-              className="rounded-md border border-slate-300 px-2 py-1 text-sm"
-              value={form.luggageCount}
-              onChange={(event) => setForm((c) => ({ ...c, luggageCount: event.target.value }))}
-            >
-              <option value="">Luggage (optional)</option>
-              {taxiLuggage.map((count) => (
-                <option key={count} value={count}>
-                  {count}
-                </option>
-              ))}
-            </select>
-            <input
-              className="rounded-md border border-slate-300 px-2 py-1 text-sm"
-              placeholder="Flight number (airport transfers)"
-              value={form.flightNumber}
-              onChange={(event) => setForm((c) => ({ ...c, flightNumber: event.target.value }))}
-            />
-            <input
-              className="rounded-md border border-slate-300 px-2 py-1 text-sm"
-              placeholder="Corporate account reference (optional)"
-              value={form.corporateAccountReference}
-              onChange={(event) => setForm((c) => ({ ...c, corporateAccountReference: event.target.value }))}
-            />
-            <input
-              className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2"
-              placeholder="Child seat notes (optional)"
-              value={form.childSeatNotes}
-              onChange={(event) => setForm((c) => ({ ...c, childSeatNotes: event.target.value }))}
-            />
-            <input
-              className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2"
-              placeholder="Accessibility notes (optional)"
-              value={form.accessibilityNotes}
-              onChange={(event) => setForm((c) => ({ ...c, accessibilityNotes: event.target.value }))}
-            />
-            <input
-              className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2"
-              placeholder="Stops or multi-stop notes (optional)"
-              value={form.stops}
-              onChange={(event) => setForm((c) => ({ ...c, stops: event.target.value }))}
-            />
           </>
         ) : null}
 
@@ -611,47 +532,18 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
 
         {flexibleJobStyle ? (
           <>
-            <select
-              className="rounded-md border border-slate-300 px-2 py-1 text-sm"
-              value={form.frequency}
-              onChange={(event) => setForm((c) => ({ ...c, frequency: event.target.value }))}
-            >
+            <select className="rounded-md border border-slate-300 px-2 py-1 text-sm" value={form.frequency} onChange={(event) => setForm((c) => ({ ...c, frequency: event.target.value }))}>
               <option value="">Frequency (optional)</option>
               {frequencyOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
+                <option key={option} value={option}>{option}</option>
               ))}
             </select>
-            <input
-              className="rounded-md border border-slate-300 px-2 py-1 text-sm"
-              placeholder="Property type (optional)"
-              value={form.propertyType}
-              onChange={(event) => setForm((c) => ({ ...c, propertyType: event.target.value }))}
-            />
+            <input className="rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="Property type (optional)" value={form.propertyType} onChange={(event) => setForm((c) => ({ ...c, propertyType: event.target.value }))} />
             {templateSlug === "mobile-valeting" ? (
-              <input
-                className="rounded-md border border-slate-300 px-2 py-1 text-sm"
-                placeholder="Vehicle details (optional)"
-                value={form.vehicleDetails}
-                onChange={(event) => setForm((c) => ({ ...c, vehicleDetails: event.target.value }))}
-              />
+              <input className="rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="Vehicle details (optional)" value={form.vehicleDetails} onChange={(event) => setForm((c) => ({ ...c, vehicleDetails: event.target.value }))} />
             ) : null}
-            <input
-              className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2"
-              placeholder="Access notes (optional)"
-              value={form.accessNotes}
-              onChange={(event) => setForm((c) => ({ ...c, accessNotes: event.target.value }))}
-            />
-            <input
-              className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2"
-              placeholder="Photo notes (optional)"
-              value={form.photoNotes}
-              onChange={(event) => setForm((c) => ({ ...c, photoNotes: event.target.value }))}
-            />
-            <p className="text-xs text-slate-600 sm:col-span-2">
-              Photo upload will be supported later; describe anything useful for now.
-            </p>
+            <input className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2" placeholder="Access notes (optional)" value={form.accessNotes} onChange={(event) => setForm((c) => ({ ...c, accessNotes: event.target.value }))} />
+            <input className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2" placeholder="Photo notes (optional)" value={form.photoNotes} onChange={(event) => setForm((c) => ({ ...c, photoNotes: event.target.value }))} />
           </>
         ) : null}
 
@@ -667,9 +559,14 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
         <textarea className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2" placeholder="Notes" value={form.notes} onChange={(event) => setForm((c) => ({ ...c, notes: event.target.value }))} />
         {error ? <p className="text-xs text-rose-700 sm:col-span-2">{error}</p> : null}
         <button type="submit" className={`${primaryButtonClass} sm:col-span-2`}>
-          {appointmentStyle ? "Save local appointment request" : taxiStyle ? "Save local taxi request" : "Save local request"}
+          {appointmentStyle ? "Save appointment request" : taxiStyle ? "Save taxi request" : "Save request"}
         </button>
       </form>
+      <p className="mt-2 text-xs text-slate-500">{openingHoursHint(templateSlug)}</p>
     </section>
   );
 }
+
+
+
+

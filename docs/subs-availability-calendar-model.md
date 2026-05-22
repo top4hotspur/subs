@@ -154,3 +154,9 @@ Current behavior:
   - appointments/bookings by hour
   - request detail list (time, customer, service/type, status, assigned/preferred staff, notes)
 - Inspect date input allows detail lookup outside visible windows.
+
+## Booking day availability tiles (local mock)
+- src/lib/calendar/booking-day-availability.ts builds the next open booking days for appointment industries.
+- It combines business opening windows, rota, closures, holidays, and local request conflicts.
+- Fully booked days are marked unavailable and disabled in booking UI.
+

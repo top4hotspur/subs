@@ -1,8 +1,12 @@
-"use client";
+﻿"use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { DemoSiteNav } from "@/components/demo/demo-site-nav";
 import { SiteCard } from "@/components/site-ui/site-card";
+import {
+  getLocalCustomerProfile,
+  saveLocalCustomerProfile,
+} from "@/lib/demo/local-customer-profile";
 import { listLocalCustomerRequests } from "@/lib/requests/local-customer-requests";
 import { CustomerRequestStatus } from "@/lib/requests/request-types";
 import { WebsiteTemplate } from "@/lib/sites/types";
@@ -29,6 +33,8 @@ export function DemoAccountPage({ template }: DemoAccountPageProps) {
       request.status === CustomerRequestStatus.CANCELLED,
   );
   const vouchers = useMemo(() => listLocalVouchers(template.slug), [template.slug]);
+  const [profile, setProfile] = useState(getLocalCustomerProfile());
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-4 py-10 sm:px-6 lg:px-8">
@@ -36,7 +42,7 @@ export function DemoAccountPage({ template }: DemoAccountPageProps) {
         <p className="text-xs uppercase tracking-[0.16em] text-slate-300">Customer account</p>
         <h1 className="mt-2 text-3xl font-bold">Welcome back</h1>
         <p className="mt-2 text-sm text-slate-200">
-          Manage upcoming bookings, booking history, profile details, payment preferences, and gift vouchers.
+          Manage your upcoming bookings, booking history, profile details, payment preferences, and gift vouchers.
         </p>
         <div className="mt-4">
           <DemoSiteNav templateSlug={template.slug} />
@@ -74,11 +80,46 @@ export function DemoAccountPage({ template }: DemoAccountPageProps) {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <SiteCard title="Personal details" subtitle="Keep your contact details up to date.">
-          <p className="text-sm text-slate-700">Name, email and mobile details are managed in your profile settings.</p>
+        <SiteCard title="Personal details" subtitle="Used to prefill bookings when you are logged in.">
+          <div className="space-y-2 text-sm">
+            <input
+              className="w-full rounded-md border border-slate-300 px-2 py-1"
+              placeholder="Your name"
+              value={profile.name}
+              onChange={(event) => setProfile((current) => ({ ...current, name: event.target.value }))}
+            />
+            <input
+              className="w-full rounded-md border border-slate-300 px-2 py-1"
+              placeholder="Email"
+              value={profile.email}
+              onChange={(event) => setProfile((current) => ({ ...current, email: event.target.value }))}
+            />
+            <input
+              className="w-full rounded-md border border-slate-300 px-2 py-1"
+              placeholder="Phone"
+              value={profile.phone}
+              onChange={(event) => setProfile((current) => ({ ...current, phone: event.target.value }))}
+            />
+            <button
+              type="button"
+              className="rounded-md bg-sky-700 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-800"
+              onClick={() => {
+                const next = saveLocalCustomerProfile({
+                  name: profile.name,
+                  email: profile.email,
+                  phone: profile.phone,
+                });
+                setProfile(next);
+                setSavedMessage("Profile saved.");
+              }}
+            >
+              Save profile
+            </button>
+            {savedMessage ? <p className="text-xs text-emerald-700">{savedMessage}</p> : null}
+          </div>
         </SiteCard>
         <SiteCard title="Payment methods" subtitle="Secure card storage and billing history.">
-          <p className="text-sm text-slate-700">Saved cards and receipts appear here once payment processing is enabled.</p>
+          <p className="text-sm text-slate-700">Saved cards and receipts will appear here when payments are enabled.</p>
         </SiteCard>
       </div>
 
