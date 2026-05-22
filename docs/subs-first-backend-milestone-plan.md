@@ -410,3 +410,13 @@ Added persisted `TenantSite` provisioning workflow:
 - `/admin/setup-requests` now includes **Start site setup** action.
 
 No Auth.js or infrastructure automation added in this task.
+
+## Migration baseline resolution (2026-05-22)
+
+- Issue: `prisma migrate dev` was blocked in non-interactive shell; DB already had existing tables so `migrate deploy` initially failed with baseline error.
+- Safe resolution used:
+1. `npx prisma migrate resolve --applied 20260522122802_init_setup_persistence`
+2. `npx prisma migrate deploy`
+- Result:
+  - provisioning migration `20260522145243_add_site_provisioning` applied successfully.
+  - database schema reported up to date by `npx prisma migrate status`.

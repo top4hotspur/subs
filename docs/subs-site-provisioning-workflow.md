@@ -34,3 +34,11 @@ This workflow turns a persisted setup request into a persisted subscriber site r
 - Stripe billing activation.
 - Email/Twilio notifications.
 - Auth.js role/session hardening.
+
+## Migration state note (Neon dev DB)
+
+- Initial persistence tables already existed before provisioning migration deploy.
+- Baseline strategy used:
+  - mark initial migration as applied with `prisma migrate resolve`
+  - deploy pending provisioning migration with `prisma migrate deploy`
+- No reset/drop/destructive operations were used.

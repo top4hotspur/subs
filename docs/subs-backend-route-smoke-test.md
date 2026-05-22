@@ -127,3 +127,16 @@ Added backend admin provisioning routes:
 Guard:
 - `x-platform-admin-email` must match `PLATFORM_ADMIN_EMAILS`.
 - Temporary until Auth.js.
+
+## Executed provisioning API smoke test (2026-05-22)
+
+Result: PASS
+
+- `GET /api/admin/sites` returned persisted site list.
+- `POST /api/admin/sites` with `setupRequestId` created a tenant site (or returned existing when already linked).
+- `GET /api/admin/sites/:id` returned domains, tasks, events, and subscription placeholder.
+- `PATCH /api/admin/sites/:id/tasks/:taskId` updated task status (`IN_PROGRESS` verified).
+
+Migration state resolution used before this smoke test:
+- `prisma migrate resolve --applied 20260522122802_init_setup_persistence`
+- `prisma migrate deploy` (applied `20260522145243_add_site_provisioning`)
