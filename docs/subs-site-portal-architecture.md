@@ -78,6 +78,14 @@ Move to DB/API/auth:
 See also:
 - `docs/subs-business-owner-admin-model.md`
 
+## Demo route alignment (current mock UX)
+- `/demo/[industry]` now focuses on public customer-facing site presentation.
+- Booking flow is separated into `/demo/[industry]/booking` instead of inline home-page forms.
+- Mock customer/staff/business-admin portal routes are split for clearer product boundaries:
+  - `/demo/[industry]/account`
+  - `/demo/[industry]/staff`
+  - `/demo/[industry]/admin`
+
 
 ## Local Analytics Layer (Current Mock State)
 - The admin layer now includes a local analytics/financial preview built from browser-stored requests/services/staff

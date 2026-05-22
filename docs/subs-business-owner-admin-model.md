@@ -61,4 +61,7 @@ Business admin can:
 - This model is documented only.
 - Current app remains local/mock for these role-specific subscriber operations.
 - Platform admin routes should not be treated as the final business-owner operational portal.
-
+- Demo route references for this model:
+  - `/demo/[industry]/account`
+  - `/demo/[industry]/staff`
+  - `/demo/[industry]/admin`

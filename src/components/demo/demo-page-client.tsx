@@ -1,6 +1,5 @@
 ﻿"use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { DemoPreview } from "@/components/demo/demo-preview";
 import {
@@ -8,7 +7,6 @@ import {
   getLocalDemoDraft,
 } from "@/lib/demo/local-demo-drafts";
 import { DemoCustomisationDraft, WebsiteTemplate } from "@/lib/sites/types";
-import { primaryButtonClass, secondaryButtonClass, smallButtonClass } from "@/lib/ui/button-styles";
 
 type DemoPageClientProps = {
   template: WebsiteTemplate;
@@ -39,27 +37,14 @@ export function DemoPageClient({ template, defaultDraft }: DemoPageClientProps) 
             Showing your customised demo draft: {activeDraft?.draftName}
           </p>
           <p className="mt-1 text-sky-800">
-            Continue building your own version, then move into setup.
+            The live site preview below reflects your latest saved draft.
           </p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <Link href={`/demo/${template.slug}/customise`} className={`${primaryButtonClass} ${smallButtonClass}`}>
-              Create my own site
-            </Link>
-            <Link href={`/setup/${template.slug}`} className={`${secondaryButtonClass} ${smallButtonClass}`}>
-              Start setup
-            </Link>
-          </div>
         </div>
       ) : (
         <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 shadow-sm">
           <p>
-            You are viewing the default template demo. Create your own version to personalise it.
+            You are viewing the default subscriber-site template preview.
           </p>
-          <div className="mt-2">
-            <Link href={`/demo/${template.slug}/customise`} className={`${secondaryButtonClass} ${smallButtonClass}`}>
-              Create my own site
-            </Link>
-          </div>
         </div>
       )}
 

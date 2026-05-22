@@ -37,4 +37,5 @@ UI wording in admin now calls this area **Business Site Settings Demo**.
 - Site-scoped business settings entry now exists at `/admin/sites/[siteId]/settings`.
 - In this pass, `/admin/sites/[siteId]/settings` is explicitly a support/provisioning preview that reuses local/mock settings tooling.
 - Platform admin is not the normal operational owner of subscriber business settings in the target architecture.
+- Day-to-day operational business admin model is represented separately in demo routes such as `/demo/[industry]/admin`.
 

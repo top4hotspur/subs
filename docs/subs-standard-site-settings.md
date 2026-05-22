@@ -78,3 +78,7 @@ Gift voucher model placeholders now exist in:
 - `src/lib/vouchers/voucher-types.ts`
 with settings for voucher enablement, delivery methods, value range, postage charge, and redemption tracking metadata.
 
+Local mock voucher helpers now also exist in:
+- `src/lib/vouchers/local-vouchers.ts`
+for browser-local issue/check/redeem demo workflows.
+

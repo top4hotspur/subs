@@ -73,6 +73,7 @@ type CustomerRequestFormProps = {
   templateSlug: WebsiteTemplateSlug;
   services?: DemoSiteService[];
   staffMembers?: StaffMember[];
+  initialServiceId?: string;
 };
 
 function availabilityHint(slug: WebsiteTemplateSlug): string {
@@ -88,7 +89,7 @@ function availabilityHint(slug: WebsiteTemplateSlug): string {
   return "The business will confirm timing after reviewing your request.";
 }
 
-export function CustomerRequestForm({ templateSlug, services, staffMembers }: CustomerRequestFormProps) {
+export function CustomerRequestForm({ templateSlug, services, staffMembers, initialServiceId }: CustomerRequestFormProps) {
   const fallbackServices = getWebsiteTemplate(templateSlug)?.defaultConfig.services ?? [];
   const effectiveServices = services && services.length > 0 ? services : fallbackServices;
   const selectableStaff = useMemo(
@@ -139,7 +140,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
     customerName: "",
     customerEmail: "",
     customerPhone: "",
-    serviceId: "",
+    serviceId: initialServiceId ?? "",
     preferredDate: "",
     preferredTime: "",
     customerAddress: "",
@@ -309,7 +310,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers }: Cu
           Request saved in this browser. In the live version this would create a customer request record with pricing status {pricingStatusLabel}.
           <div className="mt-2">
             <Link href="/account" className="font-semibold underline">
-              View in customer portal
+              View in customer account
             </Link>
           </div>
         </div>

@@ -214,7 +214,7 @@ export function buildPreferredAppointmentSlots(
   sourceWindows.forEach((window, index) => {
     const start = toMinutes(window.startTime);
     const end = toMinutes(window.endTime);
-    const step = 60;
+    const step = serviceDurationMinutes <= 30 ? 30 : 60;
 
     for (let cursor = start; cursor + serviceDurationMinutes <= end; cursor += step) {
       const hh = String(Math.floor(cursor / 60)).padStart(2, "0");

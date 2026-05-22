@@ -203,3 +203,11 @@ Still mock for infrastructure:
   - Staff login
   - Business admin login
 - Appointment-style demos now show a planned Gift Vouchers section with delivery-method options and local/mock disclaimer.
+
+## Subscriber site route split (demo model)
+- Customer-facing site home remains at `/demo/[industry]`.
+- Booking is now a dedicated route: `/demo/[industry]/booking`.
+- Customer account route: `/demo/[industry]/account`.
+- Staff operations route: `/demo/[industry]/staff`.
+- Business owner admin route: `/demo/[industry]/admin`.
+- About/Contact page routes: `/demo/[industry]/about` and `/demo/[industry]/contact`.
