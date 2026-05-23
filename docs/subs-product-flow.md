@@ -340,3 +340,12 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Services CSV template now matches service editor fields: serviceName, basePrice, durationMinutes, bufferAfterMinutes, description (+ optional rolePrice columns).
 - Contact page is now standard and always visible; About/Policy remain optional buildable pages.
 - Payments/sales section now captures payment setup intent with provider selection/instructions (no real processor integration).
+
+## Demo nav and account tidy (local/mock)
+- Demo nav now uses: Home, My Account, Staff View, Admin View, About us, Contact, Policy.
+- Bookings and Customer View links were removed from top demo nav.
+- My Account route (/demo/[industry]/account) now focuses on:
+  - contact details (local edit/save)
+  - upcoming appointments (with cancel action)
+  - completed/cancelled booking history.
+- Booking confirmation link now reads View in My Account and stays site-scoped.

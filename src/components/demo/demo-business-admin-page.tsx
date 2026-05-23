@@ -79,6 +79,23 @@ function optionNameById<T extends { id: string; name: string }>(
 }
 
 export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) {
+  const adminSections = [
+    { id: "business-settings", label: "Business settings" },
+    { id: "site-design", label: "Site design" },
+    { id: "staff-positions", label: "Staff positions" },
+    { id: "services-prices", label: "Services and prices" },
+    { id: "import-export", label: "Import/export setup data" },
+    { id: "staff", label: "Staff" },
+    { id: "appointments", label: "Appointments" },
+    { id: "rota-breaks", label: "Rota and breaks" },
+    { id: "closures", label: "Ad hoc closures" },
+    { id: "gift-vouchers", label: "Gift vouchers" },
+    { id: "page-content", label: "Page visibility/content" },
+    { id: "policies", label: "Policies" },
+    { id: "payments", label: "Payments/sales" },
+    { id: "super-user", label: "Super-user permissions" },
+  ] as const;
+
   const initialSettings = useMemo(() => getLocalCustomerSiteSettings(template.slug, template), [template]);
   const [settings, setSettings] = useState(initialSettings);
   const [voucherSettings, setVoucherSettings] = useState(getLocalVoucherSettings(template.slug));
@@ -97,6 +114,9 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
   const [newRoleLabel, setNewRoleLabel] = useState("");
   const [expandedServiceIds, setExpandedServiceIds] = useState<string[]>([]);
   const [expandedStaffIds, setExpandedStaffIds] = useState<string[]>([]);
+  const [selectedSection, setSelectedSection] = useState<
+    (typeof adminSections)[number]["id"]
+  >("business-settings");
   const [csvPreview, setCsvPreview] = useState<{
     type: "services" | "staff";
     rows: string[];
@@ -306,7 +326,34 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
 
   return (
     <DemoSitePageShell template={template} settings={settings}>
-      <CollapsibleSection title="Business settings" subtitle="Branding, currency and social profile links.">
+      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <p className="text-sm font-semibold text-slate-900">Admin sections</p>
+        <p className="mt-1 text-xs text-slate-600">
+          Select a section tile to open its settings panel.
+        </p>
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          {adminSections.map((section) => {
+            const active = selectedSection === section.id;
+            return (
+              <button
+                key={section.id}
+                type="button"
+                className={`rounded-lg border px-3 py-2 text-left text-xs font-semibold transition-colors ${
+                  active
+                    ? "border-slate-900 bg-slate-900 text-white"
+                    : "border-slate-300 bg-white text-slate-900 hover:bg-slate-100"
+                }`}
+                onClick={() => setSelectedSection(section.id)}
+              >
+                {section.label}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {selectedSection === "business-settings" ? (
+      <CollapsibleSection title="Business settings" subtitle="Branding, currency and social profile links." defaultOpen>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-xs font-semibold text-slate-700">Site/page display name
             <input
@@ -433,8 +480,10 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
           </div>
         </div>
       </CollapsibleSection>
+      ) : null}
 
-      <CollapsibleSection title="Site design" subtitle="Select the demo theme personality and one curated colour palette.">
+      {selectedSection === "site-design" ? (
+      <CollapsibleSection title="Site design" subtitle="Select the demo theme personality and one curated colour palette." defaultOpen>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-xs font-semibold text-slate-700">Theme
             <select
@@ -516,8 +565,10 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
           Open customer site preview
         </a>
       </CollapsibleSection>
+      ) : null}
 
-      <CollapsibleSection title="Staff positions" subtitle="Create business-specific role/position options used by staff records.">
+      {selectedSection === "staff-positions" ? (
+      <CollapsibleSection title="Staff positions" subtitle="Create business-specific role/position options used by staff records." defaultOpen>
         <div className="mb-3 flex flex-wrap gap-2">
           <input className="rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="Add position" value={newRoleLabel} onChange={(event) => setNewRoleLabel(event.target.value)} />
           <button type="button" className="rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800" onClick={addRole}>Add position</button>
@@ -533,7 +584,9 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
           ))}
         </div>
       </CollapsibleSection>
+      ) : null}
 
+      {selectedSection === "services-prices" ? (
       <CollapsibleSection title="Services and prices" subtitle="Compact service cards with duration and role pricing." defaultOpen>
         <div className="mb-3"><button type="button" className="rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800" onClick={addService}>Add service</button></div>
         <div className="grid gap-3">
@@ -590,8 +643,10 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
           })}
         </div>
       </CollapsibleSection>
+      ) : null}
 
-      <CollapsibleSection title="Import/export setup data" subtitle="Download CSV templates and import service/staff rows into this local demo.">
+      {selectedSection === "import-export" ? (
+      <CollapsibleSection title="Import/export setup data" subtitle="Download CSV templates and import service/staff rows into this local demo." defaultOpen>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
             <p className="text-sm font-medium text-slate-900">Services/products/pricing</p>
@@ -689,8 +744,10 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
           </div>
         ) : null}
       </CollapsibleSection>
+      ) : null}
 
-      <CollapsibleSection title="Staff" subtitle="Compact staff cards with role dropdown and available days.">
+      {selectedSection === "staff" ? (
+      <CollapsibleSection title="Staff" subtitle="Compact staff cards with role dropdown and available days." defaultOpen>
         <div className="mb-3"><button type="button" className="rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800" onClick={addStaff}>Add staff member</button></div>
         <div className="grid gap-3">
           {staffMembers.map((staff, index) => {
@@ -750,7 +807,9 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
           })}
         </div>
       </CollapsibleSection>
+      ) : null}
 
+      {selectedSection === "appointments" ? (
       <CollapsibleSection title="Appointments" subtitle="Control customer booking slot display and staff selection behaviour." defaultOpen>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-xs font-semibold text-slate-700">Appointment slot block size
@@ -791,12 +850,16 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
         </div>
         <p className="mt-2 text-xs text-slate-600">Slot interval affects how available times are shown on the customer booking page.</p>
       </CollapsibleSection>
+      ) : null}
 
-      <CollapsibleSection title="Rota and breaks" subtitle="Select one staff member and edit a compact weekly rota.">
+      {selectedSection === "rota-breaks" ? (
+      <CollapsibleSection title="Rota and breaks" subtitle="Select one staff member and edit a compact weekly rota." defaultOpen>
         <StaffRotaEditor industrySlug={template.slug} staffMembers={staffMembers} />
       </CollapsibleSection>
+      ) : null}
 
-      <CollapsibleSection title="Ad hoc closures" subtitle="Closure dates feed booking availability.">
+      {selectedSection === "closures" ? (
+      <CollapsibleSection title="Ad hoc closures" subtitle="Closure dates feed booking availability." defaultOpen>
         <div className="grid gap-2 sm:grid-cols-2">
           <input type="date" className="rounded-md border border-slate-300 px-2 py-1 text-sm" value={newClosureDate} onChange={(event) => setNewClosureDate(event.target.value)} />
           <input className="rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="Closure label" value={newClosureLabel} onChange={(event) => setNewClosureLabel(event.target.value)} />
@@ -879,8 +942,10 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
           ))}
         </ul>
       </CollapsibleSection>
+      ) : null}
 
-      <CollapsibleSection title="Gift vouchers" subtitle="Enable vouchers and configure delivery methods.">
+      {selectedSection === "gift-vouchers" ? (
+      <CollapsibleSection title="Gift vouchers" subtitle="Enable vouchers and configure delivery methods." defaultOpen>
         <div className="space-y-2 text-sm text-slate-700">
           <label className="flex items-center gap-2"><input type="checkbox" checked={voucherSettings.enabled} onChange={(event) => setVoucherSettings((current) => ({ ...current, enabled: event.target.checked }))} />Enable gift vouchers</label>
           <label className="flex items-center gap-2"><input type="checkbox" checked={voucherSettings.allowCustomValue} onChange={(event) => setVoucherSettings((current) => ({ ...current, allowCustomValue: event.target.checked }))} />Allow customer-entered voucher values</label>
@@ -902,8 +967,10 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
           <label className="text-xs">Postage charge ({formatSiteCurrency(1, currency).replace(/[0-9.,\s]/g,"")})<input type="number" step="0.5" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={voucherSettings.postageChargeGbp} onChange={(event) => setVoucherSettings((current) => ({ ...current, postageChargeGbp: Number(event.target.value || 0) }))} /></label>
         </div>
       </CollapsibleSection>
+      ) : null}
 
-      <CollapsibleSection title="Page visibility/content" subtitle="Enable pages and edit About/Contact/Policy content shown on the demo site.">
+      {selectedSection === "page-content" ? (
+      <CollapsibleSection title="Page visibility/content" subtitle="Enable pages and edit About/Contact/Policy content shown on the demo site." defaultOpen>
         <div className="space-y-4">
           <div className="grid gap-2 sm:grid-cols-3">
             <label className="flex items-center gap-2 text-sm text-slate-700">
@@ -1362,8 +1429,10 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
           </div>
         </div>
       </CollapsibleSection>
+      ) : null}
 
-      <CollapsibleSection title="Policies" subtitle="Set cancellation and refund notice rules for this business.">
+      {selectedSection === "policies" ? (
+      <CollapsibleSection title="Policies" subtitle="Set cancellation and refund notice rules for this business." defaultOpen>
         <div className="space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3">
           <label className="flex items-center gap-2 text-sm text-slate-700">
             <input
@@ -1448,8 +1517,10 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
           </label>
         </div>
       </CollapsibleSection>
+      ) : null}
 
-      <CollapsibleSection title="Payments/sales" subtitle="Local-only operational sales recording preferences.">
+      {selectedSection === "payments" ? (
+      <CollapsibleSection title="Payments/sales" subtitle="Local-only operational sales recording preferences." defaultOpen>
         <div className="mb-3 space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3">
           <label className="text-xs font-semibold text-slate-700">
             Payment setup mode
@@ -1605,14 +1676,17 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
         </div>
         <p className="mt-2 text-xs text-slate-600">Shows a staff tool for recording cash/card payments taken in store. This does not process payments, but allows for accurate finance reporting.</p>
       </CollapsibleSection>
+      ) : null}
 
-      <CollapsibleSection title="Super-user permissions" subtitle="Choose which areas delegated users can access.">
+      {selectedSection === "super-user" ? (
+      <CollapsibleSection title="Super-user permissions" subtitle="Choose which areas delegated users can access." defaultOpen>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {permissionAreas.map((area) => (
             <label key={area} className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700"><input type="checkbox" checked={Boolean(superUserPermissions[area])} onChange={(event) => setSuperUserPermissions((current) => ({ ...current, [area]: event.target.checked }))} />{area}</label>
           ))}
         </div>
       </CollapsibleSection>
+      ) : null}
 
       <div className="flex flex-wrap gap-2">
         <button type="button" className="rounded-md bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800" onClick={persistSettings}>Save business settings</button>

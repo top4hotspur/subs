@@ -144,3 +144,8 @@ See also:
 - Customer View should be treated as the normal customer site experience, not a platform-style dashboard.
 - Site-scoped account/bookings remains available under /demo/[industry]/account for booking history and cancellation.
 - Platform admin remains fully separate from subscriber business-admin and demo site routes.
+
+## Customer route semantics update
+- Customer-facing account route is now labeled My Account in demo navigation.
+- My Account is site-scoped and booking-focused, not a platform-style customer dashboard.
+- Staff and business-admin routes remain separate operational views under the same demo site namespace.

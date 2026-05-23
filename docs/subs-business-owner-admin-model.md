@@ -182,3 +182,8 @@ Important:
 - About and Policy pages remain optional via visibility toggles.
 - Admin wording for page buttons now uses business-friendly terms (Button text, Button destination) instead of CTA jargon.
 - Payment setup now supports explicit provider intent capture and setup instructions without connecting provider APIs.
+
+## Admin view layout refinement (local/mock)
+- Business admin demo now opens settings via a tile selector grid (up to 4 columns on desktop).
+- Clicking a section tile renders that section panel underneath the grid.
+- Existing section content and local state behavior are preserved; sections are no longer presented as one long always-visible vertical list.

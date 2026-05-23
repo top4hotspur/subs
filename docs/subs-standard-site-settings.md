@@ -168,3 +168,7 @@ No real provider credentials/API keys are stored or connected in this phase.
 ## Contact page visibility rule
 - pageVisibility.contact is normalized to enabled=true in local settings.
 - Contact is standard; About/Policy are optional buildable pages.
+
+## Contact/About/Policy visibility rule update
+- Contact page is standard and always visible in demo-site navigation.
+- About and Policy remain optional buildable pages controlled by visibility toggles.

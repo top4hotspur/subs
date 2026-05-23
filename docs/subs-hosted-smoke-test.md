@@ -261,3 +261,9 @@ Add these checks after backend envs are configured:
   - no contact visibility toggle in admin
 - Payments/sales:
   - verify setup mode + provider selector + instruction panel with no live provider connection.
+
+## Hosted smoke additions: nav + admin section grid
+- Demo nav should show: Home, My Account, Staff View, Admin View, About us, Contact, Policy.
+- Active/current nav item must remain readable in all themes.
+- /demo/[industry]/account should show local contact details, upcoming bookings, and booking history (no global dashboard feel).
+- /demo/[industry]/admin should show section tiles in a responsive grid with selected section panel rendering below.

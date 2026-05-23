@@ -33,8 +33,7 @@ export function DemoSiteNav({
   const pathname = usePathname();
   const allLinks = [
     { href: `/demo/${templateSlug}`, label: "Home" },
-    { href: `/demo/${templateSlug}/booking`, label: "Bookings" },
-    { href: `/demo/${templateSlug}/account`, label: "Customer View" },
+    { href: `/demo/${templateSlug}/account`, label: "My Account" },
     { href: `/demo/${templateSlug}/staff`, label: "Staff View" },
     { href: `/demo/${templateSlug}/admin`, label: "Admin View" },
     ...(showAbout ? [{ href: `/demo/${templateSlug}/about`, label: "About us" }] : []),

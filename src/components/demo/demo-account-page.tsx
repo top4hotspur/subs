@@ -4,6 +4,10 @@ import { useMemo, useState } from "react";
 import { DemoSitePageShell } from "@/components/demo/demo-site-page-shell";
 import { SiteCard } from "@/components/site-ui/site-card";
 import {
+  getLocalCustomerProfile,
+  saveLocalCustomerProfile,
+} from "@/lib/demo/local-customer-profile";
+import {
   listLocalCustomerRequests,
   LOCAL_CUSTOMER_REQUESTS_KEY,
 } from "@/lib/requests/local-customer-requests";
@@ -26,6 +30,8 @@ export function DemoAccountPage({ template }: DemoAccountPageProps) {
       (request) => request.templateSlug === template.slug,
     ),
   );
+  const [profile, setProfile] = useState(getLocalCustomerProfile());
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
 
   const upcoming = requests.filter(
     (request) =>
@@ -71,12 +77,55 @@ export function DemoAccountPage({ template }: DemoAccountPageProps) {
   return (
     <DemoSitePageShell template={template} settings={settings}>
       <SiteCard
-        title="Customer account bookings"
-        subtitle="View upcoming bookings, history, and cancellation options for this site."
+        title="My Account"
+        subtitle="Manage your contact details and view your bookings for this site."
       >
-        <p className="text-sm text-slate-700">
-          This is the site-scoped customer bookings area connected to the public website.
-        </p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <input
+            className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+            placeholder="Your name"
+            value={profile.name}
+            onChange={(event) =>
+              setProfile((current) => ({ ...current, name: event.target.value }))
+            }
+          />
+          <input
+            className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+            placeholder="Email"
+            value={profile.email}
+            onChange={(event) =>
+              setProfile((current) => ({ ...current, email: event.target.value }))
+            }
+          />
+          <input
+            className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2"
+            placeholder="Phone"
+            value={profile.phone}
+            onChange={(event) =>
+              setProfile((current) => ({ ...current, phone: event.target.value }))
+            }
+          />
+          <div className="sm:col-span-2">
+            <button
+              type="button"
+              className="rounded-md bg-sky-700 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-800"
+              onClick={() => {
+                const next = saveLocalCustomerProfile({
+                  name: profile.name,
+                  email: profile.email,
+                  phone: profile.phone,
+                });
+                setProfile(next);
+                setSavedMessage("Account details saved.");
+              }}
+            >
+              Save details
+            </button>
+            {savedMessage ? (
+              <p className="mt-2 text-xs text-emerald-700">{savedMessage}</p>
+            ) : null}
+          </div>
+        </div>
       </SiteCard>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -94,6 +143,12 @@ export function DemoAccountPage({ template }: DemoAccountPageProps) {
                     {request.serviceName || "Service"} -{" "}
                     {formatUkDate(request.preferredDate || request.createdAtIso)}
                     {request.preferredTime ? ` at ${request.preferredTime}` : ""}
+                  </p>
+                  <p className="text-xs text-slate-600">
+                    Staff: {request.preferredStaffName || "Unassigned"} | Payment:{" "}
+                    {request.paymentStatus === "PAYMENT_COMPLETED"
+                      ? "Payment Completed"
+                      : "Requires Payment"}
                   </p>
                   <button
                     type="button"
@@ -121,6 +176,9 @@ export function DemoAccountPage({ template }: DemoAccountPageProps) {
                 <li key={request.id}>
                   {request.serviceName || "Service"} - {request.status} (
                   {formatUkDateTime(request.updatedAtIso)})
+                  {request.preferredStaffName
+                    ? ` - Staff: ${request.preferredStaffName}`
+                    : ""}
                 </li>
               ))}
             </ul>

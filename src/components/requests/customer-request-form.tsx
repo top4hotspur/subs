@@ -612,7 +612,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
                 href={`/demo/${templateSlug}/account?tab=bookings`}
                 className="font-semibold underline"
               >
-                View in customer account
+                View in My Account
               </Link>
             </div>
           </div>
