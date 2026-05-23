@@ -144,3 +144,8 @@ Important:
   - Download staff CSV template
   - Upload staff CSV
 - CSV imports update local demo services/staff state only.
+
+## Site design propagation notes
+- Visual template and colour scheme changes in `/demo/[industry]/admin` now save immediately in local mock settings.
+- Customer-facing `/demo/[industry]` re-reads local settings so selected template/scheme changes are reflected consistently.
+- Available colour schemes now include Calm Blue, Fresh Green, Warm Coral, and Midnight Lime (dark premium option).

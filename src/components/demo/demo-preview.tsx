@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { DemoAccessDetailsCard } from "@/components/demo/demo-access-details-card";
 import { DemoSiteNav } from "@/components/demo/demo-site-nav";
 import { SiteBrandMark } from "@/components/site-ui/site-brand-mark";
@@ -10,7 +10,10 @@ import { SiteFooterBlock } from "@/components/site-ui/site-footer-block";
 import { getPublicServicePriceLabel } from "@/lib/pricing/service-price-display";
 import { isAppointmentStyleIndustry } from "@/lib/requests/appointment-industries";
 import { getSiteColourSchemeById } from "@/lib/sites/site-colour-schemes";
-import { getLocalCustomerSiteSettings } from "@/lib/sites/local-site-settings";
+import {
+  getLocalCustomerSiteSettings,
+  getLocalCustomerSiteSettingsStorageKey,
+} from "@/lib/sites/local-site-settings";
 import { getSiteVisualTemplateById } from "@/lib/sites/site-visual-templates";
 import { DemoCustomisationDraft, WebsiteTemplate } from "@/lib/sites/types";
 
@@ -32,7 +35,39 @@ const SOCIAL_LABELS: Record<string, string> = {
 export function DemoPreview({ template, draft }: DemoPreviewProps) {
   const { config } = draft;
   const appointmentStyle = isAppointmentStyleIndustry(template.slug);
-  const settings = useMemo(() => getLocalCustomerSiteSettings(template.slug, template), [template]);
+  const [settings, setSettings] = useState(() =>
+    getLocalCustomerSiteSettings(template.slug, template),
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const storageKey = getLocalCustomerSiteSettingsStorageKey(template.slug);
+    const syncSettings = () => {
+      setSettings(getLocalCustomerSiteSettings(template.slug, template));
+    };
+
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === storageKey) {
+        syncSettings();
+      }
+    };
+
+    const onLocalUpdate = () => {
+      syncSettings();
+    };
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", onLocalUpdate);
+    window.addEventListener("subs:site-settings-updated", onLocalUpdate);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", onLocalUpdate);
+      window.removeEventListener("subs:site-settings-updated", onLocalUpdate);
+    };
+  }, [template]);
   const visualTemplate = getSiteVisualTemplateById(settings.branding.visualTemplateId);
   const scheme = getSiteColourSchemeById(settings.branding.colourSchemeId);
   const currency = settings.paymentSettings.currencyCode ?? "GBP";
@@ -40,20 +75,22 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
   const socialEntries = Object.entries(settings.businessDetails.socialLinks ?? {}).filter(([, value]) => value && value.trim().length > 0);
   const brandName = settings.branding.siteName?.trim() || config.businessName;
 
+  const isDarkScheme = scheme.id === "midnight-lime";
+
   const heroClassByTemplate: Record<string, string> = {
-    "modern-minimalist": `${scheme.lightBackgroundClass} text-slate-950`,
+    "modern-minimalist": `${scheme.lightBackgroundClass} ${isDarkScheme ? "text-slate-100" : "text-slate-950"}`,
     "bold-edge": `${scheme.darkBackgroundClass} text-white`,
     "classic-immersive": `${scheme.darkSurfaceClass} text-white text-center`,
-    "utility-list": "bg-slate-100 text-slate-950 rounded-none border-b border-slate-300",
-    "split-screen-contemporary": "bg-white text-slate-950",
+    "utility-list": `${isDarkScheme ? "bg-slate-900 text-slate-100" : "bg-slate-100 text-slate-950"} rounded-none border-b ${isDarkScheme ? "border-slate-700" : "border-slate-300"}`,
+    "split-screen-contemporary": `${isDarkScheme ? "bg-slate-950 text-slate-100" : "bg-white text-slate-950"}`,
   };
 
   const outerClassByTemplate: Record<string, string> = {
-    "modern-minimalist": "bg-slate-50",
-    "bold-edge": "bg-slate-950 text-slate-100 border-slate-800",
-    "classic-immersive": "bg-slate-50",
-    "utility-list": "bg-slate-100",
-    "split-screen-contemporary": "bg-slate-50",
+    "modern-minimalist": isDarkScheme ? "bg-slate-950 text-slate-100 border-slate-700" : `${scheme.lightBackgroundClass}`,
+    "bold-edge": `${scheme.darkBackgroundClass} text-slate-100 ${isDarkScheme ? "border-lime-900" : "border-slate-800"}`,
+    "classic-immersive": isDarkScheme ? "bg-slate-900 text-slate-100 border-slate-700" : "bg-slate-50",
+    "utility-list": isDarkScheme ? "bg-slate-950 text-slate-100 border-slate-700" : "bg-slate-100",
+    "split-screen-contemporary": isDarkScheme ? "bg-slate-950 text-slate-100 border-slate-700" : "bg-slate-50",
   };
 
   const serviceContainerClassByTemplate: Record<string, string> = {
@@ -65,15 +102,36 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
   };
 
   const serviceCardClassByTemplate: Record<string, string> = {
-    "modern-minimalist": "rounded-2xl bg-white p-4 shadow border border-slate-100",
-    "bold-edge": "rounded-2xl bg-slate-900 p-4 shadow border border-slate-700 text-white",
-    "classic-immersive": "rounded-2xl bg-slate-50 p-4 shadow border border-slate-200",
-    "utility-list": "flex items-center justify-between rounded-xl border border-slate-300 bg-white px-4 py-3",
-    "split-screen-contemporary": "rounded-2xl bg-white p-4 border-2 border-slate-200",
+    "modern-minimalist": isDarkScheme
+      ? "rounded-2xl bg-slate-900 p-4 shadow border border-slate-700 text-slate-100"
+      : "rounded-2xl bg-white p-4 shadow border border-slate-100",
+    "bold-edge": `rounded-2xl p-4 shadow border text-white ${
+      isDarkScheme ? "bg-slate-900 border-lime-900" : "bg-slate-900 border-slate-700"
+    }`,
+    "classic-immersive": isDarkScheme
+      ? "rounded-2xl bg-slate-800 p-4 shadow border border-slate-700 text-slate-100"
+      : "rounded-2xl bg-slate-50 p-4 shadow border border-slate-200",
+    "utility-list": isDarkScheme
+      ? "flex items-center justify-between rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-slate-100"
+      : "flex items-center justify-between rounded-xl border border-slate-300 bg-white px-4 py-3",
+    "split-screen-contemporary": isDarkScheme
+      ? "rounded-2xl bg-slate-900 p-4 border-2 border-slate-700 text-slate-100"
+      : "rounded-2xl bg-white p-4 border-2 border-slate-200",
   };
 
   const accentButtonClass = `inline-flex rounded-lg px-4 py-2 text-sm font-semibold ${scheme.accentButtonClass}`;
-
+  const bodyCopyClass =
+    visualTemplate.id === "bold-edge" ||
+    visualTemplate.id === "classic-immersive" ||
+    isDarkScheme
+      ? "text-slate-200"
+      : "text-slate-700";
+  const serviceTitleClass =
+    visualTemplate.id === "bold-edge" || isDarkScheme ? "text-white" : "text-slate-900";
+  const serviceSummaryClass =
+    visualTemplate.id === "bold-edge" || isDarkScheme ? "text-slate-300" : "text-slate-600";
+  const servicePriceClass =
+    visualTemplate.id === "bold-edge" || isDarkScheme ? "text-white" : "text-slate-700";
   return (
     <div className={`overflow-hidden rounded-3xl border shadow-sm ${outerClassByTemplate[visualTemplate.id]}`}>
       <section className={`px-6 py-8 sm:px-8 ${heroClassByTemplate[visualTemplate.id]}`}>
@@ -101,7 +159,7 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
                 <Link href={`/demo/${template.slug}/booking`} className={accentButtonClass}>{config.ctaLabel}</Link>
               </div>
             </div>
-            <div className={`min-h-52 rounded-2xl ${scheme.accentSoftClass} p-6 text-sm`}>
+            <div className={`min-h-52 rounded-2xl border ${scheme.accentSoftClass} p-6 text-sm`}>
               <p className="font-semibold">Visual style preview</p>
               <p className="mt-2">This split-screen layout uses your selected colour scheme and can host hero imagery later.</p>
             </div>
@@ -116,7 +174,7 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
               dark={visualTemplate.id === "bold-edge" || visualTemplate.id === "classic-immersive"}
             />
             <h1 className="mt-6 text-4xl font-bold tracking-tight">{config.heroHeadline}</h1>
-            <p className={`mt-3 max-w-2xl ${visualTemplate.id === "bold-edge" || visualTemplate.id === "classic-immersive" ? "text-slate-200" : "text-slate-700"}`}>
+            <p className={`mt-3 max-w-2xl ${bodyCopyClass}`}>
               {config.heroSubheading}
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
@@ -136,13 +194,13 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
                 className={serviceCardClassByTemplate[visualTemplate.id]}
               >
                 <div>
-                  <p className={`text-sm font-semibold ${visualTemplate.id === "bold-edge" ? "text-white" : "text-slate-900"}`}>{service.name}</p>
-                  <p className={`mt-1 text-xs ${visualTemplate.id === "bold-edge" ? "text-slate-300" : "text-slate-600"}`}>
+                  <p className={`text-sm font-semibold ${serviceTitleClass}`}>{service.name}</p>
+                  <p className={`mt-1 text-xs ${serviceSummaryClass}`}>
                     {service.description || "Professional service tailored to local customers."}
                   </p>
                 </div>
                 <div className={visualTemplate.id === "utility-list" ? "text-right" : "mt-2"}>
-                  <p className={`text-sm font-medium ${visualTemplate.id === "bold-edge" ? "text-white" : "text-slate-700"}`}>
+                  <p className={`text-sm font-medium ${servicePriceClass}`}>
                     {getPublicServicePriceLabel(service, currency) || "Quote required"}
                   </p>
                   <p className={`text-xs font-semibold ${scheme.accentTextClass}`}>Book this service</p>
@@ -168,7 +226,7 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
           <SiteCard title="Follow us" subtitle="Social media links configured in business admin settings.">
             <div className="flex flex-wrap gap-2">
               {socialEntries.map(([key, value]) => (
-                <a key={key} href={value} target="_blank" rel="noreferrer" aria-label={`Visit us on ${SOCIAL_LABELS[key] ?? key}`} className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-900 hover:bg-slate-100">
+                <a key={key} href={value} target="_blank" rel="noreferrer" aria-label={`Visit us on ${SOCIAL_LABELS[key] ?? key}`} className={`rounded-full border px-3 py-1 text-xs font-semibold hover:bg-slate-100 ${isDarkScheme ? "border-slate-600 bg-slate-800 text-slate-100 hover:bg-slate-700" : "border-slate-300 bg-white text-slate-900"}`}>
                   {SOCIAL_LABELS[key] ?? key}
                 </a>
               ))}

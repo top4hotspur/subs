@@ -66,6 +66,13 @@ function CollapsibleSection({ title, subtitle, defaultOpen = false, children }: 
   );
 }
 
+function optionNameById<T extends { id: string; name: string }>(
+  options: T[],
+  id: string,
+): string {
+  return options.find((option) => option.id === id)?.name ?? id;
+}
+
 export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) {
   const initialSettings = useMemo(() => getLocalCustomerSiteSettings(template.slug, template), [template]);
   const [settings, setSettings] = useState(initialSettings);
@@ -103,6 +110,20 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
   >([]);
 
   const currency = settings.paymentSettings.currencyCode ?? "GBP";
+
+  function updateSettingsAndPersist(
+    updater: (current: typeof settings) => typeof settings,
+    successMessage?: string,
+  ): void {
+    setSettings((current) => {
+      const next = updater(current);
+      saveLocalCustomerSiteSettings(next);
+      return next;
+    });
+    if (successMessage) {
+      setMessage(successMessage);
+    }
+  }
 
   function persistSettings(): void {
     saveLocalCustomerSiteSettings(settings);
@@ -381,13 +402,17 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
               className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
               value={settings.branding.visualTemplateId}
               onChange={(event) =>
-                setSettings((current) => ({
-                  ...current,
-                  branding: {
-                    ...current.branding,
-                    visualTemplateId: event.target.value as typeof current.branding.visualTemplateId,
-                  },
-                }))
+                updateSettingsAndPersist(
+                  (current) => ({
+                    ...current,
+                    branding: {
+                      ...current.branding,
+                      visualTemplateId:
+                        event.target.value as typeof current.branding.visualTemplateId,
+                    },
+                  }),
+                  "Visual template updated for this demo site.",
+                )
               }
             >
               {SITE_VISUAL_TEMPLATES.map((option) => (
@@ -402,13 +427,17 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
               className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
               value={settings.branding.colourSchemeId}
               onChange={(event) =>
-                setSettings((current) => ({
-                  ...current,
-                  branding: {
-                    ...current.branding,
-                    colourSchemeId: event.target.value as typeof current.branding.colourSchemeId,
-                  },
-                }))
+                updateSettingsAndPersist(
+                  (current) => ({
+                    ...current,
+                    branding: {
+                      ...current.branding,
+                      colourSchemeId:
+                        event.target.value as typeof current.branding.colourSchemeId,
+                    },
+                  }),
+                  "Colour scheme updated for this demo site.",
+                )
               }
             >
               {SITE_COLOUR_SCHEMES.map((option) => (
@@ -419,7 +448,22 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
             </select>
           </label>
         </div>
-        <p className="mt-2 text-xs text-slate-600">Changes update this local demo preview. Live subscriber settings will be persisted later.</p>
+        <p className="mt-2 text-xs text-slate-600">
+          Changes update this local demo preview immediately. Live subscriber settings will
+          be persisted later.
+        </p>
+        <p className="mt-1 text-xs text-slate-500">
+          Current template:{" "}
+          {optionNameById(SITE_VISUAL_TEMPLATES, settings.branding.visualTemplateId)}. Current
+          colour scheme:{" "}
+          {optionNameById(SITE_COLOUR_SCHEMES, settings.branding.colourSchemeId)}.
+        </p>
+        <a
+          href={`/demo/${template.slug}`}
+          className="mt-3 inline-flex rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 hover:bg-slate-100"
+        >
+          Open customer site preview
+        </a>
       </CollapsibleSection>
 
       <CollapsibleSection title="Staff positions" subtitle="Create business-specific role/position options used by staff records.">

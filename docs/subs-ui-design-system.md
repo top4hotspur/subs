@@ -79,4 +79,9 @@ Customer-facing `/demo/[industry]` now supports multiple visual layout modes (se
 - Utility List
 - Split-Screen Contemporary
 
-Colour schemes (Calm Blue, Fresh Green, Warm Coral) alter accent/button/surface feel while keeping readability and responsive behavior.
+Colour schemes (Calm Blue, Fresh Green, Warm Coral, Midnight Lime) alter accent/button/surface feel while keeping readability and responsive behavior.
+
+## Template propagation behavior
+- Template and colour changes made in `/demo/[industry]/admin` now persist immediately for the selected industry.
+- `/demo/[industry]` listens for local settings updates and re-reads local settings on focus/update so the selected visual style is consistently reflected.
+- Midnight Lime is the dark premium option intended for dark-themed presentation with high-contrast lime accents.

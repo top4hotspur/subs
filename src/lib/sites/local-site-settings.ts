@@ -8,6 +8,12 @@ function siteSettingsKey(industrySlug: WebsiteTemplateSlug): string {
   return `subs-site-settings:${industrySlug}`;
 }
 
+export function getLocalCustomerSiteSettingsStorageKey(
+  industrySlug: WebsiteTemplateSlug,
+): string {
+  return siteSettingsKey(industrySlug);
+}
+
 function normalizeSettings(settings: CustomerSiteSettings): CustomerSiteSettings {
   const templateSlug = settings.templateSlug;
   return {
@@ -90,6 +96,7 @@ export function saveLocalCustomerSiteSettings(settings: CustomerSiteSettings): C
     updatedAtIso: new Date().toISOString(),
   };
   window.localStorage.setItem(siteSettingsKey(settings.templateSlug), JSON.stringify(updated));
+  window.dispatchEvent(new CustomEvent("subs:site-settings-updated"));
   return updated;
 }
 

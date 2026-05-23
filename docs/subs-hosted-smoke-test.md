@@ -181,8 +181,9 @@ Add these checks after backend envs are configured:
 
 ## Hosted smoke additions: visual templates and CSV tool relocation
 - `/demo/barbers/admin`:
-  - verify `Site design` selector updates `/demo/barbers` preview style
-  - verify colour scheme changes are visible
+  - verify `Site design` selector updates `/demo/barbers` preview style immediately after change
+  - verify colour scheme changes are visible and persisted after refresh
+  - select `Midnight Lime` and confirm dark surfaces + lime accents remain readable
   - verify `Import/export setup data` provides services/staff CSV template download and upload preview
 - `/demo/barbers/customise`:
   - verify CSV operational tools are removed

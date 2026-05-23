@@ -142,5 +142,10 @@ These uploads remain browser-local mock previews only (no backend media storage)
   - calm-blue
   - fresh-green
   - warm-coral
+  - midnight-lime
 
 These settings are local to browser storage in this phase.
+
+Template/colour propagation notes:
+- `branding.visualTemplateId` and `branding.colourSchemeId` are saved to local industry settings and applied on `/demo/[industry]`.
+- Admin selectors in `/demo/[industry]/admin` persist changes immediately for local preview accuracy.

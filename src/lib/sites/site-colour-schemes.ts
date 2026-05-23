@@ -1,4 +1,8 @@
-﻿export type SiteColourSchemeId = "calm-blue" | "fresh-green" | "warm-coral";
+export type SiteColourSchemeId =
+  | "calm-blue"
+  | "fresh-green"
+  | "warm-coral"
+  | "midnight-lime";
 
 export type SiteColourScheme = {
   id: SiteColourSchemeId;
@@ -45,6 +49,18 @@ export const SITE_COLOUR_SCHEMES: SiteColourScheme[] = [
     lightSurfaceClass: "bg-white",
     darkBackgroundClass: "bg-zinc-950 text-white",
     darkSurfaceClass: "bg-zinc-900 text-white",
+  },
+  {
+    id: "midnight-lime",
+    name: "Midnight Lime",
+    accentButtonClass:
+      "border border-lime-300 bg-lime-400 text-slate-950 hover:bg-lime-300",
+    accentTextClass: "text-lime-300",
+    accentSoftClass: "border-slate-700 bg-slate-800 text-lime-200",
+    lightBackgroundClass: "bg-slate-200",
+    lightSurfaceClass: "bg-slate-900 text-slate-100",
+    darkBackgroundClass: "bg-slate-950 text-slate-100",
+    darkSurfaceClass: "bg-slate-900 text-slate-100",
   },
 ];
 
