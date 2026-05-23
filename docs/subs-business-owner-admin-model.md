@@ -168,3 +168,11 @@ Important:
 - Customer View displays a policy note with cancellation/refund timing.
 - Demo policy page reflects business policy settings and business name.
 
+
+## Page content and visibility controls (local/mock)
+- Business admin can now manage About/Contact/Policy visibility and content in the demo settings area.
+- About page modes:
+  - GENERAL: editable title/body + two image placeholder fields + placement options.
+  - STAFF_PROFILES: editable profile blocks (name, role, bio, image placeholder/url).
+- Contact page includes optional Show Google Maps link from business address behavior (link-only, no API).
+- Policy page includes editable title/body plus existing cancellation/refund settings.

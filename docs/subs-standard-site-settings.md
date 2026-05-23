@@ -144,3 +144,15 @@ These uploads remain browser-local mock previews only (no backend media storage)
 - `CustomerSiteSettings.policySettings` now captures cancellation/refund notice rules for demo site policy rendering.
 - `branding.heroHeadline` and optional `branding.heroSubheading` can be managed from business admin and reflected on `/demo/[industry]`.
 
+
+## Additional page-content settings (demo/local)
+- pageVisibility.policy controls demo policy route visibility and nav exposure.
+- pageContent.about.mode supports GENERAL and STAFF_PROFILES rendering modes.
+- pageContent.about.imageUrlSecondary supports a second about-image placeholder.
+- pageContent.about.staffProfiles[] stores local profile content for staff-profile mode.
+- pageContent.contact.showGoogleMapsLinkFromAddress controls address-based Google Maps link display.
+- pageContent.policy stores editable policy page title/body content.
+
+Maps/media limitations:
+- Google Maps integration is link-only (query URL) with no API key.
+- About/profile image fields are placeholder/local inputs only (no real file storage pipeline).

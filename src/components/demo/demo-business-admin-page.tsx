@@ -845,9 +845,9 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
         </div>
       </CollapsibleSection>
 
-      <CollapsibleSection title="Page visibility/content" subtitle="Enable pages and edit About/Contact content shown on the demo site.">
+      <CollapsibleSection title="Page visibility/content" subtitle="Enable pages and edit About/Contact/Policy content shown on the demo site.">
         <div className="space-y-4">
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-2 sm:grid-cols-3">
             <label className="flex items-center gap-2 text-sm text-slate-700">
               <input
                 type="checkbox"
@@ -880,11 +880,48 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
               />
               Enable Contact page
             </label>
+            <label className="flex items-center gap-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                checked={settings.pageVisibility.policy.enabled}
+                onChange={(event) =>
+                  setSettings((current) => ({
+                    ...current,
+                    pageVisibility: {
+                      ...current.pageVisibility,
+                      policy: { ...current.pageVisibility.policy, enabled: event.target.checked },
+                    },
+                  }))
+                }
+              />
+              Enable Policy page
+            </label>
           </div>
 
           <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
             <p className="text-sm font-semibold text-slate-900">About page content</p>
             <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              <label className="text-xs font-semibold text-slate-700">About page mode
+                <select
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  value={settings.pageContent.about.mode}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      pageContent: {
+                        ...current.pageContent,
+                        about: {
+                          ...current.pageContent.about,
+                          mode: event.target.value as "GENERAL" | "STAFF_PROFILES",
+                        },
+                      },
+                    }))
+                  }
+                >
+                  <option value="GENERAL">General About Us</option>
+                  <option value="STAFF_PROFILES">Staff profiles</option>
+                </select>
+              </label>
               <label className="text-xs font-semibold text-slate-700">Page title
                 <input
                   className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
@@ -920,6 +957,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                   <option value="NONE">No image</option>
                   <option value="ABOVE_TEXT">Image above text</option>
                   <option value="BESIDE_TEXT">Image beside text</option>
+                  <option value="BELOW_TEXT">Images below text</option>
                 </select>
               </label>
               <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Main text/body
@@ -953,6 +991,116 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                   }
                 />
               </label>
+              <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Second image placeholder or URL (optional)
+                <input
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  value={settings.pageContent.about.imageUrlSecondary ?? ""}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      pageContent: {
+                        ...current.pageContent,
+                        about: {
+                          ...current.pageContent.about,
+                          imageUrlSecondary: event.target.value || undefined,
+                        },
+                      },
+                    }))
+                  }
+                />
+              </label>
+              {settings.pageContent.about.mode === "STAFF_PROFILES" ? (
+                <div className="sm:col-span-2">
+                  <p className="mb-2 text-xs font-semibold text-slate-700">Staff profile entries</p>
+                  <div className="grid gap-2">
+                    {settings.pageContent.about.staffProfiles.map((profile) => (
+                      <div key={profile.id} className="rounded-md border border-slate-200 bg-white p-2">
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <input
+                            className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+                            placeholder="Staff name"
+                            value={profile.name}
+                            onChange={(event) =>
+                              setSettings((current) => ({
+                                ...current,
+                                pageContent: {
+                                  ...current.pageContent,
+                                  about: {
+                                    ...current.pageContent.about,
+                                    staffProfiles: current.pageContent.about.staffProfiles.map((item) =>
+                                      item.id === profile.id ? { ...item, name: event.target.value } : item,
+                                    ),
+                                  },
+                                },
+                              }))
+                            }
+                          />
+                          <input
+                            className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+                            placeholder="Role/position"
+                            value={profile.role}
+                            onChange={(event) =>
+                              setSettings((current) => ({
+                                ...current,
+                                pageContent: {
+                                  ...current.pageContent,
+                                  about: {
+                                    ...current.pageContent.about,
+                                    staffProfiles: current.pageContent.about.staffProfiles.map((item) =>
+                                      item.id === profile.id ? { ...item, role: event.target.value } : item,
+                                    ),
+                                  },
+                                },
+                              }))
+                            }
+                          />
+                          <textarea
+                            className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2"
+                            rows={2}
+                            placeholder="Short bio"
+                            value={profile.bio}
+                            onChange={(event) =>
+                              setSettings((current) => ({
+                                ...current,
+                                pageContent: {
+                                  ...current.pageContent,
+                                  about: {
+                                    ...current.pageContent.about,
+                                    staffProfiles: current.pageContent.about.staffProfiles.map((item) =>
+                                      item.id === profile.id ? { ...item, bio: event.target.value } : item,
+                                    ),
+                                  },
+                                },
+                              }))
+                            }
+                          />
+                          <input
+                            className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2"
+                            placeholder="Image placeholder or URL"
+                            value={profile.imageUrl ?? ""}
+                            onChange={(event) =>
+                              setSettings((current) => ({
+                                ...current,
+                                pageContent: {
+                                  ...current.pageContent,
+                                  about: {
+                                    ...current.pageContent.about,
+                                    staffProfiles: current.pageContent.about.staffProfiles.map((item) =>
+                                      item.id === profile.id
+                                        ? { ...item, imageUrl: event.target.value }
+                                        : item,
+                                    ),
+                                  },
+                                },
+                              }))
+                            }
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               <label className="text-xs font-semibold text-slate-700">CTA label (optional)
                 <input
                   className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
@@ -1024,6 +1172,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                   <option value="NONE">No image</option>
                   <option value="ABOVE_TEXT">Image above text</option>
                   <option value="BESIDE_TEXT">Image beside text</option>
+                  <option value="BELOW_TEXT">Images below text</option>
                 </select>
               </label>
               <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Intro text/body
@@ -1078,6 +1227,25 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                   }
                 />
               </label>
+              <label className="flex items-center gap-2 text-sm text-slate-700 sm:col-span-2">
+                <input
+                  type="checkbox"
+                  checked={settings.pageContent.contact.showGoogleMapsLinkFromAddress ?? true}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      pageContent: {
+                        ...current.pageContent,
+                        contact: {
+                          ...current.pageContent.contact,
+                          showGoogleMapsLinkFromAddress: event.target.checked,
+                        },
+                      },
+                    }))
+                  }
+                />
+                Show Google Maps link from business address
+              </label>
               <label className="text-xs font-semibold text-slate-700">CTA label (optional)
                 <input
                   className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
@@ -1103,6 +1271,43 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                       pageContent: {
                         ...current.pageContent,
                         contact: { ...current.pageContent.contact, ctaHref: event.target.value || undefined },
+                      },
+                    }))
+                  }
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+            <p className="text-sm font-semibold text-slate-900">Policy page content</p>
+            <div className="mt-2 grid gap-2">
+              <label className="text-xs font-semibold text-slate-700">Policy page title
+                <input
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  value={settings.pageContent.policy.title}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      pageContent: {
+                        ...current.pageContent,
+                        policy: { ...current.pageContent.policy, title: event.target.value },
+                      },
+                    }))
+                  }
+                />
+              </label>
+              <label className="text-xs font-semibold text-slate-700">Policy intro/body
+                <textarea
+                  rows={3}
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  value={settings.pageContent.policy.body}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      pageContent: {
+                        ...current.pageContent,
+                        policy: { ...current.pageContent.policy, body: event.target.value },
                       },
                     }))
                   }

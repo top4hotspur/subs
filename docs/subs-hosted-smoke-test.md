@@ -221,3 +221,22 @@ Add these checks after backend envs are configured:
   - mobile stacked layout
   - no clipping/overlap in service cards
 
+
+## Hosted smoke additions: contact, vouchers, about/contact/policy content
+- /demo/[industry] homepage:
+  - confirm no standalone Follow us tile
+  - confirm social icon links render inside Contact and opening hours tile and open in new tab
+  - confirm Gift vouchers card uses simple CTA (Buy gift voucher) and delivery-method line
+- /demo/[industry]/admin:
+  - About page mode switch between GENERAL and STAFF_PROFILES`r
+  - Contact page toggle Show Google Maps link from business address`r
+  - Policy page visibility toggle and title/body editing
+- /demo/[industry]/about:
+  - GENERAL mode shows paragraph + up to two image placeholders
+  - STAFF_PROFILES mode shows profile cards
+- /demo/[industry]/contact:
+  - no Service areas line
+  - View on Google Maps link appears when address + toggle enabled
+- /demo/[industry]/policy:
+  - page reflects editable policy title/body + cancellation/refund rules
+  - if policy visibility disabled, page shows hidden-state notice and policy nav link is hidden

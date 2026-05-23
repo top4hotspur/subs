@@ -34,7 +34,7 @@ export function DemoSitePageShell({
             templateSlug={template.slug}
             showAbout={settings.pageVisibility.about.enabled}
             showContact={settings.pageVisibility.contact.enabled}
-            showPolicy
+            showPolicy={settings.pageVisibility.policy?.enabled ?? true}
           />
         </div>
       </section>

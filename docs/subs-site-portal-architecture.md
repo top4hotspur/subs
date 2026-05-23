@@ -133,3 +133,9 @@ See also:
 - Demo credential cards were removed from portal pages.
 - Shared demo site shell now keeps context header consistent across `/demo/[industry]/*` pages.
 - Demo policy page now exists at `/demo/[industry]/policy` and is driven by local policy settings.
+
+## Demo site page-content behavior (local/mock)
+- Demo customer homepage now consolidates social links into contact/opening-hours context.
+- About, Contact, and Policy routes are subscriber-site scoped and driven by local business-admin content settings.
+- Contact route map behavior uses a generated Google Maps search URL from address; no Google Maps API integration is enabled.
+- Policy visibility can be switched off from business admin settings, which also hides the policy nav link where practical.

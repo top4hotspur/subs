@@ -20,6 +20,11 @@ export function DemoAboutContactPage({ template, mode }: Props) {
   const aboutEnabled = pageVisibility.about.enabled;
   const contactEnabled = pageVisibility.contact.enabled;
   const pageEnabled = isAbout ? aboutEnabled : contactEnabled;
+  const mapsQuery = settings.businessDetails.address
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        settings.businessDetails.address,
+      )}`
+    : "";
 
   return (
     <DemoSitePageShell template={template} settings={settings}>
@@ -31,15 +36,59 @@ export function DemoAboutContactPage({ template, mode }: Props) {
         </SiteCard>
       ) : isAbout ? (
         <SiteCard title={aboutContent.title || settings.businessDetails.businessName} subtitle="About your business">
-          {aboutContent.imagePlacement !== "NONE" ? (
-            <p className="mb-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3 text-xs text-slate-600">
-              {aboutContent.imagePlacement === "ABOVE_TEXT"
-                ? "Image placement: above text"
-                : "Image placement: beside text"}
-              {aboutContent.imageUrl ? ` (${aboutContent.imageUrl})` : " (image placeholder)"}
-            </p>
-          ) : null}
-          <p className="text-sm text-slate-700">{aboutContent.body}</p>
+          {aboutContent.mode === "STAFF_PROFILES" ? (
+            <div className="space-y-4">
+              <p className="text-sm text-slate-700">{aboutContent.body}</p>
+              <div className="grid gap-4 md:grid-cols-2">
+                {aboutContent.staffProfiles.slice(0, 4).map((profile) => (
+                  <article
+                    key={profile.id}
+                    className="rounded-lg border border-slate-200 bg-slate-50 p-3"
+                  >
+                    <div className="mb-3 flex h-28 items-center justify-center rounded border border-dashed border-slate-300 bg-white text-xs text-slate-500">
+                      {profile.imageUrl || "Profile image placeholder"}
+                    </div>
+                    <p className="text-sm font-semibold text-slate-900">{profile.name}</p>
+                    <p className="text-xs font-medium text-slate-600">{profile.role}</p>
+                    <p className="mt-2 text-sm text-slate-700">{profile.bio}</p>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {(aboutContent.imageUrl || aboutContent.imageUrlSecondary) &&
+              aboutContent.imagePlacement !== "NONE" &&
+              aboutContent.imagePlacement !== "BELOW_TEXT" ? (
+                <div
+                  className={`grid gap-3 ${
+                    aboutContent.imagePlacement === "BESIDE_TEXT"
+                      ? "md:grid-cols-2"
+                      : "md:grid-cols-2"
+                  }`}
+                >
+                  <div className="flex h-36 items-center justify-center rounded border border-dashed border-slate-300 bg-slate-50 text-xs text-slate-500">
+                    {aboutContent.imageUrl || "Image 1 placeholder"}
+                  </div>
+                  <div className="flex h-36 items-center justify-center rounded border border-dashed border-slate-300 bg-slate-50 text-xs text-slate-500">
+                    {aboutContent.imageUrlSecondary || "Image 2 placeholder"}
+                  </div>
+                </div>
+              ) : null}
+              <p className="text-sm text-slate-700">{aboutContent.body}</p>
+              {(aboutContent.imageUrl || aboutContent.imageUrlSecondary) &&
+              aboutContent.imagePlacement === "BELOW_TEXT" ? (
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="flex h-36 items-center justify-center rounded border border-dashed border-slate-300 bg-slate-50 text-xs text-slate-500">
+                    {aboutContent.imageUrl || "Image 1 placeholder"}
+                  </div>
+                  <div className="flex h-36 items-center justify-center rounded border border-dashed border-slate-300 bg-slate-50 text-xs text-slate-500">
+                    {aboutContent.imageUrlSecondary || "Image 2 placeholder"}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          )}
           {aboutContent.ctaLabel && aboutContent.ctaHref ? (
             <a
               href={aboutContent.ctaHref}
@@ -56,12 +105,18 @@ export function DemoAboutContactPage({ template, mode }: Props) {
             <p>Phone: {settings.businessDetails.phone}</p>
             <p>Email: {settings.businessDetails.email}</p>
             {settings.businessDetails.address ? <p>Address: {settings.businessDetails.address}</p> : null}
-            {settings.businessDetails.serviceAreas.length > 0 ? (
-              <p>Service areas: {settings.businessDetails.serviceAreas.join(", ")}</p>
+            <p>Opening hours: {settings.businessDetails.openingHours}</p>
+            <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-2 text-xs text-slate-600">{contactContent.mapPlaceholderText}</p>
+            {contactContent.showGoogleMapsLinkFromAddress && mapsQuery ? (
+              <a
+                href={mapsQuery}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-100"
+              >
+                View on Google Maps
+              </a>
             ) : null}
-            <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-2 text-xs text-slate-600">
-              {contactContent.mapPlaceholderText}
-            </p>
             {contactContent.ctaLabel && contactContent.ctaHref ? (
               <a
                 href={contactContent.ctaHref}

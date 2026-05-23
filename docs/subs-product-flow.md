@@ -319,3 +319,13 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - New demo policy route: `/demo/[industry]/policy`, using business name + policy settings.
 - No real payment/refund processing is implemented in this phase.
 
+
+## Demo content controls update (local/mock)
+- Social links are now rendered inside the customer-facing Contact and opening hours tile on /demo/[industry] rather than a separate Follow us tile.
+- Gift vouchers homepage card is simplified to a direct customer CTA (Buy gift voucher) and reflects admin-enabled delivery methods (Email, Collect in store, Post).
+- About page now supports two admin-configurable modes:
+  - GENERAL (text + two image placeholders)
+  - STAFF_PROFILES (profile cards with name/role/bio/image placeholder)
+- Contact page now supports a Google Maps search link derived from business address (no API key integration).
+- Policy page now supports admin visibility toggle and editable policy title/body content in addition to cancellation/refund rules.
+- All of the above remains browser-local mock state only in this phase.

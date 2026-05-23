@@ -26,6 +26,7 @@ function defaultPageVisibility(): SitePageVisibilitySettings {
     privacy: pageItem("Privacy", true, false, true),
     cookies: pageItem("Cookies", true, false, true),
     bookingOrQuote: pageItem("Book / Request Quote", true, true, true),
+    policy: pageItem("Policy", true, true, true),
     customerLogin: pageItem("Customer Login", false, false, true),
     businessLogin: pageItem("Business Login", false, false, true),
   };
@@ -53,8 +54,26 @@ function defaultPageContent(template: WebsiteTemplate): SitePageContentSettings 
     about: {
       title: `About ${template.defaultConfig.businessName}`,
       body: "Share your story, experience, and what customers can expect when they book with you.",
-      imagePlacement: "NONE",
+      mode: "GENERAL",
+      imagePlacement: "ABOVE_TEXT",
       imageUrl: undefined,
+      imageUrlSecondary: undefined,
+      staffProfiles: [
+        {
+          id: "profile-1",
+          name: "Team member one",
+          role: "Lead specialist",
+          bio: "Short profile intro about experience and customer care.",
+          imageUrl: "",
+        },
+        {
+          id: "profile-2",
+          name: "Team member two",
+          role: "Senior specialist",
+          bio: "Short profile intro about strengths and preferred services.",
+          imageUrl: "",
+        },
+      ],
       ctaLabel: "Book now",
       ctaHref: `/demo/${template.slug}/booking`,
     },
@@ -67,6 +86,15 @@ function defaultPageContent(template: WebsiteTemplate): SitePageContentSettings 
       ctaHref: `/demo/${template.slug}/booking`,
       contactDetailsText: "Use your business profile details below, or add custom contact notes.",
       mapPlaceholderText: "Map or directions content can be added here.",
+      showGoogleMapsLinkFromAddress: true,
+    },
+    policy: {
+      title: `${template.defaultConfig.businessName} policy`,
+      body: "Read our policy details before confirming a booking.",
+      imagePlacement: "NONE",
+      imageUrl: undefined,
+      ctaLabel: undefined,
+      ctaHref: undefined,
     },
   };
 }

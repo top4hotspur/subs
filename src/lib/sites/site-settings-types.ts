@@ -60,9 +60,17 @@ export type SitePageVisibilitySettings = {
   privacy: SiteVisibilityItem;
   cookies: SiteVisibilityItem;
   bookingOrQuote: SiteVisibilityItem;
+  policy: SiteVisibilityItem;
   customerLogin: SiteVisibilityItem;
   businessLogin: SiteVisibilityItem;
 };
+
+export type SiteAboutPageMode = "GENERAL" | "STAFF_PROFILES";
+export type SitePageImagePlacement =
+  | "NONE"
+  | "ABOVE_TEXT"
+  | "BESIDE_TEXT"
+  | "BELOW_TEXT";
 
 export type SiteSectionVisibilitySettings = {
   hero: SiteSectionVisibilityItem;
@@ -82,18 +90,32 @@ export type SiteSectionVisibilitySettings = {
 export type SitePageContentBlock = {
   title: string;
   body: string;
-  imagePlacement: "NONE" | "ABOVE_TEXT" | "BESIDE_TEXT";
+  imagePlacement: SitePageImagePlacement;
   imageUrl?: string;
   ctaLabel?: string;
   ctaHref?: string;
 };
 
+export type SiteStaffProfileContentBlock = {
+  id: string;
+  name: string;
+  role: string;
+  bio: string;
+  imageUrl?: string;
+};
+
 export type SitePageContentSettings = {
-  about: SitePageContentBlock;
+  about: SitePageContentBlock & {
+    mode: SiteAboutPageMode;
+    imageUrlSecondary?: string;
+    staffProfiles: SiteStaffProfileContentBlock[];
+  };
   contact: SitePageContentBlock & {
     contactDetailsText?: string;
     mapPlaceholderText?: string;
+    showGoogleMapsLinkFromAddress?: boolean;
   };
+  policy: SitePageContentBlock;
 };
 
 export type SiteServiceItem = {

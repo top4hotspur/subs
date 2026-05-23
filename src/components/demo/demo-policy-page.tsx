@@ -13,6 +13,8 @@ export function DemoPolicyPage({ template }: DemoPolicyPageProps) {
   const settings = getLocalCustomerSiteSettings(template.slug, template);
   const businessName = settings.businessDetails.businessName || settings.branding.siteName;
   const policy = settings.policySettings;
+  const policyContent = settings.pageContent.policy;
+  const policyEnabled = settings.pageVisibility.policy?.enabled ?? true;
   const sameDayLabel =
     policy.noRefundWithinDays === 0
       ? "same day of appointment"
@@ -20,10 +22,20 @@ export function DemoPolicyPage({ template }: DemoPolicyPageProps) {
 
   return (
     <DemoSitePageShell template={template} settings={settings}>
+      {!policyEnabled ? (
+        <SiteCard title="Policy page currently hidden" subtitle="This page is disabled in business admin settings.">
+          <p className="text-sm text-slate-700">
+            Enable the policy page from Business Admin to show policy details on the demo site.
+          </p>
+        </SiteCard>
+      ) : (
       <SiteCard
-        title={`${businessName} booking and refund policy`}
+        title={policyContent.title || `${businessName} booking and refund policy`}
         subtitle="Please read these terms before confirming your booking."
       >
+        {policyContent.body ? (
+          <p className="mb-3 text-sm text-slate-700">{policyContent.body}</p>
+        ) : null}
         {policy.cancellationEnabled ? (
           <div className="space-y-2 text-sm text-slate-700">
             <p>
@@ -44,6 +56,7 @@ export function DemoPolicyPage({ template }: DemoPolicyPageProps) {
           Local/mock policy content only. No real payment/refund processing is active in this demo.
         </p>
       </SiteCard>
+      )}
     </DemoSitePageShell>
   );
 }

@@ -72,16 +72,46 @@ function normalizeSettings(settings: CustomerSiteSettings): CustomerSiteSettings
       ...settings.businessDetails,
       socialLinks: settings.businessDetails?.socialLinks ?? {},
     },
+    pageVisibility: {
+      ...settings.pageVisibility,
+      policy: settings.pageVisibility?.policy ?? {
+        title: "Policy",
+        enabled: true,
+        showInHeader: true,
+        showInFooter: true,
+      },
+    },
     pageContent: {
       about: {
+        mode: settings.pageContent?.about?.mode ?? "GENERAL",
         title:
           settings.pageContent?.about?.title ||
           `About ${settings.businessDetails.businessName || settings.branding.siteName}`,
         body:
           settings.pageContent?.about?.body ||
           "Share your story, experience, and what customers can expect when they book with you.",
-        imagePlacement: settings.pageContent?.about?.imagePlacement ?? "NONE",
+        imagePlacement: settings.pageContent?.about?.imagePlacement ?? "ABOVE_TEXT",
         imageUrl: settings.pageContent?.about?.imageUrl,
+        imageUrlSecondary: settings.pageContent?.about?.imageUrlSecondary,
+        staffProfiles:
+          settings.pageContent?.about?.staffProfiles?.length > 0
+            ? settings.pageContent.about.staffProfiles
+            : [
+                {
+                  id: "profile-1",
+                  name: "Team member one",
+                  role: "Lead specialist",
+                  bio: "Short profile intro about experience and customer care.",
+                  imageUrl: "",
+                },
+                {
+                  id: "profile-2",
+                  name: "Team member two",
+                  role: "Senior specialist",
+                  bio: "Short profile intro about strengths and preferred services.",
+                  imageUrl: "",
+                },
+              ],
         ctaLabel: settings.pageContent?.about?.ctaLabel ?? "Book now",
         ctaHref: settings.pageContent?.about?.ctaHref ?? `/demo/${templateSlug}/booking`,
       },
@@ -100,6 +130,20 @@ function normalizeSettings(settings: CustomerSiteSettings): CustomerSiteSettings
         mapPlaceholderText:
           settings.pageContent?.contact?.mapPlaceholderText ||
           "Map or directions content can be added here.",
+        showGoogleMapsLinkFromAddress:
+          settings.pageContent?.contact?.showGoogleMapsLinkFromAddress ?? true,
+      },
+      policy: {
+        title:
+          settings.pageContent?.policy?.title ||
+          `${settings.businessDetails.businessName || settings.branding.siteName} policy`,
+        body:
+          settings.pageContent?.policy?.body ||
+          "Read our policy details before confirming a booking.",
+        imagePlacement: "NONE",
+        imageUrl: undefined,
+        ctaLabel: settings.pageContent?.policy?.ctaLabel,
+        ctaHref: settings.pageContent?.policy?.ctaHref,
       },
     },
   };

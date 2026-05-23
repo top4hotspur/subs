@@ -15,6 +15,8 @@ import {
 } from "@/lib/sites/local-site-settings";
 import { getSiteVisualTemplateById } from "@/lib/sites/site-visual-templates";
 import { DemoCustomisationDraft, WebsiteTemplate } from "@/lib/sites/types";
+import { getLocalVoucherSettings } from "@/lib/vouchers/local-vouchers";
+import { VoucherDeliveryMethod } from "@/lib/vouchers/voucher-types";
 
 type DemoPreviewProps = {
   template: WebsiteTemplate;
@@ -28,6 +30,21 @@ const SOCIAL_LABELS: Record<string, string> = {
   x: "X",
   linkedin: "LinkedIn",
   youtube: "YouTube",
+};
+
+const SOCIAL_ICON_LABELS: Record<string, string> = {
+  facebook: "f",
+  instagram: "ig",
+  tiktok: "tt",
+  x: "x",
+  linkedin: "in",
+  youtube: "yt",
+};
+
+const DELIVERY_METHOD_LABELS: Record<string, string> = {
+  [VoucherDeliveryMethod.DIGITAL_EMAIL]: "Email",
+  [VoucherDeliveryMethod.COLLECT_IN_STORE]: "Collect in store",
+  [VoucherDeliveryMethod.POST]: "Post",
 };
 
 export function DemoPreview({ template, draft }: DemoPreviewProps) {
@@ -77,6 +94,10 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
   const brandName = settings.branding.siteName?.trim() || config.businessName;
   const heroHeadline = settings.branding.heroHeadline?.trim() || config.heroHeadline;
   const heroSubheading = settings.branding.heroSubheading?.trim() || "";
+  const voucherSettings = getLocalVoucherSettings(template.slug);
+  const deliveryOptions = voucherSettings.deliveryMethods
+    .map((method) => DELIVERY_METHOD_LABELS[method])
+    .filter(Boolean);
 
   const isDarkTheme =
     theme.id === "urban-hipster" ||
@@ -129,6 +150,7 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
                 templateSlug={template.slug}
                 showAbout={settings.pageVisibility.about.enabled}
                 showContact={settings.pageVisibility.contact.enabled}
+                showPolicy={settings.pageVisibility.policy?.enabled ?? true}
               />
             </div>
           </div>
@@ -209,38 +231,49 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
           </div>
         </SiteCard>
 
-        {socialEntries.length > 0 ? (
-          <SiteCard title="Follow us" subtitle="Social links configured in business admin settings.">
-            <div className="flex flex-wrap gap-2">
-              {socialEntries.map(([key, value]) => (
-                <a
-                  key={key}
-                  href={value}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label={`Visit us on ${SOCIAL_LABELS[key] ?? key}`}
-                  className={`rounded-full border px-3 py-1 text-xs font-semibold ${scheme.borderClass} ${scheme.heroPanelClass}`}
-                >
-                  {SOCIAL_LABELS[key] ?? key}
-                </a>
-              ))}
+        {appointmentStyle && voucherSettings.enabled ? (
+          <SiteCard
+            title="Gift vouchers"
+            subtitle="Choose a voucher value and delivery option for someone special."
+          >
+            <p className={`text-sm ${scheme.mutedTextClass}`}>
+              Available delivery options: {deliveryOptions.join(", ")}.
+            </p>
+            <div className="mt-3">
+              <Link
+                href={`/demo/${template.slug}/account`}
+                className={accentButtonClass}
+              >
+                Buy gift voucher
+              </Link>
             </div>
           </SiteCard>
         ) : null}
 
-        {appointmentStyle ? (
-          <SiteCard title="Gift vouchers" subtitle="Choose a value and delivery method that suits the customer.">
-            <ul className={`list-disc space-y-2 pl-5 text-sm ${scheme.mutedTextClass}`}>
-              <li>Choose voucher value and issue a unique voucher ID</li>
-              <li>Delivery methods: digital email, collect in store, post (with postage charge)</li>
-              <li>Staff can check, redeem, and log voucher usage details</li>
-            </ul>
-          </SiteCard>
-        ) : null}
-
         <SiteCard title="Contact and opening hours" subtitle={`${config.contact.phone} | ${config.contact.email}`}>
-          <p className={`text-sm ${scheme.mutedTextClass}`}>{config.contact.address}</p>
-          <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>{config.openingHours.summary}</p>
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className={`text-sm ${scheme.mutedTextClass}`}>{config.contact.address}</p>
+              <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>{config.openingHours.summary}</p>
+            </div>
+            {socialEntries.length > 0 ? (
+              <div className="flex flex-wrap gap-2 md:justify-end">
+                {socialEntries.map(([key, value]) => (
+                  <a
+                    key={key}
+                    href={value}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={`Visit us on ${SOCIAL_LABELS[key] ?? key}`}
+                    title={SOCIAL_LABELS[key] ?? key}
+                    className={`inline-flex h-8 min-w-8 items-center justify-center rounded-full border px-2 text-[11px] font-bold uppercase ${scheme.borderClass} ${scheme.heroPanelClass}`}
+                  >
+                    {SOCIAL_ICON_LABELS[key] ?? key.slice(0, 2)}
+                  </a>
+                ))}
+              </div>
+            ) : null}
+          </div>
         </SiteCard>
 
         <SiteFooterBlock
