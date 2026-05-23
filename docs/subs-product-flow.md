@@ -1,4 +1,4 @@
-﻿# Subs Product Flow
+# Subs Product Flow
 
 ## Current v1 flow
 1. Homepage -> industry page -> demo page -> customise draft.
@@ -305,29 +305,7 @@ Still mock for infrastructure:
 - Payments/sales helper copy updated to include finance reporting context.
 - Business branding controls now expose explicit `Remove logo` and `Remove favicon` actions.
 
-## Subscriber visual templates (local mock)
-Business admin now supports site design selection with 5 visual templates:
-- Modern Minimalist
-- Bold Edge
-- Classic Immersive
-- Utility List
-- Split-Screen Contemporary
-
-And 3 colour schemes:
-- Calm Blue
-- Fresh Green
-- Warm Coral
-
-Selections are local/mock and immediately affect the customer-facing demo preview. No backend persistence is wired for subscriber settings yet.
-
-## Demo homepage layout updates
-- Hero headline is now editable in `/demo/[industry]/admin` and reflected on `/demo/[industry]`.
-- Hero subheading is optional and hidden when blank.
-- Demo homepage now uses a combined `Contact and opening hours` tile at the bottom.
-- The previous `Portal access` tile was removed to keep the customer-facing homepage cleaner.
-- `Open customer site preview` in business admin now opens in a new tab for side-by-side template testing.
-
-## CSV tooling location update
+## Subscriber site themes (local mock)`r`nBusiness admin now controls subscriber site style through a curated Theme + Palette system:`r`n- Themes: Modern Minimalist, Vintage Classic, Urban Hipster, Luxury Elegant, Rustic Warm`r`n- Each theme has 3 curated palettes; there is no unlimited colour picker in launch mode.`r`n- Theme controls visual personality and layout feel while feature scope remains consistent.`r`n- Changes made in `/demo/[industry]/admin` propagate to customer-facing `/demo/[industry]` immediately via local settings.`r`n- Legacy saved IDs from older template/scheme names are mapped automatically.`r`n- Themes are intentionally designed to look strong without requiring business photo uploads.`r`n`r`n## CSV tooling location update
 CSV import/export setup tools moved out of demo customisation and into business admin (`Import/export setup data`) for services and staff.
 
 ## Demo booking/account/policy polish (2026-05)
@@ -340,3 +318,4 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Cancellation/refund policy settings added to business admin (`Policies` section), local/mock only.
 - New demo policy route: `/demo/[industry]/policy`, using business name + policy settings.
 - No real payment/refund processing is implemented in this phase.
+

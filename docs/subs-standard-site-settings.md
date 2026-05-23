@@ -1,4 +1,4 @@
-﻿# Subs Standard Site Settings
+# Subs Standard Site Settings
 
 ## Purpose
 Define one reusable settings model that every customer website can use, regardless of industry template.
@@ -90,7 +90,7 @@ for browser-local issue/check/redeem demo workflows.
 ## Local demo management enhancements
 - Services can now be added/removed in demo business admin.
 - Staff can now be added/removed with super-user and weekday-availability flags.
-- Gift voucher setting inputs now clearly indicate GBP values (£).
+- Gift voucher setting inputs now clearly indicate GBP values (�).
 
 
 ## Compact editor layout updates
@@ -140,28 +140,7 @@ These uploads remain browser-local mock previews only (no backend media storage)
 - Image placement is modeled locally with placeholders; no real media storage pipeline is enabled.
 - Branding assets (logo/favicon) remain local preview only with explicit removal controls.
 
-## Visual template and colour controls (demo)
-- `branding.visualTemplateId` controls the subscriber site visual layout.
-- `branding.colourSchemeId` controls accent and surface palette.
-- Available visual templates:
-  - modern-minimalist
-  - bold-edge
-  - classic-immersive
-  - utility-list
-  - split-screen-contemporary
-- Available colour schemes:
-  - calm-blue
-  - fresh-green
-  - warm-coral
-  - midnight-lime
-
-These settings are local to browser storage in this phase.
-
-Template/colour propagation notes:
-- `branding.visualTemplateId` and `branding.colourSchemeId` are saved to local industry settings and applied on `/demo/[industry]`.
-- Admin selectors in `/demo/[industry]/admin` persist changes immediately for local preview accuracy.
-- `branding.heroSubheading` is optional and hidden on the demo homepage when blank.
-
-## Demo policy settings (local)
+## Theme and palette controls (demo)`r`n- `branding.visualTemplateId` now maps to the controlled theme system:`r`n  - modern-minimalist`r`n  - vintage-classic`r`n  - urban-hipster`r`n  - luxury-elegant`r`n  - rustic-warm`r`n- `branding.colourSchemeId` now maps to curated per-theme palettes (3 per theme).`r`n- Admin `Site design` UI filters palette options to the selected theme.`r`n- No free colour picker is exposed in launch configuration.`r`n`r`nBackward compatibility:`r`n- legacy template IDs are normalized (bold-edge/classic-immersive/utility-list/split-screen-contemporary).`r`n- legacy colour IDs are normalized (calm-blue/fresh-green/warm-coral/midnight-lime).`r`n`r`n## Demo policy settings (local)
 - `CustomerSiteSettings.policySettings` now captures cancellation/refund notice rules for demo site policy rendering.
 - `branding.heroHeadline` and optional `branding.heroSubheading` can be managed from business admin and reflected on `/demo/[industry]`.
+

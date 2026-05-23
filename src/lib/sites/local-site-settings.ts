@@ -1,5 +1,10 @@
-﻿import { buildDefaultCustomerSiteSettings } from "@/lib/sites/default-site-settings";
+import { buildDefaultCustomerSiteSettings } from "@/lib/sites/default-site-settings";
+import {
+  getSiteColourSchemesForTheme,
+  normalizeSiteColourSchemeId,
+} from "@/lib/sites/site-colour-schemes";
 import { CustomerSiteSettings, SiteServiceItem } from "@/lib/sites/site-settings-types";
+import { normalizeSiteVisualTemplateId } from "@/lib/sites/site-visual-templates";
 import { WebsiteTemplate, WebsiteTemplateSlug } from "@/lib/sites/types";
 
 // Temporary browser-only localStorage persistence for customer site settings.
@@ -16,10 +21,24 @@ export function getLocalCustomerSiteSettingsStorageKey(
 
 function normalizeSettings(settings: CustomerSiteSettings): CustomerSiteSettings {
   const templateSlug = settings.templateSlug;
+  const normalizedThemeId = normalizeSiteVisualTemplateId(
+    settings.branding?.visualTemplateId,
+  );
+  const normalizedPaletteId = normalizeSiteColourSchemeId(
+    settings.branding?.colourSchemeId,
+  );
+  const allowedPalettes = getSiteColourSchemesForTheme(normalizedThemeId);
+  const paletteForTheme =
+    allowedPalettes.find((palette) => palette.id === normalizedPaletteId)?.id ??
+    allowedPalettes[0]?.id ??
+    normalizedPaletteId;
+
   return {
     ...settings,
     branding: {
       ...settings.branding,
+      visualTemplateId: normalizedThemeId,
+      colourSchemeId: paletteForTheme,
       heroHeadline: settings.branding?.heroHeadline ?? settings.branding?.siteName ?? "",
       heroSubheading: settings.branding?.heroSubheading ?? "",
     },
@@ -173,5 +192,3 @@ export function seedLocalCustomerSiteSettings(
   }
   return getLocalCustomerSiteSettings(industrySlug, template);
 }
-
-

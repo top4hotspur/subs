@@ -73,17 +73,7 @@ Default theme remains neutral so it suits all 14 launch industries. Customer-spe
 - Hero CTA readability pass also enforces high-contrast text on `View example demo` and `How it works`.
 - Trust/value lead tile wording is now `Includes ALL business tools` with updated supporting conversion copy.
 
-## Demo visual system variants
-Customer-facing `/demo/[industry]` now supports multiple visual layout modes (selected from business admin):
-- Modern Minimalist
-- Bold Edge
-- Classic Immersive
-- Utility List
-- Split-Screen Contemporary
-
-Colour schemes (Calm Blue, Fresh Green, Warm Coral, Midnight Lime) alter accent/button/surface feel while keeping readability and responsive behavior.
-
-## Template propagation behavior
+## Demo theme system (local mock)`r`nCustomer-facing `/demo/[industry]` now uses a controlled theme + palette model:`r`n- Themes: Modern Minimalist, Vintage Classic, Urban Hipster, Luxury Elegant, Rustic Warm`r`n- Each theme has exactly 3 curated colour palettes (no free colour picker).`r`n`r`nThe launch design direction is intentionally controlled so subscribers can pick meaningful styles without creating messy combinations.`r`n`r`n## Theme personalities
 - Template and colour changes made in `/demo/[industry]/admin` now persist immediately for the selected industry.
 - `/demo/[industry]` listens for local settings updates and re-reads local settings on focus/update so the selected visual style is consistently reflected.
 - Midnight Lime is the dark premium option intended for dark-themed presentation with high-contrast lime accents.
@@ -94,7 +84,4 @@ Colour schemes (Calm Blue, Fresh Green, Warm Coral, Midnight Lime) alter accent/
 - Demo credential cards were removed from customer-facing and business-admin demo surfaces.
 - Template layouts were strengthened so each option has more obvious differences in hero structure, card/list shape, and typography feel.
 
-## Demo nav/readability and template polish
-- Active demo nav pill contrast now forces readable selected state regardless of container theme.
-- Split-screen contemporary template layout was adjusted for cleaner 50/50 desktop hero and stable stacked mobile behavior.
-- Demo homepage removed portal-access tile and now ends with a combined contact/opening-hours tile.
+## Theme personalities`r`n- Modern Minimalist: airy light surfaces, soft shadows, rounded cards.`r`n- Vintage Classic: cream/warm traditional presentation with formal card borders.`r`n- Urban Hipster: dark bold treatment with punchy accents and sharper cards.`r`n- Luxury Elegant: premium refined presentation with polished hero/panel treatment.`r`n- Rustic Warm: earthy practical style with friendly local-business tone.`r`n`r`n## Palette model`r`n- Modern Minimalist: slate-teal, soft-blue, warm-neutral`r`n- Vintage Classic: red-cream, wood-brass, ink-ivory`r`n- Urban Hipster: black-neon-green, charcoal-electric-blue, black-hot-coral`r`n- Luxury Elegant: navy-gold, emerald-champagne, aubergine-pearl`r`n- Rustic Warm: olive-sand, terracotta-cream, brown-sage`r`n`r`n## Theme propagation behavior`r`n- Theme and palette selections saved in `/demo/[industry]/admin` persist immediately in local settings.`r`n- `/demo/[industry]` listens for local updates and reflects visual changes without backend persistence.`r`n- Legacy template IDs and colour IDs are mapped to the new theme/palette model for backward compatibility.`r`n`r`n## Image policy for launch`r`n- No required image uploads for a professional result.`r`n- Themes are designed to look strong using typography, spacing, cards, borders, gradients, and colour.`r`n- Optional business photos can be added later.

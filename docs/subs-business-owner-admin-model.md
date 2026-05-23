@@ -145,12 +145,7 @@ Important:
   - Upload staff CSV
 - CSV imports update local demo services/staff state only.
 
-## Site design propagation notes
-- Visual template and colour scheme changes in `/demo/[industry]/admin` now save immediately in local mock settings.
-- Customer-facing `/demo/[industry]` re-reads local settings so selected template/scheme changes are reflected consistently.
-- Available colour schemes now include Calm Blue, Fresh Green, Warm Coral, and Midnight Lime (dark premium option).
-
-## Payment processor setup intent (local mock)
+## Site design controls (local mock)`r`n- Business admin `Site design` now uses a controlled Theme + Colour palette model.`r`n- Themes: Modern Minimalist, Vintage Classic, Urban Hipster, Luxury Elegant, Rustic Warm.`r`n- Each theme exposes exactly 3 curated palettes; palette options are filtered by selected theme.`r`n- Theme/palette changes persist immediately in local browser settings and propagate to `/demo/[industry]`.`r`n- Backward mapping is applied for old template/colour IDs already stored in local settings.`r`n- No required image uploads: themes are designed to look professional through layout, cards, typography, and colour tokens.`r`n`r`n## Payment processor setup intent (local mock)
 - Demo business admin now includes setup choices:
   - Existing processor
   - Need help setting one up
@@ -172,3 +167,4 @@ Important:
   - optional custom policy note
 - Customer View displays a policy note with cancellation/refund timing.
 - Demo policy page reflects business policy settings and business name.
+

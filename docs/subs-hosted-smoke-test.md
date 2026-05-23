@@ -1,4 +1,4 @@
-﻿# Subs Hosted Smoke Test (Manual)
+# Subs Hosted Smoke Test (Manual)
 
 Run these checks on the hosted environment after deployment.
 
@@ -185,18 +185,7 @@ Add these checks after backend envs are configured:
   - verify `Portal access` tile is removed
   - verify combined `Contact and opening hours` tile appears at the bottom
 
-## Hosted smoke additions: visual templates and CSV tool relocation
-- `/demo/barbers/admin`:
-  - verify `Site design` selector updates `/demo/barbers` preview style immediately after change
-  - verify colour scheme changes are visible and persisted after refresh
-  - select `Midnight Lime` and confirm dark surfaces + lime accents remain readable
-  - verify `Import/export setup data` provides services/staff CSV template download and upload preview
-- `/demo/barbers/customise`:
-  - verify CSV operational tools are removed
-  - verify guidance points users to business admin for imports
-- Repeat spot checks on `/demo/window-cleaning`, `/demo/bus-hire`, `/demo/tutors`.
-
-## Hosted smoke additions: payment setup intent (demo admin)
+## Hosted smoke additions: theme system and CSV tool relocation`r`n- `/demo/barbers/admin`:`r`n  - change Theme and confirm `/demo/barbers` reflects clear personality/layout change`r`n  - change Colour palette and confirm accents/surfaces update`r`n  - verify palette selector is limited to 3 options for the selected theme`r`n  - verify `Open customer site preview` opens in a new tab`r`n  - verify `Import/export setup data` provides services/staff CSV template download and upload preview`r`n- `/demo/barbers/customise`:`r`n  - verify CSV operational tools are removed`r`n  - verify guidance points users to business admin for imports`r`n- Backward compatibility check:`r`n  - if older local settings exist, confirm page still loads and old template/scheme IDs map to valid theme/palette values`r`n- Repeat spot checks on `/demo/window-cleaning`, `/demo/bus-hire`, `/demo/tutors`.`r`n`r`n## Hosted smoke additions: payment setup intent (demo admin)
 - Open `/demo/barbers/admin` > `Payments/sales`.
 - Confirm payment processor setup option list appears:
   - existing processor
@@ -231,3 +220,4 @@ Add these checks after backend envs are configured:
   - desktop 50/50 feel
   - mobile stacked layout
   - no clipping/overlap in service cards
+

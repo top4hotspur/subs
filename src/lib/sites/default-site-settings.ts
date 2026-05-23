@@ -83,7 +83,7 @@ export function buildDefaultCustomerSiteSettings(template: WebsiteTemplate): Cus
       heroHeadline: template.defaultConfig.heroHeadline,
       heroSubheading: "",
       visualTemplateId: "modern-minimalist",
-      colourSchemeId: "calm-blue",
+      colourSchemeId: "slate-teal",
       useTextLogoFallback: true,
       primaryColor: template.defaultConfig.primaryColor,
       accentColor: template.defaultConfig.accentColor,

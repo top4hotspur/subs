@@ -8,9 +8,15 @@ import type { Weekday } from "@/lib/calendar/calendar-types";
 import { listLocalBusinessClosures, saveLocalBusinessClosures } from "@/lib/calendar/local-closures";
 import { getPublicServicePriceLabel } from "@/lib/pricing/service-price-display";
 import { getLocalCustomerSiteSettings, saveLocalCustomerSiteSettings } from "@/lib/sites/local-site-settings";
-import { SITE_COLOUR_SCHEMES } from "@/lib/sites/site-colour-schemes";
+import {
+  getSiteColourSchemesForTheme,
+  SITE_COLOUR_SCHEMES,
+} from "@/lib/sites/site-colour-schemes";
 import { WebsiteTemplate } from "@/lib/sites/types";
-import { SITE_VISUAL_TEMPLATES } from "@/lib/sites/site-visual-templates";
+import {
+  getSiteVisualTemplateById,
+  SITE_VISUAL_TEMPLATES,
+} from "@/lib/sites/site-visual-templates";
 import { listLocalStaff, saveLocalStaff } from "@/lib/staff/local-staff";
 import { listLocalStaffRoles, saveLocalStaffRoles, seedLocalStaffRoles, type StaffRoleDefinition } from "@/lib/staff/staff-role-settings";
 import { StaffAvailabilityMode, StaffRoleType, type StaffMember } from "@/lib/staff/staff-types";
@@ -109,6 +115,8 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
   >([]);
 
   const currency = settings.paymentSettings.currencyCode ?? "GBP";
+  const selectedTheme = getSiteVisualTemplateById(settings.branding.visualTemplateId);
+  const paletteOptions = getSiteColourSchemesForTheme(selectedTheme.id);
 
   function updateSettingsAndPersist(
     updater: (current: typeof settings) => typeof settings,
@@ -391,9 +399,9 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
         </div>
       </CollapsibleSection>
 
-      <CollapsibleSection title="Site design" subtitle="Select local visual template and colour scheme for this subscriber demo site.">
+      <CollapsibleSection title="Site design" subtitle="Select the demo theme personality and one curated colour palette.">
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="text-xs font-semibold text-slate-700">Visual template
+          <label className="text-xs font-semibold text-slate-700">Theme
             <select
               className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
               value={settings.branding.visualTemplateId}
@@ -405,9 +413,14 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                       ...current.branding,
                       visualTemplateId:
                         event.target.value as typeof current.branding.visualTemplateId,
+                      colourSchemeId:
+                        getSiteVisualTemplateById(
+                          event.target.value,
+                        ).allowedPalettes[0] ??
+                        current.branding.colourSchemeId,
                     },
                   }),
-                  "Visual template updated for this demo site.",
+                  "Theme updated for this demo site.",
                 )
               }
             >
@@ -418,7 +431,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
               ))}
             </select>
           </label>
-          <label className="text-xs font-semibold text-slate-700">Colour scheme
+          <label className="text-xs font-semibold text-slate-700">Colour palette
             <select
               className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
               value={settings.branding.colourSchemeId}
@@ -432,11 +445,11 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                         event.target.value as typeof current.branding.colourSchemeId,
                     },
                   }),
-                  "Colour scheme updated for this demo site.",
+                  "Colour palette updated for this demo site.",
                 )
               }
             >
-              {SITE_COLOUR_SCHEMES.map((option) => (
+              {paletteOptions.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.name}
                 </option>
@@ -449,10 +462,15 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
           be persisted later.
         </p>
         <p className="mt-1 text-xs text-slate-500">
-          Current template:{" "}
-          {optionNameById(SITE_VISUAL_TEMPLATES, settings.branding.visualTemplateId)}. Current
-          colour scheme:{" "}
+          Current theme: {selectedTheme.name}. Current palette:{" "}
           {optionNameById(SITE_COLOUR_SCHEMES, settings.branding.colourSchemeId)}.
+        </p>
+        <p className="mt-1 text-xs text-slate-500">
+          {selectedTheme.description} Best for: {selectedTheme.bestFor.join(", ")}.
+        </p>
+        <p className="mt-1 text-xs text-slate-500">
+          Business photos can be added later. These themes are designed to look
+          professional without needing image uploads.
         </p>
         <a
           href={`/demo/${template.slug}`}
