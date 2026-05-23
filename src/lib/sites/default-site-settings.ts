@@ -162,6 +162,12 @@ export function buildDefaultCustomerSiteSettings(template: WebsiteTemplate): Cus
       policyText:
         "Bookings can be cancelled up to 24 hours in advance for a full refund. No refund is available after this notice period.",
     },
+    policySettings: {
+      cancellationEnabled: true,
+      fullRefundNoticeDays: 2,
+      noRefundWithinDays: 1,
+      customPolicyNote: "",
+    },
     seo: {
       title: `${template.defaultConfig.businessName} | ${template.category}`,
       description: template.marketingSummary,

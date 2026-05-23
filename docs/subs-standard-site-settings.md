@@ -161,3 +161,7 @@ Template/colour propagation notes:
 - `branding.visualTemplateId` and `branding.colourSchemeId` are saved to local industry settings and applied on `/demo/[industry]`.
 - Admin selectors in `/demo/[industry]/admin` persist changes immediately for local preview accuracy.
 - `branding.heroSubheading` is optional and hidden on the demo homepage when blank.
+
+## Demo policy settings (local)
+- `CustomerSiteSettings.policySettings` now captures cancellation/refund notice rules for demo site policy rendering.
+- `branding.heroHeadline` and optional `branding.heroSubheading` can be managed from business admin and reflected on `/demo/[industry]`.

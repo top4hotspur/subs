@@ -329,3 +329,14 @@ Selections are local/mock and immediately affect the customer-facing demo previe
 
 ## CSV tooling location update
 CSV import/export setup tools moved out of demo customisation and into business admin (`Import/export setup data`) for services and staff.
+
+## Demo booking/account/policy polish (2026-05)
+- Demo site nav active-state contrast hardened to keep selected pill readable.
+- Demo nav labels updated to `Customer View`, `Staff View`, and `Admin View`.
+- Site-scoped demo pages now share a consistent top demo header using a reusable shell component.
+- Booking submit label updated to `Book Appointment`.
+- Booking confirmation now renders beside submit area and links to `/demo/[industry]/account?tab=bookings`.
+- Customer View now includes local cancellation action for upcoming bookings.
+- Cancellation/refund policy settings added to business admin (`Policies` section), local/mock only.
+- New demo policy route: `/demo/[industry]/policy`, using business name + policy settings.
+- No real payment/refund processing is implemented in this phase.

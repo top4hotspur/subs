@@ -1,6 +1,6 @@
 "use client";
 
-import { DemoSiteNav } from "@/components/demo/demo-site-nav";
+import { DemoSitePageShell } from "@/components/demo/demo-site-page-shell";
 import { SiteCard } from "@/components/site-ui/site-card";
 import { getLocalCustomerSiteSettings } from "@/lib/sites/local-site-settings";
 import { WebsiteTemplate } from "@/lib/sites/types";
@@ -22,19 +22,7 @@ export function DemoAboutContactPage({ template, mode }: Props) {
   const pageEnabled = isAbout ? aboutEnabled : contactEnabled;
 
   return (
-    <main className="mx-auto max-w-4xl space-y-6 px-4 py-10 sm:px-6 lg:px-8">
-      <section className="rounded-2xl border border-slate-200 bg-slate-900 p-5 text-white shadow-sm">
-        <p className="text-xs uppercase tracking-[0.16em] text-slate-300">{template.category}</p>
-        <h1 className="mt-2 text-3xl font-bold">{isAbout ? "About us" : "Contact"}</h1>
-        <div className="mt-4">
-          <DemoSiteNav
-            templateSlug={template.slug}
-            showAbout={aboutEnabled}
-            showContact={contactEnabled}
-          />
-        </div>
-      </section>
-
+    <DemoSitePageShell template={template} settings={settings}>
       {!pageEnabled ? (
         <SiteCard title="Page currently hidden" subtitle="This page is disabled in business admin settings.">
           <p className="text-sm text-slate-700">
@@ -85,6 +73,6 @@ export function DemoAboutContactPage({ template, mode }: Props) {
           </div>
         </SiteCard>
       )}
-    </main>
+    </DemoSitePageShell>
   );
 }

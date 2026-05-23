@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import { DemoSiteNav } from "@/components/demo/demo-site-nav";
+import { DemoSitePageShell } from "@/components/demo/demo-site-page-shell";
 import { SiteCard } from "@/components/site-ui/site-card";
 import {
   createLocalInStoreSale,
@@ -142,20 +142,7 @@ export function DemoStaffPage({ template }: DemoStaffPageProps) {
   }
 
   return (
-    <main className="mx-auto max-w-5xl space-y-6 px-4 py-10 sm:px-6 lg:px-8">
-      <section className="rounded-2xl border border-slate-200 bg-slate-900 p-5 text-white shadow-sm">
-        <p className="text-xs uppercase tracking-[0.16em] text-slate-300">Staff portal</p>
-        <h1 className="mt-2 text-3xl font-bold">Staff operations</h1>
-        <p className="mt-2 text-sm text-slate-200">Staff login is for appointments, manual bookings, voucher checks, and in-store operations. Platform admin is a separate login.</p>
-        <div className="mt-4">
-          <DemoSiteNav
-            templateSlug={template.slug}
-            showAbout={settings.pageVisibility.about.enabled}
-            showContact={settings.pageVisibility.contact.enabled}
-          />
-        </div>
-      </section>
-
+    <DemoSitePageShell template={template} settings={settings}>
       <div className="grid gap-4 md:grid-cols-2">
         <SiteCard title="Today’s appointments" subtitle={formatUkDate(today)}>
           {todayAppointments.length === 0 ? <p className="text-sm text-slate-600">No appointments scheduled today.</p> : (
@@ -260,7 +247,7 @@ export function DemoStaffPage({ template }: DemoStaffPageProps) {
       ) : null}
 
       <p className="text-xs text-slate-500">Last updated: {formatUkDateTime(new Date().toISOString())}</p>
-    </main>
+    </DemoSitePageShell>
   );
 }
 

@@ -163,3 +163,12 @@ Important:
 - Demo access credential cards were removed from demo customer/staff/admin pages.
 - Business admin now includes hero headline editing for the customer-facing demo homepage.
 - `Open customer site preview` opens a new tab for faster side-by-side template checks.
+
+## Demo policy controls (local mock)
+- Business admin now includes a `Policies` section with:
+  - cancellation enabled toggle
+  - full refund notice days (1-5)
+  - no refund within days (same day or 1-5 days)
+  - optional custom policy note
+- Customer View displays a policy note with cancellation/refund timing.
+- Demo policy page reflects business policy settings and business name.

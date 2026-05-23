@@ -177,3 +177,8 @@ Current behavior:
 - When creating an ad hoc closure date in business admin, the local workflow now checks same-day active appointments.
 - Canceled/no-show requests are excluded from the warning list.
 - Impacted bookings are shown so staff can contact customers to cancel/rearrange.
+
+## Cancellation policy preview impact (local mock)
+- Customer account upcoming-bookings cards now include local cancellation action.
+- Cancellation/refund note is derived from site policy settings for customer visibility.
+- No real refund transaction handling is performed.

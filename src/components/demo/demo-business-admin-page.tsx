@@ -2,7 +2,7 @@
 
 import { ReactNode, useMemo, useState } from "react";
 import { StaffRotaEditor } from "@/components/calendar/staff-rota-editor";
-import { DemoSiteNav } from "@/components/demo/demo-site-nav";
+import { DemoSitePageShell } from "@/components/demo/demo-site-page-shell";
 import { WEEKDAYS } from "@/lib/calendar/calendar-types";
 import type { Weekday } from "@/lib/calendar/calendar-types";
 import { listLocalBusinessClosures, saveLocalBusinessClosures } from "@/lib/calendar/local-closures";
@@ -262,20 +262,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
   }
 
   return (
-    <main className="mx-auto max-w-6xl space-y-6 px-4 py-10 sm:px-6 lg:px-8">
-      <section className="rounded-2xl border border-slate-200 bg-slate-900 p-5 text-white shadow-sm">
-        <p className="text-xs uppercase tracking-[0.16em] text-slate-300">Business admin portal</p>
-        <h1 className="mt-2 text-3xl font-bold">Site owner control centre</h1>
-        <p className="mt-2 text-sm text-slate-200">This is the subscriber business-owner admin area for this site. Platform admin for MyExperiment.club is separate.</p>
-        <div className="mt-4">
-          <DemoSiteNav
-            templateSlug={template.slug}
-            showAbout={settings.pageVisibility.about.enabled}
-            showContact={settings.pageVisibility.contact.enabled}
-          />
-        </div>
-      </section>
-
+    <DemoSitePageShell template={template} settings={settings}>
       <CollapsibleSection title="Business settings" subtitle="Branding, currency and social profile links.">
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-xs font-semibold text-slate-700">Site/page display name
@@ -1108,6 +1095,92 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
         </div>
       </CollapsibleSection>
 
+      <CollapsibleSection title="Policies" subtitle="Set cancellation and refund notice rules for this business.">
+        <div className="space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3">
+          <label className="flex items-center gap-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={settings.policySettings.cancellationEnabled}
+              onChange={(event) =>
+                setSettings((current) => ({
+                  ...current,
+                  policySettings: {
+                    ...current.policySettings,
+                    cancellationEnabled: event.target.checked,
+                  },
+                }))
+              }
+            />
+            Enable cancellation policy
+          </label>
+
+          <label className="text-xs font-semibold text-slate-700">
+            Full refund notice period
+            <select
+              className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+              value={settings.policySettings.fullRefundNoticeDays}
+              onChange={(event) =>
+                setSettings((current) => ({
+                  ...current,
+                  policySettings: {
+                    ...current.policySettings,
+                    fullRefundNoticeDays: Number(event.target.value) as 1 | 2 | 3 | 4 | 5,
+                  },
+                }))
+              }
+            >
+              <option value={1}>1 day before appointment</option>
+              <option value={2}>2 days before appointment</option>
+              <option value={3}>3 days before appointment</option>
+              <option value={4}>4 days before appointment</option>
+              <option value={5}>5 days before appointment</option>
+            </select>
+          </label>
+
+          <label className="text-xs font-semibold text-slate-700">
+            No refund rule
+            <select
+              className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+              value={settings.policySettings.noRefundWithinDays}
+              onChange={(event) =>
+                setSettings((current) => ({
+                  ...current,
+                  policySettings: {
+                    ...current.policySettings,
+                    noRefundWithinDays: Number(event.target.value) as 0 | 1 | 2 | 3 | 4 | 5,
+                  },
+                }))
+              }
+            >
+              <option value={0}>same day of appointment</option>
+              <option value={1}>within 1 day of appointment</option>
+              <option value={2}>within 2 days of appointment</option>
+              <option value={3}>within 3 days of appointment</option>
+              <option value={4}>within 4 days of appointment</option>
+              <option value={5}>within 5 days of appointment</option>
+            </select>
+          </label>
+
+          <label className="text-xs font-semibold text-slate-700">
+            Custom policy note (optional)
+            <textarea
+              rows={2}
+              className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+              value={settings.policySettings.customPolicyNote ?? ""}
+              onChange={(event) =>
+                setSettings((current) => ({
+                  ...current,
+                  policySettings: {
+                    ...current.policySettings,
+                    customPolicyNote: event.target.value,
+                  },
+                }))
+              }
+            />
+          </label>
+        </div>
+      </CollapsibleSection>
+
       <CollapsibleSection title="Payments/sales" subtitle="Local-only operational sales recording preferences.">
         <div className="mb-3 space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3">
           <label className="text-xs font-semibold text-slate-700">
@@ -1204,7 +1277,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
         <button type="button" className="rounded-md bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800" onClick={persistSettings}>Save business settings</button>
         {message ? <p className="text-sm text-slate-600">{message}</p> : null}
       </div>
-    </main>
+    </DemoSitePageShell>
   );
 }
 

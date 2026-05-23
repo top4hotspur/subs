@@ -205,3 +205,29 @@ Add these checks after backend envs are configured:
 - If `existing processor` is selected, verify processor name input is shown.
 - Confirm setup notes field can be edited and saved locally.
 - Confirm helper note states no real provider connection is active.
+
+## Hosted smoke additions: demo booking/account/policy
+- Demo nav active state: selected page button remains readable.
+- Demo nav labels: `Customer View`, `Staff View`, `Admin View`.
+- Confirm top demo context header appears on:
+  - `/demo/[industry]`
+  - `/demo/[industry]/booking`
+  - `/demo/[industry]/account`
+  - `/demo/[industry]/staff`
+  - `/demo/[industry]/admin`
+  - `/demo/[industry]/about`
+  - `/demo/[industry]/contact`
+  - `/demo/[industry]/policy`
+- Booking page:
+  - submit button label is `Book Appointment`
+  - success message appears near submit area
+  - account link points to `/demo/[industry]/account?tab=bookings`
+- Customer View:
+  - upcoming bookings can be cancelled locally
+  - cancellation policy note is visible
+- Admin policies:
+  - full-refund days and no-refund window settings update policy wording
+- Split-screen contemporary:
+  - desktop 50/50 feel
+  - mobile stacked layout
+  - no clipping/overlap in service cards

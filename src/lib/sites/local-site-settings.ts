@@ -43,6 +43,12 @@ function normalizeSettings(settings: CustomerSiteSettings): CustomerSiteSettings
       allowCustomerStaffSelection:
         settings.appointmentSettings?.allowCustomerStaffSelection ?? true,
     },
+    policySettings: {
+      cancellationEnabled: settings.policySettings?.cancellationEnabled ?? true,
+      fullRefundNoticeDays: settings.policySettings?.fullRefundNoticeDays ?? 2,
+      noRefundWithinDays: settings.policySettings?.noRefundWithinDays ?? 1,
+      customPolicyNote: settings.policySettings?.customPolicyNote ?? "",
+    },
     businessDetails: {
       ...settings.businessDetails,
       socialLinks: settings.businessDetails?.socialLinks ?? {},

@@ -187,6 +187,13 @@ export type SiteCancellationPolicySettings = {
   policyText?: string;
 };
 
+export type SitePolicySettings = {
+  cancellationEnabled: boolean;
+  fullRefundNoticeDays: 1 | 2 | 3 | 4 | 5;
+  noRefundWithinDays: 0 | 1 | 2 | 3 | 4 | 5;
+  customPolicyNote?: string;
+};
+
 export type CustomerSiteSettings = {
   id: string;
   templateSlug: WebsiteTemplateSlug;
@@ -201,6 +208,7 @@ export type CustomerSiteSettings = {
   paymentSettings: SitePaymentSettings;
   appointmentSettings: SiteAppointmentSettings;
   cancellationPolicy: SiteCancellationPolicySettings;
+  policySettings: SitePolicySettings;
   seo: SiteSeoSettings;
   analytics: SiteAnalyticsSettings;
   createdAtIso: string;

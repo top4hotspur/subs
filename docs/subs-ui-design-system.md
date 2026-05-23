@@ -93,3 +93,8 @@ Colour schemes (Calm Blue, Fresh Green, Warm Coral, Midnight Lime) alter accent/
   - `Admin View`
 - Demo credential cards were removed from customer-facing and business-admin demo surfaces.
 - Template layouts were strengthened so each option has more obvious differences in hero structure, card/list shape, and typography feel.
+
+## Demo nav/readability and template polish
+- Active demo nav pill contrast now forces readable selected state regardless of container theme.
+- Split-screen contemporary template layout was adjusted for cleaner 50/50 desktop hero and stable stacked mobile behavior.
+- Demo homepage removed portal-access tile and now ends with a combined contact/opening-hours tile.

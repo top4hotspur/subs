@@ -8,18 +8,20 @@ type DemoSiteNavProps = {
   templateSlug: WebsiteTemplateSlug;
   showAbout?: boolean;
   showContact?: boolean;
+  showPolicy?: boolean;
 };
 
 const demoNavPillClass =
   "inline-flex items-center justify-center rounded-lg border-2 border-slate-300 bg-white px-3 py-2 text-sm font-semibold !text-slate-950 visited:!text-slate-950 shadow-sm transition-colors hover:bg-slate-100 hover:!text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900";
 
 const activeDemoNavPillClass =
-  "border-slate-900 bg-slate-900 !text-white visited:!text-white shadow";
+  "border-slate-950 bg-slate-950 !text-white visited:!text-white hover:!text-white shadow";
 
 export function DemoSiteNav({
   templateSlug,
   showAbout = true,
   showContact = true,
+  showPolicy = true,
 }: DemoSiteNavProps) {
   const pathname = usePathname();
   const allLinks = [
@@ -30,6 +32,7 @@ export function DemoSiteNav({
     { href: `/demo/${templateSlug}/admin`, label: "Admin View" },
     ...(showAbout ? [{ href: `/demo/${templateSlug}/about`, label: "About us" }] : []),
     ...(showContact ? [{ href: `/demo/${templateSlug}/contact`, label: "Contact" }] : []),
+    ...(showPolicy ? [{ href: `/demo/${templateSlug}/policy`, label: "Policy" }] : []),
   ] as const;
 
   return (

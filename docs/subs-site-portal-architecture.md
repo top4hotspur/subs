@@ -124,3 +124,12 @@ See also:
   - `/demo/[industry]/staff`
   - `/demo/[industry]/admin`
 - Demo nav and wording explicitly distinguish business-admin (subscriber) from platform-admin.
+
+## Demo portal structure updates
+- Site-scoped demo navigation now uses view labels rather than login labels:
+  - Customer View
+  - Staff View
+  - Admin View
+- Demo credential cards were removed from portal pages.
+- Shared demo site shell now keeps context header consistent across `/demo/[industry]/*` pages.
+- Demo policy page now exists at `/demo/[industry]/policy` and is driven by local policy settings.

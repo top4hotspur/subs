@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   AppointmentSlotPreference,
   DayPeriod,
@@ -157,6 +157,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedHourKey, setExpandedHourKey] = useState<string | null>(null);
+  const confirmationRef = useRef<HTMLDivElement | null>(null);
 
 
   function selectedServiceName(): string | undefined {
@@ -273,17 +274,6 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
         <p className="mt-1 text-xs text-slate-600">Opening hours vary by day. Please choose your preferred date and time.</p>
       ) : null}
 
-      {submitted ? (
-        <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
-          Your request has been saved. Auto-response prepared.
-          <div className="mt-2">
-            <Link href="/account" className="font-semibold underline">
-              View in customer account
-            </Link>
-          </div>
-        </div>
-      ) : null}
-
       <form
         className="mt-3 grid gap-2 sm:grid-cols-2"
         onSubmit={(event) => {
@@ -364,6 +354,10 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
           });
           setSubmitted(true);
           setError(null);
+          requestAnimationFrame(() => {
+            confirmationRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+            confirmationRef.current?.focus();
+          });
         }}
       >
         <input className="rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="Customer name" value={form.customerName} onChange={(event) => setForm((c) => ({ ...c, customerName: event.target.value }))} />
@@ -604,8 +598,25 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
         <textarea className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2" placeholder="Notes" value={form.notes} onChange={(event) => setForm((c) => ({ ...c, notes: event.target.value }))} />
         {error ? <p className="text-xs text-rose-700 sm:col-span-2">{error}</p> : null}
         <button type="submit" className={`${primaryButtonClass} sm:col-span-2`}>
-          {appointmentStyle ? "Save appointment request" : taxiStyle ? "Save taxi request" : "Save request"}
+          {appointmentStyle ? "Book Appointment" : taxiStyle ? "Save taxi request" : "Save request"}
         </button>
+        {submitted ? (
+          <div
+            ref={confirmationRef}
+            tabIndex={-1}
+            className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 sm:col-span-2"
+          >
+            Your booking request has been saved. Auto-response prepared.
+            <div className="mt-2">
+              <Link
+                href={`/demo/${templateSlug}/account?tab=bookings`}
+                className="font-semibold underline"
+              >
+                View in customer account
+              </Link>
+            </div>
+          </div>
+        ) : null}
       </form>
     </section>
   );

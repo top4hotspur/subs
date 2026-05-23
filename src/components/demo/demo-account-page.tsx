@@ -1,14 +1,17 @@
 ﻿"use client";
 
 import { useMemo, useState } from "react";
-import { DemoSiteNav } from "@/components/demo/demo-site-nav";
+import { DemoSitePageShell } from "@/components/demo/demo-site-page-shell";
 import { SiteCard } from "@/components/site-ui/site-card";
 import {
   getLocalCustomerProfile,
   saveLocalCustomerProfile,
 } from "@/lib/demo/local-customer-profile";
 import { listLocalCustomerRequests } from "@/lib/requests/local-customer-requests";
-import { CustomerRequestStatus } from "@/lib/requests/request-types";
+import { LOCAL_CUSTOMER_REQUESTS_KEY } from "@/lib/requests/local-customer-requests";
+import {
+  CustomerRequestStatus,
+} from "@/lib/requests/request-types";
 import { getLocalCustomerSiteSettings } from "@/lib/sites/local-site-settings";
 import { WebsiteTemplate } from "@/lib/sites/types";
 import { formatSiteCurrency, formatUkDate, formatUkDateTime } from "@/lib/ui/display-labels";
@@ -25,7 +28,9 @@ type DemoAccountPageProps = {
 export function DemoAccountPage({ template }: DemoAccountPageProps) {
   const settings = useMemo(() => getLocalCustomerSiteSettings(template.slug, template), [template]);
   const currency = settings.paymentSettings.currencyCode ?? "GBP";
-  const requests = useMemo(() => listLocalCustomerRequests().filter((request) => request.templateSlug === template.slug), [template.slug]);
+  const [requests, setRequests] = useState(() =>
+    listLocalCustomerRequests().filter((request) => request.templateSlug === template.slug),
+  );
   const upcoming = requests.filter((request) => request.status !== CustomerRequestStatus.CANCELLED && request.status !== CustomerRequestStatus.COMPLETED);
   const history = requests.filter((request) => request.status === CustomerRequestStatus.COMPLETED || request.status === CustomerRequestStatus.CANCELLED);
   const vouchers = useMemo(() => listLocalVouchers(template.slug), [template.slug]);
@@ -63,28 +68,54 @@ export function DemoAccountPage({ template }: DemoAccountPageProps) {
     setVoucherMessage("Voucher created locally.");
   }
 
-  return (
-    <main className="mx-auto max-w-5xl space-y-6 px-4 py-10 sm:px-6 lg:px-8">
-      <section className="rounded-2xl border border-slate-200 bg-slate-900 p-5 text-white shadow-sm">
-        <p className="text-xs uppercase tracking-[0.16em] text-slate-300">Customer account</p>
-        <h1 className="mt-2 text-3xl font-bold">Welcome back</h1>
-        <p className="mt-2 text-sm text-slate-200">This is the end-customer portal for bookings, profile details, and vouchers. Platform admin is separate from this site login flow.</p>
-        <div className="mt-4">
-          <DemoSiteNav
-            templateSlug={template.slug}
-            showAbout={settings.pageVisibility.about.enabled}
-            showContact={settings.pageVisibility.contact.enabled}
-          />
-        </div>
-      </section>
+  function cancellationPolicyNote(): string {
+    const policy = settings.policySettings;
+    if (!policy?.cancellationEnabled) {
+      return "Cancellation policy is currently managed directly by the business.";
+    }
+    return `Full refund when cancelled at least ${policy.fullRefundNoticeDays} day(s) before appointment. No refund for cancellations within ${policy.noRefundWithinDays} day(s).`;
+  }
 
+  function cancelBooking(requestId: string): void {
+    setRequests((current) =>
+      current.map((request) =>
+        request.id === requestId
+          ? { ...request, status: CustomerRequestStatus.CANCELLED, updatedAtIso: new Date().toISOString() }
+          : request,
+      ),
+    );
+    const all = listLocalCustomerRequests();
+    const updated = all.map((request) =>
+      request.id === requestId
+        ? { ...request, status: CustomerRequestStatus.CANCELLED, updatedAtIso: new Date().toISOString() }
+        : request,
+    );
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(LOCAL_CUSTOMER_REQUESTS_KEY, JSON.stringify(updated));
+    }
+  }
+
+  return (
+    <DemoSitePageShell template={template} settings={settings}>
       <div className="grid gap-4 md:grid-cols-2">
         <SiteCard title="Upcoming bookings" subtitle="Your next scheduled appointments.">
           {upcoming.length === 0 ? <p className="text-sm text-slate-600">No upcoming bookings.</p> : (
             <ul className="space-y-2 text-sm text-slate-700">
-              {upcoming.map((request) => <li key={request.id}>{request.serviceName || "Service"} - {formatUkDate(request.preferredDate || request.createdAtIso)}{request.preferredTime ? ` at ${request.preferredTime}` : ""}</li>)}
+              {upcoming.map((request) => (
+                <li key={request.id} className="rounded-md border border-slate-200 bg-white px-2 py-2">
+                  <p>{request.serviceName || "Service"} - {formatUkDate(request.preferredDate || request.createdAtIso)}{request.preferredTime ? ` at ${request.preferredTime}` : ""}</p>
+                  <button
+                    type="button"
+                    className="mt-1 text-xs font-semibold text-rose-700 underline"
+                    onClick={() => cancelBooking(request.id)}
+                  >
+                    Cancel booking
+                  </button>
+                </li>
+              ))}
             </ul>
           )}
+          <p className="mt-2 text-xs text-slate-600">{cancellationPolicyNote()}</p>
         </SiteCard>
         <SiteCard title="Booking history" subtitle="Completed and cancelled appointments.">
           {history.length === 0 ? <p className="text-sm text-slate-600">No booking history yet.</p> : (
@@ -144,7 +175,7 @@ export function DemoAccountPage({ template }: DemoAccountPageProps) {
           )}
         </SiteCard>
       </div>
-    </main>
+    </DemoSitePageShell>
   );
 }
 
