@@ -70,3 +70,13 @@ Default theme remains neutral so it suits all 14 launch industries. Customer-spe
 - Homepage hero buttons now use explicit high-contrast hierarchy to prevent low-contrast text on light surfaces.
 - Trust/value block now features a lead wide tile (`Business tools included`) above secondary value tiles.
 - FAQ content was replaced with an expanded sales-focused set while keeping claims aligned to current product state.
+
+## Demo visual system variants
+Customer-facing `/demo/[industry]` now supports multiple visual layout modes (selected from business admin):
+- Modern Minimalist
+- Bold Edge
+- Classic Immersive
+- Utility List
+- Split-Screen Contemporary
+
+Colour schemes (Calm Blue, Fresh Green, Warm Coral) alter accent/button/surface feel while keeping readability and responsive behavior.

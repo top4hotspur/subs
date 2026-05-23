@@ -5,16 +5,20 @@ import { StaffRotaEditor } from "@/components/calendar/staff-rota-editor";
 import { DemoAccessDetailsCard } from "@/components/demo/demo-access-details-card";
 import { DemoSiteNav } from "@/components/demo/demo-site-nav";
 import { WEEKDAYS } from "@/lib/calendar/calendar-types";
+import type { Weekday } from "@/lib/calendar/calendar-types";
 import { listLocalBusinessClosures, saveLocalBusinessClosures } from "@/lib/calendar/local-closures";
 import { getPublicServicePriceLabel } from "@/lib/pricing/service-price-display";
 import { getLocalCustomerSiteSettings, saveLocalCustomerSiteSettings } from "@/lib/sites/local-site-settings";
+import { SITE_COLOUR_SCHEMES } from "@/lib/sites/site-colour-schemes";
 import { WebsiteTemplate } from "@/lib/sites/types";
+import { SITE_VISUAL_TEMPLATES } from "@/lib/sites/site-visual-templates";
 import { listLocalStaff, saveLocalStaff } from "@/lib/staff/local-staff";
 import { listLocalStaffRoles, saveLocalStaffRoles, seedLocalStaffRoles, type StaffRoleDefinition } from "@/lib/staff/staff-role-settings";
 import { StaffAvailabilityMode, StaffRoleType, type StaffMember } from "@/lib/staff/staff-types";
 import { formatSiteCurrency, formatUkDate, weekdayLabel } from "@/lib/ui/display-labels";
 import { listLocalCustomerRequests } from "@/lib/requests/local-customer-requests";
 import { CustomerRequestStatus } from "@/lib/requests/request-types";
+import { downloadCsvTemplate, readCsvFile } from "@/lib/demo/csv-tools";
 import { getLocalVoucherSettings, saveLocalVoucherSettings } from "@/lib/vouchers/local-vouchers";
 import { VoucherDeliveryMethod } from "@/lib/vouchers/voucher-types";
 
@@ -81,6 +85,11 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
   const [newRoleLabel, setNewRoleLabel] = useState("");
   const [expandedServiceIds, setExpandedServiceIds] = useState<string[]>([]);
   const [expandedStaffIds, setExpandedStaffIds] = useState<string[]>([]);
+  const [csvPreview, setCsvPreview] = useState<{
+    type: "services" | "staff";
+    rows: string[];
+    fileName: string;
+  } | null>(null);
   const [closureConflictMessage, setClosureConflictMessage] = useState<string | null>(null);
   const [closureConflicts, setClosureConflicts] = useState<
     {
@@ -180,6 +189,56 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
       setMessage(`${type === "logo" ? "Logo" : "Favicon"} preview updated locally.`);
     };
     reader.readAsDataURL(file);
+  }
+
+  async function handleCsvUpload(
+    file: File | undefined,
+    type: "services" | "staff",
+  ): Promise<void> {
+    if (!file) return;
+    const rows = await readCsvFile(file);
+    setCsvPreview({ type, rows, fileName: file.name });
+
+    if (type === "services" && rows.length > 0) {
+      setSettings((current) => ({
+        ...current,
+        services: rows.map((name, index) => ({
+          id: `csv-service-${index + 1}`,
+          name,
+          description: "",
+          basePriceGbp: undefined,
+          durationMinutes: 45,
+          bufferAfterMinutes: 0,
+          bookable: true,
+          requiresQuote: false,
+          active: true,
+        })),
+      }));
+      return;
+    }
+
+    if (type === "staff" && rows.length > 0) {
+      const now = new Date().toISOString();
+      const defaultRole = activeRoles[0]?.label ?? "Team Member";
+      const weekdays: Weekday[] = ["monday", "tuesday", "wednesday", "thursday", "friday"];
+      setStaffMembers((current) => [
+        ...current,
+        ...rows.map((displayName, index) => ({
+          id: `csv-staff-${Date.now()}-${index + 1}`,
+          displayName,
+          role: StaffRoleType.GENERAL_STAFF,
+          roleLabel: defaultRole,
+          serviceIds: settings.services.filter((service) => service.active).map((service) => service.id),
+          active: true,
+          customerSelectable: true,
+          isSuperUser: false,
+          availableWeekdays: weekdays,
+          availabilityMode: StaffAvailabilityMode.APPOINTMENT_ONLY,
+          createdAtIso: now,
+          updatedAtIso: now,
+        })),
+      ]);
+    }
   }
 
   return (
@@ -315,6 +374,54 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
         </div>
       </CollapsibleSection>
 
+      <CollapsibleSection title="Site design" subtitle="Select local visual template and colour scheme for this subscriber demo site.">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="text-xs font-semibold text-slate-700">Visual template
+            <select
+              className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+              value={settings.branding.visualTemplateId}
+              onChange={(event) =>
+                setSettings((current) => ({
+                  ...current,
+                  branding: {
+                    ...current.branding,
+                    visualTemplateId: event.target.value as typeof current.branding.visualTemplateId,
+                  },
+                }))
+              }
+            >
+              {SITE_VISUAL_TEMPLATES.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs font-semibold text-slate-700">Colour scheme
+            <select
+              className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+              value={settings.branding.colourSchemeId}
+              onChange={(event) =>
+                setSettings((current) => ({
+                  ...current,
+                  branding: {
+                    ...current.branding,
+                    colourSchemeId: event.target.value as typeof current.branding.colourSchemeId,
+                  },
+                }))
+              }
+            >
+              {SITE_COLOUR_SCHEMES.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <p className="mt-2 text-xs text-slate-600">Changes update this local demo preview. Live subscriber settings will be persisted later.</p>
+      </CollapsibleSection>
+
       <CollapsibleSection title="Staff positions" subtitle="Create business-specific role/position options used by staff records.">
         <div className="mb-3 flex flex-wrap gap-2">
           <input className="rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="Add position" value={newRoleLabel} onChange={(event) => setNewRoleLabel(event.target.value)} />
@@ -387,6 +494,82 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
             );
           })}
         </div>
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Import/export setup data" subtitle="Download CSV templates and import service/staff rows into this local demo.">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-sm font-medium text-slate-900">Services/products/pricing</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-100"
+                onClick={() =>
+                  downloadCsvTemplate(
+                    "services-template.csv",
+                    "serviceName,priceLabel,description\nStandard Service,From GBP25,Short description",
+                  )
+                }
+              >
+                Download services CSV template
+              </button>
+              <label className="cursor-pointer rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800">
+                Upload services CSV
+                <input
+                  type="file"
+                  accept=".csv,text/csv"
+                  className="hidden"
+                  onChange={(event) => {
+                    void handleCsvUpload(event.target.files?.[0], "services");
+                    event.currentTarget.value = "";
+                  }}
+                />
+              </label>
+            </div>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <p className="text-sm font-medium text-slate-900">Staff/team</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-100"
+                onClick={() =>
+                  downloadCsvTemplate(
+                    "staff-template.csv",
+                    "staffName,role,email,phone\nTeam Member,Owner,team@example.com,07123456789",
+                  )
+                }
+              >
+                Download staff CSV template
+              </button>
+              <label className="cursor-pointer rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800">
+                Upload staff CSV
+                <input
+                  type="file"
+                  accept=".csv,text/csv"
+                  className="hidden"
+                  onChange={(event) => {
+                    void handleCsvUpload(event.target.files?.[0], "staff");
+                    event.currentTarget.value = "";
+                  }}
+                />
+              </label>
+            </div>
+          </div>
+        </div>
+        {csvPreview ? (
+          <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700">
+            <p className="font-semibold">
+              {csvPreview.type === "services" ? "Services" : "Staff"} CSV preview ({csvPreview.fileName})
+            </p>
+            <p className="mt-1">Rows detected: {csvPreview.rows.length}</p>
+            <ul className="mt-1 list-disc pl-4">
+              {csvPreview.rows.slice(0, 6).map((row) => (
+                <li key={row}>{row}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </CollapsibleSection>
 
       <CollapsibleSection title="Staff" subtitle="Compact staff cards with role dropdown and available days.">

@@ -288,3 +288,21 @@ Still mock for infrastructure:
 - Page visibility/content now includes editable About and Contact content blocks (title/body/image placement/CTA + contact/map text placeholders).
 - Payments/sales helper copy updated to include finance reporting context.
 - Business branding controls now expose explicit `Remove logo` and `Remove favicon` actions.
+
+## Subscriber visual templates (local mock)
+Business admin now supports site design selection with 5 visual templates:
+- Modern Minimalist
+- Bold Edge
+- Classic Immersive
+- Utility List
+- Split-Screen Contemporary
+
+And 3 colour schemes:
+- Calm Blue
+- Fresh Green
+- Warm Coral
+
+Selections are local/mock and immediately affect the customer-facing demo preview. No backend persistence is wired for subscriber settings yet.
+
+## CSV tooling location update
+CSV import/export setup tools moved out of demo customisation and into business admin (`Import/export setup data`) for services and staff.

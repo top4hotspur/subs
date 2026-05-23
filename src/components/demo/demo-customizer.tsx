@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { ChangeEvent, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { DemoDraftPicker } from "@/components/demo/demo-draft-picker";
 import { DemoPreview } from "@/components/demo/demo-preview";
 import {
@@ -19,18 +19,11 @@ import {
   outlineButtonClass,
   primaryButtonClass,
   secondaryButtonClass,
-  smallButtonClass,
 } from "@/lib/ui/button-styles";
 
 type DemoCustomizerProps = {
   template: WebsiteTemplate;
   initialDraft: DemoCustomisationDraft;
-};
-
-type CsvPreview = {
-  type: "services" | "staff";
-  rows: string[];
-  fileName: string;
 };
 
 function parseServices(input: string): DemoSiteService[] {
@@ -41,28 +34,6 @@ function parseServices(input: string): DemoSiteService[] {
     .map((name, index) => ({ id: `service-${index + 1}`, name }));
 }
 
-function parseSimpleCsv(text: string): string[] {
-  return text
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .slice(1)
-    .map((line) => line.split(",")[0]?.replace(/^"|"$/g, "")?.trim())
-    .filter((value) => Boolean(value));
-}
-
-function downloadCsvTemplate(filename: string, csv: string): void {
-  if (typeof window === "undefined") return;
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-  URL.revokeObjectURL(url);
-}
 
 function buildDemoSummary(template: WebsiteTemplate, draft: DemoCustomisationDraft): string {
   const { config } = draft;
@@ -100,7 +71,6 @@ export function DemoCustomizer({ template, initialDraft }: DemoCustomizerProps) 
   );
   const [isSaved, setIsSaved] = useState(false);
   const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
-  const [csvPreview, setCsvPreview] = useState<CsvPreview | null>(null);
   const savedTimerRef = useRef<number | null>(null);
 
   const servicesInput = draft.config.services.map((service) => service.name).join("\n");
@@ -127,24 +97,6 @@ export function DemoCustomizer({ template, initialDraft }: DemoCustomizerProps) 
     }
   }
 
-  async function handleCsvUpload(
-    event: ChangeEvent<HTMLInputElement>,
-    type: "services" | "staff",
-  ): Promise<void> {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const content = await file.text();
-    const values = parseSimpleCsv(content);
-    setCsvPreview({ type, rows: values, fileName: file.name });
-
-    if (type === "services" && values.length > 0) {
-      applyPatch({ config: { services: values.map((name, index) => ({ id: `csv-service-${index + 1}`, name })) } });
-    }
-
-    event.target.value = "";
-  }
-
   const config = draft.config;
 
   return (
@@ -157,7 +109,7 @@ export function DemoCustomizer({ template, initialDraft }: DemoCustomizerProps) 
               Add the key details now. We will use these to prepare your website setup.
             </p>
             <p className="mt-1 text-xs text-slate-500">
-              You can add services, prices, staff and opening details using templates or CSV to speed things up.
+              You can add services, pricing, staff and operational setup later in the business admin area.
             </p>
           </div>
           <span className="text-xs font-medium text-emerald-700">
@@ -261,84 +213,10 @@ export function DemoCustomizer({ template, initialDraft }: DemoCustomizerProps) 
         </section>
 
         <section className="space-y-3 rounded-xl border border-slate-200 p-4">
-          <h2 className="text-sm font-semibold text-slate-900">Fast setup templates</h2>
+          <h2 className="text-sm font-semibold text-slate-900">Operational setup tools</h2>
           <p className="text-xs text-slate-600">
-            Use CSV templates to speed up services/pricing and staff content.
+            Services, staff, pricing and CSV import/export tools are available in the business admin area after this step.
           </p>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <p className="text-sm font-medium text-slate-900">Services/products/pricing</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  className={`${outlineButtonClass} ${smallButtonClass}`}
-                  onClick={() =>
-                    downloadCsvTemplate(
-                      "services-template.csv",
-                      "serviceName,priceLabel,description\nStandard Service,From GBP25,Short description",
-                    )
-                  }
-                >
-                  Download services CSV template
-                </button>
-                <label className={`${secondaryButtonClass} ${smallButtonClass} cursor-pointer`}>
-                  Upload services CSV
-                  <input
-                    type="file"
-                    accept=".csv,text/csv"
-                    className="hidden"
-                    onChange={(event) => {
-                      void handleCsvUpload(event, "services");
-                    }}
-                  />
-                </label>
-              </div>
-            </div>
-
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <p className="text-sm font-medium text-slate-900">Staff/team</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  className={`${outlineButtonClass} ${smallButtonClass}`}
-                  onClick={() =>
-                    downloadCsvTemplate(
-                      "staff-template.csv",
-                      "staffName,role,email,phone\nTeam Member,Owner,team@example.com,07123456789",
-                    )
-                  }
-                >
-                  Download staff CSV template
-                </button>
-                <label className={`${secondaryButtonClass} ${smallButtonClass} cursor-pointer`}>
-                  Upload staff CSV
-                  <input
-                    type="file"
-                    accept=".csv,text/csv"
-                    className="hidden"
-                    onChange={(event) => {
-                      void handleCsvUpload(event, "staff");
-                    }}
-                  />
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {csvPreview ? (
-            <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700">
-              <p className="font-semibold">
-                {csvPreview.type === "services" ? "Services" : "Staff"} CSV preview ({csvPreview.fileName})
-              </p>
-              <p className="mt-1">Rows detected: {csvPreview.rows.length}</p>
-              <ul className="mt-1 list-disc pl-4">
-                {csvPreview.rows.slice(0, 6).map((row) => (
-                  <li key={row}>{row}</li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
         </section>
 
         <section className="space-y-3 rounded-xl border border-slate-200 p-4">

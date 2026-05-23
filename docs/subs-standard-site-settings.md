@@ -128,3 +128,19 @@ These uploads remain browser-local mock previews only (no backend media storage)
 - `pageContent.about` and `pageContent.contact` now drive `/demo/[industry]/about` and `/demo/[industry]/contact` rendering.
 - Image placement is modeled locally with placeholders; no real media storage pipeline is enabled.
 - Branding assets (logo/favicon) remain local preview only with explicit removal controls.
+
+## Visual template and colour controls (demo)
+- `branding.visualTemplateId` controls the subscriber site visual layout.
+- `branding.colourSchemeId` controls accent and surface palette.
+- Available visual templates:
+  - modern-minimalist
+  - bold-edge
+  - classic-immersive
+  - utility-list
+  - split-screen-contemporary
+- Available colour schemes:
+  - calm-blue
+  - fresh-green
+  - warm-coral
+
+These settings are local to browser storage in this phase.

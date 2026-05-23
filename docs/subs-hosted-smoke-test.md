@@ -178,3 +178,13 @@ Add these checks after backend envs are configured:
 - In business branding section:
   - verify `Remove logo` clears visual logo and public demo falls back to text brand
   - verify `Remove favicon` clears local favicon preview state
+
+## Hosted smoke additions: visual templates and CSV tool relocation
+- `/demo/barbers/admin`:
+  - verify `Site design` selector updates `/demo/barbers` preview style
+  - verify colour scheme changes are visible
+  - verify `Import/export setup data` provides services/staff CSV template download and upload preview
+- `/demo/barbers/customise`:
+  - verify CSV operational tools are removed
+  - verify guidance points users to business admin for imports
+- Repeat spot checks on `/demo/window-cleaning`, `/demo/bus-hire`, `/demo/tutors`.

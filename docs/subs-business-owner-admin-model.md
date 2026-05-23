@@ -135,3 +135,12 @@ Important:
   - contact details text and map placeholder text for Contact page
 - Branding controls include explicit remove actions for local logo/favicon previews.
 - Payments/sales helper text now clarifies local in-store recording supports finance reporting accuracy.
+
+## Business admin setup tools
+- New `Site design` section allows subscriber business owners to choose visual template + colour scheme.
+- New `Import/export setup data` section includes:
+  - Download services CSV template
+  - Upload services CSV
+  - Download staff CSV template
+  - Upload staff CSV
+- CSV imports update local demo services/staff state only.

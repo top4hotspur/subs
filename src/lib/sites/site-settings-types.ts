@@ -1,4 +1,6 @@
 ﻿import { WebsiteTemplateSlug } from "@/lib/sites/types";
+import { SiteColourSchemeId } from "@/lib/sites/site-colour-schemes";
+import { SiteVisualTemplateId } from "@/lib/sites/site-visual-templates";
 
 export type SiteVisibilityItem = {
   enabled: boolean;
@@ -14,6 +16,8 @@ export type SiteSectionVisibilityItem = {
 
 export type SiteBrandingSettings = {
   siteName: string;
+  visualTemplateId: SiteVisualTemplateId;
+  colourSchemeId: SiteColourSchemeId;
   logoUrl?: string;
   logoAlt?: string;
   useTextLogoFallback: boolean;
@@ -194,4 +198,6 @@ export type CustomerSiteSettings = {
   createdAtIso: string;
   updatedAtIso: string;
 };
+
+
 

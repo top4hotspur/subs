@@ -1,4 +1,4 @@
-import { CustomerSiteSettings, SitePageContentSettings, SitePageVisibilitySettings, SiteSectionVisibilitySettings } from "@/lib/sites/site-settings-types";
+﻿import { CustomerSiteSettings, SitePageContentSettings, SitePageVisibilitySettings, SiteSectionVisibilitySettings } from "@/lib/sites/site-settings-types";
 import { WebsiteTemplate } from "@/lib/sites/types";
 import { shouldCustomersSelectStaffByDefault } from "@/lib/staff/industry-staff-defaults";
 
@@ -80,6 +80,8 @@ export function buildDefaultCustomerSiteSettings(template: WebsiteTemplate): Cus
     templateSlug: template.slug,
     branding: {
       siteName: template.defaultConfig.businessName,
+      visualTemplateId: "modern-minimalist",
+      colourSchemeId: "calm-blue",
       useTextLogoFallback: true,
       primaryColor: template.defaultConfig.primaryColor,
       accentColor: template.defaultConfig.accentColor,
@@ -172,6 +174,8 @@ export function buildDefaultCustomerSiteSettings(template: WebsiteTemplate): Cus
     updatedAtIso: now,
   };
 }
+
+
 
 
 
