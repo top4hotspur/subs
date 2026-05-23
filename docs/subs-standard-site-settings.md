@@ -98,3 +98,9 @@ for browser-local issue/check/redeem demo workflows.
 - Services now support compact card editing with durationMinutes and ufferAfterMinutes in the demo admin UI.
 - Staff now uses business-created position dropdowns, replacing free-text as the primary position control.
 
+
+## Currency and social settings
+- paymentSettings.currencyCode now drives local demo currency display for service/voucher/sales values.
+- paymentSettings.allowInStorePaymentRecording controls staff in-store sale capture visibility.
+- usinessDetails.socialLinks now powers customer-facing social links when configured.
+

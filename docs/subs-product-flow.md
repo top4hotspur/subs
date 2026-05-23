@@ -230,3 +230,10 @@ Still mock for infrastructure:
 - /demo/[industry]/admin now uses compact service and staff cards to reduce long-scroll editing.
 - Staff role/position options are business-defined and reused in staff dropdown selection.
 
+
+## Additional demo business controls
+- Service cards now use explicit input labels for editing clarity.
+- Voucher delivery options are now shown as Email, Collect in store, Post.
+- Postal voucher delivery now captures a dedicated voucher delivery address in local mock flows.
+- Staff can optionally assign a team member when creating manual bookings.
+

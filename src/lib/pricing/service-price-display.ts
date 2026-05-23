@@ -6,6 +6,11 @@
   staffPriceOverrides?: { priceGbp: number }[];
 };
 
+function formatCurrency(amount: number, currency: "GBP" | "EUR" | "USD" = "GBP"): string {
+  const locale = currency === "USD" ? "en-US" : currency === "EUR" ? "de-DE" : "en-GB";
+  return new Intl.NumberFormat(locale, { style: "currency", currency, maximumFractionDigits: 0 }).format(amount);
+}
+
 export function getServicePriceValues(service: PriceLikeService): number[] {
   const values: number[] = [];
   if (typeof service.basePriceGbp === "number") values.push(service.basePriceGbp);
@@ -26,13 +31,16 @@ export function serviceHasVariablePricing(service: PriceLikeService): boolean {
   return new Set(values).size > 1;
 }
 
-export function getPublicServicePriceLabel(service: PriceLikeService): string | undefined {
+export function getPublicServicePriceLabel(
+  service: PriceLikeService,
+  currency: "GBP" | "EUR" | "USD" = "GBP",
+): string | undefined {
   if (service.requiresQuote) return "Quote required";
 
   const lowest = getLowestServicePriceGbp(service);
   if (lowest !== null) {
-    if (serviceHasVariablePricing(service)) return `From £${lowest}`;
-    return `£${lowest}`;
+    if (serviceHasVariablePricing(service)) return `From ${formatCurrency(lowest, currency)}`;
+    return formatCurrency(lowest, currency);
   }
 
   return service.priceLabel;

@@ -85,3 +85,10 @@ Business admin can:
 - Staff position uses a dropdown populated from business-created positions.
 - Staff is managed in compact cards with day-availability summary and expandable details.
 
+
+## Social, currency, and in-store controls (demo)
+- Business admin can configure social profile links and enabled platforms.
+- Site currency can be set to GBP/EUR/USD for local display formatting.
+- Staff manual booking supports optional assigned staff.
+- In-store payment recording can be enabled/disabled per site; enabled state exposes a staff sales recorder.
+

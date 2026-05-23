@@ -110,3 +110,9 @@ See also:
 - Staff portal manual booking captures payment-required vs payment-completed state for operational visibility.
 - Business admin demo includes service/staff lifecycle controls and weekday-availability constraints for rota setup.
 
+
+## Local sales and social profile layer
+- Staff portal can record in-store sales (cash/card) when enabled by business admin settings.
+- Customer-facing homepage now renders configured social media links from business settings.
+- All payment/sales records remain local-only and do not process real transactions.
+

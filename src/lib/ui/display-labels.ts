@@ -191,3 +191,10 @@ export function formatOptional(value?: string | null, fallback = "-"): string {
   return trimmed ? trimmed : fallback;
 }
 
+
+
+export function formatSiteCurrency(value: number, currency: "GBP" | "EUR" | "USD" = "GBP"): string {
+  const locale = currency === "USD" ? "en-US" : currency === "EUR" ? "de-DE" : "en-GB";
+  return new Intl.NumberFormat(locale, { style: "currency", currency }).format(value);
+}
+

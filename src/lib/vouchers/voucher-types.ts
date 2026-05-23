@@ -1,4 +1,4 @@
-export const VoucherDeliveryMethod = {
+﻿export const VoucherDeliveryMethod = {
   DIGITAL_EMAIL: "DIGITAL_EMAIL",
   COLLECT_IN_STORE: "COLLECT_IN_STORE",
   POST: "POST",
@@ -34,6 +34,7 @@ export type GiftVoucherRecord = {
   purchaserEmail: string;
   recipientName: string;
   recipientEmail?: string;
+  deliveryAddress?: string;
   deliveryMethod: VoucherDeliveryMethod;
   status: GiftVoucherStatus;
   redeemedAtIso?: string;
@@ -42,4 +43,5 @@ export type GiftVoucherRecord = {
   createdAtIso: string;
   updatedAtIso: string;
 };
+
 

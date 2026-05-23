@@ -1,4 +1,4 @@
-import { buildDefaultCustomerSiteSettings } from "@/lib/sites/default-site-settings";
+﻿import { buildDefaultCustomerSiteSettings } from "@/lib/sites/default-site-settings";
 import { CustomerSiteSettings, SiteServiceItem } from "@/lib/sites/site-settings-types";
 import { WebsiteTemplate, WebsiteTemplateSlug } from "@/lib/sites/types";
 
@@ -6,6 +6,24 @@ import { WebsiteTemplate, WebsiteTemplateSlug } from "@/lib/sites/types";
 // This is intentionally local/mock and should move to DB + API later.
 function siteSettingsKey(industrySlug: WebsiteTemplateSlug): string {
   return `subs-site-settings:${industrySlug}`;
+}
+
+function normalizeSettings(settings: CustomerSiteSettings): CustomerSiteSettings {
+  return {
+    ...settings,
+    paymentSettings: {
+      cardPaymentsEnabled: settings.paymentSettings?.cardPaymentsEnabled ?? true,
+      cashPaymentsEnabled: settings.paymentSettings?.cashPaymentsEnabled ?? false,
+      requirePrepaymentForBookings: settings.paymentSettings?.requirePrepaymentForBookings ?? true,
+      cashNoShowWarningEnabled: settings.paymentSettings?.cashNoShowWarningEnabled ?? true,
+      currencyCode: settings.paymentSettings?.currencyCode ?? "GBP",
+      allowInStorePaymentRecording: settings.paymentSettings?.allowInStorePaymentRecording ?? false,
+    },
+    businessDetails: {
+      ...settings.businessDetails,
+      socialLinks: settings.businessDetails?.socialLinks ?? {},
+    },
+  };
 }
 
 function readSettings(industrySlug: WebsiteTemplateSlug): CustomerSiteSettings | null {
@@ -19,7 +37,7 @@ function readSettings(industrySlug: WebsiteTemplateSlug): CustomerSiteSettings |
   }
 
   try {
-    return JSON.parse(raw) as CustomerSiteSettings;
+    return normalizeSettings(JSON.parse(raw) as CustomerSiteSettings);
   } catch {
     return null;
   }
@@ -51,7 +69,7 @@ export function getLocalCustomerSiteSettings(
   if (typeof window !== "undefined") {
     window.localStorage.setItem(siteSettingsKey(industrySlug), JSON.stringify(defaults));
   }
-  return defaults;
+  return normalizeSettings(defaults);
 }
 
 export function resetLocalCustomerSiteSettings(
@@ -69,7 +87,7 @@ export function resetLocalCustomerSiteSettings(
   if (typeof window !== "undefined") {
     window.localStorage.setItem(siteSettingsKey(industrySlug), JSON.stringify(reset));
   }
-  return reset;
+  return normalizeSettings(reset);
 }
 
 export function updateLocalSiteServices(
@@ -94,3 +112,4 @@ export function seedLocalCustomerSiteSettings(
   }
   return getLocalCustomerSiteSettings(industrySlug, template);
 }
+

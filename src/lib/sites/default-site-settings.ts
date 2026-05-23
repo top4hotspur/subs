@@ -1,4 +1,4 @@
-import { CustomerSiteSettings, SitePageVisibilitySettings, SiteSectionVisibilitySettings } from "@/lib/sites/site-settings-types";
+﻿import { CustomerSiteSettings, SitePageVisibilitySettings, SiteSectionVisibilitySettings } from "@/lib/sites/site-settings-types";
 import { WebsiteTemplate } from "@/lib/sites/types";
 
 function slugify(value: string): string {
@@ -116,6 +116,8 @@ export function buildDefaultCustomerSiteSettings(template: WebsiteTemplate): Cus
       cashPaymentsEnabled: false,
       requirePrepaymentForBookings: true,
       cashNoShowWarningEnabled: true,
+      currencyCode: "GBP",
+      allowInStorePaymentRecording: false,
     },
     cancellationPolicy: {
       cancellationWindowHours: 24,
@@ -127,12 +129,7 @@ export function buildDefaultCustomerSiteSettings(template: WebsiteTemplate): Cus
     seo: {
       title: `${template.defaultConfig.businessName} | ${template.category}`,
       description: template.marketingSummary,
-      keywords: [
-        template.slug,
-        template.category.toLowerCase(),
-        "local service website",
-        "managed website",
-      ],
+      keywords: [template.slug, template.category.toLowerCase(), "local service website", "managed website"],
       canonicalUrl: `https://www.myexperiment.club/${domainSlug}`,
     },
     analytics: {

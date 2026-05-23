@@ -1,4 +1,4 @@
-import { WebsiteTemplateSlug } from "@/lib/sites/types";
+﻿import { WebsiteTemplateSlug } from "@/lib/sites/types";
 
 export type SiteVisibilityItem = {
   enabled: boolean;
@@ -135,11 +135,15 @@ export type SiteAnalyticsSettings = {
   trackBookingConversions: boolean;
 };
 
+export type SiteCurrencyCode = "GBP" | "EUR" | "USD";
+
 export type SitePaymentSettings = {
   cardPaymentsEnabled: boolean;
   cashPaymentsEnabled: boolean;
   requirePrepaymentForBookings: boolean;
   cashNoShowWarningEnabled: boolean;
+  currencyCode: SiteCurrencyCode;
+  allowInStorePaymentRecording: boolean;
 };
 
 export type SiteCancellationPolicySettings = {
@@ -166,3 +170,4 @@ export type CustomerSiteSettings = {
   createdAtIso: string;
   updatedAtIso: string;
 };
+

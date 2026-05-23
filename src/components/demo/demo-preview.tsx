@@ -1,44 +1,40 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo } from "react";
+import { DemoSiteNav } from "@/components/demo/demo-site-nav";
 import { SiteBrandMark } from "@/components/site-ui/site-brand-mark";
 import { SiteCard } from "@/components/site-ui/site-card";
 import { SiteFooterBlock } from "@/components/site-ui/site-footer-block";
-import { DemoSiteNav } from "@/components/demo/demo-site-nav";
+import { getPublicServicePriceLabel } from "@/lib/pricing/service-price-display";
 import { isAppointmentStyleIndustry } from "@/lib/requests/appointment-industries";
 import { getLocalCustomerSiteSettings } from "@/lib/sites/local-site-settings";
-import { DemoCustomisationDraft, DemoSiteService, WebsiteTemplate } from "@/lib/sites/types";
+import { DemoCustomisationDraft, WebsiteTemplate } from "@/lib/sites/types";
 import { primaryButtonClass } from "@/lib/ui/button-styles";
-import { getPublicServicePriceLabel } from "@/lib/pricing/service-price-display";
 
 type DemoPreviewProps = {
   template: WebsiteTemplate;
   draft: DemoCustomisationDraft;
 };
 
-function resolveActiveServices(template: WebsiteTemplate, draftServices: DemoSiteService[]): DemoSiteService[] {
-  if (typeof window === "undefined") {
-    return draftServices;
-  }
-
-  const settings = getLocalCustomerSiteSettings(template.slug, template);
-  const active = settings.services
-    .filter((service) => service.active)
-    .map((service) => ({
-      id: service.id,
-      name: service.name,
-      description: service.description,
-      priceLabel: service.priceLabel,
-    }));
-
-  return active.length > 0 ? active : draftServices;
-}
+const SOCIAL_LABELS: Record<string, string> = {
+  facebook: "Facebook",
+  instagram: "Instagram",
+  tiktok: "TikTok",
+  x: "X",
+  linkedin: "LinkedIn",
+  youtube: "YouTube",
+  website: "Website",
+};
 
 export function DemoPreview({ template, draft }: DemoPreviewProps) {
   const { config } = draft;
   const appointmentStyle = isAppointmentStyleIndustry(template.slug);
-  const [requestServices] = useState<DemoSiteService[]>(() => resolveActiveServices(template, config.services));
+  const settings = useMemo(() => getLocalCustomerSiteSettings(template.slug, template), [template]);
+  const currency = settings.paymentSettings.currencyCode ?? "GBP";
+  const activeServices = settings.services.filter((service) => service.active);
+  const socialEntries = Object.entries(settings.businessDetails.socialLinks ?? {}).filter(([, value]) => value && value.trim().length > 0);
+
   return (
     <div className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 shadow-sm">
       <section className="rounded-b-3xl border-b border-slate-800 bg-slate-900 px-6 py-8 text-white sm:px-8">
@@ -49,28 +45,18 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
         <h1 className="mt-6 text-4xl font-bold tracking-tight">{config.heroHeadline}</h1>
         <p className="mt-3 max-w-2xl text-slate-200">{config.heroSubheading}</p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Link href={`/demo/${template.slug}/booking`} className={primaryButtonClass}>
-            {config.ctaLabel}
-          </Link>
+          <Link href={`/demo/${template.slug}/booking`} className={primaryButtonClass}>{config.ctaLabel}</Link>
         </div>
       </section>
 
       <div className="space-y-6 px-6 py-8 sm:px-8">
         <SiteCard title="Services" subtitle="Tile-based service layout matching your selected industry template.">
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {requestServices.map((service) => (
-              <Link
-                key={service.id}
-                href={`/demo/${template.slug}/booking?service=${encodeURIComponent(service.id)}`}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:bg-slate-50"
-              >
+            {activeServices.map((service) => (
+              <Link key={service.id} href={`/demo/${template.slug}/booking?service=${encodeURIComponent(service.id)}`} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:bg-slate-50">
                 <p className="text-sm font-semibold text-slate-900">{service.name}</p>
-                <p className="mt-1 text-xs text-slate-600">
-                  {service.description || "Professional service tailored to local customers."}
-                </p>
-                <p className="mt-2 text-sm font-medium text-slate-700">
-                  {getPublicServicePriceLabel(service) || "From £25"}
-                </p>
+                <p className="mt-1 text-xs text-slate-600">{service.description || "Professional service tailored to local customers."}</p>
+                <p className="mt-2 text-sm font-medium text-slate-700">{getPublicServicePriceLabel(service, currency) || "Quote required"}</p>
                 <p className="mt-2 text-xs font-semibold text-sky-700">Book this service</p>
               </Link>
             ))}
@@ -85,10 +71,19 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
           <SiteCard title="Demo login placeholder" subtitle={`${template.demoLogin.email} / ${template.demoLogin.password}`} />
         </div>
 
-        <SiteCard
-          title="Customer and team portal layers (planned)"
-          subtitle="Live customer sites will have separate portal access for different users."
-        >
+        {socialEntries.length > 0 ? (
+          <SiteCard title="Follow us" subtitle="Social media links configured in business admin settings.">
+            <div className="flex flex-wrap gap-2">
+              {socialEntries.map(([key, value]) => (
+                <a key={key} href={value} target="_blank" rel="noreferrer" aria-label={`Visit us on ${SOCIAL_LABELS[key] ?? key}`} className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-900 hover:bg-slate-100">
+                  {SOCIAL_LABELS[key] ?? key}
+                </a>
+              ))}
+            </div>
+          </SiteCard>
+        ) : null}
+
+        <SiteCard title="Customer and team portal layers (planned)" subtitle="Live customer sites will have separate portal access for different users.">
           <ul className="list-disc space-y-2 pl-5 text-sm text-slate-600">
             <li>Customer login: bookings, payments, vouchers, profile</li>
             <li>Staff login: appointments, telephone/manual bookings, voucher check and redeem</li>
@@ -101,10 +96,7 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
         </SiteCard>
 
         {appointmentStyle ? (
-          <SiteCard
-            title="Gift vouchers (planned module)"
-            subtitle="Business admin will be able to enable/disable vouchers and choose delivery methods."
-          >
+          <SiteCard title="Gift vouchers (planned module)" subtitle="Business admin will be able to enable/disable vouchers and choose delivery methods.">
             <ul className="list-disc space-y-2 pl-5 text-sm text-slate-600">
               <li>Choose voucher value and issue a unique voucher ID</li>
               <li>Delivery methods: digital email, collect in store, post (with postage charge)</li>
@@ -118,27 +110,9 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
           brand={config.businessName}
           description="Managed local-business website subscription with ongoing support and clear setup workflow."
           groups={[
-            {
-              title: "Explore",
-              links: [
-                { label: "Bookings", href: `/demo/${template.slug}/booking` },
-                { label: "About us", href: `/demo/${template.slug}/about` },
-              ],
-            },
-            {
-              title: "Account",
-              links: [
-                { label: "Customer account", href: `/demo/${template.slug}/account` },
-                { label: "Contact", href: `/demo/${template.slug}/contact` },
-              ],
-            },
-            {
-              title: "Team",
-              links: [
-                { label: "Staff view", href: `/demo/${template.slug}/staff` },
-                { label: "Business admin", href: `/demo/${template.slug}/admin` },
-              ],
-            },
+            { title: "Explore", links: [{ label: "Bookings", href: `/demo/${template.slug}/booking` }, { label: "About us", href: `/demo/${template.slug}/about` }] },
+            { title: "Account", links: [{ label: "Customer account", href: `/demo/${template.slug}/account` }, { label: "Contact", href: `/demo/${template.slug}/contact` }] },
+            { title: "Team", links: [{ label: "Staff view", href: `/demo/${template.slug}/staff` }, { label: "Business admin", href: `/demo/${template.slug}/admin` }] },
           ]}
         />
       </div>
