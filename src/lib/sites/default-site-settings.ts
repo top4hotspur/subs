@@ -80,6 +80,8 @@ export function buildDefaultCustomerSiteSettings(template: WebsiteTemplate): Cus
     templateSlug: template.slug,
     branding: {
       siteName: template.defaultConfig.businessName,
+      heroHeadline: template.defaultConfig.heroHeadline,
+      heroSubheading: "",
       visualTemplateId: "modern-minimalist",
       colourSchemeId: "calm-blue",
       useTextLogoFallback: true,

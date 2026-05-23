@@ -122,6 +122,7 @@ for browser-local issue/check/redeem demo workflows.
 ## Branding controls (local demo)
 Business site settings demo now includes branding controls for:
 - Site/page display name (text fallback)
+- Hero headline text (editable from business admin and reflected on `/demo/[industry]`)
 - Logo local preview upload (PNG/SVG preferred)
   - Recommended dimensions: 512 x 512 (square icon) or 1200 x 400 (wide header)
   - Max file size: 1 MB
@@ -159,3 +160,4 @@ These settings are local to browser storage in this phase.
 Template/colour propagation notes:
 - `branding.visualTemplateId` and `branding.colourSchemeId` are saved to local industry settings and applied on `/demo/[industry]`.
 - Admin selectors in `/demo/[industry]/admin` persist changes immediately for local preview accuracy.
+- `branding.heroSubheading` is optional and hidden on the demo homepage when blank.

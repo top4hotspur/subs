@@ -87,3 +87,9 @@ Colour schemes (Calm Blue, Fresh Green, Warm Coral, Midnight Lime) alter accent/
 - Template and colour changes made in `/demo/[industry]/admin` now persist immediately for the selected industry.
 - `/demo/[industry]` listens for local settings updates and re-reads local settings on focus/update so the selected visual style is consistently reflected.
 - Midnight Lime is the dark premium option intended for dark-themed presentation with high-contrast lime accents.
+- Demo nav labels now use:
+  - `Customer View`
+  - `Staff View`
+  - `Admin View`
+- Demo credential cards were removed from customer-facing and business-admin demo surfaces.
+- Template layouts were strengthened so each option has more obvious differences in hero structure, card/list shape, and typography feel.

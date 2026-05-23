@@ -289,14 +289,10 @@ Still mock for infrastructure:
 - Demo site routes now keep platform admin separate from subscriber site login areas.
 - On `/demo/*` routes, global platform header/footer chrome is hidden so prospects are not pushed into MyExperiment.club platform admin login by mistake.
 - Demo nav labels are now explicit:
-  - Customer login
-  - Staff login
-  - Business admin login
-- Demo access details are shown in-site with preview-only credentials:
-  - demo.customer@example.com / demo123
-  - demo.staff@example.com / demo123
-  - demo.admin@example.com / demo123
-- These credentials are demo-only and do not represent real account provisioning.
+  - Customer View
+  - Staff View
+  - Admin View
+- Demo access credentials cards have been removed from demo customer/admin/staff pages to avoid fake-login clutter in the public preview.
 
 ## Demo readability and admin-controls fixes (2026-05)
 - Demo nav/menu pill styles were hardened with explicit high-contrast classes for dark-hero usage.
@@ -323,6 +319,13 @@ And 3 colour schemes:
 - Warm Coral
 
 Selections are local/mock and immediately affect the customer-facing demo preview. No backend persistence is wired for subscriber settings yet.
+
+## Demo homepage layout updates
+- Hero headline is now editable in `/demo/[industry]/admin` and reflected on `/demo/[industry]`.
+- Hero subheading is optional and hidden when blank.
+- Demo homepage now uses a combined `Contact and opening hours` tile at the bottom.
+- The previous `Portal access` tile was removed to keep the customer-facing homepage cleaner.
+- `Open customer site preview` in business admin now opens in a new tab for side-by-side template testing.
 
 ## CSV tooling location update
 CSV import/export setup tools moved out of demo customisation and into business admin (`Import/export setup data`) for services and staff.

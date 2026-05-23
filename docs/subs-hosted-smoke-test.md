@@ -161,14 +161,14 @@ Add these checks after backend envs are configured:
 ## Hosted smoke additions: demo login/nav clarity
 - Open `/demo/barbers` (and other demo industry routes) and confirm:
   - demo nav pill text is readable on dark hero
-  - nav shows `Customer login`, `Staff login`, `Business admin login`
+  - nav shows `Customer View`, `Staff View`, `Admin View`
   - links route to `/demo/[industry]/account`, `/staff`, `/admin`
 - Confirm platform admin link is not shown in global header/footer while on `/demo/*` routes.
-- Confirm demo access card is visible and lists preview-only credentials.
+- Confirm demo access credential card is not shown on demo customer/admin/staff pages.
 - Confirm `/admin` platform login remains available from non-demo routes.
 
 ## Hosted smoke additions: demo readability and page-content controls
-- Demo nav pills (`Home`, `Bookings`, `Customer login`, `Staff login`, `Business admin login`, `About us`, `Contact`) must be clearly readable on dark hero backgrounds.
+- Demo nav pills (`Home`, `Bookings`, `Customer View`, `Staff View`, `Admin View`, `About us`, `Contact`) must be clearly readable on dark hero backgrounds.
 - Verify service/staff summary separators render cleanly as ` - ` (no mojibake characters).
 - In `/demo/[industry]/admin` > Ad hoc closures:
   - adding a future closure with no bookings shows a green confirmation
@@ -179,6 +179,11 @@ Add these checks after backend envs are configured:
 - In business branding section:
   - verify `Remove logo` clears visual logo and public demo falls back to text brand
   - verify `Remove favicon` clears local favicon preview state
+- On `/demo/[industry]` homepage:
+  - verify hero headline updates from `/demo/[industry]/admin`
+  - verify hero subheading is hidden when blank
+  - verify `Portal access` tile is removed
+  - verify combined `Contact and opening hours` tile appears at the bottom
 
 ## Hosted smoke additions: visual templates and CSV tool relocation
 - `/demo/barbers/admin`:

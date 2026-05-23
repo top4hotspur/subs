@@ -1,7 +1,6 @@
 ﻿"use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import { DemoAccessDetailsCard } from "@/components/demo/demo-access-details-card";
 import { DemoSiteNav } from "@/components/demo/demo-site-nav";
 import { SiteCard } from "@/components/site-ui/site-card";
 import {
@@ -156,8 +155,6 @@ export function DemoStaffPage({ template }: DemoStaffPageProps) {
           />
         </div>
       </section>
-
-      <DemoAccessDetailsCard />
 
       <div className="grid gap-4 md:grid-cols-2">
         <SiteCard title="Today’s appointments" subtitle={formatUkDate(today)}>

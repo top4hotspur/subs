@@ -11,10 +11,10 @@ type DemoSiteNavProps = {
 };
 
 const demoNavPillClass =
-  "inline-flex items-center justify-center rounded-lg border-2 border-slate-300 bg-white px-3 py-2 text-sm font-semibold !text-slate-950 shadow-sm transition-colors hover:bg-slate-100 hover:!text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900";
+  "inline-flex items-center justify-center rounded-lg border-2 border-slate-300 bg-white px-3 py-2 text-sm font-semibold !text-slate-950 visited:!text-slate-950 shadow-sm transition-colors hover:bg-slate-100 hover:!text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900";
 
 const activeDemoNavPillClass =
-  "border-slate-900 bg-slate-900 !text-white shadow";
+  "border-slate-900 bg-slate-900 !text-white visited:!text-white shadow";
 
 export function DemoSiteNav({
   templateSlug,
@@ -25,9 +25,9 @@ export function DemoSiteNav({
   const allLinks = [
     { href: `/demo/${templateSlug}`, label: "Home" },
     { href: `/demo/${templateSlug}/booking`, label: "Bookings" },
-    { href: `/demo/${templateSlug}/account`, label: "Customer login" },
-    { href: `/demo/${templateSlug}/staff`, label: "Staff login" },
-    { href: `/demo/${templateSlug}/admin`, label: "Business admin login" },
+    { href: `/demo/${templateSlug}/account`, label: "Customer View" },
+    { href: `/demo/${templateSlug}/staff`, label: "Staff View" },
+    { href: `/demo/${templateSlug}/admin`, label: "Admin View" },
     ...(showAbout ? [{ href: `/demo/${templateSlug}/about`, label: "About us" }] : []),
     ...(showContact ? [{ href: `/demo/${templateSlug}/contact`, label: "Contact" }] : []),
   ] as const;

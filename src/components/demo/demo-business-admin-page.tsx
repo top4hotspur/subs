@@ -2,7 +2,6 @@
 
 import { ReactNode, useMemo, useState } from "react";
 import { StaffRotaEditor } from "@/components/calendar/staff-rota-editor";
-import { DemoAccessDetailsCard } from "@/components/demo/demo-access-details-card";
 import { DemoSiteNav } from "@/components/demo/demo-site-nav";
 import { WEEKDAYS } from "@/lib/calendar/calendar-types";
 import type { Weekday } from "@/lib/calendar/calendar-types";
@@ -277,8 +276,6 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
         </div>
       </section>
 
-      <DemoAccessDetailsCard />
-
       <CollapsibleSection title="Business settings" subtitle="Branding, currency and social profile links.">
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-xs font-semibold text-slate-700">Site/page display name
@@ -289,6 +286,18 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                 setSettings((current) => ({
                   ...current,
                   branding: { ...current.branding, siteName: event.target.value },
+                }))
+              }
+            />
+          </label>
+          <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Hero headline
+            <input
+              className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+              value={settings.branding.heroHeadline ?? ""}
+              onChange={(event) =>
+                setSettings((current) => ({
+                  ...current,
+                  branding: { ...current.branding, heroHeadline: event.target.value },
                 }))
               }
             />
@@ -460,6 +469,8 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
         </p>
         <a
           href={`/demo/${template.slug}`}
+          target="_blank"
+          rel="noreferrer"
           className="mt-3 inline-flex rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 hover:bg-slate-100"
         >
           Open customer site preview

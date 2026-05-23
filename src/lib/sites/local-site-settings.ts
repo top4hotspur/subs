@@ -18,6 +18,11 @@ function normalizeSettings(settings: CustomerSiteSettings): CustomerSiteSettings
   const templateSlug = settings.templateSlug;
   return {
     ...settings,
+    branding: {
+      ...settings.branding,
+      heroHeadline: settings.branding?.heroHeadline ?? settings.branding?.siteName ?? "",
+      heroSubheading: settings.branding?.heroSubheading ?? "",
+    },
     paymentSettings: {
       paymentProcessorSetupMode:
         settings.paymentSettings?.paymentProcessorSetupMode ??

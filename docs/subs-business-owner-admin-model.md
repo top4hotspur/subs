@@ -157,3 +157,9 @@ Important:
   - Manual recording only for now
 - Existing processor name and setup notes can be captured locally.
 - This is configuration intent only and does not connect Stripe/Square/PayPal APIs in this phase.
+
+## Demo navigation and preview cleanup (local mock)
+- Demo navigation labels are now `Customer View`, `Staff View`, and `Admin View`.
+- Demo access credential cards were removed from demo customer/staff/admin pages.
+- Business admin now includes hero headline editing for the customer-facing demo homepage.
+- `Open customer site preview` opens a new tab for faster side-by-side template checks.

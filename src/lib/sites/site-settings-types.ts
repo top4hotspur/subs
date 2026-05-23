@@ -16,6 +16,8 @@ export type SiteSectionVisibilityItem = {
 
 export type SiteBrandingSettings = {
   siteName: string;
+  heroHeadline?: string;
+  heroSubheading?: string;
   visualTemplateId: SiteVisualTemplateId;
   colourSchemeId: SiteColourSchemeId;
   logoUrl?: string;
