@@ -116,3 +116,11 @@ See also:
 - Customer-facing homepage now renders configured social media links from business settings.
 - All payment/sales records remain local-only and do not process real transactions.
 
+
+## Platform admin vs subscriber login routes
+- Platform admin (`/admin`) is for MyExperiment.club operations only.
+- Subscriber site demo routes (`/demo/[industry]/*`) now keep login navigation site-scoped:
+  - `/demo/[industry]/account`
+  - `/demo/[industry]/staff`
+  - `/demo/[industry]/admin`
+- Demo nav and wording explicitly distinguish business-admin (subscriber) from platform-admin.

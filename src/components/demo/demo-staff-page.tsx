@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import { DemoAccessDetailsCard } from "@/components/demo/demo-access-details-card";
 import { DemoSiteNav } from "@/components/demo/demo-site-nav";
 import { SiteCard } from "@/components/site-ui/site-card";
 import {
@@ -146,9 +147,11 @@ export function DemoStaffPage({ template }: DemoStaffPageProps) {
       <section className="rounded-2xl border border-slate-200 bg-slate-900 p-5 text-white shadow-sm">
         <p className="text-xs uppercase tracking-[0.16em] text-slate-300">Staff portal</p>
         <h1 className="mt-2 text-3xl font-bold">Staff operations</h1>
-        <p className="mt-2 text-sm text-slate-200">View appointments, manage rota visibility, create manual bookings, and redeem vouchers.</p>
+        <p className="mt-2 text-sm text-slate-200">Staff login is for appointments, manual bookings, voucher checks, and in-store operations. Platform admin is a separate login.</p>
         <div className="mt-4"><DemoSiteNav templateSlug={template.slug} /></div>
       </section>
+
+      <DemoAccessDetailsCard />
 
       <div className="grid gap-4 md:grid-cols-2">
         <SiteCard title="Today’s appointments" subtitle={formatUkDate(today)}>

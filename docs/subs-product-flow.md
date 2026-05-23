@@ -264,3 +264,16 @@ Still mock for infrastructure:
 - Pricing domain tile now explicitly states domain service is optional: only charged when domain registration/management is provided.
 - Homepage FAQ replaced with the longer conversion-focused list covering package scope, domains, previews before payment, branding fallback, hosting responsibility, bookings, staffing, vouchers, and manual bookings.
 - Public positioning remains simple-package and avoids WhatsApp/expense-tracking launch claims.
+
+## Demo login separation and navigation clarity (2026-05)
+- Demo site routes now keep platform admin separate from subscriber site login areas.
+- On `/demo/*` routes, global platform header/footer chrome is hidden so prospects are not pushed into MyExperiment.club platform admin login by mistake.
+- Demo nav labels are now explicit:
+  - Customer login
+  - Staff login
+  - Business admin login
+- Demo access details are shown in-site with preview-only credentials:
+  - demo.customer@example.com / demo123
+  - demo.staff@example.com / demo123
+  - demo.admin@example.com / demo123
+- These credentials are demo-only and do not represent real account provisioning.

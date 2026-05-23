@@ -2,6 +2,7 @@
 
 import { ReactNode, useMemo, useState } from "react";
 import { StaffRotaEditor } from "@/components/calendar/staff-rota-editor";
+import { DemoAccessDetailsCard } from "@/components/demo/demo-access-details-card";
 import { DemoSiteNav } from "@/components/demo/demo-site-nav";
 import { WEEKDAYS } from "@/lib/calendar/calendar-types";
 import { listLocalBusinessClosures, saveLocalBusinessClosures } from "@/lib/calendar/local-closures";
@@ -173,9 +174,11 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
       <section className="rounded-2xl border border-slate-200 bg-slate-900 p-5 text-white shadow-sm">
         <p className="text-xs uppercase tracking-[0.16em] text-slate-300">Business admin portal</p>
         <h1 className="mt-2 text-3xl font-bold">Site owner control centre</h1>
-        <p className="mt-2 text-sm text-slate-200">Manage services, staff setup, booking preferences, vouchers, pages, and team permissions.</p>
+        <p className="mt-2 text-sm text-slate-200">This is the subscriber business-owner admin area for this site. Platform admin for MyExperiment.club is separate.</p>
         <div className="mt-4"><DemoSiteNav templateSlug={template.slug} /></div>
       </section>
+
+      <DemoAccessDetailsCard />
 
       <CollapsibleSection title="Business settings" subtitle="Branding, currency and social profile links.">
         <div className="grid gap-3 sm:grid-cols-2">

@@ -1,6 +1,14 @@
-﻿import { SiteFooterBlock } from "@/components/site-ui/site-footer-block";
+﻿"use client";
+
+import { usePathname } from "next/navigation";
+import { SiteFooterBlock } from "@/components/site-ui/site-footer-block";
 
 export function SiteFooter() {
+  const pathname = usePathname();
+  if (pathname?.startsWith("/demo/")) {
+    return null;
+  }
+
   return (
     <footer className="mt-16 px-4 pb-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
@@ -19,13 +27,13 @@ export function SiteFooter() {
               title: "Portals",
               links: [
                 { label: "Customer login (mock)", href: "/account" },
-                { label: "Admin login (mock)", href: "/admin" },
+                { label: "Platform admin", href: "/admin" },
               ],
             },
             {
               title: "Project",
               links: [
-                { label: "Admin settings", href: "/admin/settings" },
+                { label: "Business site settings demo", href: "/admin/settings" },
                 { label: "Homepage", href: "/" },
               ],
             },
@@ -36,4 +44,3 @@ export function SiteFooter() {
     </footer>
   );
 }
-

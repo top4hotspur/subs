@@ -156,3 +156,12 @@ Add these checks after backend envs are configured:
 - Demo public site (`/demo/[industry]`):
   - verify logo appears in brand area when uploaded
   - verify text-brand fallback is shown when no logo is present
+
+## Hosted smoke additions: demo login/nav clarity
+- Open `/demo/barbers` (and other demo industry routes) and confirm:
+  - demo nav pill text is readable on dark hero
+  - nav shows `Customer login`, `Staff login`, `Business admin login`
+  - links route to `/demo/[industry]/account`, `/staff`, `/admin`
+- Confirm platform admin link is not shown in global header/footer while on `/demo/*` routes.
+- Confirm demo access card is visible and lists preview-only credentials.
+- Confirm `/admin` platform login remains available from non-demo routes.

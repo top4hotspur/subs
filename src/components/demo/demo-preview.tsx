@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
+import { DemoAccessDetailsCard } from "@/components/demo/demo-access-details-card";
 import { DemoSiteNav } from "@/components/demo/demo-site-nav";
 import { SiteBrandMark } from "@/components/site-ui/site-brand-mark";
 import { SiteCard } from "@/components/site-ui/site-card";
@@ -75,9 +76,11 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
           </SiteCard>
           <SiteCard title="Opening hours" subtitle={config.openingHours.summary} />
           <SiteCard title="Portal access" subtitle="Customer, staff, and business admin areas">
-            <p className="text-sm text-slate-600">Secure login areas are available for customers, staff, and site owners.</p>
+            <p className="text-sm text-slate-600">Customer, staff, and business admin logins are available as separate site-scoped demo areas.</p>
           </SiteCard>
         </div>
+
+        <DemoAccessDetailsCard compact />
 
         {socialEntries.length > 0 ? (
           <SiteCard title="Follow us" subtitle="Social media links configured in business admin settings.">

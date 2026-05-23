@@ -113,3 +113,13 @@ Business admin can:
 - Customer-facing demo brand area uses uploaded logo when available.
 - If no logo is set, the site falls back to text branding using the configured business/site display name.
 - Media is local-preview only and not persisted to a production media pipeline in this phase.
+
+## Demo access details (preview-only)
+Business-owner/staff/customer mock routes now display demo credential guidance for hosted reviews:
+- Customer: demo.customer@example.com / demo123
+- Staff: demo.staff@example.com / demo123
+- Business admin: demo.admin@example.com / demo123
+
+Important:
+- These are non-production preview credentials.
+- Platform admin credentials/access code are not shown in demo-site portal UI.

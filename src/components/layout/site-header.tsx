@@ -1,7 +1,15 @@
-﻿import Link from "next/link";
+﻿"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { SiteBrandMark } from "@/components/site-ui/site-brand-mark";
 
 export function SiteHeader() {
+  const pathname = usePathname();
+  if (pathname?.startsWith("/demo/")) {
+    return null;
+  }
+
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
@@ -19,11 +27,10 @@ export function SiteHeader() {
             Customer login
           </Link>
           <Link href="/admin" className="rounded-md px-2 py-1 hover:bg-slate-100 hover:text-slate-900">
-            Admin login
+            Platform admin
           </Link>
         </nav>
       </div>
     </header>
   );
 }
-
