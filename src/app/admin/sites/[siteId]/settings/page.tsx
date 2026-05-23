@@ -15,6 +15,19 @@ import {
   putAdminSitePersistedServices,
   patchAdminSitePersistedSettings,
 } from "@/lib/sites/admin-site-settings-client";
+import {
+  deletePersistedStaffMember,
+  deletePersistedStaffRole,
+  listPersistedStaff,
+  listPersistedStaffRoles,
+  savePersistedStaff,
+  savePersistedStaffRoles,
+} from "@/lib/sites/admin-site-staff-client";
+import type {
+  CustomerSiteStaffMemberRecord,
+  CustomerSiteStaffRoleRecord,
+  WeekdayValue,
+} from "@/lib/sites/customer-site-staff-types";
 import { SITE_VISUAL_TEMPLATES } from "@/lib/sites/site-visual-templates";
 import { SITE_COLOUR_SCHEMES } from "@/lib/sites/site-colour-schemes";
 import { outlineButtonClass, primaryButtonClass, smallButtonClass } from "@/lib/ui/button-styles";
@@ -44,6 +57,30 @@ type PersistedServiceDraft = {
   active: boolean;
   sortOrder: string;
   rolePriceOverrides: string;
+};
+
+type PersistedStaffRoleDraft = {
+  id?: string;
+  label: string;
+  platformRole: string;
+  active: boolean;
+  sortOrder: string;
+};
+
+type PersistedStaffMemberDraft = {
+  id?: string;
+  roleId: string;
+  displayName: string;
+  roleLabel: string;
+  email: string;
+  phone: string;
+  bio: string;
+  active: boolean;
+  customerSelectable: boolean;
+  isSuperUser: boolean;
+  availableWeekdays: WeekdayValue[];
+  notes: string;
+  sortOrder: string;
 };
 
 function toMessage(error: string, status: number): string {
@@ -105,6 +142,74 @@ function emptyServiceDraft(sortOrder: number): PersistedServiceDraft {
   };
 }
 
+const weekdayValues: WeekdayValue[] = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+];
+
+function weekdayLabel(weekday: WeekdayValue): string {
+  return weekday.charAt(0).toUpperCase() + weekday.slice(1);
+}
+
+function toStaffRoleDraft(role: CustomerSiteStaffRoleRecord): PersistedStaffRoleDraft {
+  return {
+    id: role.id,
+    label: role.label,
+    platformRole: role.platformRole ?? "",
+    active: role.active,
+    sortOrder: String(role.sortOrder),
+  };
+}
+
+function emptyStaffRoleDraft(sortOrder: number): PersistedStaffRoleDraft {
+  return {
+    label: "",
+    platformRole: "",
+    active: true,
+    sortOrder: String(sortOrder),
+  };
+}
+
+function toStaffMemberDraft(member: CustomerSiteStaffMemberRecord): PersistedStaffMemberDraft {
+  return {
+    id: member.id,
+    roleId: member.roleId ?? "",
+    displayName: member.displayName,
+    roleLabel: member.roleLabel ?? "",
+    email: member.email ?? "",
+    phone: member.phone ?? "",
+    bio: member.bio ?? "",
+    active: member.active,
+    customerSelectable: member.customerSelectable,
+    isSuperUser: member.isSuperUser,
+    availableWeekdays: member.availableWeekdays ?? [],
+    notes: member.notes ?? "",
+    sortOrder: String(member.sortOrder),
+  };
+}
+
+function emptyStaffMemberDraft(sortOrder: number): PersistedStaffMemberDraft {
+  return {
+    roleId: "",
+    displayName: "",
+    roleLabel: "",
+    email: "",
+    phone: "",
+    bio: "",
+    active: true,
+    customerSelectable: false,
+    isSuperUser: false,
+    availableWeekdays: [],
+    notes: "",
+    sortOrder: String(sortOrder),
+  };
+}
+
 export default function AdminSiteSettingsPage() {
   const params = useParams<{ siteId: string }>();
   const siteId = typeof params?.siteId === "string" ? params.siteId : "";
@@ -118,6 +223,8 @@ export default function AdminSiteSettingsPage() {
     toSettingsDraft(null),
   );
   const [servicesDraft, setServicesDraft] = useState<PersistedServiceDraft[]>([]);
+  const [staffRolesDraft, setStaffRolesDraft] = useState<PersistedStaffRoleDraft[]>([]);
+  const [staffMembersDraft, setStaffMembersDraft] = useState<PersistedStaffMemberDraft[]>([]);
 
   const allowedPalettes = useMemo(() => {
     const theme = SITE_VISUAL_TEMPLATES.find((item) => item.id === settingsDraft.visualThemeId);
@@ -138,10 +245,12 @@ export default function AdminSiteSettingsPage() {
       setError(null);
       setMessage(null);
 
-      const [detailResult, settingsResult, servicesResult] = await Promise.all([
+      const [detailResult, settingsResult, servicesResult, rolesResult, staffResult] = await Promise.all([
         getAdminTenantSiteDetail(siteId),
         getAdminSitePersistedSettings(siteId),
         getAdminSitePersistedServices(siteId),
+        listPersistedStaffRoles(siteId),
+        listPersistedStaff(siteId),
       ]);
 
       if (!active) return;
@@ -165,9 +274,21 @@ export default function AdminSiteSettingsPage() {
         setLoading(false);
         return;
       }
+      if (!rolesResult.ok) {
+        setError(toMessage(rolesResult.error, rolesResult.status));
+        setLoading(false);
+        return;
+      }
+      if (!staffResult.ok) {
+        setError(toMessage(staffResult.error, staffResult.status));
+        setLoading(false);
+        return;
+      }
 
       setSettingsDraft(toSettingsDraft(settingsResult.settings));
       setServicesDraft(servicesResult.services.map(toServiceDraft));
+      setStaffRolesDraft(rolesResult.roles.map(toStaffRoleDraft));
+      setStaffMembersDraft(staffResult.staff.map(toStaffMemberDraft));
       setLoading(false);
     }
 
@@ -243,6 +364,83 @@ export default function AdminSiteSettingsPage() {
 
     setServicesDraft(result.services.map(toServiceDraft));
     setMessage("Persisted services saved.");
+  }
+
+  async function savePersistedStaffRolesSection(): Promise<void> {
+    if (!siteId) return;
+    setMessage("Saving persisted staff roles...");
+
+    const payload = staffRolesDraft.map((role, index) => ({
+      id: role.id,
+      label: role.label.trim(),
+      platformRole: role.platformRole.trim() || null,
+      active: role.active,
+      sortOrder: role.sortOrder.trim() ? Number(role.sortOrder) : index,
+    }));
+
+    const result = await savePersistedStaffRoles(siteId, payload);
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status));
+      return;
+    }
+
+    setStaffRolesDraft(result.roles.map(toStaffRoleDraft));
+    setMessage("Persisted staff roles saved.");
+  }
+
+  async function savePersistedStaffMembersSection(): Promise<void> {
+    if (!siteId) return;
+    setMessage("Saving persisted staff members...");
+
+    const payload = staffMembersDraft.map((member, index) => ({
+      id: member.id,
+      roleId: member.roleId.trim() || null,
+      displayName: member.displayName.trim(),
+      roleLabel: member.roleLabel.trim() || null,
+      email: member.email.trim() || null,
+      phone: member.phone.trim() || null,
+      bio: member.bio.trim() || null,
+      active: member.active,
+      customerSelectable: member.customerSelectable,
+      isSuperUser: member.isSuperUser,
+      availableWeekdays: member.availableWeekdays,
+      notes: member.notes.trim() || null,
+      sortOrder: member.sortOrder.trim() ? Number(member.sortOrder) : index,
+    }));
+
+    const result = await savePersistedStaff(siteId, payload);
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status));
+      return;
+    }
+
+    setStaffMembersDraft(result.staff.map(toStaffMemberDraft));
+    setMessage("Persisted staff members saved.");
+  }
+
+  async function deleteRole(id?: string): Promise<void> {
+    if (!siteId || !id) return;
+    const result = await deletePersistedStaffRole(siteId, id);
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status));
+      return;
+    }
+    setStaffRolesDraft((current) => current.filter((role) => role.id !== id));
+    setStaffMembersDraft((current) =>
+      current.map((member) => (member.roleId === id ? { ...member, roleId: "" } : member)),
+    );
+    setMessage("Staff role deleted. Linked staff role references were cleared.");
+  }
+
+  async function deleteStaff(id?: string): Promise<void> {
+    if (!siteId || !id) return;
+    const result = await deletePersistedStaffMember(siteId, id);
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status));
+      return;
+    }
+    setStaffMembersDraft((current) => current.filter((member) => member.id !== id));
+    setMessage("Staff member deleted.");
   }
 
   return (
@@ -412,6 +610,191 @@ export default function AdminSiteSettingsPage() {
               <button type="button" className={`${primaryButtonClass} ${smallButtonClass}`} onClick={savePersistedServices}>
                 Save persisted services
               </button>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-xl font-semibold text-slate-900">Persisted staff and roles</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Rota, breaks and holidays are still local/demo only and will be persisted in a later pass.
+            </p>
+
+            <div className="mt-4 grid gap-6 lg:grid-cols-2">
+              <div>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-sm font-semibold text-slate-900">Staff roles/positions</h3>
+                  <button
+                    type="button"
+                    className={`${outlineButtonClass} ${smallButtonClass}`}
+                    onClick={() => setStaffRolesDraft((current) => [...current, emptyStaffRoleDraft(current.length)])}
+                  >
+                    Add role
+                  </button>
+                </div>
+
+                <div className="mt-3 space-y-2">
+                  {staffRolesDraft.length === 0 ? (
+                    <p className="text-sm text-slate-600">No persisted roles yet.</p>
+                  ) : (
+                    staffRolesDraft.map((role, index) => (
+                      <div key={`${role.id ?? "new"}-${index}`} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <label className="text-xs font-semibold text-slate-700">Label
+                            <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={role.label} onChange={(event) => setStaffRolesDraft((current) => current.map((row, i) => i === index ? { ...row, label: event.target.value } : row))} />
+                          </label>
+                          <label className="text-xs font-semibold text-slate-700">Platform role
+                            <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={role.platformRole} onChange={(event) => setStaffRolesDraft((current) => current.map((row, i) => i === index ? { ...row, platformRole: event.target.value } : row))} />
+                          </label>
+                          <label className="text-xs font-semibold text-slate-700">Sort order
+                            <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={role.sortOrder} onChange={(event) => setStaffRolesDraft((current) => current.map((row, i) => i === index ? { ...row, sortOrder: event.target.value } : row))} />
+                          </label>
+                          <label className="mt-5 flex items-center gap-2 text-xs font-semibold text-slate-700">
+                            <input type="checkbox" checked={role.active} onChange={(event) => setStaffRolesDraft((current) => current.map((row, i) => i === index ? { ...row, active: event.target.checked } : row))} />
+                            Active
+                          </label>
+                        </div>
+                        <div className="mt-2 flex gap-2">
+                          <button
+                            type="button"
+                            className="rounded-md border border-rose-300 bg-white px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50"
+                            onClick={() => {
+                              if (role.id) {
+                                void deleteRole(role.id);
+                              } else {
+                                setStaffRolesDraft((current) => current.filter((_, i) => i !== index));
+                              }
+                            }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="mt-3">
+                  <button type="button" className={`${primaryButtonClass} ${smallButtonClass}`} onClick={savePersistedStaffRolesSection}>
+                    Save persisted roles
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-sm font-semibold text-slate-900">Staff members</h3>
+                  <button
+                    type="button"
+                    className={`${outlineButtonClass} ${smallButtonClass}`}
+                    onClick={() => setStaffMembersDraft((current) => [...current, emptyStaffMemberDraft(current.length)])}
+                  >
+                    Add staff member
+                  </button>
+                </div>
+
+                <div className="mt-3 space-y-2">
+                  {staffMembersDraft.length === 0 ? (
+                    <p className="text-sm text-slate-600">No persisted staff yet.</p>
+                  ) : (
+                    staffMembersDraft.map((member, index) => (
+                      <div key={`${member.id ?? "new"}-${index}`} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <label className="text-xs font-semibold text-slate-700">Name
+                            <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={member.displayName} onChange={(event) => setStaffMembersDraft((current) => current.map((row, i) => i === index ? { ...row, displayName: event.target.value } : row))} />
+                          </label>
+                          <label className="text-xs font-semibold text-slate-700">Role
+                            <select className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={member.roleId} onChange={(event) => setStaffMembersDraft((current) => current.map((row, i) => i === index ? { ...row, roleId: event.target.value } : row))}>
+                              <option value="">None</option>
+                              {staffRolesDraft.map((role, roleIndex) => (
+                                <option key={`${role.id ?? "new-role"}-${roleIndex}`} value={role.id ?? ""}>{role.label || "Untitled role"}</option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="text-xs font-semibold text-slate-700">Role label fallback
+                            <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={member.roleLabel} onChange={(event) => setStaffMembersDraft((current) => current.map((row, i) => i === index ? { ...row, roleLabel: event.target.value } : row))} />
+                          </label>
+                          <label className="text-xs font-semibold text-slate-700">Email
+                            <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={member.email} onChange={(event) => setStaffMembersDraft((current) => current.map((row, i) => i === index ? { ...row, email: event.target.value } : row))} />
+                          </label>
+                          <label className="text-xs font-semibold text-slate-700">Phone
+                            <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={member.phone} onChange={(event) => setStaffMembersDraft((current) => current.map((row, i) => i === index ? { ...row, phone: event.target.value } : row))} />
+                          </label>
+                          <label className="text-xs font-semibold text-slate-700">Sort order
+                            <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={member.sortOrder} onChange={(event) => setStaffMembersDraft((current) => current.map((row, i) => i === index ? { ...row, sortOrder: event.target.value } : row))} />
+                          </label>
+                          <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Bio
+                            <textarea className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" rows={2} value={member.bio} onChange={(event) => setStaffMembersDraft((current) => current.map((row, i) => i === index ? { ...row, bio: event.target.value } : row))} />
+                          </label>
+                          <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Notes
+                            <textarea className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" rows={2} value={member.notes} onChange={(event) => setStaffMembersDraft((current) => current.map((row, i) => i === index ? { ...row, notes: event.target.value } : row))} />
+                          </label>
+                          <div className="sm:col-span-2">
+                            <p className="text-xs font-semibold text-slate-700">Available weekdays</p>
+                            <div className="mt-1 flex flex-wrap gap-2">
+                              {weekdayValues.map((weekday) => (
+                                <label key={weekday} className="flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700">
+                                  <input
+                                    type="checkbox"
+                                    checked={member.availableWeekdays.includes(weekday)}
+                                    onChange={(event) => {
+                                      setStaffMembersDraft((current) =>
+                                        current.map((row, i) =>
+                                          i === index
+                                            ? {
+                                                ...row,
+                                                availableWeekdays: event.target.checked
+                                                  ? [...row.availableWeekdays, weekday]
+                                                  : row.availableWeekdays.filter((item) => item !== weekday),
+                                              }
+                                            : row,
+                                        ),
+                                      );
+                                    }}
+                                  />
+                                  {weekdayLabel(weekday)}
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                          <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                            <input type="checkbox" checked={member.active} onChange={(event) => setStaffMembersDraft((current) => current.map((row, i) => i === index ? { ...row, active: event.target.checked } : row))} />
+                            Active
+                          </label>
+                          <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                            <input type="checkbox" checked={member.customerSelectable} onChange={(event) => setStaffMembersDraft((current) => current.map((row, i) => i === index ? { ...row, customerSelectable: event.target.checked } : row))} />
+                            Customer selectable
+                          </label>
+                          <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                            <input type="checkbox" checked={member.isSuperUser} onChange={(event) => setStaffMembersDraft((current) => current.map((row, i) => i === index ? { ...row, isSuperUser: event.target.checked } : row))} />
+                            Super user
+                          </label>
+                        </div>
+                        <div className="mt-2">
+                          <button
+                            type="button"
+                            className="rounded-md border border-rose-300 bg-white px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50"
+                            onClick={() => {
+                              if (member.id) {
+                                void deleteStaff(member.id);
+                              } else {
+                                setStaffMembersDraft((current) => current.filter((_, i) => i !== index));
+                              }
+                            }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="mt-3">
+                  <button type="button" className={`${primaryButtonClass} ${smallButtonClass}`} onClick={savePersistedStaffMembersSection}>
+                    Save persisted staff
+                  </button>
+                </div>
+              </div>
             </div>
           </section>
 

@@ -475,3 +475,25 @@ Admin/API surface:
 Admin UI:
 - `/admin/sites/[siteId]/settings` now includes a clearly labeled persisted editor section for this scope.
 - Existing demo/local settings preview remains available on the same page for continuity.
+
+## New milestone: persisted subscriber staff roles and staff members (2026-05-23)
+Scope of this backend pass:
+- Persist per-tenant staff role/position definitions.
+- Persist per-tenant staff members, including availability weekdays and key flags.
+
+In scope models:
+- CustomerSiteStaffRole
+- CustomerSiteStaffMember
+
+In scope API routes:
+- GET/PUT/POST `/api/admin/sites/[id]/staff-roles`
+- DELETE `/api/admin/sites/[id]/staff-roles/[roleId]`
+- GET/PUT/POST `/api/admin/sites/[id]/staff`
+- DELETE `/api/admin/sites/[id]/staff/[staffId]`
+
+Still out of scope (local/demo only):
+- rota days, breaks, holidays, closures
+- vouchers/pages/policies/social
+- bookings/customers/accounts
+- file/logo storage
+- real subscriber auth roles

@@ -74,3 +74,17 @@ Added Prisma models:
 Indexes/relations:
 - CustomerSiteSettings.tenantSiteId unique FK -> TenantSite
 - CustomerSiteService indexed by tenantSiteId, active, sortOrder
+
+## Persisted staff models (Postgres)
+Added Prisma models:
+- CustomerSiteStaffRole
+  - tenantSiteId, label, platformRole, active, sortOrder
+- CustomerSiteStaffMember
+  - tenantSiteId, roleId (optional), displayName, roleLabel
+  - email, phone, bio, active, customerSelectable, isSuperUser
+  - availableWeekdays (Json array), serviceIds (Json), notes, sortOrder
+
+Tenant scoping/indexes:
+- both models indexed by tenantSiteId, active, sortOrder
+- staff members indexed by roleId
+- role delete behavior preserves member roleLabel fallback while clearing roleId

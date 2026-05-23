@@ -91,3 +91,17 @@ Persisted now:
 
 Still local/mock in this phase:
 - staff, rota, closures, vouchers, pages/policies content, payments integration, files/logos, customer bookings/accounts.
+
+## Persisted staff and roles (narrow milestone)
+- `/admin/sites/[siteId]/settings` now includes a persisted staff/roles section tied to TenantSite.
+- Platform-admin session is used for support/provisioning editing in this phase.
+
+Persisted now:
+- staff role definitions (label, platformRole, active, sortOrder)
+- staff members (role linkage, contact fields, active/customerSelectable/isSuperUser, availableWeekdays, notes, sortOrder)
+
+Current delete/deactivation behavior:
+- deleting a role clears `roleId` for linked staff and preserves `roleLabel` fallback text.
+
+Still local/demo in this phase:
+- rota/breaks/holidays/closures and other business-owner modules.

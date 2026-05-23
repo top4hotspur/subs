@@ -275,3 +275,15 @@ Add these checks after backend envs are configured:
   - add/edit/remove service rows and save persisted services.
 - Reload page and confirm persisted values remain.
 - Confirm note remains visible that staff/rota/pages/vouchers/policies are still local/demo in this milestone.
+
+## Hosted smoke additions: persisted staff roles and staff
+- Open `/admin/sites/[siteId]/settings` and confirm `Persisted staff and roles` section loads.
+- Roles:
+  - add/edit/remove role
+  - save and reload confirms persistence
+- Staff:
+  - add/edit/remove staff member
+  - set role, active/customerSelectable/superUser flags
+  - set available weekdays and notes
+  - save and reload confirms persistence
+- Confirm note states rota/breaks/holidays are still local/demo only.

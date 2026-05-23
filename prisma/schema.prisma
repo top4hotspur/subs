@@ -30,6 +30,8 @@ model TenantSite {
   subscriptions             SubscriptionRecord[]
   customerSiteSettings      CustomerSiteSettings?
   customerSiteServices      CustomerSiteService[]
+  customerSiteStaffRoles    CustomerSiteStaffRole[]
+  customerSiteStaffMembers  CustomerSiteStaffMember[]
   setupRequest              SetupRequest?          @relation("SetupRequestToTenantSite", fields: [setupRequestId], references: [id])
 }
 
@@ -247,4 +249,48 @@ model CustomerSiteService {
   @@index([tenantSiteId])
   @@index([active])
   @@index([sortOrder])
+}
+
+model CustomerSiteStaffRole {
+  id           String     @id @default(cuid())
+  tenantSiteId String
+  label        String
+  platformRole String?
+  active       Boolean    @default(true)
+  sortOrder    Int        @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  tenantSite   TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  staffMembers CustomerSiteStaffMember[]
+
+  @@index([tenantSiteId])
+  @@index([tenantSiteId, active])
+  @@index([tenantSiteId, sortOrder])
+}
+
+model CustomerSiteStaffMember {
+  id                String                 @id @default(cuid())
+  tenantSiteId      String
+  roleId            String?
+  displayName       String
+  roleLabel         String?
+  email             String?
+  phone             String?
+  bio               String?
+  active            Boolean                @default(true)
+  customerSelectable Boolean               @default(false)
+  isSuperUser       Boolean                @default(false)
+  availableWeekdays Json?
+  serviceIds        Json?
+  notes             String?
+  sortOrder         Int                    @default(0)
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  tenantSite        TenantSite             @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  role              CustomerSiteStaffRole? @relation(fields: [roleId], references: [id], onDelete: SetNull)
+
+  @@index([tenantSiteId])
+  @@index([tenantSiteId, active])
+  @@index([tenantSiteId, sortOrder])
+  @@index([roleId])
 }

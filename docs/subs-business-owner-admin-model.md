@@ -195,3 +195,10 @@ Important:
 - Current persisted editor is platform-admin support/provisioning only (`/admin/sites/[siteId]/settings`).
 - Future subscriber business-admin auth/portal should assume ownership of these persisted records.
 - Other business-admin modules remain local/mock until later milestones.
+
+## Persisted staff bridge (current milestone)
+- Added tenant-scoped persisted entities:
+  - CustomerSiteStaffRole
+  - CustomerSiteStaffMember
+- Persisted staff editor is now available in platform-admin support route `/admin/sites/[siteId]/settings`.
+- Rota/breaks/holidays remain local/mock and are the next persistence milestone.

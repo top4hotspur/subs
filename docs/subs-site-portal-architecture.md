@@ -155,3 +155,8 @@ See also:
 - Editing surface is currently exposed under platform-admin support route `/admin/sites/[siteId]/settings` for provisioning/testing.
 - Target architecture remains unchanged: subscriber business admin is the eventual owner/operator of these settings.
 - Demo route `/demo/[industry]/admin` remains local/mock and is not yet backed by these persisted records.
+
+## Persisted staff layer (support/provisioning phase)
+- Staff roles and staff members now have tenant-scoped persisted models under TenantSite.
+- Persisted editing currently lives under platform-admin support route `/admin/sites/[siteId]/settings`.
+- Demo business-admin (`/demo/[industry]/admin`) remains local/mock for rota and broader operational modules in this milestone.
