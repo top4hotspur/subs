@@ -19,6 +19,12 @@ function normalizeSettings(settings: CustomerSiteSettings): CustomerSiteSettings
   return {
     ...settings,
     paymentSettings: {
+      paymentProcessorSetupMode:
+        settings.paymentSettings?.paymentProcessorSetupMode ??
+        "MANUAL_RECORDING_ONLY",
+      existingProcessorName:
+        settings.paymentSettings?.existingProcessorName ?? "",
+      processorSetupNotes: settings.paymentSettings?.processorSetupNotes ?? "",
       cardPaymentsEnabled: settings.paymentSettings?.cardPaymentsEnabled ?? true,
       cashPaymentsEnabled: settings.paymentSettings?.cashPaymentsEnabled ?? false,
       requirePrepaymentForBookings: settings.paymentSettings?.requirePrepaymentForBookings ?? true,

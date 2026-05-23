@@ -149,3 +149,11 @@ Important:
 - Visual template and colour scheme changes in `/demo/[industry]/admin` now save immediately in local mock settings.
 - Customer-facing `/demo/[industry]` re-reads local settings so selected template/scheme changes are reflected consistently.
 - Available colour schemes now include Calm Blue, Fresh Green, Warm Coral, and Midnight Lime (dark premium option).
+
+## Payment processor setup intent (local mock)
+- Demo business admin now includes setup choices:
+  - Existing processor
+  - Need help setting one up
+  - Manual recording only for now
+- Existing processor name and setup notes can be captured locally.
+- This is configuration intent only and does not connect Stripe/Square/PayPal APIs in this phase.

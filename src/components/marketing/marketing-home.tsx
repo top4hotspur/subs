@@ -37,7 +37,7 @@ const industryGroups: Array<{
 ];
 
 const leadTrustPoint = {
-  title: "Business tools included",
+  title: "Includes ALL business tools",
   detail: "Manage services, prices, staff, rota, availability and customer requests in one place.",
 };
 
@@ -52,19 +52,21 @@ const trustPoints = [
   },
   {
     title: "Managed setup and hosting",
-    detail: "We help with setup, hosting and domain guidance so you are not left handling technical overhead.",
+    detail: "We set up, host and manage your site, leaving you to focus on growing your business.",
   },
   {
-    title: "One simple package",
-    detail: "No confusing tiers. One full-feature website subscription for one monthly price.",
+    title: "Customer communication",
+    detail:
+      "Stay in touch with customers directly. Automatically confirm bookings, email special offers etc all from your brand new website.",
   },
   {
     title: "Lower-cost alternative",
     detail: "Avoid piecing together separate booking tools, website maintenance and agency support.",
   },
   {
-    title: "Fast launch target",
-    detail: "Once your details and domain are ready, we aim to get your site live within a day.",
+    title: "Fast launch",
+    detail:
+      "From sign up, your site should be live and ready to take orders within a day!",
   },
 ];
 
@@ -113,6 +115,14 @@ const faqs = [
     q: "Do I need to be a tech expert to make changes to my services or pricing?",
     a: "Not at all. You have access to a simple services, products, and pricing editor where you can easily update your offerings, including setting different prices for different staff roles.",
   },
+  {
+    q: "What if I get stuck?",
+    a: "Support is on hand to help you get up and running as quickly as possible. We guide you through setup, domain questions, and the key information needed to get your site live.",
+  },
+  {
+    q: "How do payment processors work?",
+    a: "You can use an existing payment processor, ask us to help you set one up, or begin by recording payments manually until you are ready. The aim is to make the transition as smooth as possible without forcing you into one provider.",
+  },
 ];
 
 export function MarketingHome() {
@@ -126,23 +136,23 @@ export function MarketingHome() {
         <SiteHero
           title="Managed websites and booking tools for local service businesses"
           subtitle="Choose your industry, preview a working demo, and get a professional website with booking/request tools, customer features and ongoing support - all in one simple monthly package."
-          helperText="£149 setup + £30/month. Full managed website included. Live-site target within a day once details and domain are ready."
+          helperText="£149 setup + £30/month. Full managed website included. Live-site target within a day once domain name has been confirmed."
           actions={(
             <>
               <Link href="#industries" className={primaryButtonClass}>
                 Choose your business type
               </Link>
-              <Link href="/demo/barbers" className={secondaryButtonClass}>
+              <Link href="/demo/barbers" className={`${secondaryButtonClass} !text-slate-950`}>
                 View example demo
               </Link>
-              <Link href="#how-it-works" className={secondaryButtonClass}>
+              <Link href="#how-it-works" className={`${secondaryButtonClass} !text-slate-950`}>
                 How it works
               </Link>
             </>
           )}
         />
 
-        <SiteSection title="More than just a website. A complete toolkit for your service business.">
+        <SiteSection title="More than just a website. A complete toolkit for your business.">
           <p className="text-slate-600">
             Get a professional, fully managed online presence designed around how your business actually works. We handle setup, hosting and ongoing maintenance so you can focus on customers, bookings and day-to-day service.
           </p>
@@ -176,9 +186,9 @@ export function MarketingHome() {
             {[
               "Choose your business type",
               "View the demo",
-              "Customise your demo",
-              "Start setup",
-              "We configure and host the site",
+              "Place order (with domain details)",
+              "Your site is built",
+              "Customise the look and feel of your business and add services, pricing, staff etc",
             ].map((step, index) => (
               <li key={step} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Step {index + 1}</p>

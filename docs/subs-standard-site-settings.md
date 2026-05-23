@@ -108,6 +108,16 @@ for browser-local issue/check/redeem demo workflows.
 - appointmentSettings.appointmentSlotIntervalMinutes supports `15`, `30`, or `60` minute slot blocks.
 - appointmentSettings.allowCustomerStaffSelection controls whether customers see preferred-staff selection in booking forms.
 
+## Payment processor setup intent (local mock)
+- `paymentSettings.paymentProcessorSetupMode`:
+  - `EXISTING_PROCESSOR`
+  - `NEED_HELP_SETUP`
+  - `MANUAL_RECORDING_ONLY`
+- Optional local notes fields:
+  - `paymentSettings.existingProcessorName`
+  - `paymentSettings.processorSetupNotes`
+- This captures setup intent only; no real payment processor integration is enabled in this phase.
+
 
 ## Branding controls (local demo)
 Business site settings demo now includes branding controls for:

@@ -263,6 +263,26 @@ Still mock for infrastructure:
 - Value section now leads with a wide `Business tools included` tile above supporting value tiles.
 - Pricing domain tile now explicitly states domain service is optional: only charged when domain registration/management is provided.
 - Homepage FAQ replaced with the longer conversion-focused list covering package scope, domains, previews before payment, branding fallback, hosting responsibility, bookings, staffing, vouchers, and manual bookings.
+- Homepage hero CTA readability updated so `View example demo` and `How it works` match high-contrast button treatment.
+- Homepage trust/value copy updated:
+  - `More than just a website. A complete toolkit for your business.`
+  - lead tile title now `Includes ALL business tools`
+  - `Managed setup and hosting` and `Fast launch` copy refreshed
+  - `One simple package` tile replaced with `Customer communication`
+- Pricing copy updated:
+  - intro now emphasizes no expensive tiers and one recurring monthly fee
+  - domain tile explicitly states optional charge only when a new domain registration is needed
+  - go-live helper wording now references confirmed domain name
+- How-it-works steps now follow:
+  1. Choose your business type
+  2. View the demo
+  3. Place order (with domain details)
+  4. Your site is built
+  5. Customise look/feel, services, pricing, and staff
+- New FAQ entries:
+  - `What if I get stuck?`
+  - `How do payment processors work?`
+- Demo business admin payments section now includes payment processor setup intent options (existing processor / need help / manual recording) with notes, local mock only.
 - Public positioning remains simple-package and avoids WhatsApp/expense-tracking launch claims.
 
 ## Demo login separation and navigation clarity (2026-05)

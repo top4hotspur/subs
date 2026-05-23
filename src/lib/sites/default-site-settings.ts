@@ -139,6 +139,9 @@ export function buildDefaultCustomerSiteSettings(template: WebsiteTemplate): Cus
       reviewRequestEnabled: true,
     },
     paymentSettings: {
+      paymentProcessorSetupMode: "MANUAL_RECORDING_ONLY",
+      existingProcessorName: "",
+      processorSetupNotes: "",
       cardPaymentsEnabled: true,
       cashPaymentsEnabled: false,
       requirePrepaymentForBookings: true,

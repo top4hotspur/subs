@@ -145,6 +145,7 @@ Add these checks after backend envs are configured:
 ## Hosted smoke additions: homepage and business branding controls (2026-05)
 - Homepage:
   - verify first hero CTA row is readable in light/dark states
+  - verify `View example demo` and `How it works` are as readable as `Choose your business type`
   - verify `Business tools included` appears as lead wide tile in value section
   - verify domain tile reads as optional domain service
   - verify updated long FAQ list is visible
@@ -189,3 +190,13 @@ Add these checks after backend envs are configured:
   - verify CSV operational tools are removed
   - verify guidance points users to business admin for imports
 - Repeat spot checks on `/demo/window-cleaning`, `/demo/bus-hire`, `/demo/tutors`.
+
+## Hosted smoke additions: payment setup intent (demo admin)
+- Open `/demo/barbers/admin` > `Payments/sales`.
+- Confirm payment processor setup option list appears:
+  - existing processor
+  - need help setting one up
+  - manual recording only for now
+- If `existing processor` is selected, verify processor name input is shown.
+- Confirm setup notes field can be edited and saved locally.
+- Confirm helper note states no real provider connection is active.

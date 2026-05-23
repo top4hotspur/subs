@@ -20,7 +20,7 @@ export function SimpleOfferCard({ industrySlug, ctaLabel, showCta = true }: Simp
       </p>
       <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">No confusing packages</h2>
       <p className="mt-3 max-w-3xl text-slate-600">
-        The demo you customise is the site we build for you. Everything starts with one professional managed offer.
+        No expensive tiers or missing features. Everything is included for one recurring monthly fee.
       </p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -37,12 +37,12 @@ export function SimpleOfferCard({ industrySlug, ctaLabel, showCta = true }: Simp
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Domain service</p>
           <p className="mt-2 text-2xl font-semibold text-slate-900">£{offer.domainRegistrationFeeGbp}</p>
-          <p className="text-sm text-slate-600">optional - only if we register/manage your domain</p>
+          <p className="text-sm text-slate-600">optional - only if you need us to register a new domain.</p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Go-live target</p>
           <p className="mt-2 text-2xl font-semibold text-slate-900">Within a day</p>
-          <p className="text-sm text-slate-600">once details and domain are ready</p>
+          <p className="text-sm text-slate-600">Once domain name has been confirmed.</p>
         </div>
       </div>
 

@@ -1098,10 +1098,86 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
       </CollapsibleSection>
 
       <CollapsibleSection title="Payments/sales" subtitle="Local-only operational sales recording preferences.">
+        <div className="mb-3 space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3">
+          <label className="text-xs font-semibold text-slate-700">
+            Payment processor setup
+            <select
+              className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+              value={settings.paymentSettings.paymentProcessorSetupMode}
+              onChange={(event) =>
+                setSettings((current) => ({
+                  ...current,
+                  paymentSettings: {
+                    ...current.paymentSettings,
+                    paymentProcessorSetupMode: event.target.value as
+                      | "EXISTING_PROCESSOR"
+                      | "NEED_HELP_SETUP"
+                      | "MANUAL_RECORDING_ONLY",
+                  },
+                }))
+              }
+            >
+              <option value="EXISTING_PROCESSOR">I already have a payment processor</option>
+              <option value="NEED_HELP_SETUP">I need help setting one up</option>
+              <option value="MANUAL_RECORDING_ONLY">
+                I only want to record payments manually for now
+              </option>
+            </select>
+          </label>
+
+          {settings.paymentSettings.paymentProcessorSetupMode ===
+          "EXISTING_PROCESSOR" ? (
+            <label className="text-xs font-semibold text-slate-700">
+              Existing processor
+              <input
+                className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                placeholder="Stripe, Square, SumUp, PayPal, Other"
+                value={settings.paymentSettings.existingProcessorName ?? ""}
+                onChange={(event) =>
+                  setSettings((current) => ({
+                    ...current,
+                    paymentSettings: {
+                      ...current.paymentSettings,
+                      existingProcessorName: event.target.value,
+                    },
+                  }))
+                }
+              />
+            </label>
+          ) : null}
+
+          <label className="text-xs font-semibold text-slate-700">
+            Processor/setup notes
+            <textarea
+              rows={2}
+              className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+              placeholder="Add any payment setup notes for this business."
+              value={settings.paymentSettings.processorSetupNotes ?? ""}
+              onChange={(event) =>
+                setSettings((current) => ({
+                  ...current,
+                  paymentSettings: {
+                    ...current.paymentSettings,
+                    processorSetupNotes: event.target.value,
+                  },
+                }))
+              }
+            />
+          </label>
+          <p className="text-xs text-slate-600">
+            This does not connect a payment provider yet. It records how the business plans to
+            take payments and helps prepare setup.
+          </p>
+        </div>
+
         <label className="flex items-center gap-2 text-sm text-slate-700">
           <input type="checkbox" checked={settings.paymentSettings.allowInStorePaymentRecording} onChange={(event) => setSettings((current) => ({ ...current, paymentSettings: { ...current.paymentSettings, allowInStorePaymentRecording: event.target.checked } }))} />
           Allow in-store payment recording
         </label>
+        <div className="mt-2 rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-600">
+          Card/cash/manual payment recording preferences can be configured here for local mock
+          setup.
+        </div>
         <p className="mt-2 text-xs text-slate-600">Shows a staff tool for recording cash/card payments taken in store. This does not process payments, but allows for accurate finance reporting.</p>
       </CollapsibleSection>
 

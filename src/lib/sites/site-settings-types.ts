@@ -159,6 +159,12 @@ export type SiteAnalyticsSettings = {
 export type SiteCurrencyCode = "GBP" | "EUR" | "USD";
 
 export type SitePaymentSettings = {
+  paymentProcessorSetupMode:
+    | "EXISTING_PROCESSOR"
+    | "NEED_HELP_SETUP"
+    | "MANUAL_RECORDING_ONLY";
+  existingProcessorName?: string;
+  processorSetupNotes?: string;
   cardPaymentsEnabled: boolean;
   cashPaymentsEnabled: boolean;
   requirePrepaymentForBookings: boolean;

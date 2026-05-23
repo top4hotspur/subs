@@ -70,6 +70,8 @@ Default theme remains neutral so it suits all 14 launch industries. Customer-spe
 - Homepage hero buttons now use explicit high-contrast hierarchy to prevent low-contrast text on light surfaces.
 - Trust/value block now features a lead wide tile (`Business tools included`) above secondary value tiles.
 - FAQ content was replaced with an expanded sales-focused set while keeping claims aligned to current product state.
+- Hero CTA readability pass also enforces high-contrast text on `View example demo` and `How it works`.
+- Trust/value lead tile wording is now `Includes ALL business tools` with updated supporting conversion copy.
 
 ## Demo visual system variants
 Customer-facing `/demo/[industry]` now supports multiple visual layout modes (selected from business admin):
