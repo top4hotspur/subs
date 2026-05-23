@@ -77,3 +77,17 @@ This workflow turns a persisted setup request into a persisted subscriber site r
 - Start site setup and provisioning updates now require authenticated platform-admin session.
 - `/admin/sites?siteId=<id>` deep-link behavior remains in place after authenticated navigation.
 - No real domain automation, Stripe, or messaging integration in this milestone.
+
+## Persisted subscriber settings (first narrow backend step)
+- Subscriber-site records can now store initial persisted settings and services under a selected TenantSite.
+- Persisted section is available at `/admin/sites/[siteId]/settings`.
+- This editor is support/provisioning-focused until subscriber business-owner auth is introduced.
+
+Persisted now:
+- site display/branding basics
+- visual theme id and colour palette id
+- currency
+- services (name, description, basePrice, duration, bufferAfter, active, sortOrder, rolePriceOverrides JSON)
+
+Still local/mock in this phase:
+- staff, rota, closures, vouchers, pages/policies content, payments integration, files/logos, customer bookings/accounts.

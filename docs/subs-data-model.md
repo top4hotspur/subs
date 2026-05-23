@@ -61,3 +61,16 @@ Service CSV import/export for demo business-admin now aligns with service editor
 - bufferAfterMinutes
 - description
 - optional rolePrice:<role label> fields
+
+## Persisted subscriber-site settings models (Postgres)
+Added Prisma models:
+- CustomerSiteSettings
+  - unique per TenantSite (`tenantSiteId`)
+  - stores basic display/contact/theme/currency fields
+- CustomerSiteService
+  - many per TenantSite
+  - stores service name/description/price/duration/buffer/active/sortOrder/rolePriceOverrides
+
+Indexes/relations:
+- CustomerSiteSettings.tenantSiteId unique FK -> TenantSite
+- CustomerSiteService indexed by tenantSiteId, active, sortOrder

@@ -453,3 +453,25 @@ No Auth.js or infrastructure automation added in this task.
   - `PLATFORM_ADMIN_ACCESS_CODE`
 - Hosted smoke checks now include login redirect/session/logout flow for `/admin`, `/admin/setup-requests`, and `/admin/sites`.
 - Hosted auth diagnostics route is available at `/api/admin-auth-health` to verify auth env presence safely.
+
+## New milestone: persisted subscriber site settings/services (2026-05-23)
+Scope of this backend pass:
+- Persist per-tenant basic site settings/branding/theme in Postgres.
+- Persist per-tenant services/prices/durations in Postgres.
+
+In scope models:
+- CustomerSiteSettings (1 row per TenantSite).
+- CustomerSiteService (many rows per TenantSite).
+
+Out of scope (remains local/mock):
+- staff, rota, closures, vouchers, pages/content, policies, payment setup intent, social links, customer bookings/accounts, file/logo storage.
+
+Admin/API surface:
+- GET/PATCH `/api/admin/sites/[id]/settings`
+- GET/PUT/POST `/api/admin/sites/[id]/services`
+- DELETE `/api/admin/sites/[id]/services/[serviceId]`
+- all routes use existing platform-admin session guard.
+
+Admin UI:
+- `/admin/sites/[siteId]/settings` now includes a clearly labeled persisted editor section for this scope.
+- Existing demo/local settings preview remains available on the same page for continuity.

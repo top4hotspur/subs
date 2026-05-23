@@ -1,0 +1,113 @@
+import { NextRequest, NextResponse } from "next/server";
+import { ZodError } from "zod";
+import { isPlatformAdminSession } from "@/lib/auth/platform-admin";
+import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
+import {
+  getCustomerSiteSettings,
+  upsertCustomerSiteSettings,
+} from "@/lib/sites/customer-site-settings-repository";
+import { upsertCustomerSiteSettingsSchema } from "@/lib/sites/customer-site-settings-schema";
+import { getTenantSiteById } from "@/lib/sites/site-provisioning-repository";
+
+function backendNotConfigured() {
+  return NextResponse.json(
+    { ok: false, error: "BACKEND_PERSISTENCE_NOT_CONFIGURED" },
+    { status: 503 },
+  );
+}
+
+export async function GET(
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+) {
+  if (!isBackendPersistenceConfigured()) return backendNotConfigured();
+  if (!(await isPlatformAdminSession())) {
+    return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+  }
+
+  try {
+    const { id } = await context.params;
+    const site = await getTenantSiteById(id);
+    if (!site) {
+      return NextResponse.json({ ok: false, error: "SITE_NOT_FOUND" }, { status: 404 });
+    }
+
+    const settings = await getCustomerSiteSettings(id);
+    return NextResponse.json({ ok: true, settings });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "SITE_SETTINGS_GET_FAILED",
+        message: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+) {
+  if (!isBackendPersistenceConfigured()) return backendNotConfigured();
+  if (!(await isPlatformAdminSession())) {
+    return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+  }
+
+  try {
+    const { id } = await context.params;
+    const site = await getTenantSiteById(id);
+    if (!site) {
+      return NextResponse.json({ ok: false, error: "SITE_NOT_FOUND" }, { status: 404 });
+    }
+
+    const body = await request.json();
+    const parsed = upsertCustomerSiteSettingsSchema.parse({
+      tenantSiteId: id,
+      siteDisplayName: body?.siteDisplayName,
+      businessName: body?.businessName,
+      phone: body?.phone,
+      email: body?.email,
+      address: body?.address,
+      openingHoursSummary: body?.openingHoursSummary,
+      heroHeadline: body?.heroHeadline,
+      heroSubheading: body?.heroSubheading,
+      visualThemeId: body?.visualThemeId,
+      colourPaletteId: body?.colourPaletteId,
+      currency: body?.currency,
+    });
+
+    const settings = await upsertCustomerSiteSettings(id, {
+      siteDisplayName: parsed.siteDisplayName,
+      businessName: parsed.businessName,
+      phone: parsed.phone,
+      email: parsed.email,
+      address: parsed.address,
+      openingHoursSummary: parsed.openingHoursSummary,
+      heroHeadline: parsed.heroHeadline,
+      heroSubheading: parsed.heroSubheading,
+      visualThemeId: parsed.visualThemeId,
+      colourPaletteId: parsed.colourPaletteId,
+      currency: parsed.currency,
+    });
+
+    return NextResponse.json({ ok: true, settings });
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        { ok: false, error: "VALIDATION_ERROR", details: error.issues },
+        { status: 400 },
+      );
+    }
+
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "SITE_SETTINGS_UPDATE_FAILED",
+        message: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    );
+  }
+}

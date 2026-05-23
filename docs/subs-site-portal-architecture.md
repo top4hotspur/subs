@@ -149,3 +149,9 @@ See also:
 - Customer-facing account route is now labeled My Account in demo navigation.
 - My Account is site-scoped and booking-focused, not a platform-style customer dashboard.
 - Staff and business-admin routes remain separate operational views under the same demo site namespace.
+
+## Transitional ownership and persistence note
+- Persisted settings now exist per TenantSite for a narrow subset (basic site settings + services).
+- Editing surface is currently exposed under platform-admin support route `/admin/sites/[siteId]/settings` for provisioning/testing.
+- Target architecture remains unchanged: subscriber business admin is the eventual owner/operator of these settings.
+- Demo route `/demo/[industry]/admin` remains local/mock and is not yet backed by these persisted records.

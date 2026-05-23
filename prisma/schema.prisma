@@ -28,6 +28,8 @@ model TenantSite {
   provisioningTasks         SiteProvisioningTask[]
   statusEvents              SiteStatusEvent[]
   subscriptions             SubscriptionRecord[]
+  customerSiteSettings      CustomerSiteSettings?
+  customerSiteServices      CustomerSiteService[]
   setupRequest              SetupRequest?          @relation("SetupRequestToTenantSite", fields: [setupRequestId], references: [id])
 }
 
@@ -206,4 +208,43 @@ model SalesLeadEvent {
 
   @@index([salesLeadId])
   @@index([createdAt])
+}
+
+model CustomerSiteSettings {
+  id                  String     @id @default(cuid())
+  tenantSiteId        String     @unique
+  siteDisplayName     String?
+  businessName        String?
+  phone               String?
+  email               String?
+  address             String?
+  openingHoursSummary String?
+  heroHeadline        String?
+  heroSubheading      String?
+  visualThemeId       String?
+  colourPaletteId     String?
+  currency            String?    @default("GBP")
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+  tenantSite          TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+}
+
+model CustomerSiteService {
+  id                 String     @id @default(cuid())
+  tenantSiteId       String
+  name               String
+  description        String?
+  basePrice          Decimal?   @db.Decimal(10, 2)
+  durationMinutes    Int?
+  bufferAfterMinutes Int?
+  active             Boolean    @default(true)
+  sortOrder          Int        @default(0)
+  rolePriceOverrides Json?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  tenantSite         TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+
+  @@index([tenantSiteId])
+  @@index([active])
+  @@index([sortOrder])
 }

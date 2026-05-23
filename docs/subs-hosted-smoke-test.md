@@ -267,3 +267,11 @@ Add these checks after backend envs are configured:
 - Active/current nav item must remain readable in all themes.
 - /demo/[industry]/account should show local contact details, upcoming bookings, and booking history (no global dashboard feel).
 - /demo/[industry]/admin should show section tiles in a responsive grid with selected section panel rendering below.
+
+## Hosted smoke additions: persisted subscriber settings/services
+- Open `/admin/sites`, select a site, click `Persisted site settings`.
+- In `/admin/sites/[siteId]/settings` persisted section:
+  - edit/save siteDisplayName, businessName, phone, email, address, openingHoursSummary, heroHeadline, heroSubheading, visualThemeId, colourPaletteId, currency.
+  - add/edit/remove service rows and save persisted services.
+- Reload page and confirm persisted values remain.
+- Confirm note remains visible that staff/rota/pages/vouchers/policies are still local/demo in this milestone.

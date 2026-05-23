@@ -330,10 +330,10 @@ export default function AdminSitesPage() {
                   href={`/admin/sites/${encodeURIComponent(selectedSite.id)}/settings`}
                   className={`${primaryButtonClass} ${smallButtonClass}`}
                 >
-                  Open subscriber settings preview
+                  Persisted site settings
                 </Link>
                 <p className="mt-2 text-xs text-slate-600">
-                  Business owners will manage these settings from their own site admin portal later.
+                  Support/provisioning settings editor until subscriber admin auth is added.
                 </p>
               </div>
 

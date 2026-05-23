@@ -187,3 +187,11 @@ Important:
 - Business admin demo now opens settings via a tile selector grid (up to 4 columns on desktop).
 - Clicking a section tile renders that section panel underneath the grid.
 - Existing section content and local state behavior are preserved; sections are no longer presented as one long always-visible vertical list.
+
+## Persisted settings bridge (current milestone)
+- A narrow persisted model now exists for subscriber sites:
+  - CustomerSiteSettings
+  - CustomerSiteService
+- Current persisted editor is platform-admin support/provisioning only (`/admin/sites/[siteId]/settings`).
+- Future subscriber business-admin auth/portal should assume ownership of these persisted records.
+- Other business-admin modules remain local/mock until later milestones.
