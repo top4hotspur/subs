@@ -12,10 +12,17 @@ type DemoSiteNavProps = {
 };
 
 const demoNavPillClass =
-  "inline-flex items-center justify-center rounded-lg border-2 border-slate-300 bg-white px-3 py-2 text-sm font-semibold !text-slate-950 visited:!text-slate-950 shadow-sm transition-colors hover:bg-slate-100 hover:!text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900";
+  "inline-flex items-center justify-center rounded-lg border-2 px-3 py-2 text-sm font-semibold shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2";
 
 const activeDemoNavPillClass =
-  "border-slate-950 bg-slate-950 !text-white visited:!text-white hover:!text-white shadow";
+  "!border-slate-950 !bg-slate-950 !text-white visited:!text-white hover:!bg-slate-900 hover:!text-white";
+
+const inactiveDemoNavPillClass =
+  "!border-slate-300 !bg-white !text-slate-950 visited:!text-slate-950 hover:!border-slate-400 hover:!bg-slate-100 hover:!text-slate-950";
+
+function demoNavButtonClass(active: boolean): string {
+  return `${demoNavPillClass} ${active ? activeDemoNavPillClass : inactiveDemoNavPillClass}`;
+}
 
 export function DemoSiteNav({
   templateSlug,
@@ -43,7 +50,8 @@ export function DemoSiteNav({
           <Link
             key={link.href}
             href={link.href}
-            className={`${demoNavPillClass} ${isActive ? activeDemoNavPillClass : ""}`}
+            aria-current={isActive ? "page" : undefined}
+            className={demoNavButtonClass(isActive)}
           >
             {link.label}
           </Link>

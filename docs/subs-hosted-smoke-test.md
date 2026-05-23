@@ -240,3 +240,24 @@ Add these checks after backend envs are configured:
 - /demo/[industry]/policy:
   - page reflects editable policy title/body + cancellation/refund rules
   - if policy visibility disabled, page shows hidden-state notice and policy nav link is hidden
+
+## Hosted smoke additions: urgent demo nav/account and CSV checks
+- Demo nav:
+  - active/current menu item must remain readable on all pages/themes
+  - verify Home, Bookings, Customer View, Staff View, Admin View, About, Contact, Policy states
+- Shared demo intro:
+  - confirm top demo intro/sell header appears on all demo sub-routes
+- Customer account concept:
+  - /demo/[industry]/account should focus on site-scoped bookings/history/cancel (no platform-style dashboard cards)
+- Booking confirmation:
+  - submit button says Book Appointment`r
+  - success appears near submit area
+  - account link points to /demo/[industry]/account?tab=bookings`r
+- Services CSV:
+  - template columns match editor fields (serviceName, basePrice, durationMinutes, bufferAfterMinutes, description)
+  - optional olePrice:<role> columns accepted
+- Contact page:
+  - always visible
+  - no contact visibility toggle in admin
+- Payments/sales:
+  - verify setup mode + provider selector + instruction panel with no live provider connection.

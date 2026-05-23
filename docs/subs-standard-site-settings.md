@@ -156,3 +156,15 @@ These uploads remain browser-local mock previews only (no backend media storage)
 Maps/media limitations:
 - Google Maps integration is link-only (query URL) with no API key.
 - About/profile image fields are placeholder/local inputs only (no real file storage pipeline).
+
+## Payment setup intent fields (demo/local)
+paymentSettings now includes additional setup-preparation fields:
+- processorProvider: STRIPE | SQUARE | SUMUP | PAYPAL | WORLDPAY | ZETTLE | OTHER
+- merchantReference: account email or merchant reference text
+- existing setup mode and notes fields remain
+
+No real provider credentials/API keys are stored or connected in this phase.
+
+## Contact page visibility rule
+- pageVisibility.contact is normalized to enabled=true in local settings.
+- Contact is standard; About/Policy are optional buildable pages.

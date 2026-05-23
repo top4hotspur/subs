@@ -149,7 +149,7 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
               <DemoSiteNav
                 templateSlug={template.slug}
                 showAbout={settings.pageVisibility.about.enabled}
-                showContact={settings.pageVisibility.contact.enabled}
+                showContact
                 showPolicy={settings.pageVisibility.policy?.enabled ?? true}
               />
             </div>

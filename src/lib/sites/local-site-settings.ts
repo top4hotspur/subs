@@ -46,8 +46,10 @@ function normalizeSettings(settings: CustomerSiteSettings): CustomerSiteSettings
       paymentProcessorSetupMode:
         settings.paymentSettings?.paymentProcessorSetupMode ??
         "MANUAL_RECORDING_ONLY",
+      processorProvider: settings.paymentSettings?.processorProvider,
       existingProcessorName:
         settings.paymentSettings?.existingProcessorName ?? "",
+      merchantReference: settings.paymentSettings?.merchantReference ?? "",
       processorSetupNotes: settings.paymentSettings?.processorSetupNotes ?? "",
       cardPaymentsEnabled: settings.paymentSettings?.cardPaymentsEnabled ?? true,
       cashPaymentsEnabled: settings.paymentSettings?.cashPaymentsEnabled ?? false,
@@ -74,6 +76,15 @@ function normalizeSettings(settings: CustomerSiteSettings): CustomerSiteSettings
     },
     pageVisibility: {
       ...settings.pageVisibility,
+      contact: {
+        ...(settings.pageVisibility?.contact ?? {
+          title: "Contact",
+          enabled: true,
+          showInHeader: true,
+          showInFooter: true,
+        }),
+        enabled: true,
+      },
       policy: settings.pageVisibility?.policy ?? {
         title: "Policy",
         enabled: true,

@@ -176,3 +176,9 @@ Important:
   - STAFF_PROFILES: editable profile blocks (name, role, bio, image placeholder/url).
 - Contact page includes optional Show Google Maps link from business address behavior (link-only, no API).
 - Policy page includes editable title/body plus existing cancellation/refund settings.
+
+## Business admin page-builder wording and page rules
+- Contact page is treated as a standard always-on page in demo model.
+- About and Policy pages remain optional via visibility toggles.
+- Admin wording for page buttons now uses business-friendly terms (Button text, Button destination) instead of CTA jargon.
+- Payment setup now supports explicit provider intent capture and setup instructions without connecting provider APIs.

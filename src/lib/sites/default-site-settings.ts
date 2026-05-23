@@ -170,7 +170,9 @@ export function buildDefaultCustomerSiteSettings(template: WebsiteTemplate): Cus
     },
     paymentSettings: {
       paymentProcessorSetupMode: "MANUAL_RECORDING_ONLY",
+      processorProvider: undefined,
       existingProcessorName: "",
+      merchantReference: "",
       processorSetupNotes: "",
       cardPaymentsEnabled: true,
       cashPaymentsEnabled: false,

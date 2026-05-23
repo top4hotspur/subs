@@ -329,3 +329,14 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Contact page now supports a Google Maps search link derived from business address (no API key integration).
 - Policy page now supports admin visibility toggle and editable policy title/body content in addition to cancellation/refund rules.
 - All of the above remains browser-local mock state only in this phase.
+
+## Demo nav/account and payment-setup corrections (local/mock)
+- Demo nav button states now use explicit active/inactive class helpers for reliable readability across themes.
+- Shared demo intro/sell header is now standardized across all /demo/[industry] routes via common intro + shell usage.
+- Customer View concept is now site-scoped:
+  - public customer site remains /demo/[industry]`r
+  - account/bookings area remains /demo/[industry]/account for upcoming/history/cancel actions.
+- Booking confirmation continues to link to site-scoped customer account (/demo/[industry]/account?tab=bookings).
+- Services CSV template now matches service editor fields: serviceName, basePrice, durationMinutes, bufferAfterMinutes, description (+ optional rolePrice columns).
+- Contact page is now standard and always visible; About/Policy remain optional buildable pages.
+- Payments/sales section now captures payment setup intent with provider selection/instructions (no real processor integration).

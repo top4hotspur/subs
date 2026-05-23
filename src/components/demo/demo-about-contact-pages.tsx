@@ -18,7 +18,7 @@ export function DemoAboutContactPage({ template, mode }: Props) {
   const contactContent = settings.pageContent.contact;
 
   const aboutEnabled = pageVisibility.about.enabled;
-  const contactEnabled = pageVisibility.contact.enabled;
+  const contactEnabled = true;
   const pageEnabled = isAbout ? aboutEnabled : contactEnabled;
   const mapsQuery = settings.businessDetails.address
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(

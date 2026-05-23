@@ -23,7 +23,7 @@ import { StaffAvailabilityMode, StaffRoleType, type StaffMember } from "@/lib/st
 import { formatSiteCurrency, formatUkDate, weekdayLabel } from "@/lib/ui/display-labels";
 import { listLocalCustomerRequests } from "@/lib/requests/local-customer-requests";
 import { CustomerRequestStatus } from "@/lib/requests/request-types";
-import { downloadCsvTemplate, readCsvFile } from "@/lib/demo/csv-tools";
+import { downloadCsvTemplate, readCsvRecords } from "@/lib/demo/csv-tools";
 import { getLocalVoucherSettings, saveLocalVoucherSettings } from "@/lib/vouchers/local-vouchers";
 import { VoucherDeliveryMethod } from "@/lib/vouchers/voucher-types";
 
@@ -224,41 +224,76 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
     type: "services" | "staff",
   ): Promise<void> {
     if (!file) return;
-    const rows = await readCsvFile(file);
-    setCsvPreview({ type, rows, fileName: file.name });
+    const records = await readCsvRecords(file);
+    setCsvPreview({
+      type,
+      rows:
+        type === "services"
+          ? records.map((row) => row.serviceName || "")
+          : records.map((row) => row.staffName || row.displayName || ""),
+      fileName: file.name,
+    });
 
-    if (type === "services" && rows.length > 0) {
+    if (type === "services" && records.length > 0) {
       setSettings((current) => ({
         ...current,
-        services: rows.map((name, index) => ({
+        services: records
+          .filter((row) => (row.serviceName || "").trim().length > 0)
+          .map((row, index) => ({
           id: `csv-service-${index + 1}`,
-          name,
-          description: "",
-          basePriceGbp: undefined,
-          durationMinutes: 45,
-          bufferAfterMinutes: 0,
+          name: row.serviceName.trim(),
+          description: row.description ?? "",
+          basePriceGbp:
+            row.basePrice && Number.isFinite(Number(row.basePrice))
+              ? Number(row.basePrice)
+              : undefined,
+          durationMinutes:
+            row.durationMinutes && Number.isFinite(Number(row.durationMinutes))
+              ? Number(row.durationMinutes)
+              : 45,
+          bufferAfterMinutes:
+            row.bufferAfterMinutes &&
+            Number.isFinite(Number(row.bufferAfterMinutes))
+              ? Number(row.bufferAfterMinutes)
+              : 0,
           bookable: true,
           requiresQuote: false,
           active: true,
+          rolePriceOverrides: activeRoles
+            .map((role) => {
+              const key = `rolePrice:${role.label}`;
+              const raw = row[key];
+              if (!raw || !Number.isFinite(Number(raw))) return null;
+              return {
+                roleId: role.id,
+                roleLabel: role.label,
+                priceGbp: Number(raw),
+              };
+            })
+            .filter((value): value is NonNullable<typeof value> => Boolean(value)),
         })),
       }));
       return;
     }
 
-    if (type === "staff" && rows.length > 0) {
+    if (type === "staff" && records.length > 0) {
       const now = new Date().toISOString();
       const defaultRole = activeRoles[0]?.label ?? "Team Member";
       const weekdays: Weekday[] = ["monday", "tuesday", "wednesday", "thursday", "friday"];
       setStaffMembers((current) => [
         ...current,
-        ...rows.map((displayName, index) => ({
+        ...records
+          .filter((row) => (row.staffName || row.displayName || "").trim().length > 0)
+          .map((row, index) => ({
           id: `csv-staff-${Date.now()}-${index + 1}`,
-          displayName,
+          displayName: (row.staffName || row.displayName || "").trim(),
           role: StaffRoleType.GENERAL_STAFF,
-          roleLabel: defaultRole,
+          roleLabel: (row.roleLabel || defaultRole).trim(),
           serviceIds: settings.services.filter((service) => service.active).map((service) => service.id),
-          active: true,
-          customerSelectable: true,
+          active: row.active ? row.active.toLowerCase() !== "false" : true,
+          customerSelectable: row.customerSelectable
+            ? row.customerSelectable.toLowerCase() !== "false"
+            : true,
           isSuperUser: false,
           availableWeekdays: weekdays,
           availabilityMode: StaffAvailabilityMode.APPOINTMENT_ONLY,
@@ -565,10 +600,26 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                 type="button"
                 className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-100"
                 onClick={() =>
-                  downloadCsvTemplate(
-                    "services-template.csv",
-                    "serviceName,priceLabel,description\nStandard Service,From GBP25,Short description",
-                  )
+                  downloadCsvTemplate("services-template.csv", (() => {
+                    const roleHeaders = activeRoles.map((role) => `rolePrice:${role.label}`);
+                    const headers = [
+                      "serviceName",
+                      "basePrice",
+                      "durationMinutes",
+                      "bufferAfterMinutes",
+                      "description",
+                      ...roleHeaders,
+                    ];
+                    const values = [
+                      "Standard Service",
+                      "25",
+                      "45",
+                      "0",
+                      "Short description",
+                      ...roleHeaders.map(() => ""),
+                    ];
+                    return `${headers.join(",")}\n${values.join(",")}`;
+                  })())
                 }
               >
                 Download services CSV template
@@ -628,6 +679,13 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                 <li key={row}>{row}</li>
               ))}
             </ul>
+            {csvPreview.type === "services" ? (
+              <p className="mt-2 text-slate-600">
+                Expected service columns: serviceName, basePrice, durationMinutes,
+                bufferAfterMinutes, description, plus optional rolePrice:&lt;role label&gt;
+                columns.
+              </p>
+            ) : null}
           </div>
         ) : null}
       </CollapsibleSection>
@@ -864,22 +922,9 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
               />
               Enable About Us page
             </label>
-            <label className="flex items-center gap-2 text-sm text-slate-700">
-              <input
-                type="checkbox"
-                checked={settings.pageVisibility.contact.enabled}
-                onChange={(event) =>
-                  setSettings((current) => ({
-                    ...current,
-                    pageVisibility: {
-                      ...current.pageVisibility,
-                      contact: { ...current.pageVisibility.contact, enabled: event.target.checked },
-                    },
-                  }))
-                }
-              />
-              Enable Contact page
-            </label>
+            <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+              Contact page is always visible.
+            </div>
             <label className="flex items-center gap-2 text-sm text-slate-700">
               <input
                 type="checkbox"
@@ -1101,7 +1146,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                   </div>
                 </div>
               ) : null}
-              <label className="text-xs font-semibold text-slate-700">CTA label (optional)
+              <label className="text-xs font-semibold text-slate-700">Button text (optional)
                 <input
                   className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
                   value={settings.pageContent.about.ctaLabel ?? ""}
@@ -1116,7 +1161,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                   }
                 />
               </label>
-              <label className="text-xs font-semibold text-slate-700">CTA link (optional)
+              <label className="text-xs font-semibold text-slate-700">Button destination (optional)
                 <input
                   className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
                   value={settings.pageContent.about.ctaHref ?? ""}
@@ -1246,7 +1291,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                 />
                 Show Google Maps link from business address
               </label>
-              <label className="text-xs font-semibold text-slate-700">CTA label (optional)
+              <label className="text-xs font-semibold text-slate-700">Button text (optional)
                 <input
                   className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
                   value={settings.pageContent.contact.ctaLabel ?? ""}
@@ -1261,7 +1306,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                   }
                 />
               </label>
-              <label className="text-xs font-semibold text-slate-700">CTA link (optional)
+              <label className="text-xs font-semibold text-slate-700">Button destination (optional)
                 <input
                   className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
                   value={settings.pageContent.contact.ctaHref ?? ""}
@@ -1407,7 +1452,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
       <CollapsibleSection title="Payments/sales" subtitle="Local-only operational sales recording preferences.">
         <div className="mb-3 space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3">
           <label className="text-xs font-semibold text-slate-700">
-            Payment processor setup
+            Payment setup mode
             <select
               className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
               value={settings.paymentSettings.paymentProcessorSetupMode}
@@ -1434,23 +1479,96 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
 
           {settings.paymentSettings.paymentProcessorSetupMode ===
           "EXISTING_PROCESSOR" ? (
-            <label className="text-xs font-semibold text-slate-700">
-              Existing processor
-              <input
-                className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
-                placeholder="Stripe, Square, SumUp, PayPal, Other"
-                value={settings.paymentSettings.existingProcessorName ?? ""}
-                onChange={(event) =>
-                  setSettings((current) => ({
-                    ...current,
-                    paymentSettings: {
-                      ...current.paymentSettings,
-                      existingProcessorName: event.target.value,
-                    },
-                  }))
-                }
-              />
-            </label>
+            <>
+              <label className="text-xs font-semibold text-slate-700">
+                Provider
+                <select
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  value={settings.paymentSettings.processorProvider ?? ""}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      paymentSettings: {
+                        ...current.paymentSettings,
+                        processorProvider: (event.target.value || undefined) as
+                          | "STRIPE"
+                          | "SQUARE"
+                          | "SUMUP"
+                          | "PAYPAL"
+                          | "WORLDPAY"
+                          | "ZETTLE"
+                          | "OTHER"
+                          | undefined,
+                      },
+                    }))
+                  }
+                >
+                  <option value="">Select provider</option>
+                  <option value="STRIPE">Stripe</option>
+                  <option value="SQUARE">Square</option>
+                  <option value="SUMUP">SumUp</option>
+                  <option value="PAYPAL">PayPal</option>
+                  <option value="WORLDPAY">Worldpay</option>
+                  <option value="ZETTLE">Zettle</option>
+                  <option value="OTHER">Other</option>
+                </select>
+              </label>
+              <label className="text-xs font-semibold text-slate-700">
+                Provider name (if different)
+                <input
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  placeholder="Provider display name"
+                  value={settings.paymentSettings.existingProcessorName ?? ""}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      paymentSettings: {
+                        ...current.paymentSettings,
+                        existingProcessorName: event.target.value,
+                      },
+                    }))
+                  }
+                />
+              </label>
+              <label className="text-xs font-semibold text-slate-700">
+                Account email / merchant reference
+                <input
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  placeholder="name@business.com or merchant reference"
+                  value={settings.paymentSettings.merchantReference ?? ""}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      paymentSettings: {
+                        ...current.paymentSettings,
+                        merchantReference: event.target.value,
+                      },
+                    }))
+                  }
+                />
+              </label>
+              <div className="rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-600">
+                <p className="font-semibold text-slate-800">Connection instructions</p>
+                <p className="mt-1">
+                  Prepare your provider name, account email/merchant reference, and any
+                  checkout requirements. Provider connection is not active in this demo.
+                </p>
+              </div>
+            </>
+          ) : null}
+
+          {settings.paymentSettings.paymentProcessorSetupMode === "NEED_HELP_SETUP" ? (
+            <div className="rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-600">
+              We can help you choose and prepare a suitable processor during setup. Add
+              your preferences in notes below.
+            </div>
+          ) : null}
+
+          {settings.paymentSettings.paymentProcessorSetupMode === "MANUAL_RECORDING_ONLY" ? (
+            <div className="rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-600">
+              You can start by recording in-store cash/card payments manually, then switch
+              to processor connection later.
+            </div>
           ) : null}
 
           <label className="text-xs font-semibold text-slate-700">

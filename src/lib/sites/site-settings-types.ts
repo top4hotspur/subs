@@ -187,7 +187,16 @@ export type SitePaymentSettings = {
     | "EXISTING_PROCESSOR"
     | "NEED_HELP_SETUP"
     | "MANUAL_RECORDING_ONLY";
+  processorProvider?:
+    | "STRIPE"
+    | "SQUARE"
+    | "SUMUP"
+    | "PAYPAL"
+    | "WORLDPAY"
+    | "ZETTLE"
+    | "OTHER";
   existingProcessorName?: string;
+  merchantReference?: string;
   processorSetupNotes?: string;
   cardPaymentsEnabled: boolean;
   cashPaymentsEnabled: boolean;

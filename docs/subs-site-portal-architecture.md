@@ -139,3 +139,8 @@ See also:
 - About, Contact, and Policy routes are subscriber-site scoped and driven by local business-admin content settings.
 - Contact route map behavior uses a generated Google Maps search URL from address; no Google Maps API integration is enabled.
 - Policy visibility can be switched off from business admin settings, which also hides the policy nav link where practical.
+
+## Demo route clarity update
+- Customer View should be treated as the normal customer site experience, not a platform-style dashboard.
+- Site-scoped account/bookings remains available under /demo/[industry]/account for booking history and cancellation.
+- Platform admin remains fully separate from subscriber business-admin and demo site routes.

@@ -52,3 +52,12 @@ Current persistence is intentionally browser-only mock storage.
 - Source keys: subs-customer-requests and subs-crm-customers.
 
 
+
+## Demo CSV alignment note
+Service CSV import/export for demo business-admin now aligns with service editor shape:
+- serviceName
+- basePrice
+- durationMinutes
+- bufferAfterMinutes
+- description
+- optional rolePrice:<role label> fields
