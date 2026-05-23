@@ -37,7 +37,7 @@ export function SimpleOfferCard({ industrySlug, ctaLabel, showCta = true }: Simp
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Domain service</p>
           <p className="mt-2 text-2xl font-semibold text-slate-900">£{offer.domainRegistrationFeeGbp}</p>
-          <p className="text-sm text-slate-600">only if we register/manage</p>
+          <p className="text-sm text-slate-600">optional - only if we register/manage your domain</p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Go-live target</p>
@@ -54,4 +54,5 @@ export function SimpleOfferCard({ industrySlug, ctaLabel, showCta = true }: Simp
     </section>
   );
 }
+
 

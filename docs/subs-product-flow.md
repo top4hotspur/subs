@@ -257,3 +257,10 @@ Still mock for infrastructure:
   - window-cleaning, cleaners, gardeners, mobile-valeting
   - driving-instructors, tutors
 
+
+## Homepage conversion polish (2026-05)
+- Hero CTA contrast updated for stronger readability: primary action uses a dark filled button and secondary actions use high-contrast light buttons with dark text.
+- Value section now leads with a wide `Business tools included` tile above supporting value tiles.
+- Pricing domain tile now explicitly states domain service is optional: only charged when domain registration/management is provided.
+- Homepage FAQ replaced with the longer conversion-focused list covering package scope, domains, previews before payment, branding fallback, hosting responsibility, bookings, staffing, vouchers, and manual bookings.
+- Public positioning remains simple-package and avoids WhatsApp/expense-tracking launch claims.

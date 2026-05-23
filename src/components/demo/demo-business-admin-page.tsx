@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { ReactNode, useMemo, useState } from "react";
 import { StaffRotaEditor } from "@/components/calendar/staff-rota-editor";
@@ -29,6 +29,8 @@ const SOCIAL_PLATFORMS = [
   { key: "linkedin", label: "LinkedIn" },
   { key: "youtube", label: "YouTube" },
 ] as const;
+const MAX_LOGO_BYTES = 1024 * 1024;
+const MAX_FAVICON_BYTES = 512 * 1024;
 
 function makeServiceId(): string {
   return `service_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -134,6 +136,38 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
     setNewRoleLabel("");
   }
 
+  function applyBrandingFile(
+    file: File | undefined,
+    type: "logo" | "favicon",
+  ): void {
+    if (!file) return;
+    const maxBytes = type === "logo" ? MAX_LOGO_BYTES : MAX_FAVICON_BYTES;
+    if (file.size > maxBytes) {
+      setMessage(`${type === "logo" ? "Logo" : "Favicon"} exceeds the local preview limit.`);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const value = typeof reader.result === "string" ? reader.result : undefined;
+      if (!value) return;
+      setSettings((current) => ({
+        ...current,
+        branding: {
+          ...current.branding,
+          ...(type === "logo"
+            ? {
+                logoUrl: value,
+                logoAlt: `${current.branding.siteName || current.businessDetails.businessName} logo`,
+              }
+            : { faviconUrl: value }),
+        },
+      }));
+      setMessage(`${type === "logo" ? "Logo" : "Favicon"} preview updated locally.`);
+    };
+    reader.readAsDataURL(file);
+  }
+
   return (
     <main className="mx-auto max-w-6xl space-y-6 px-4 py-10 sm:px-6 lg:px-8">
       <section className="rounded-2xl border border-slate-200 bg-slate-900 p-5 text-white shadow-sm">
@@ -143,8 +177,20 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
         <div className="mt-4"><DemoSiteNav templateSlug={template.slug} /></div>
       </section>
 
-      <CollapsibleSection title="Business settings" subtitle="Currency and social profile links.">
+      <CollapsibleSection title="Business settings" subtitle="Branding, currency and social profile links.">
         <div className="grid gap-3 sm:grid-cols-2">
+          <label className="text-xs font-semibold text-slate-700">Site/page display name
+            <input
+              className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+              value={settings.branding.siteName}
+              onChange={(event) =>
+                setSettings((current) => ({
+                  ...current,
+                  branding: { ...current.branding, siteName: event.target.value },
+                }))
+              }
+            />
+          </label>
           <label className="text-xs font-semibold text-slate-700">Currency
             <select className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={currency} onChange={(event) => setSettings((current) => ({ ...current, paymentSettings: { ...current.paymentSettings, currencyCode: event.target.value as "GBP" | "EUR" | "USD" } }))}>
               <option value="GBP">GBP (£)</option>
@@ -152,6 +198,61 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
               <option value="USD">USD ($)</option>
             </select>
           </label>
+        </div>
+
+        <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3">
+          <p className="text-sm font-semibold text-slate-900">Business branding</p>
+          <p className="mt-1 text-xs text-slate-600">Use text branding or upload local preview assets. Files remain local to this browser.</p>
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <div className="rounded-md border border-slate-200 bg-white p-3">
+              <p className="text-xs font-semibold text-slate-800">Logo upload (local preview)</p>
+              <input
+                type="file"
+                accept="image/png,image/svg+xml,image/jpeg,image/webp"
+                className="mt-2 block w-full text-xs text-slate-700 file:mr-3 file:rounded-md file:border-0 file:bg-slate-900 file:px-3 file:py-1.5 file:font-semibold file:text-white hover:file:bg-slate-800"
+                onChange={(event) => applyBrandingFile(event.target.files?.[0], "logo")}
+              />
+              <p className="mt-2 text-xs text-slate-600">Recommended: PNG or SVG. 512 x 512 px (square icon) or 1200 x 400 px (wide header). Maximum file size: 1 MB. Transparent background recommended.</p>
+              {settings.branding.logoUrl ? (
+                <button
+                  type="button"
+                  className="mt-2 text-xs font-semibold text-rose-700"
+                  onClick={() =>
+                    setSettings((current) => ({
+                      ...current,
+                      branding: { ...current.branding, logoUrl: undefined, logoAlt: undefined },
+                    }))
+                  }
+                >
+                  Remove logo preview
+                </button>
+              ) : null}
+            </div>
+            <div className="rounded-md border border-slate-200 bg-white p-3">
+              <p className="text-xs font-semibold text-slate-800">Favicon upload (local preview)</p>
+              <input
+                type="file"
+                accept="image/png,image/x-icon,image/vnd.microsoft.icon"
+                className="mt-2 block w-full text-xs text-slate-700 file:mr-3 file:rounded-md file:border-0 file:bg-slate-900 file:px-3 file:py-1.5 file:font-semibold file:text-white hover:file:bg-slate-800"
+                onChange={(event) => applyBrandingFile(event.target.files?.[0], "favicon")}
+              />
+              <p className="mt-2 text-xs text-slate-600">Recommended: PNG or ICO. 32 x 32 px minimum, 512 x 512 px source recommended. Maximum file size: 512 KB.</p>
+              {settings.branding.faviconUrl ? (
+                <button
+                  type="button"
+                  className="mt-2 text-xs font-semibold text-rose-700"
+                  onClick={() =>
+                    setSettings((current) => ({
+                      ...current,
+                      branding: { ...current.branding, faviconUrl: undefined },
+                    }))
+                  }
+                >
+                  Remove favicon preview
+                </button>
+              ) : null}
+            </div>
+          </div>
         </div>
 
         <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3">
@@ -219,7 +320,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="text-sm font-semibold text-slate-900">{service.name}</p>
-                    <p className="text-xs text-slate-600">{getPublicServicePriceLabel(service, currency) || "Quote required"} • {service.durationMinutes ?? 45} min</p>
+                    <p className="text-xs text-slate-600">{getPublicServicePriceLabel(service, currency) || "Quote required"} â€¢ {service.durationMinutes ?? 45} min</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button type="button" className="text-xs font-semibold text-sky-700" onClick={() => toggleServiceExpanded(service.id)}>{expanded ? "Collapse" : "Edit"}</button>
@@ -276,7 +377,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="text-sm font-semibold text-slate-900">{staff.displayName}</p>
-                    <p className="text-xs text-slate-600">{staff.roleLabel || "Position not set"} • {summarizeDays(staff.availableWeekdays)}</p>
+                    <p className="text-xs text-slate-600">{staff.roleLabel || "Position not set"} â€¢ {summarizeDays(staff.availableWeekdays)}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button type="button" className="text-xs font-semibold text-sky-700" onClick={() => toggleStaffExpanded(staff.id)}>{expanded ? "Collapse" : "Edit"}</button>
@@ -439,3 +540,8 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
     </main>
   );
 }
+
+
+
+
+

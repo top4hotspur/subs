@@ -65,3 +65,8 @@ Default theme remains neutral so it suits all 14 launch industries. Customer-spe
   - live-site target within a day when details/domain are ready
 - Public-facing marketing copy no longer promotes WhatsApp add-on pricing.
 
+
+## Homepage CTA + FAQ refresh (2026-05)
+- Homepage hero buttons now use explicit high-contrast hierarchy to prevent low-contrast text on light surfaces.
+- Trust/value block now features a lead wide tile (`Business tools included`) above secondary value tiles.
+- FAQ content was replaced with an expanded sales-focused set while keeping claims aligned to current product state.

@@ -107,3 +107,9 @@ Business admin can:
   - Payments/sales
   - Super-user permissions
 - Appointments section includes slot interval and customer staff-selection controls.
+
+## Branding fallback model (demo)
+- Business owner mock now supports text-brand fallback plus optional local logo/favicon preview uploads.
+- Customer-facing demo brand area uses uploaded logo when available.
+- If no logo is set, the site falls back to text branding using the configured business/site display name.
+- Media is local-preview only and not persisted to a production media pipeline in this phase.

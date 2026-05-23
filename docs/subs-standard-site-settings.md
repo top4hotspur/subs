@@ -108,3 +108,17 @@ for browser-local issue/check/redeem demo workflows.
 - appointmentSettings.appointmentSlotIntervalMinutes supports `15`, `30`, or `60` minute slot blocks.
 - appointmentSettings.allowCustomerStaffSelection controls whether customers see preferred-staff selection in booking forms.
 
+
+## Branding controls (local demo)
+Business site settings demo now includes branding controls for:
+- Site/page display name (text fallback)
+- Logo local preview upload (PNG/SVG preferred)
+  - Recommended dimensions: 512 x 512 (square icon) or 1200 x 400 (wide header)
+  - Max file size: 1 MB
+  - Transparent background recommended
+- Favicon local preview upload (PNG/ICO preferred)
+  - Minimum: 32 x 32
+  - Recommended source: 512 x 512
+  - Max file size: 512 KB
+
+These uploads remain browser-local mock previews only (no backend media storage).

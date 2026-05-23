@@ -141,3 +141,18 @@ Add these checks after backend envs are configured:
   - `/demo/bus-hire/customise`
   - `/setup/bus-hire`
 
+
+## Hosted smoke additions: homepage and business branding controls (2026-05)
+- Homepage:
+  - verify first hero CTA row is readable in light/dark states
+  - verify `Business tools included` appears as lead wide tile in value section
+  - verify domain tile reads as optional domain service
+  - verify updated long FAQ list is visible
+- Demo business admin (`/demo/[industry]/admin`):
+  - verify site/page display name can be edited
+  - verify logo local preview upload accepts supported image files and updates brand area
+  - verify favicon local preview upload accepts supported image files
+  - verify guidance text shows recommended dimensions and max file sizes
+- Demo public site (`/demo/[industry]`):
+  - verify logo appears in brand area when uploaded
+  - verify text-brand fallback is shown when no logo is present

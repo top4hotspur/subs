@@ -33,6 +33,7 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
   const currency = settings.paymentSettings.currencyCode ?? "GBP";
   const activeServices = settings.services.filter((service) => service.active);
   const socialEntries = Object.entries(settings.businessDetails.socialLinks ?? {}).filter(([key, value]) => key !== "website" && value && value.trim().length > 0);
+  const brandName = settings.branding.siteName?.trim() || config.businessName;
 
   return (
     <div className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 shadow-sm">
@@ -40,7 +41,13 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
           <DemoSiteNav templateSlug={template.slug} />
         </div>
-        <SiteBrandMark name={config.businessName} tagline={template.category} dark />
+        <SiteBrandMark
+          name={brandName}
+          tagline={template.category}
+          logoUrl={settings.branding.logoUrl}
+          logoAlt={settings.branding.logoAlt}
+          dark
+        />
         <h1 className="mt-6 text-4xl font-bold tracking-tight">{config.heroHeadline}</h1>
         <p className="mt-3 max-w-2xl text-slate-200">{config.heroSubheading}</p>
         <div className="mt-6 flex flex-wrap gap-3">
@@ -108,7 +115,7 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
         ) : null}
 
         <SiteFooterBlock
-          brand={config.businessName}
+          brand={brandName}
           description="Managed local-business website subscription with ongoing support and clear setup workflow."
           groups={[
             { title: "Explore", links: [{ label: "Bookings", href: `/demo/${template.slug}/booking` }, { label: "About us", href: `/demo/${template.slug}/about` }] },
@@ -120,4 +127,5 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
     </div>
   );
 }
+
 

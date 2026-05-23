@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { HomeFaqAccordion } from "@/components/marketing/home-faq-accordion";
 import { IndustryCategoryBrowser } from "@/components/marketing/industry-category-browser";
 import { SimpleOfferCard } from "@/components/pricing/simple-offer-card";
@@ -7,7 +7,7 @@ import { SiteHero } from "@/components/site-ui/site-hero";
 import { SiteSection } from "@/components/site-ui/site-section";
 import { listWebsiteTemplates } from "@/lib/sites/mock-repository";
 import { WebsiteTemplateSlug } from "@/lib/sites/types";
-import { outlineButtonClass, secondaryButtonClass } from "@/lib/ui/button-styles";
+import { primaryButtonClass, secondaryButtonClass } from "@/lib/ui/button-styles";
 
 const industryGroups: Array<{
   title: string;
@@ -36,6 +36,11 @@ const industryGroups: Array<{
   },
 ];
 
+const leadTrustPoint = {
+  title: "Business tools included",
+  detail: "Manage services, prices, staff, rota, availability and customer requests in one place.",
+};
+
 const trustPoints = [
   {
     title: "Industry-specific website",
@@ -44,10 +49,6 @@ const trustPoints = [
   {
     title: "Booking and enquiry flows",
     detail: "Turn visitors into customers with appointment, quote or request flows built around your services.",
-  },
-  {
-    title: "Business tools included",
-    detail: "Manage services, prices, staff, rota, availability and customer requests in one place.",
   },
   {
     title: "Managed setup and hosting",
@@ -69,24 +70,48 @@ const trustPoints = [
 
 const faqs = [
   {
-    q: "Is this a cut-down package?",
-    a: "No. The demo you customise is the site we set up and manage for you.",
+    q: "Do I have to pay extra to unlock more features?",
+    a: "No, we keep things entirely simple. We offer one full package for everyone, with no confusing feature tiers. Your subscription includes all the business management tools, booking flows, and staff scheduling features we offer.",
   },
   {
-    q: "Can I use my own domain?",
-    a: "Yes. You can use an existing domain, buy one yourself, or ask us to register/manage it.",
+    q: "Do I need to buy my own domain name?",
+    a: "You have options. If you already own a domain, you can point it to us at no extra domain fee. If you need a new one, we can register and manage it for you for a flat £49 fee.",
   },
   {
-    q: "What if I do not have a logo?",
-    a: "No problem. The site uses a polished text-brand fallback until you provide a logo.",
+    q: "Do I have to pay before seeing what my site looks like?",
+    a: "Not at all. You can choose your industry, preview a realistic demo site, and customise your core details before you submit a setup request or pay.",
   },
   {
-    q: "Are email notifications included?",
-    a: "Yes. Email notifications are included as standard.",
+    q: "What if my business doesn't have a professional logo yet?",
+    a: "No problem. The site uses a polished text-brand fallback until you provide a logo. You can easily update it later whenever you are ready.",
   },
   {
-    q: "Can I customise the demo before subscribing?",
-    a: "Yes. You can customise first, then start setup when ready.",
+    q: "Who handles the hosting and technical updates?",
+    a: "We do. Your £30 monthly subscription covers the hosting, setup support, and ongoing platform management. We manage the tech so you can stay focused on running your business.",
+  },
+  {
+    q: "Does the website actually handle my customer bookings?",
+    a: "Yes, this is not just a brochure website. Your site includes industry-specific booking or quote flows, and standard email notifications to keep your customers updated.",
+  },
+  {
+    q: "Can I manage my staff and their schedules on the platform?",
+    a: "Yes. As the site owner, you have access to business admin features where you can set up staff profiles, assign roles, and manage rotas, breaks, and closures.",
+  },
+  {
+    q: "Can customers choose which staff member they book with?",
+    a: "Yes, the platform includes a customer-selectable staff toggle, allowing your clients to book with their preferred barber, stylist, or service provider.",
+  },
+  {
+    q: "Does the platform handle gift vouchers?",
+    a: "Yes, optional gift vouchers are supported. You can configure the settings in your admin area, and there is a specific workflow for checking and redeeming vouchers when customers use them.",
+  },
+  {
+    q: "What happens if a customer books over the phone or walks in?",
+    a: "The platform supports manual and telephone bookings, so you can easily add those appointments to your digital schedule alongside the online requests.",
+  },
+  {
+    q: "Do I need to be a tech expert to make changes to my services or pricing?",
+    a: "Not at all. You have access to a simple services, products, and pricing editor where you can easily update your offerings, including setting different prices for different staff roles.",
   },
 ];
 
@@ -100,17 +125,17 @@ export function MarketingHome() {
       <div className="mx-auto max-w-6xl space-y-8 px-4 py-10 sm:px-6 lg:px-8">
         <SiteHero
           title="Managed websites and booking tools for local service businesses"
-          subtitle="Choose your industry, preview a working demo, and get a professional website with booking/request tools, customer features and ongoing support — all in one simple monthly package."
+          subtitle="Choose your industry, preview a working demo, and get a professional website with booking/request tools, customer features and ongoing support - all in one simple monthly package."
           helperText="£149 setup + £30/month. Full managed website included. Live-site target within a day once details and domain are ready."
           actions={(
             <>
-              <Link href="#industries" className={secondaryButtonClass}>
+              <Link href="#industries" className={primaryButtonClass}>
                 Choose your business type
               </Link>
-              <Link href="/demo/barbers" className={outlineButtonClass}>
+              <Link href="/demo/barbers" className={secondaryButtonClass}>
                 View example demo
               </Link>
-              <Link href="#how-it-works" className={outlineButtonClass}>
+              <Link href="#how-it-works" className={secondaryButtonClass}>
                 How it works
               </Link>
             </>
@@ -121,7 +146,11 @@ export function MarketingHome() {
           <p className="text-slate-600">
             Get a professional, fully managed online presence designed around how your business actually works. We handle setup, hosting and ongoing maintenance so you can focus on customers, bookings and day-to-day service.
           </p>
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <div className="mt-6 rounded-xl border border-slate-300 bg-slate-900 p-5 text-white">
+            <p className="text-lg font-semibold">{leadTrustPoint.title}</p>
+            <p className="mt-1 text-sm text-slate-200">{leadTrustPoint.detail}</p>
+          </div>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
             {trustPoints.map((point) => (
               <div key={point.title} className="rounded-xl border border-slate-200 bg-white p-4">
                 <p className="text-sm font-semibold text-slate-900">{point.title}</p>
@@ -175,3 +204,4 @@ export function MarketingHome() {
     </main>
   );
 }
+
