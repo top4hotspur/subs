@@ -9,6 +9,7 @@ export function getDefaultRequestKindForIndustry(
 ): CustomerRequestKind {
   switch (slug) {
     case "taxi":
+    case "bus-hire":
       return CustomerRequestKind.QUOTE_REQUEST;
     case "window-cleaning":
     case "cleaners":
@@ -29,6 +30,8 @@ export function getDefaultLocationTypeForIndustry(
   switch (slug) {
     case "taxi":
       return CustomerRequestLocationType.ROUTE;
+    case "bus-hire":
+      return CustomerRequestLocationType.ROUTE;
     case "window-cleaning":
     case "cleaners":
     case "gardeners":
@@ -47,7 +50,10 @@ export function getSuggestedRequestFieldsForIndustry(
     case "taxi":
       return ["pickup", "destination", "date/time", "passengers", "luggage"];
     case "driving-instructors":
+    case "tutors":
       return ["pickup area", "lesson type", "availability", "customer details"];
+    case "bus-hire":
+      return ["pickup", "destination", "group size", "date/time", "contact details"];
     case "dog-grooming":
       return [
         "service",
@@ -74,6 +80,8 @@ export function getRequestActionLabelForIndustry(
   switch (slug) {
     case "taxi":
       return "Request a quote";
+    case "bus-hire":
+      return "Request bus hire quote";
     case "window-cleaning":
     case "cleaners":
     case "gardeners":
@@ -81,6 +89,8 @@ export function getRequestActionLabelForIndustry(
       return "Request a quote";
     case "driving-instructors":
       return "Enquire about lessons";
+    case "tutors":
+      return "Book tutoring session";
     case "beauticians":
       return "Book treatment";
     case "massage":

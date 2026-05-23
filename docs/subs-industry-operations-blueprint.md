@@ -33,12 +33,11 @@ Request capture uses the shared model documented in `docs/subs-customer-request-
 - review analytics and financial records
 - manage customer communication preferences
 - email notifications included
-- WhatsApp notifications only with add-on
 
-## Industry blueprint summary (launch 12)
+## Industry blueprint summary (launch 14)
 | Industry | Action label | Operation mode | Scheduling mode | Staff allocation | Pricing mode |
 | --- | --- | --- | --- | --- | --- |
-| taxi | Request fare or book ride | QUOTE_REQUEST | ROUTE_BASED | BUSINESS_ALLOCATES | DISTANCE_TIME_BASED |
+| taxi | Request fare or book ride | QUOTE_REQUEST | ROUTE_BASED | BUSINESS_ALLOCATES | DISTANCE_TIME_BASED |`r`n| bus-hire | Request bus hire quote | QUOTE_REQUEST | ROUTE_BASED | BUSINESS_ALLOCATES | QUOTE_BASED |
 | barbers | Book appointment | BOOKING | FIXED_TIME_SLOT | CUSTOMER_SELECTS | FIXED_SERVICE_PRICE |
 | hairdressers | Book consultation or appointment | BOOKING | FIXED_TIME_SLOT | CUSTOMER_SELECTS | FROM_PRICE |
 | beauticians | Book treatment | BOOKING | FIXED_TIME_SLOT | BUSINESS_ALLOCATES | FIXED_SERVICE_PRICE |
@@ -46,7 +45,7 @@ Request capture uses the shared model documented in `docs/subs-customer-request-
 | massage | Book massage session | BOOKING | FIXED_TIME_SLOT | BUSINESS_ALLOCATES | FIXED_SERVICE_PRICE |
 | window-cleaning | Request quote | QUOTE_REQUEST | FLEXIBLE_JOB_WINDOW | BUSINESS_ALLOCATES | QUOTE_BASED |
 | dog-grooming | Book grooming appointment | BOOKING | FIXED_TIME_SLOT | BUSINESS_ALLOCATES | FROM_PRICE |
-| driving-instructors | Book lesson | BOOKING | LESSON_SLOT | BUSINESS_ALLOCATES | PACKAGE_BASED |
+| driving-instructors | Book lesson | BOOKING | LESSON_SLOT | BUSINESS_ALLOCATES | PACKAGE_BASED |`r`n| tutors | Book tutoring session | BOOKING | LESSON_SLOT | CUSTOMER_SELECTS | FIXED_SERVICE_PRICE |
 | mobile-valeting | Request valeting booking | JOB_REQUEST | FLEXIBLE_JOB_WINDOW | BUSINESS_ALLOCATES | PACKAGE_BASED |
 | cleaners | Request cleaning service | JOB_REQUEST | FLEXIBLE_JOB_WINDOW | BUSINESS_ALLOCATES | HOURLY |
 | gardeners | Request gardening job | JOB_REQUEST | FLEXIBLE_JOB_WINDOW | BUSINESS_ALLOCATES | QUOTE_BASED |
@@ -61,7 +60,7 @@ Key additions for taxi:
 3. Deeper lifecycle:
 `DRAFT/REQUESTED`, `REVIEWING`, `QUOTED`, `ACCEPTED`, `PAYMENT_PENDING`, `CONFIRMED`, `DRIVER_ASSIGNED`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`, `NO_SHOW`.
 4. Admin workflow depth (quote inbox, pricing settings/uplifts, driver allocation, journey calendar, income tracking).
-5. Notifications aligned to shared model (email standard, WhatsApp via optional add-on only).
+5. Notifications aligned to shared model (email confirmations in current public offering).
 
 ## Job completion messaging concept
 When business marks work complete:
@@ -71,7 +70,7 @@ When business marks work complete:
 4. If another booking exists, include next booking date.
 5. If no future booking exists, include return link and review request.
 6. Send by email as standard.
-7. Send via WhatsApp only when add-on is enabled.
+7. Send via email in the current public offering.
 
 ## What is not built yet
 - no real auth
@@ -81,3 +80,4 @@ When business marks work complete:
 - no live booking/job engine
 
 Current implementation is local/static/mock only.
+

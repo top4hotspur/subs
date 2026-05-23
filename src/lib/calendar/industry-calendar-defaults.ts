@@ -6,6 +6,7 @@ export function getDefaultAvailabilityWindowTypeForIndustry(
 ): AvailabilityWindowType {
   switch (slug) {
     case "taxi":
+    case "bus-hire":
       return AvailabilityWindowType.ROUTE_BASED;
     case "window-cleaning":
     case "cleaners":
@@ -19,6 +20,7 @@ export function getDefaultAvailabilityWindowTypeForIndustry(
     case "massage":
     case "dog-grooming":
     case "driving-instructors":
+    case "tutors":
       return AvailabilityWindowType.APPOINTMENT_ONLY;
     default:
       return AvailabilityWindowType.OPEN;
@@ -29,6 +31,8 @@ export function getDefaultSchedulingNoteForIndustry(slug: WebsiteTemplateSlug): 
   switch (slug) {
     case "taxi":
       return "Journey timing is confirmed by the operator based on route demand and driver coverage.";
+    case "bus-hire":
+      return "Group transport requests are confirmed after route, vehicle, and timing review.";
     case "window-cleaning":
     case "cleaners":
     case "gardeners":
@@ -36,6 +40,8 @@ export function getDefaultSchedulingNoteForIndustry(slug: WebsiteTemplateSlug): 
       return "Requests are confirmed into flexible visit windows rather than strict appointment slots.";
     case "driving-instructors":
       return "Lesson slots are typically scheduled in fixed 60-minute windows.";
+    case "tutors":
+      return "Lesson slots are usually booked in fixed teaching blocks.";
     default:
       return "Appointments are typically managed in fixed slots with confirmation after request review.";
   }
@@ -46,6 +52,7 @@ export function getDefaultServiceDurationForIndustry(slug: WebsiteTemplateSlug):
     case "massage":
       return 60;
     case "driving-instructors":
+    case "tutors":
       return 60;
     case "window-cleaning":
     case "cleaners":
@@ -53,6 +60,7 @@ export function getDefaultServiceDurationForIndustry(slug: WebsiteTemplateSlug):
     case "mobile-valeting":
       return 90;
     case "taxi":
+    case "bus-hire":
       return 45;
     default:
       return 45;
@@ -68,6 +76,7 @@ export function shouldUseFixedSlotsByDefault(slug: WebsiteTemplateSlug): boolean
     "massage",
     "dog-grooming",
     "driving-instructors",
+    "tutors",
   ].includes(slug);
 }
 

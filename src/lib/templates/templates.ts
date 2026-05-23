@@ -42,6 +42,46 @@ export const websiteTemplates: Record<WebsiteTemplate["slug"], WebsiteTemplate> 
       },
     },
   },
+  "bus-hire": {
+    slug: "bus-hire",
+    name: "Bus Hire Websites",
+    category: "Bus Hire Website",
+    marketingSummary:
+      "Managed bus and coach hire websites built to capture high-value group transport enquiries.",
+    featureBullets: [
+      "Group transport request-first conversion flow",
+      "Service packages for events, schools, and airport groups",
+      "Clear enquiry handling for route, date, and group size",
+    ],
+    pricing: {
+      setupFeeLabel: "From GBP 399 one-off setup",
+      monthlyFeeLabel: "From GBP 79/month managed",
+      notes: "Pricing varies by pages, integrations, and support level.",
+    },
+    demoLogin: { email: "demo.bushire@myexperiment.club", password: "demo123" },
+    defaultConfig: {
+      businessName: "Northline Coach & Bus Hire",
+      primaryColor: "#0ea5e9",
+      accentColor: "#0f172a",
+      heroHeadline: "Reliable Group Transport for Events, Schools and Corporate Trips",
+      heroSubheading:
+        "Capture detailed transport requests and respond quickly with structured quote workflows.",
+      ctaLabel: "Request bus hire quote",
+      services: [
+        { id: "private-bus-hire", name: "Private bus hire" },
+        { id: "school-transport", name: "School transport" },
+        { id: "event-transport", name: "Event transport" },
+        { id: "airport-group-transfer", name: "Airport group transfer" },
+        { id: "day-trip-transport", name: "Day trip transport" },
+      ],
+      openingHours: { summary: "Mon-Sun: 7:00-22:00" },
+      contact: {
+        phone: "020 7946 1100",
+        email: "quotes@northlinebus.example",
+        address: "Depot 3, Riverway Industrial Estate",
+      },
+    },
+  },
   barbers: {
     slug: "barbers",
     name: "Barber Websites",
@@ -428,6 +468,45 @@ export const websiteTemplates: Record<WebsiteTemplate["slug"], WebsiteTemplate> 
         phone: "020 7946 8000",
         email: "hello@firstpass.example",
         address: "12 College Road, Eastfield",
+      },
+    },
+  },
+  tutors: {
+    slug: "tutors",
+    name: "Tutor Websites",
+    category: "Tutors Website",
+    marketingSummary:
+      "Managed tutoring websites for individual tutors and small teams with lesson booking and enquiry flows.",
+    featureBullets: [
+      "Subject and lesson-format service tiles",
+      "Parent/student enquiry and lesson booking flow",
+      "Professional local tutoring brand presence",
+    ],
+    pricing: {
+      setupFeeLabel: "From GBP 349 one-off setup",
+      monthlyFeeLabel: "From GBP 69/month managed",
+      notes: "Pricing varies by pages, integrations, and support level.",
+    },
+    demoLogin: { email: "demo.tutors@myexperiment.club", password: "demo123" },
+    defaultConfig: {
+      businessName: "BrightPath Tutoring",
+      primaryColor: "#2563eb",
+      accentColor: "#1e3a8a",
+      heroHeadline: "One-to-one and online tutoring that helps students progress faster",
+      heroSubheading:
+        "Show subjects, lesson options, and tutor availability with a booking-first tutoring website.",
+      ctaLabel: "Book lesson enquiry",
+      services: [
+        { id: "one-to-one-tutoring", name: "One-to-one tutoring" },
+        { id: "online-lesson", name: "Online lesson" },
+        { id: "exam-preparation", name: "Exam preparation" },
+        { id: "group-session", name: "Group session" },
+      ],
+      openingHours: { summary: "Mon-Sun: 9:00-20:00" },
+      contact: {
+        phone: "020 7946 1200",
+        email: "hello@brightpathtutoring.example",
+        address: "42 Learning Lane, Central Town",
       },
     },
   },

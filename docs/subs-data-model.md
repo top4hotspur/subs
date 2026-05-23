@@ -1,6 +1,6 @@
 # Subs Data Model
 
-## Core domains
+## Core domains`r`n- Industry catalogue: 14 launch industries (including tutors and bus-hire)`r`n
 - Templates: static industry template catalogue (`WebsiteTemplate`)
 - Demo drafts: per-prospect local customisation (`DemoCustomisationDraft`)
 - Setup requests: local mock subscription onboarding records
@@ -50,4 +50,5 @@ Current persistence is intentionally browser-only mock storage.
 - Customer CRM model is browser-local and available at /admin/crm.
 - Matching priority: email, then phone, then name.
 - Source keys: subs-customer-requests and subs-crm-customers.
+
 

@@ -115,7 +115,13 @@ Add these checks after backend envs are configured:
 
 ## Hosted smoke additions: homepage and booking polish
 - Homepage:
+  - verify trust/value section appears before pricing block
   - verify category-first industry reveal (do not show all industries at once by default)
+  - verify category order:
+    - Hair, Beauty & Wellness
+    - Home Services
+    - Transport
+    - Learning
   - verify no WhatsApp add-on pricing in public hero/pricing sections
   - verify messaging includes managed website + booking tools + simple package positioning
 - Demo booking:
@@ -123,4 +129,15 @@ Add these checks after backend envs are configured:
   - verify `Opening hours` label is used
   - verify interval-specific slot rendering (15/30/60) reflects business admin appointment setting
   - verify booking success text uses `Auto-response prepared` wording (not real-send wording)
+
+## Hosted smoke additions: new industries
+- Verify these routes load:
+  - `/tutors`
+  - `/demo/tutors`
+  - `/demo/tutors/customise`
+  - `/setup/tutors`
+  - `/bus-hire`
+  - `/demo/bus-hire`
+  - `/demo/bus-hire/customise`
+  - `/setup/bus-hire`
 

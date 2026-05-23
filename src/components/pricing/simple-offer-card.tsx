@@ -6,9 +6,10 @@ import { primaryButtonClass } from "@/lib/ui/button-styles";
 type SimpleOfferCardProps = {
   industrySlug?: WebsiteTemplateSlug;
   ctaLabel?: string;
+  showCta?: boolean;
 };
 
-export function SimpleOfferCard({ industrySlug, ctaLabel }: SimpleOfferCardProps) {
+export function SimpleOfferCard({ industrySlug, ctaLabel, showCta = true }: SimpleOfferCardProps) {
   const offer = getWebsiteSubscriptionOffer();
   const href = industrySlug ? `/setup/${industrySlug}` : "/#industries";
 
@@ -45,11 +46,11 @@ export function SimpleOfferCard({ industrySlug, ctaLabel }: SimpleOfferCardProps
         </div>
       </div>
 
-      <p className="mt-4 text-sm text-slate-600">Email notifications are included. More features are being added all the time.</p>
-
-      <Link href={href} className={`mt-6 ${primaryButtonClass}`}>
-        {ctaLabel ?? (industrySlug ? "Start setup" : "Choose your business type")}
-      </Link>
+      {showCta ? (
+        <Link href={href} className={`mt-6 ${primaryButtonClass}`}>
+          {ctaLabel ?? (industrySlug ? "Start setup" : "Choose your business type")}
+        </Link>
+      ) : null}
     </section>
   );
 }

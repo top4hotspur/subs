@@ -1,5 +1,6 @@
 ﻿export const WEBSITE_TEMPLATE_SLUGS = [
   "taxi",
+  "bus-hire",
   "barbers",
   "hairdressers",
   "beauticians",
@@ -8,6 +9,7 @@
   "window-cleaning",
   "dog-grooming",
   "driving-instructors",
+  "tutors",
   "mobile-valeting",
   "cleaners",
   "gardeners",

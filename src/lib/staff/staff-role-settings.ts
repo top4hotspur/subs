@@ -41,6 +41,10 @@ function buildSeed(slug: WebsiteTemplateSlug): StaffRoleDefinition[] {
           ? ["Nail Technician", "Senior Nail Technician"]
           : slug === "taxi"
             ? ["Driver", "Dispatcher", "Admin"]
+            : slug === "bus-hire"
+              ? ["Driver", "Coordinator", "Admin"]
+              : slug === "tutors"
+                ? ["Tutor", "Senior Tutor", "Admin"]
             : ["Owner", "Admin", "General Staff"];
 
   return labels.map((label) => ({

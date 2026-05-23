@@ -18,19 +18,7 @@ Primary audience:
 - Owners/operators who need a clear online presence plus practical tools for bookings, quotes, staff scheduling, and customer contact.
 - Businesses that want a managed solution instead of piecing together multiple tools.
 
-Launch industries:
-- Taxi / private hire
-- Barbers
-- Hairdressers
-- Beauticians
-- Nail salon
-- Massage
-- Window cleaning
-- Dog grooming
-- Driving instructors
-- Mobile valeting
-- Cleaners
-- Gardeners
+Launch industries:\r\n- Taxi / private hire\r\n- Bus hire\r\n- Barbers\r\n- Hairdressers\r\n- Beauticians\r\n- Nail salon\r\n- Massage\r\n- Window cleaning\r\n- Dog grooming\r\n- Driving instructors\r\n- Tutors\r\n- Mobile valeting\r\n- Cleaners\r\n- Gardeners
 
 ## 4. Core customer journey
 1. Business owner chooses their industry on MyExperiment.club.
@@ -153,7 +141,6 @@ CTA options:
 - Industry-specific workflows
 - Business admin tooling included
 - Managed setup, hosting, and domain support
-- Optional WhatsApp add-on
 
 ## 11. What not to imply
 - Do not imply live payment processing is fully implemented today unless presented as future capability.
@@ -171,3 +158,4 @@ CTA options:
 - Organised
 - Supportive
 - Professional but approachable
+

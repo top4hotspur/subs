@@ -240,6 +240,7 @@ Still mock for infrastructure:
 ## Homepage and booking UX refresh
 - Homepage now leads with value-first messaging for managed websites plus booking/request tools.
 - Industry selection is category-first (reveal by category), rather than showing all industries at once.
+- Category order is Hair, Beauty & Wellness -> Home Services -> Transport -> Learning.
 - Public pricing/copy removes WhatsApp add-on sales messaging.
 - Business admin now uses collapsible accordion sections for cleaner navigation.
 - Appointments settings include slot interval control (`15/30/60`) and customer staff-selection toggle.
@@ -248,4 +249,11 @@ Still mock for infrastructure:
   - 30 min: half-hour slots
   - 15 min: hour tiles first, then quarter-hour options within selected hour
 - Booking submissions now create a local/mock auto-response email event log entry.
+
+## Industry coverage update
+- Launch coverage now includes 14 industries:
+  - taxi, bus-hire
+  - barbers, hairdressers, beauticians, nail-salon, massage, dog-grooming
+  - window-cleaning, cleaners, gardeners, mobile-valeting
+  - driving-instructors, tutors
 

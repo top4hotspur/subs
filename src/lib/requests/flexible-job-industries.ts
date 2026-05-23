@@ -5,6 +5,7 @@ const FLEXIBLE_JOB_INDUSTRIES: WebsiteTemplateSlug[] = [
   "cleaners",
   "gardeners",
   "mobile-valeting",
+  "bus-hire",
 ];
 
 export function isFlexibleJobIndustry(slug: WebsiteTemplateSlug): boolean {
@@ -21,6 +22,8 @@ export function flexibleJobHeading(slug: WebsiteTemplateSlug): string {
       return "Request gardening job";
     case "mobile-valeting":
       return "Request mobile valeting";
+    case "bus-hire":
+      return "Request bus hire quote";
     default:
       return "Request service quote";
   }
@@ -36,6 +39,8 @@ export function flexibleJobServiceLabel(slug: WebsiteTemplateSlug): string {
       return "Select gardening service";
     case "mobile-valeting":
       return "Select valeting package";
+    case "bus-hire":
+      return "Select transport service";
     default:
       return "Select service";
   }
@@ -47,6 +52,8 @@ export function flexibleJobAddressLabel(slug: WebsiteTemplateSlug): string {
       return "Vehicle location";
     case "gardeners":
       return "Job address";
+    case "bus-hire":
+      return "Pickup location";
     default:
       return "Property address";
   }
@@ -67,6 +74,8 @@ export function flexibleJobAdminLabel(slug: WebsiteTemplateSlug): string {
       return "Gardening workflow view";
     case "mobile-valeting":
       return "Mobile valeting workflow view";
+    case "bus-hire":
+      return "Bus hire workflow view";
     default:
       return "Flexible job workflow view";
   }

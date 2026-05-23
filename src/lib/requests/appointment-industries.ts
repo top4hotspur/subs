@@ -7,6 +7,7 @@ const APPOINTMENT_STYLE_INDUSTRIES: WebsiteTemplateSlug[] = [
   "beauticians",
   "massage",
   "dog-grooming",
+  "tutors",
 ];
 
 export function isAppointmentStyleIndustry(slug: WebsiteTemplateSlug): boolean {
@@ -21,6 +22,8 @@ export function getAppointmentServiceLabel(slug: WebsiteTemplateSlug): string {
       return "Select massage session";
     case "dog-grooming":
       return "Select grooming service";
+    case "tutors":
+      return "Select tutoring service";
     default:
       return "Select appointment service";
   }
@@ -34,6 +37,8 @@ export function getAppointmentStaffLabel(slug: WebsiteTemplateSlug): string {
       return "Preferred therapist (optional)";
     case "dog-grooming":
       return "Preferred groomer (optional)";
+    case "tutors":
+      return "Preferred tutor (optional)";
     default:
       return "Preferred barber/stylist (optional)";
   }
@@ -47,6 +52,8 @@ export function getAppointmentActionHeading(slug: WebsiteTemplateSlug): string {
       return "Book massage session";
     case "dog-grooming":
       return "Book grooming appointment";
+    case "tutors":
+      return "Book tutoring session";
     default:
       return "Book appointment request";
   }

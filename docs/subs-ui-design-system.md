@@ -36,7 +36,7 @@ No upload is required for a presentable preview. `SiteBrandMark` provides an int
 - Demo pages use the same visual language so preview feels like a real site.
 
 ## Custom colours later
-Default theme remains neutral so it suits all 12 launch industries. Customer-specific brand colours are still supported through customisation data and can be layered onto this system later.
+Default theme remains neutral so it suits all 14 launch industries. Customer-specific brand colours are still supported through customisation data and can be layered onto this system later.
 
 ## Current limitations
 - Still local/mock architecture and browser-local persistence.
@@ -54,6 +54,11 @@ Default theme remains neutral so it suits all 12 launch industries. Customer-spe
   - keep current tab on the matching industry sales page
 - Demo/customisation wording now uses `Create my own site` for clearer conversion intent.
 - Homepage industry discovery is now category-first with click-to-reveal industry lists.
+- Category order is:
+  - Hair, Beauty & Wellness
+  - Home Services
+  - Transport
+  - Learning
 - Public homepage copy emphasizes:
   - managed website + booking tools
   - simple one-package pricing

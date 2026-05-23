@@ -7,6 +7,7 @@ import {
 export function getDefaultStaffRoleForIndustry(slug: WebsiteTemplateSlug): StaffRoleType {
   switch (slug) {
     case "taxi":
+    case "bus-hire":
       return StaffRoleType.DRIVER;
     case "barbers":
       return StaffRoleType.BARBER;
@@ -21,6 +22,7 @@ export function getDefaultStaffRoleForIndustry(slug: WebsiteTemplateSlug): Staff
     case "dog-grooming":
       return StaffRoleType.GROOMER;
     case "driving-instructors":
+    case "tutors":
       return StaffRoleType.INSTRUCTOR;
     case "mobile-valeting":
       return StaffRoleType.VALETER;
@@ -38,6 +40,7 @@ export function getDefaultStaffAvailabilityModeForIndustry(
 ): StaffAvailabilityMode {
   switch (slug) {
     case "taxi":
+    case "bus-hire":
       return StaffAvailabilityMode.ROUTE_BASED;
     case "barbers":
     case "hairdressers":
@@ -53,6 +56,7 @@ export function getDefaultStaffAvailabilityModeForIndustry(
     case "cleaners":
     case "gardeners":
     case "driving-instructors":
+    case "tutors":
       return StaffAvailabilityMode.FLEXIBLE;
     default:
       return StaffAvailabilityMode.NOT_SCHEDULED;
@@ -86,7 +90,10 @@ export function getDefaultStaffLabelForIndustry(slug: WebsiteTemplateSlug): stri
     case "dog-grooming":
       return "Groomer";
     case "driving-instructors":
+    case "tutors":
       return "Instructor";
+    case "bus-hire":
+      return "Driver";
     case "mobile-valeting":
       return "Valeter";
     case "cleaners":
