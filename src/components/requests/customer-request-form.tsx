@@ -3,10 +3,6 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
-  shouldUseFixedSlotsByDefault,
-  shouldUseFlexibleWindowsByDefault,
-} from "@/lib/calendar/industry-calendar-defaults";
-import {
   AppointmentSlotPreference,
   DayPeriod,
 } from "@/lib/calendar/appointment-slot-preferences";
@@ -41,7 +37,6 @@ import {
 import {
   getDefaultLocationTypeForIndustry,
   getDefaultRequestKindForIndustry,
-  getRequestActionLabelForIndustry,
 } from "@/lib/requests/industry-request-defaults";
 import {
   createLocalCustomerRequest,
@@ -56,7 +51,6 @@ import {
 import { getWebsiteTemplate } from "@/lib/sites/mock-repository";
 import { getLocalCustomerSiteSettings } from "@/lib/sites/local-site-settings";
 import { DemoSiteService, WebsiteTemplateSlug } from "@/lib/sites/types";
-import { shouldCustomersSelectStaffByDefault } from "@/lib/staff/industry-staff-defaults";
 import { StaffMember } from "@/lib/staff/staff-types";
 import { primaryButtonClass } from "@/lib/ui/button-styles";
 import { formatUkDate, weekdayLabel } from "@/lib/ui/display-labels";
@@ -68,19 +62,6 @@ type CustomerRequestFormProps = {
   staffMembers?: StaffMember[];
   initialServiceId?: string;
 };
-
-function openingHoursHint(slug: WebsiteTemplateSlug): string {
-  if (slug === "taxi") {
-    return "Journey times are confirmed by the operator after booking.";
-  }
-  if (shouldUseFlexibleWindowsByDefault(slug)) {
-    return "Visit windows are confirmed after the team reviews your request.";
-  }
-  if (shouldUseFixedSlotsByDefault(slug)) {
-    return "Choose your preferred day and time from the available schedule.";
-  }
-  return "The business confirms final timing after review.";
-}
 
 function availabilityClass(level: "HIGH" | "LIMITED" | "LOW" | "NONE", selected: boolean): string {
   if (selected) return "border-sky-700 bg-sky-700 text-white";
@@ -109,14 +90,22 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
     () => (typeof window === "undefined" ? [] : listLocalCustomerRequests()),
     [],
   );
+  const siteSettings = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    const template = getWebsiteTemplate(templateSlug);
+    if (!template) return null;
+    return getLocalCustomerSiteSettings(templateSlug, template);
+  }, [templateSlug]);
 
   const requestKind = getDefaultRequestKindForIndustry(templateSlug);
   const locationType = getDefaultLocationTypeForIndustry(templateSlug);
-  const actionLabel = getRequestActionLabelForIndustry(templateSlug);
   const appointmentStyle = isAppointmentStyleIndustry(templateSlug);
   const flexibleJobStyle = isFlexibleJobIndustry(templateSlug);
   const taxiStyle = isTaxiIndustry(templateSlug);
-  const customerSelectableByDefault = shouldCustomersSelectStaffByDefault(templateSlug);
+  const allowCustomerStaffSelection =
+    siteSettings?.appointmentSettings?.allowCustomerStaffSelection ?? true;
+  const appointmentSlotIntervalMinutes =
+    siteSettings?.appointmentSettings?.appointmentSlotIntervalMinutes ?? 30;
   const preferredStaffLabel = appointmentStyle
     ? getAppointmentStaffLabel(templateSlug)
     : "Preferred staff member (optional)";
@@ -167,6 +156,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
   });
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [expandedHourKey, setExpandedHourKey] = useState<string | null>(null);
 
 
   function selectedServiceName(): string | undefined {
@@ -222,6 +212,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
       serviceDurationMinutes:
         (selectedServiceSettings?.durationMinutes ?? 45) +
         (selectedServiceSettings?.bufferAfterMinutes ?? 0),
+      slotIntervalMinutes: appointmentSlotIntervalMinutes,
     });
   }, [
     appointmentStyle,
@@ -230,6 +221,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
     selectedServiceSettings,
     selectedStaffMember,
     templateSlug,
+    appointmentSlotIntervalMinutes,
   ]);
 
   const preferredSlots = useMemo<AppointmentSlotPreference[]>(() => {
@@ -259,7 +251,6 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
               ? taxiRequestHeading()
               : "Request service"}
       </h3>
-      <p className="mt-1 text-xs text-slate-600">{actionLabel}.</p>
       {appointmentStyle && selectedServiceSettings?.durationMinutes ? (
         <p className="mt-1 text-xs text-slate-600">
           Selected service duration: {selectedServiceSettings.durationMinutes} minutes
@@ -281,25 +272,10 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
       {appointmentStyle && businessAvailabilityPreview.length === 0 ? (
         <p className="mt-1 text-xs text-slate-600">Opening hours vary by day. Please choose your preferred date and time.</p>
       ) : null}
-      {flexibleJobStyle ? (
-        <p className="mt-1 text-xs text-slate-600">Choose your preferred date or visit window.</p>
-      ) : null}
-      {templateSlug === "beauticians" ? (
-        <p className="mt-1 text-xs text-slate-600">Add any relevant treatment preferences in notes.</p>
-      ) : null}
-      {templateSlug === "massage" ? (
-        <p className="mt-1 text-xs text-slate-600">Add any relevant session preferences in notes.</p>
-      ) : null}
-      {taxiStyle ? (
-        <p className="mt-1 text-xs text-slate-600">Share pickup, destination, and journey details so we can confirm your booking.</p>
-      ) : null}
-      {!customerSelectableByDefault ? (
-        <p className="mt-1 text-xs text-slate-600">The business will allocate the right team member.</p>
-      ) : null}
 
       {submitted ? (
         <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
-          Your request has been saved.
+          Your request has been saved. Auto-response prepared.
           <div className="mt-2">
             <Link href="/account" className="font-semibold underline">
               View in customer account
@@ -422,6 +398,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
                     className={`rounded-md border p-2 text-left text-xs ${availabilityClass(day.level, selected)}`}
                     onClick={() => {
                       if (day.blocked) return;
+                      setExpandedHourKey(null);
                       setForm((c) => ({ ...c, preferredDate: day.date, preferredTime: "" }));
                     }}
                   >
@@ -455,32 +432,94 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
                 ].map((group) => (
                   <div key={group.key}>
                     <p className="text-xs font-medium text-slate-700">{group.label}</p>
-                    <div className="mt-1 flex flex-wrap gap-2">
-                      {slotGroups[group.key].length === 0 ? (
-                        <span className="text-xs text-slate-500">No times available in this period.</span>
-                      ) : (
-                        slotGroups[group.key].map((slot) => (
-                          <button
-                            key={slot.id}
-                            type="button"
-                            disabled={Boolean(slot.blocked)}
-                            className={`rounded-md border px-2 py-1 text-xs font-medium ${
-                              form.preferredTime === slot.startTime
-                                ? "border-sky-700 bg-sky-700 text-white"
-                                : slot.blocked
-                                  ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
-                                  : "border-slate-300 bg-slate-100 text-slate-900 hover:bg-slate-200"
-                            }`}
-                            onClick={() => {
-                              if (slot.blocked) return;
-                              setForm((c) => ({ ...c, preferredTime: slot.startTime }));
-                            }}
-                          >
-                            {slot.label} {slot.blocked ? "· Unavailable" : ""}
-                          </button>
-                        ))
-                      )}
-                    </div>
+                    {appointmentSlotIntervalMinutes === 15 ? (
+                      <div className="mt-1 space-y-2">
+                        {Array.from(
+                          slotGroups[group.key].reduce((map, slot) => {
+                            const hour = `${slot.startTime.slice(0, 2)}:00`;
+                            if (!map.has(hour)) map.set(hour, []);
+                            map.get(hour)?.push(slot);
+                            return map;
+                          }, new Map<string, AppointmentSlotPreference[]>()),
+                        ).map(([hour, slots]) => {
+                          const hourKey = `${group.key}:${hour}`;
+                          const selected = expandedHourKey === hourKey;
+                          const allBlocked = slots.every((slot) => slot.blocked);
+                          return (
+                            <div key={hourKey} className="rounded-md border border-slate-200 p-2">
+                              <button
+                                type="button"
+                                disabled={allBlocked}
+                                className={`w-full rounded-md border px-2 py-1 text-left text-xs font-semibold ${
+                                  selected
+                                    ? "border-sky-700 bg-sky-700 text-white"
+                                    : allBlocked
+                                      ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+                                      : "border-slate-300 bg-white text-slate-900 hover:bg-slate-100"
+                                }`}
+                                onClick={() => setExpandedHourKey((current) => (current === hourKey ? null : hourKey))}
+                              >
+                                {hour}
+                              </button>
+                              {selected ? (
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                  {slots.map((slot) => (
+                                    <button
+                                      key={slot.id}
+                                      type="button"
+                                      disabled={Boolean(slot.blocked)}
+                                      className={`rounded-md border px-2 py-1 text-xs font-medium ${
+                                        form.preferredTime === slot.startTime
+                                          ? "border-sky-700 bg-sky-700 text-white"
+                                          : slot.blocked
+                                            ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+                                            : "border-slate-300 bg-slate-100 text-slate-900 hover:bg-slate-200"
+                                      }`}
+                                      onClick={() => {
+                                        if (slot.blocked) return;
+                                        setForm((c) => ({ ...c, preferredTime: slot.startTime }));
+                                      }}
+                                    >
+                                      {slot.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              ) : null}
+                            </div>
+                          );
+                        })}
+                        {slotGroups[group.key].length === 0 ? (
+                          <span className="text-xs text-slate-500">No times available in this period.</span>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <div className="mt-1 flex flex-wrap gap-2">
+                        {slotGroups[group.key].length === 0 ? (
+                          <span className="text-xs text-slate-500">No times available in this period.</span>
+                        ) : (
+                          slotGroups[group.key].map((slot) => (
+                            <button
+                              key={slot.id}
+                              type="button"
+                              disabled={Boolean(slot.blocked)}
+                              className={`rounded-md border px-2 py-1 text-xs font-medium ${
+                                form.preferredTime === slot.startTime
+                                  ? "border-sky-700 bg-sky-700 text-white"
+                                  : slot.blocked
+                                    ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+                                    : "border-slate-300 bg-slate-100 text-slate-900 hover:bg-slate-200"
+                              }`}
+                              onClick={() => {
+                                if (slot.blocked) return;
+                                setForm((c) => ({ ...c, preferredTime: slot.startTime }));
+                              }}
+                            >
+                              {slot.label} {slot.blocked ? "· Unavailable" : ""}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -497,7 +536,7 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
           <input type="time" className="rounded-md border border-slate-300 px-2 py-1 text-sm" value={form.preferredTime} onChange={(event) => setForm((c) => ({ ...c, preferredTime: event.target.value }))} />
         )}
 
-        {selectableStaff.length > 0 ? (
+        {allowCustomerStaffSelection && selectableStaff.length > 0 ? (
           <select
             className="rounded-md border border-slate-300 px-2 py-1 text-sm sm:col-span-2"
             value={form.preferredStaffId}
@@ -568,7 +607,6 @@ export function CustomerRequestForm({ templateSlug, services, staffMembers, init
           {appointmentStyle ? "Save appointment request" : taxiStyle ? "Save taxi request" : "Save request"}
         </button>
       </form>
-      <p className="mt-2 text-xs text-slate-500">{openingHoursHint(templateSlug)}</p>
     </section>
   );
 }

@@ -75,7 +75,7 @@ function buildDemoSummary(template: WebsiteTemplate, draft: DemoCustomisationDra
     `Hero: ${config.heroHeadline}`,
     `Services: ${config.services.map((service) => service.name).join(", ")}`,
     `Opening hours: ${config.openingHours.summary}`,
-    `Pricing: GBP149 setup; GBP30/month base; optional add-ons in setup`,
+    `Pricing: GBP149 setup; GBP30/month base package`,
   ].join("\n");
 }
 

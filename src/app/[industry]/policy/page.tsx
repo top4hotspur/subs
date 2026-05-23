@@ -45,7 +45,7 @@ export default async function IndustryPolicyPage({ params }: Props) {
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-3">
         <h2 className="text-xl font-semibold text-slate-900">Communications</h2>
         <p className="text-sm text-slate-700">Email notifications are included as standard.</p>
-        <p className="text-sm text-slate-700">WhatsApp updates are optional and depend on add-on enablement.</p>
+        <p className="text-sm text-slate-700">More features are being added all the time.</p>
       </section>
 
       <p className="mt-6 text-xs text-slate-500">Local/mock policy content only. No legal review or backend enforcement is applied in this demo.</p>

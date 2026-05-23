@@ -20,7 +20,6 @@ import {
   WebsiteTemplate,
 } from "@/lib/sites/types";
 import {
-  communicationOptionLabel,
   domainOptionLabel,
   formatGbp,
 } from "@/lib/ui/display-labels";
@@ -85,10 +84,7 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
       ? offer.domainRegistrationFeeGbp
       : 0;
   const monthlyFee =
-    offer.monthlyFeeGbp +
-    (draft.communicationOption === CommunicationOption.EMAIL_AND_WHATSAPP
-      ? offer.whatsappAddonMonthlyFeeGbp
-      : 0);
+    offer.monthlyFeeGbp;
   const setupTotal = offer.setupFeeGbp + domainFee;
 
   function validate(): string[] {
@@ -309,32 +305,8 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
         <section className="space-y-3 rounded-xl border border-slate-200 p-4">
           <h2 className="text-lg font-semibold text-slate-900">Customer communications</h2>
           <p className="text-sm text-slate-600">
-            Email confirmations are included. Add WhatsApp if you want customer updates sent by WhatsApp as well.
+            Email confirmations are included as standard. More features are being added all the time.
           </p>
-          <label className="block text-sm text-slate-700">
-            <input
-              type="radio"
-              name="communication-option"
-              className="mr-2"
-              checked={draft.communicationOption === CommunicationOption.EMAIL_ONLY}
-              onChange={() =>
-                setDraft((c) => ({ ...c, communicationOption: CommunicationOption.EMAIL_ONLY }))
-              }
-            />
-            Email only — included
-          </label>
-          <label className="block text-sm text-slate-700">
-            <input
-              type="radio"
-              name="communication-option"
-              className="mr-2"
-              checked={draft.communicationOption === CommunicationOption.EMAIL_AND_WHATSAPP}
-              onChange={() =>
-                setDraft((c) => ({ ...c, communicationOption: CommunicationOption.EMAIL_AND_WHATSAPP }))
-              }
-            />
-            Email + WhatsApp — +{formatGbp(offer.whatsappAddonMonthlyFeeGbp)}/month
-          </label>
         </section>
 
         <section className="space-y-3 rounded-xl border border-slate-200 p-4">
@@ -416,9 +388,7 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
           <p>
             <span className="font-semibold">Domain option:</span> {domainOptionLabel(draft.domainOption)}
           </p>
-          <p>
-            <span className="font-semibold">Customer communications:</span> {communicationOptionLabel(draft.communicationOption)}
-          </p>
+          <p><span className="font-semibold">Customer communications:</span> Email notifications included</p>
           <hr className="my-2 border-slate-200" />
           <p>
             <span className="font-semibold">Setup fee:</span> {formatGbp(offer.setupFeeGbp)}
@@ -434,12 +404,6 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
           </p>
           <p>
             <span className="font-semibold">Email included:</span> Yes
-          </p>
-          <p>
-            <span className="font-semibold">WhatsApp add-on:</span>{" "}
-            {draft.communicationOption === CommunicationOption.EMAIL_AND_WHATSAPP
-              ? "Yes"
-              : "No"}
           </p>
         </div>
       </aside>

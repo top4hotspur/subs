@@ -53,4 +53,10 @@ Default theme remains neutral so it suits all 12 launch industries. Customer-spe
   - open demo in new tab/window
   - keep current tab on the matching industry sales page
 - Demo/customisation wording now uses `Create my own site` for clearer conversion intent.
+- Homepage industry discovery is now category-first with click-to-reveal industry lists.
+- Public homepage copy emphasizes:
+  - managed website + booking tools
+  - simple one-package pricing
+  - live-site target within a day when details/domain are ready
+- Public-facing marketing copy no longer promotes WhatsApp add-on pricing.
 

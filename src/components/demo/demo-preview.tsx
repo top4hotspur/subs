@@ -24,7 +24,6 @@ const SOCIAL_LABELS: Record<string, string> = {
   x: "X",
   linkedin: "LinkedIn",
   youtube: "YouTube",
-  website: "Website",
 };
 
 export function DemoPreview({ template, draft }: DemoPreviewProps) {
@@ -33,7 +32,7 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
   const settings = useMemo(() => getLocalCustomerSiteSettings(template.slug, template), [template]);
   const currency = settings.paymentSettings.currencyCode ?? "GBP";
   const activeServices = settings.services.filter((service) => service.active);
-  const socialEntries = Object.entries(settings.businessDetails.socialLinks ?? {}).filter(([, value]) => value && value.trim().length > 0);
+  const socialEntries = Object.entries(settings.businessDetails.socialLinks ?? {}).filter(([key, value]) => key !== "website" && value && value.trim().length > 0);
 
   return (
     <div className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 shadow-sm">
@@ -68,7 +67,9 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
             <p className="text-sm text-slate-600">{config.contact.address}</p>
           </SiteCard>
           <SiteCard title="Opening hours" subtitle={config.openingHours.summary} />
-          <SiteCard title="Demo login placeholder" subtitle={`${template.demoLogin.email} / ${template.demoLogin.password}`} />
+          <SiteCard title="Portal access" subtitle="Customer, staff, and business admin areas">
+            <p className="text-sm text-slate-600">Secure login areas are available for customers, staff, and site owners.</p>
+          </SiteCard>
         </div>
 
         {socialEntries.length > 0 ? (
@@ -83,7 +84,7 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
           </SiteCard>
         ) : null}
 
-        <SiteCard title="Customer and team portal layers (planned)" subtitle="Live customer sites will have separate portal access for different users.">
+        <SiteCard title="Customer and team portal areas" subtitle="Separate access for customers, staff, and business owners.">
           <ul className="list-disc space-y-2 pl-5 text-sm text-slate-600">
             <li>Customer login: bookings, payments, vouchers, profile</li>
             <li>Staff login: appointments, telephone/manual bookings, voucher check and redeem</li>
@@ -91,18 +92,18 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
           </ul>
         </SiteCard>
 
-        <SiteCard title="Future workflow support" subtitle="Bookings, quote requests, staff scheduling, completion updates, and review requests can be configured during setup.">
+        <SiteCard title="Business workflow support" subtitle="Bookings, quote requests, staff scheduling, completion updates, and review requests can be configured during setup.">
           <p className="text-sm text-slate-600">Appointments and customer updates are handled directly from the site portal experience.</p>
         </SiteCard>
 
         {appointmentStyle ? (
-          <SiteCard title="Gift vouchers (planned module)" subtitle="Business admin will be able to enable/disable vouchers and choose delivery methods.">
+          <SiteCard title="Gift vouchers" subtitle="Choose a value and delivery method that suits the customer.">
             <ul className="list-disc space-y-2 pl-5 text-sm text-slate-600">
               <li>Choose voucher value and issue a unique voucher ID</li>
               <li>Delivery methods: digital email, collect in store, post (with postage charge)</li>
               <li>Staff can check, redeem, and log voucher usage details</li>
             </ul>
-            <p className="mt-2 text-xs text-slate-500">Payment and delivery setup will be finalised during onboarding.</p>
+            <p className="mt-2 text-xs text-slate-500">Voucher options can be configured by the business owner in the site admin area.</p>
           </SiteCard>
         ) : null}
 

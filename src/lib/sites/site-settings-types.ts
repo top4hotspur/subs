@@ -146,6 +146,11 @@ export type SitePaymentSettings = {
   allowInStorePaymentRecording: boolean;
 };
 
+export type SiteAppointmentSettings = {
+  appointmentSlotIntervalMinutes: 15 | 30 | 60;
+  allowCustomerStaffSelection: boolean;
+};
+
 export type SiteCancellationPolicySettings = {
   cancellationWindowHours: number;
   fullRefundBeforeWindow: boolean;
@@ -164,6 +169,7 @@ export type CustomerSiteSettings = {
   legal: SiteLegalSettings;
   notifications: SiteNotificationSettings;
   paymentSettings: SitePaymentSettings;
+  appointmentSettings: SiteAppointmentSettings;
   cancellationPolicy: SiteCancellationPolicySettings;
   seo: SiteSeoSettings;
   analytics: SiteAnalyticsSettings;

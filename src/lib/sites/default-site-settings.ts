@@ -1,5 +1,6 @@
-﻿import { CustomerSiteSettings, SitePageVisibilitySettings, SiteSectionVisibilitySettings } from "@/lib/sites/site-settings-types";
+import { CustomerSiteSettings, SitePageVisibilitySettings, SiteSectionVisibilitySettings } from "@/lib/sites/site-settings-types";
 import { WebsiteTemplate } from "@/lib/sites/types";
+import { shouldCustomersSelectStaffByDefault } from "@/lib/staff/industry-staff-defaults";
 
 function slugify(value: string): string {
   return value
@@ -119,6 +120,10 @@ export function buildDefaultCustomerSiteSettings(template: WebsiteTemplate): Cus
       currencyCode: "GBP",
       allowInStorePaymentRecording: false,
     },
+    appointmentSettings: {
+      appointmentSlotIntervalMinutes: 30,
+      allowCustomerStaffSelection: shouldCustomersSelectStaffByDefault(template.slug),
+    },
     cancellationPolicy: {
       cancellationWindowHours: 24,
       fullRefundBeforeWindow: true,
@@ -143,3 +148,6 @@ export function buildDefaultCustomerSiteSettings(template: WebsiteTemplate): Cus
     updatedAtIso: now,
   };
 }
+
+
+

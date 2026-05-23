@@ -39,13 +39,13 @@ export function SimpleOfferCard({ industrySlug, ctaLabel }: SimpleOfferCardProps
           <p className="text-sm text-slate-600">only if we register/manage</p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">WhatsApp add-on</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-900">+£{offer.whatsappAddonMonthlyFeeGbp}</p>
-          <p className="text-sm text-slate-600">optional monthly</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Go-live target</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-900">Within a day</p>
+          <p className="text-sm text-slate-600">once details and domain are ready</p>
         </div>
       </div>
 
-      <p className="mt-4 text-sm text-slate-600">Email notifications are included as standard.</p>
+      <p className="mt-4 text-sm text-slate-600">Email notifications are included. More features are being added all the time.</p>
 
       <Link href={href} className={`mt-6 ${primaryButtonClass}`}>
         {ctaLabel ?? (industrySlug ? "Start setup" : "Choose your business type")}

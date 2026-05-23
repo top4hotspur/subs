@@ -1,56 +1,25 @@
-﻿"use client";
+"use client";
 
-import { useMemo, useState } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import { StaffRotaEditor } from "@/components/calendar/staff-rota-editor";
 import { DemoSiteNav } from "@/components/demo/demo-site-nav";
-import { SiteCard } from "@/components/site-ui/site-card";
 import { WEEKDAYS } from "@/lib/calendar/calendar-types";
-import {
-  listLocalBusinessClosures,
-  saveLocalBusinessClosures,
-} from "@/lib/calendar/local-closures";
+import { listLocalBusinessClosures, saveLocalBusinessClosures } from "@/lib/calendar/local-closures";
 import { getPublicServicePriceLabel } from "@/lib/pricing/service-price-display";
-import {
-  getLocalCustomerSiteSettings,
-  saveLocalCustomerSiteSettings,
-} from "@/lib/sites/local-site-settings";
+import { getLocalCustomerSiteSettings, saveLocalCustomerSiteSettings } from "@/lib/sites/local-site-settings";
 import { WebsiteTemplate } from "@/lib/sites/types";
-import {
-  listLocalStaff,
-  saveLocalStaff,
-} from "@/lib/staff/local-staff";
-import {
-  listLocalStaffRoles,
-  saveLocalStaffRoles,
-  seedLocalStaffRoles,
-  type StaffRoleDefinition,
-} from "@/lib/staff/staff-role-settings";
-import {
-  StaffAvailabilityMode,
-  StaffRoleType,
-  type StaffMember,
-} from "@/lib/staff/staff-types";
+import { listLocalStaff, saveLocalStaff } from "@/lib/staff/local-staff";
+import { listLocalStaffRoles, saveLocalStaffRoles, seedLocalStaffRoles, type StaffRoleDefinition } from "@/lib/staff/staff-role-settings";
+import { StaffAvailabilityMode, StaffRoleType, type StaffMember } from "@/lib/staff/staff-types";
 import { formatSiteCurrency, formatUkDate, weekdayLabel } from "@/lib/ui/display-labels";
-import {
-  getLocalVoucherSettings,
-  saveLocalVoucherSettings,
-} from "@/lib/vouchers/local-vouchers";
+import { getLocalVoucherSettings, saveLocalVoucherSettings } from "@/lib/vouchers/local-vouchers";
 import { VoucherDeliveryMethod } from "@/lib/vouchers/voucher-types";
 
 type DemoBusinessAdminPageProps = {
   template: WebsiteTemplate;
 };
 
-const permissionAreas = [
-  "staff",
-  "rotas",
-  "bookings",
-  "financials",
-  "services",
-  "vouchers",
-  "pages",
-  "notifications",
-] as const;
+const permissionAreas = ["staff", "rotas", "bookings", "financials", "services", "vouchers", "pages", "notifications"] as const;
 
 const SOCIAL_PLATFORMS = [
   { key: "facebook", label: "Facebook" },
@@ -59,7 +28,6 @@ const SOCIAL_PLATFORMS = [
   { key: "x", label: "X / Twitter" },
   { key: "linkedin", label: "LinkedIn" },
   { key: "youtube", label: "YouTube" },
-  { key: "website", label: "Website" },
 ] as const;
 
 function makeServiceId(): string {
@@ -75,6 +43,18 @@ function makeRoleId(): string {
 function summarizeDays(days?: string[]): string {
   if (!days || days.length === 0) return "No days selected";
   return days.map((d) => weekdayLabel(d as never)).join(", ");
+}
+
+function CollapsibleSection({ title, subtitle, defaultOpen = false, children }: { title: string; subtitle: string; defaultOpen?: boolean; children: ReactNode }) {
+  return (
+    <details open={defaultOpen} className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <summary className="cursor-pointer list-none px-5 py-4">
+        <p className="text-base font-semibold text-slate-900">{title}</p>
+        <p className="mt-1 text-sm text-slate-600">{subtitle}</p>
+      </summary>
+      <div className="border-t border-slate-200 px-5 py-4">{children}</div>
+    </details>
+  );
 }
 
 export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) {
@@ -163,7 +143,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
         <div className="mt-4"><DemoSiteNav templateSlug={template.slug} /></div>
       </section>
 
-      <SiteCard title="Business settings" subtitle="Currency, payment recording, and social profile links.">
+      <CollapsibleSection title="Business settings" subtitle="Currency and social profile links.">
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-xs font-semibold text-slate-700">Currency
             <select className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={currency} onChange={(event) => setSettings((current) => ({ ...current, paymentSettings: { ...current.paymentSettings, currencyCode: event.target.value as "GBP" | "EUR" | "USD" } }))}>
@@ -172,12 +152,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
               <option value="USD">USD ($)</option>
             </select>
           </label>
-          <label className="flex items-center gap-2 self-end text-sm text-slate-700">
-            <input type="checkbox" checked={settings.paymentSettings.allowInStorePaymentRecording} onChange={(event) => setSettings((current) => ({ ...current, paymentSettings: { ...current.paymentSettings, allowInStorePaymentRecording: event.target.checked } }))} />
-            Allow in-store payment recording
-          </label>
         </div>
-        <p className="mt-2 text-xs text-slate-600">Shows a staff tool for recording cash/card payments taken in store. This does not process payments.</p>
 
         <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3">
           <p className="text-sm font-semibold text-slate-900">Social Media</p>
@@ -215,9 +190,9 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
             })}
           </div>
         </div>
-      </SiteCard>
+      </CollapsibleSection>
 
-      <SiteCard title="Staff positions" subtitle="Create business-specific role/position options used by staff records.">
+      <CollapsibleSection title="Staff positions" subtitle="Create business-specific role/position options used by staff records.">
         <div className="mb-3 flex flex-wrap gap-2">
           <input className="rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="Add position" value={newRoleLabel} onChange={(event) => setNewRoleLabel(event.target.value)} />
           <button type="button" className="rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800" onClick={addRole}>Add position</button>
@@ -232,9 +207,9 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
             </div>
           ))}
         </div>
-      </SiteCard>
+      </CollapsibleSection>
 
-      <SiteCard title="Services and prices" subtitle="Compact service cards with duration and role pricing.">
+      <CollapsibleSection title="Services and prices" subtitle="Compact service cards with duration and role pricing." defaultOpen>
         <div className="mb-3"><button type="button" className="rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800" onClick={addService}>Add service</button></div>
         <div className="grid gap-3">
           {settings.services.map((service, index) => {
@@ -289,9 +264,9 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
             );
           })}
         </div>
-      </SiteCard>
+      </CollapsibleSection>
 
-      <SiteCard title="Staff" subtitle="Compact staff cards with role dropdown and available days.">
+      <CollapsibleSection title="Staff" subtitle="Compact staff cards with role dropdown and available days.">
         <div className="mb-3"><button type="button" className="rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800" onClick={addStaff}>Add staff member</button></div>
         <div className="grid gap-3">
           {staffMembers.map((staff, index) => {
@@ -350,61 +325,112 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
             );
           })}
         </div>
-      </SiteCard>
+      </CollapsibleSection>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <SiteCard title="Ad hoc closures" subtitle="Closure dates feed booking availability.">
-          <div className="grid gap-2 sm:grid-cols-2">
-            <input type="date" className="rounded-md border border-slate-300 px-2 py-1 text-sm" value={newClosureDate} onChange={(event) => setNewClosureDate(event.target.value)} />
-            <input className="rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="Closure label" value={newClosureLabel} onChange={(event) => setNewClosureLabel(event.target.value)} />
-          </div>
-          <button type="button" className="mt-2 rounded-md bg-slate-800 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-900" onClick={() => { if(!newClosureDate) return; setClosures((current)=>[...current,{id:`closure_${Date.now()}`,industrySlug:template.slug,date:newClosureDate,label:newClosureLabel||"Closed",allDay:true,active:true,createdAtIso:new Date().toISOString(),updatedAtIso:new Date().toISOString()}]); setNewClosureDate(""); setNewClosureLabel(""); }}>Add closure</button>
-          <ul className="mt-3 space-y-2 text-sm text-slate-700">
-            {closures.length === 0 ? <li>No closures added.</li> : null}
-            {closures.map((closure) => (
-              <li key={closure.id} className="flex items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-2 py-1">
-                <span>{formatUkDate(closure.date)} - {closure.label}</span>
-                <button type="button" className="text-xs font-semibold text-rose-700" onClick={() => setClosures((current) => current.filter((item) => item.id !== closure.id))}>Remove</button>
-              </li>
-            ))}
-          </ul>
-        </SiteCard>
+      <CollapsibleSection title="Appointments" subtitle="Control customer booking slot display and staff selection behaviour." defaultOpen>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="text-xs font-semibold text-slate-700">Appointment slot block size
+            <select
+              className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+              value={settings.appointmentSettings.appointmentSlotIntervalMinutes}
+              onChange={(event) =>
+                setSettings((current) => ({
+                  ...current,
+                  appointmentSettings: {
+                    ...current.appointmentSettings,
+                    appointmentSlotIntervalMinutes: Number(event.target.value) as 15 | 30 | 60,
+                  },
+                }))
+              }
+            >
+              <option value={15}>15 minutes</option>
+              <option value={30}>30 minutes</option>
+              <option value={60}>1 hour</option>
+            </select>
+          </label>
+          <label className="flex items-center gap-2 self-end text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={settings.appointmentSettings.allowCustomerStaffSelection}
+              onChange={(event) =>
+                setSettings((current) => ({
+                  ...current,
+                  appointmentSettings: {
+                    ...current.appointmentSettings,
+                    allowCustomerStaffSelection: event.target.checked,
+                  },
+                }))
+              }
+            />
+            Allow customer staff selection
+          </label>
+        </div>
+        <p className="mt-2 text-xs text-slate-600">Slot interval affects how available times are shown on the customer booking page.</p>
+      </CollapsibleSection>
 
-        <SiteCard title="Gift vouchers" subtitle="Enable vouchers and configure delivery methods.">
-          <div className="space-y-2 text-sm text-slate-700">
-            <label className="flex items-center gap-2"><input type="checkbox" checked={voucherSettings.enabled} onChange={(event) => setVoucherSettings((current) => ({ ...current, enabled: event.target.checked }))} />Enable gift vouchers</label>
-            <label className="flex items-center gap-2"><input type="checkbox" checked={voucherSettings.allowCustomValue} onChange={(event) => setVoucherSettings((current) => ({ ...current, allowCustomValue: event.target.checked }))} />Allow customer-entered voucher values</label>
-            <div className="grid grid-cols-2 gap-2">
-              <label className="text-xs">Min value ({formatSiteCurrency(1, currency).replace(/[0-9.,\s]/g,"")})<input type="number" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={voucherSettings.minValueGbp} onChange={(event) => setVoucherSettings((current) => ({ ...current, minValueGbp: Number(event.target.value || 0) }))} /></label>
-              <label className="text-xs">Max value ({formatSiteCurrency(1, currency).replace(/[0-9.,\s]/g,"")})<input type="number" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={voucherSettings.maxValueGbp} onChange={(event) => setVoucherSettings((current) => ({ ...current, maxValueGbp: Number(event.target.value || 0) }))} /></label>
-            </div>
-            <div className="rounded-md border border-slate-200 bg-slate-50 p-2">
-              <p className="text-xs font-semibold text-slate-700">Delivery Options</p>
-              <div className="mt-1 space-y-1 text-xs">
-                {[{method:VoucherDeliveryMethod.DIGITAL_EMAIL,label:"Email"},{method:VoucherDeliveryMethod.COLLECT_IN_STORE,label:"Collect in store"},{method:VoucherDeliveryMethod.POST,label:"Post"}].map((item) => (
-                  <label key={item.method} className="flex items-center gap-2">
-                    <input type="checkbox" checked={voucherSettings.deliveryMethods.includes(item.method)} onChange={(event) => setVoucherSettings((current) => ({ ...current, deliveryMethods: event.target.checked ? [...current.deliveryMethods, item.method] : current.deliveryMethods.filter((method) => method !== item.method) }))} />
-                    {item.label}
-                  </label>
-                ))}
-              </div>
-            </div>
-            <label className="text-xs">Postage charge ({formatSiteCurrency(1, currency).replace(/[0-9.,\s]/g,"")})<input type="number" step="0.5" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={voucherSettings.postageChargeGbp} onChange={(event) => setVoucherSettings((current) => ({ ...current, postageChargeGbp: Number(event.target.value || 0) }))} /></label>
-          </div>
-        </SiteCard>
-      </div>
-
-      <SiteCard title="Staff rota" subtitle="Select one staff member and edit a compact weekly rota. Service availability days control rota eligibility.">
+      <CollapsibleSection title="Rota and breaks" subtitle="Select one staff member and edit a compact weekly rota.">
         <StaffRotaEditor industrySlug={template.slug} staffMembers={staffMembers} />
-      </SiteCard>
+      </CollapsibleSection>
 
-      <SiteCard title="Super-user permissions model" subtitle="Choose which areas delegated users can access.">
+      <CollapsibleSection title="Ad hoc closures" subtitle="Closure dates feed booking availability.">
+        <div className="grid gap-2 sm:grid-cols-2">
+          <input type="date" className="rounded-md border border-slate-300 px-2 py-1 text-sm" value={newClosureDate} onChange={(event) => setNewClosureDate(event.target.value)} />
+          <input className="rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="Closure label" value={newClosureLabel} onChange={(event) => setNewClosureLabel(event.target.value)} />
+        </div>
+        <button type="button" className="mt-2 rounded-md bg-slate-800 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-900" onClick={() => { if(!newClosureDate) return; setClosures((current)=>[...current,{id:`closure_${Date.now()}`,industrySlug:template.slug,date:newClosureDate,label:newClosureLabel||"Closed",allDay:true,active:true,createdAtIso:new Date().toISOString(),updatedAtIso:new Date().toISOString()}]); setNewClosureDate(""); setNewClosureLabel(""); }}>Add closure</button>
+        <ul className="mt-3 space-y-2 text-sm text-slate-700">
+          {closures.length === 0 ? <li>No closures added.</li> : null}
+          {closures.map((closure) => (
+            <li key={closure.id} className="flex items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-2 py-1">
+              <span>{formatUkDate(closure.date)} - {closure.label}</span>
+              <button type="button" className="text-xs font-semibold text-rose-700" onClick={() => setClosures((current) => current.filter((item) => item.id !== closure.id))}>Remove</button>
+            </li>
+          ))}
+        </ul>
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Gift vouchers" subtitle="Enable vouchers and configure delivery methods.">
+        <div className="space-y-2 text-sm text-slate-700">
+          <label className="flex items-center gap-2"><input type="checkbox" checked={voucherSettings.enabled} onChange={(event) => setVoucherSettings((current) => ({ ...current, enabled: event.target.checked }))} />Enable gift vouchers</label>
+          <label className="flex items-center gap-2"><input type="checkbox" checked={voucherSettings.allowCustomValue} onChange={(event) => setVoucherSettings((current) => ({ ...current, allowCustomValue: event.target.checked }))} />Allow customer-entered voucher values</label>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="text-xs">Min value ({formatSiteCurrency(1, currency).replace(/[0-9.,\s]/g,"")})<input type="number" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={voucherSettings.minValueGbp} onChange={(event) => setVoucherSettings((current) => ({ ...current, minValueGbp: Number(event.target.value || 0) }))} /></label>
+            <label className="text-xs">Max value ({formatSiteCurrency(1, currency).replace(/[0-9.,\s]/g,"")})<input type="number" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={voucherSettings.maxValueGbp} onChange={(event) => setVoucherSettings((current) => ({ ...current, maxValueGbp: Number(event.target.value || 0) }))} /></label>
+          </div>
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-2">
+            <p className="text-xs font-semibold text-slate-700">Delivery Options</p>
+            <div className="mt-1 space-y-1 text-xs">
+              {[{method:VoucherDeliveryMethod.DIGITAL_EMAIL,label:"Email"},{method:VoucherDeliveryMethod.COLLECT_IN_STORE,label:"Collect in store"},{method:VoucherDeliveryMethod.POST,label:"Post"}].map((item) => (
+                <label key={item.method} className="flex items-center gap-2">
+                  <input type="checkbox" checked={voucherSettings.deliveryMethods.includes(item.method)} onChange={(event) => setVoucherSettings((current) => ({ ...current, deliveryMethods: event.target.checked ? [...current.deliveryMethods, item.method] : current.deliveryMethods.filter((method) => method !== item.method) }))} />
+                  {item.label}
+                </label>
+              ))}
+            </div>
+          </div>
+          <label className="text-xs">Postage charge ({formatSiteCurrency(1, currency).replace(/[0-9.,\s]/g,"")})<input type="number" step="0.5" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={voucherSettings.postageChargeGbp} onChange={(event) => setVoucherSettings((current) => ({ ...current, postageChargeGbp: Number(event.target.value || 0) }))} /></label>
+        </div>
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Page visibility/content" subtitle="Page toggles and content controls are available in this demo model.">
+        <p className="text-sm text-slate-600">Use this section in the live subscriber portal to enable/disable pages such as About, Contact, Gallery, Reviews, and Policies.</p>
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Payments/sales" subtitle="Local-only operational sales recording preferences.">
+        <label className="flex items-center gap-2 text-sm text-slate-700">
+          <input type="checkbox" checked={settings.paymentSettings.allowInStorePaymentRecording} onChange={(event) => setSettings((current) => ({ ...current, paymentSettings: { ...current.paymentSettings, allowInStorePaymentRecording: event.target.checked } }))} />
+          Allow in-store payment recording
+        </label>
+        <p className="mt-2 text-xs text-slate-600">Shows a staff tool for recording cash/card payments taken in store. This does not process payments.</p>
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Super-user permissions" subtitle="Choose which areas delegated users can access.">
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {permissionAreas.map((area) => (
             <label key={area} className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700"><input type="checkbox" checked={Boolean(superUserPermissions[area])} onChange={(event) => setSuperUserPermissions((current) => ({ ...current, [area]: event.target.checked }))} />{area}</label>
           ))}
         </div>
-      </SiteCard>
+      </CollapsibleSection>
 
       <div className="flex flex-wrap gap-2">
         <button type="button" className="rounded-md bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800" onClick={persistSettings}>Save business settings</button>

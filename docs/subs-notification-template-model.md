@@ -6,7 +6,7 @@ This is preview/edit modeling only and does not send real messages.
 
 ## Channels
 - Email (`EMAIL`) - included as standard
-- WhatsApp (`WHATSAPP`) - optional add-on only (+£10/month)
+- WhatsApp channel metadata remains in internal models only and is not part of the current public offering.
 
 ## Events
 - `SETUP_REQUEST_RECEIVED`
@@ -34,8 +34,7 @@ Additional local metadata placeholders:
 Implemented in:
 - `src/lib/notifications/default-notification-templates.ts`
 
-Defaults include both email and WhatsApp versions.
-WhatsApp defaults are created but disabled unless add-on is enabled.
+Defaults are currently focused on email templates for customer-facing flows.
 
 ## Variables
 Template tokens include:
@@ -87,7 +86,7 @@ Functions:
 - `JOB_COMPLETED`
 - `REVIEW_REQUEST`
 
-This is preview-only. No real email/WhatsApp sending.
+This is preview-only. No real email sending.
 
 ## Future boundaries
 Not implemented in this phase:
@@ -97,9 +96,8 @@ Not implemented in this phase:
 - API/webhook orchestration
 - per-customer messaging preferences persistence in DB
 
-Future Twilio path:
-- local templates are designed to map to Twilio Content Templates later
-- backend credentials/workflows are required before any sync can happen
-- WhatsApp templates typically require provider approval before live sends
-- current UI only shows local metadata/status and does not sync/send
+## Booking auto-response local mock
+- Booking/request saves now prepare a local email auto-response event log entry.
+- These events are browser-local and do not send real email.
+- UI wording should remain explicit: `Auto-response prepared` rather than claiming delivery.
 

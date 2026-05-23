@@ -160,6 +160,13 @@ Current behavior:
 - It combines business opening windows, rota, closures, holidays, and local request conflicts.
 - Fully booked days are marked unavailable and disabled in booking UI.
 
+## Slot interval display rules (local mock)
+- appointmentSettings.appointmentSlotIntervalMinutes controls slot display density.
+- 60-minute interval: hourly slot buttons.
+- 30-minute interval: half-hour slot buttons.
+- 15-minute interval: hour-level parent buttons first, then quarter-hour options inside the selected hour.
+- Slot interval rendering still respects closures, holidays, and local conflict flags.
+
 
 ## Rota compactness and duration linkage
 - Rota editor remains single-staff focused with compact weekday rows and collapsible break editors.

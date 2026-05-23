@@ -32,7 +32,6 @@ Key groups:
 
 ## Notifications and templates
 - Email notifications are included by default.
-- WhatsApp add-on is optional (+£10/month).
 - Template content is modeled separately in:
   - `src/lib/notifications/notification-types.ts`
   - `src/lib/notifications/local-notification-templates.ts`
@@ -102,5 +101,10 @@ for browser-local issue/check/redeem demo workflows.
 ## Currency and social settings
 - paymentSettings.currencyCode now drives local demo currency display for service/voucher/sales values.
 - paymentSettings.allowInStorePaymentRecording controls staff in-store sale capture visibility.
-- usinessDetails.socialLinks now powers customer-facing social links when configured.
+- businessDetails.socialLinks now powers customer-facing social links when configured.
+- Social platform list excludes `Website`; supported options are Facebook, Instagram, TikTok, X/Twitter, LinkedIn, YouTube.
+
+## Appointment display controls
+- appointmentSettings.appointmentSlotIntervalMinutes supports `15`, `30`, or `60` minute slot blocks.
+- appointmentSettings.allowCustomerStaffSelection controls whether customers see preferred-staff selection in booking forms.
 

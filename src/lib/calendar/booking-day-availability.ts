@@ -30,6 +30,7 @@ type BuildBookingDayAvailabilityOptions = {
   daysToReturn?: number;
   lookAheadDays?: number;
   serviceDurationMinutes?: number;
+  slotIntervalMinutes?: 15 | 30 | 60;
   selectedStaffId?: string;
   selectedStaffName?: string;
   businessAvailabilityWindows: BusinessAvailabilityWindow[];
@@ -107,6 +108,7 @@ export function buildBookingDayAvailability(
     daysToReturn = 14,
     lookAheadDays = 60,
     serviceDurationMinutes = 45,
+    slotIntervalMinutes = 30,
     selectedStaffId,
     selectedStaffName,
     businessAvailabilityWindows,
@@ -140,6 +142,7 @@ export function buildBookingDayAvailability(
       staffHolidays,
       existingRequests,
       serviceDurationMinutes,
+      slotIntervalMinutes,
       selectedStaffId,
       selectedStaffName,
     });

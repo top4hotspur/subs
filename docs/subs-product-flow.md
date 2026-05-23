@@ -237,3 +237,15 @@ Still mock for infrastructure:
 - Postal voucher delivery now captures a dedicated voucher delivery address in local mock flows.
 - Staff can optionally assign a team member when creating manual bookings.
 
+## Homepage and booking UX refresh
+- Homepage now leads with value-first messaging for managed websites plus booking/request tools.
+- Industry selection is category-first (reveal by category), rather than showing all industries at once.
+- Public pricing/copy removes WhatsApp add-on sales messaging.
+- Business admin now uses collapsible accordion sections for cleaner navigation.
+- Appointments settings include slot interval control (`15/30/60`) and customer staff-selection toggle.
+- Booking UI supports interval-specific display:
+  - 60 min: hourly slots
+  - 30 min: half-hour slots
+  - 15 min: hour tiles first, then quarter-hour options within selected hour
+- Booking submissions now create a local/mock auto-response email event log entry.
+

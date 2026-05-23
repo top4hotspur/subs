@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { HomeFaqAccordion } from "@/components/marketing/home-faq-accordion";
-import { IndustryDemoCardCta } from "@/components/marketing/industry-demo-card";
+import { IndustryCategoryBrowser } from "@/components/marketing/industry-category-browser";
 import { SimpleOfferCard } from "@/components/pricing/simple-offer-card";
-import { SiteCard } from "@/components/site-ui/site-card";
 import { SiteCtaPanel } from "@/components/site-ui/site-cta-panel";
 import { SiteHero } from "@/components/site-ui/site-hero";
 import { SiteSection } from "@/components/site-ui/site-section";
@@ -12,19 +11,28 @@ import { outlineButtonClass, secondaryButtonClass } from "@/lib/ui/button-styles
 
 const industryGroups: Array<{
   title: string;
+  description: string;
   slugs: WebsiteTemplateSlug[];
 }> = [
   {
     title: "Transport",
-    slugs: ["taxi", "driving-instructors", "mobile-valeting"],
+    slugs: ["taxi"],
+    description: "Taxi and private-hire websites with route-focused requests.",
   },
   {
     title: "Hair, Beauty & Wellness",
     slugs: ["barbers", "hairdressers", "beauticians", "nail-salon", "massage"],
+    description: "Appointment-led businesses with service pricing and slot booking.",
   },
   {
     title: "Home & Outdoor Services",
-    slugs: ["window-cleaning", "dog-grooming", "cleaners", "gardeners"],
+    slugs: ["window-cleaning", "cleaners", "gardeners", "dog-grooming", "mobile-valeting"],
+    description: "Quote and job-request flows for property and mobile services.",
+  },
+  {
+    title: "Learning & Mobile Services",
+    slugs: ["driving-instructors"],
+    description: "Instructor-style service sites with structured enquiry workflows.",
   },
 ];
 
@@ -37,7 +45,7 @@ const trustPoints = [
   "Invoicing/payment tracking planned",
   "Customer feedback and review request support",
   "Email notifications included",
-  "Optional WhatsApp add-on",
+  "More features are being added all the time",
   "Hosting and ongoing management",
 ];
 
@@ -59,10 +67,6 @@ const faqs = [
     a: "Yes. Email notifications are included as standard.",
   },
   {
-    q: "Can I add WhatsApp?",
-    a: "Yes. WhatsApp communication can be added as an optional +GBP10/month add-on.",
-  },
-  {
     q: "Can I customise the demo before subscribing?",
     a: "Yes. You can customise first, then start setup when ready.",
   },
@@ -78,9 +82,9 @@ export function MarketingHome() {
       <div className="mx-auto max-w-6xl space-y-8 px-4 py-10 sm:px-6 lg:px-8">
         <SiteHero
           eyebrow="Subs / MyExperiment.club"
-          title="Subscription websites for local service businesses"
-          subtitle="Demo first, customise your version, then request setup. One simple website subscription with ongoing management."
-          helperText="GBP149 setup + GBP30/month. Email included. Optional WhatsApp add-on +GBP10/month."
+          title="Managed websites and booking tools for local service businesses"
+          subtitle="Choose your industry, preview a working demo, and get a professional website with booking/request tools, customer features and ongoing support — all in one simple monthly package."
+          helperText="£149 setup + £30/month. Full managed website included. Live-site target within a day once details and domain are ready."
           actions={(
             <>
               <Link href="#industries" className={secondaryButtonClass}>
@@ -100,34 +104,10 @@ export function MarketingHome() {
 
         <SiteSection id="industries" title="Choose your business type" eyebrow="12 launch industries">
           <p className="text-slate-600">
-            Browse by industry, open the demo, customise your version, and move to setup when ready.
+            Start with a category, then pick your industry demo and continue to your sales page.
           </p>
-
-          <div className="mt-8 space-y-8">
-            {industryGroups.map((group) => (
-              <div key={group.title}>
-                <h3 className="text-lg font-semibold text-slate-900">{group.title}</h3>
-                <div className="mt-4 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                  {group.slugs.map((slug) => {
-                    const template = templateMap.get(slug);
-                    if (!template) {
-                      return null;
-                    }
-
-                    return (
-                      <SiteCard key={template.slug} title={template.name} subtitle={template.marketingSummary}>
-                        <ul className="list-disc space-y-1 pl-5 text-sm text-slate-600">
-                          {template.featureBullets.slice(0, 3).map((bullet) => (
-                            <li key={bullet}>{bullet}</li>
-                          ))}
-                        </ul>
-                        <IndustryDemoCardCta industrySlug={template.slug} />
-                      </SiteCard>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
+          <div className="mt-6">
+            <IndustryCategoryBrowser groups={industryGroups} templateMap={templateMap} />
           </div>
         </SiteSection>
 
@@ -157,7 +137,7 @@ export function MarketingHome() {
             {trustPoints.map((point) => (
               <div key={point} className="flex items-start gap-3 rounded-xl bg-white/70 px-3 py-2 text-sm text-slate-700">
                 <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-                  ?
+                  ✓
                 </span>
                 <span>{point}</span>
               </div>

@@ -113,3 +113,14 @@ Add these checks after backend envs are configured:
   - note indicates route may later move to a subscriber/business-owner area
 - Open `/admin/sites`, select a site, click `Manage business site settings`, and confirm `/admin/sites/[siteId]/settings` loads with site-specific heading/context.
 
+## Hosted smoke additions: homepage and booking polish
+- Homepage:
+  - verify category-first industry reveal (do not show all industries at once by default)
+  - verify no WhatsApp add-on pricing in public hero/pricing sections
+  - verify messaging includes managed website + booking tools + simple package positioning
+- Demo booking:
+  - verify 14-day open-day tiles are shown
+  - verify `Opening hours` label is used
+  - verify interval-specific slot rendering (15/30/60) reflects business admin appointment setting
+  - verify booking success text uses `Auto-response prepared` wording (not real-send wording)
+

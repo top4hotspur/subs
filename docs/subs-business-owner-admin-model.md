@@ -92,3 +92,18 @@ Business admin can:
 - Staff manual booking supports optional assigned staff.
 - In-store payment recording can be enabled/disabled per site; enabled state exposes a staff sales recorder.
 
+
+## Business admin layout refresh (demo)
+- Core sections are now collapsible to reduce long scrolling:
+  - Business settings
+  - Staff positions
+  - Services and prices
+  - Staff
+  - Appointments
+  - Rota and breaks
+  - Ad hoc closures
+  - Gift vouchers
+  - Page visibility/content
+  - Payments/sales
+  - Super-user permissions
+- Appointments section includes slot interval and customer staff-selection controls.

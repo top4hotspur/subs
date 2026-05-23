@@ -40,7 +40,7 @@ export default async function SetupIndustryPage({ params }: SetupIndustryPagePro
         <h1 className="mt-2 text-3xl font-bold text-slate-900">{template.name}</h1>
         <p className="mt-3 text-slate-600">
           One full website offer: £{offer.setupFeeGbp} setup, £{offer.monthlyFeeGbp}/month,
-          optional domain registration/management and optional WhatsApp add-on.
+          with optional domain registration/management only where needed.
         </p>
         <Link href={`/demo/${template.slug}/customise`} className="mt-4 inline-flex text-sm font-medium text-sky-700 hover:text-sky-900">
           Back to customisation
@@ -65,7 +65,7 @@ export default async function SetupIndustryPage({ params }: SetupIndustryPagePro
         <SiteSettingsSummary settings={siteSettings} />
         <p className="mt-3 text-sm text-slate-600">
           Logo is optional and text-brand fallback works by default. Pages and sections can be adjusted during setup.
-          Email notifications are included, WhatsApp is optional, and legal pages can be enabled/hidden and edited later.
+          Email notifications are included, and legal pages can be enabled/hidden and edited later.
           Customer/business login areas are future admin-controlled features.
         </p>
       </section>

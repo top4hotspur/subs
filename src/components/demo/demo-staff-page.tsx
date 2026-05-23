@@ -98,7 +98,7 @@ export function DemoStaffPage({ template }: DemoStaffPageProps) {
       assignedStaffId: assignedStaff?.id,
       assignedStaffName: assignedStaff?.displayName,
     });
-    setBookingMessage("Manual booking created successfully.");
+    setBookingMessage("Manual booking created. Auto-response prepared.");
   }
 
   function checkOrRedeemVoucher(redeem: boolean): void {

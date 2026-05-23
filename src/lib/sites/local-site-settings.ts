@@ -19,6 +19,12 @@ function normalizeSettings(settings: CustomerSiteSettings): CustomerSiteSettings
       currencyCode: settings.paymentSettings?.currencyCode ?? "GBP",
       allowInStorePaymentRecording: settings.paymentSettings?.allowInStorePaymentRecording ?? false,
     },
+    appointmentSettings: {
+      appointmentSlotIntervalMinutes:
+        settings.appointmentSettings?.appointmentSlotIntervalMinutes ?? 30,
+      allowCustomerStaffSelection:
+        settings.appointmentSettings?.allowCustomerStaffSelection ?? true,
+    },
     businessDetails: {
       ...settings.businessDetails,
       socialLinks: settings.businessDetails?.socialLinks ?? {},

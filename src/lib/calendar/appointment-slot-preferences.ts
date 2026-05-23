@@ -44,6 +44,7 @@ type BuildPreferredAppointmentSlotsOptions = {
   staffHolidays?: StaffHolidayDate[];
   existingRequests?: CustomerRequest[];
   serviceDurationMinutes?: number;
+  slotIntervalMinutes?: 15 | 30 | 60;
   selectedStaffId?: string;
   selectedStaffName?: string;
 };
@@ -117,6 +118,7 @@ export function buildPreferredAppointmentSlots(
     staffHolidays = [],
     existingRequests = [],
     serviceDurationMinutes = 45,
+    slotIntervalMinutes = 30,
     selectedStaffId,
     selectedStaffName,
   } = options;
@@ -214,7 +216,7 @@ export function buildPreferredAppointmentSlots(
   sourceWindows.forEach((window, index) => {
     const start = toMinutes(window.startTime);
     const end = toMinutes(window.endTime);
-    const step = serviceDurationMinutes <= 30 ? 30 : 60;
+    const step = slotIntervalMinutes;
 
     for (let cursor = start; cursor + serviceDurationMinutes <= end; cursor += step) {
       const hh = String(Math.floor(cursor / 60)).padStart(2, "0");

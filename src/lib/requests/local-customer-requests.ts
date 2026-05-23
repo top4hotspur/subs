@@ -1,4 +1,5 @@
-﻿import { WebsiteTemplateSlug } from "@/lib/sites/types";
+import { WebsiteTemplateSlug } from "@/lib/sites/types";
+import { prepareLocalBookingAutoResponse } from "@/lib/notifications/local-notification-events";
 import {
   CustomerRequest,
   CustomerRequestCommunicationChannel,
@@ -75,6 +76,7 @@ export function createLocalCustomerRequest(
   const requests = listLocalCustomerRequests();
   requests.unshift(request);
   write(requests);
+  prepareLocalBookingAutoResponse(request);
   return request;
 }
 
@@ -194,4 +196,6 @@ export function seedLocalCustomerRequests(): CustomerRequest[] {
   write(seeded);
   return seeded;
 }
+
+
 
