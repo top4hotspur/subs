@@ -172,3 +172,8 @@ Current behavior:
 - Rota editor remains single-staff focused with compact weekday rows and collapsible break editors.
 - Service duration/buffer values from business admin are fed into local slot suggestion generation.
 
+
+## Closure conflict visibility (local mock)
+- When creating an ad hoc closure date in business admin, the local workflow now checks same-day active appointments.
+- Canceled/no-show requests are excluded from the warning list.
+- Impacted bookings are shown so staff can contact customers to cancel/rearrange.

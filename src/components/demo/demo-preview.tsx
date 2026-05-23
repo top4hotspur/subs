@@ -40,7 +40,11 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
     <div className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 shadow-sm">
       <section className="rounded-b-3xl border-b border-slate-800 bg-slate-900 px-6 py-8 text-white sm:px-8">
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-          <DemoSiteNav templateSlug={template.slug} />
+          <DemoSiteNav
+            templateSlug={template.slug}
+            showAbout={settings.pageVisibility.about.enabled}
+            showContact={settings.pageVisibility.contact.enabled}
+          />
         </div>
         <SiteBrandMark
           name={brandName}

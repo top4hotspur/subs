@@ -1,4 +1,4 @@
-import { CustomerSiteSettings, SitePageVisibilitySettings, SiteSectionVisibilitySettings } from "@/lib/sites/site-settings-types";
+import { CustomerSiteSettings, SitePageContentSettings, SitePageVisibilitySettings, SiteSectionVisibilitySettings } from "@/lib/sites/site-settings-types";
 import { WebsiteTemplate } from "@/lib/sites/types";
 import { shouldCustomersSelectStaffByDefault } from "@/lib/staff/industry-staff-defaults";
 
@@ -48,6 +48,29 @@ function defaultSectionVisibility(): SiteSectionVisibilitySettings {
   };
 }
 
+function defaultPageContent(template: WebsiteTemplate): SitePageContentSettings {
+  return {
+    about: {
+      title: `About ${template.defaultConfig.businessName}`,
+      body: "Share your story, experience, and what customers can expect when they book with you.",
+      imagePlacement: "NONE",
+      imageUrl: undefined,
+      ctaLabel: "Book now",
+      ctaHref: `/demo/${template.slug}/booking`,
+    },
+    contact: {
+      title: "Contact us",
+      body: "Get in touch by phone, email, or online booking request.",
+      imagePlacement: "NONE",
+      imageUrl: undefined,
+      ctaLabel: "Send booking request",
+      ctaHref: `/demo/${template.slug}/booking`,
+      contactDetailsText: "Use your business profile details below, or add custom contact notes.",
+      mapPlaceholderText: "Map or directions content can be added here.",
+    },
+  };
+}
+
 export function buildDefaultCustomerSiteSettings(template: WebsiteTemplate): CustomerSiteSettings {
   const now = new Date().toISOString();
   const domainSlug = slugify(template.defaultConfig.businessName || template.slug);
@@ -79,6 +102,7 @@ export function buildDefaultCustomerSiteSettings(template: WebsiteTemplate): Cus
       socialLinks: {},
     },
     pageVisibility: defaultPageVisibility(),
+    pageContent: defaultPageContent(template),
     sectionVisibility: defaultSectionVisibility(),
     services: template.defaultConfig.services.map((service) => ({
       id: service.id,

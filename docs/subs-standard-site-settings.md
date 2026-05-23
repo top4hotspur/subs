@@ -122,3 +122,9 @@ Business site settings demo now includes branding controls for:
   - Max file size: 512 KB
 
 These uploads remain browser-local mock previews only (no backend media storage).
+
+## Local page-content controls (demo)
+- `pageVisibility` toggles for About and Contact now feed demo route behavior.
+- `pageContent.about` and `pageContent.contact` now drive `/demo/[industry]/about` and `/demo/[industry]/contact` rendering.
+- Image placement is modeled locally with placeholders; no real media storage pipeline is enabled.
+- Branding assets (logo/favicon) remain local preview only with explicit removal controls.

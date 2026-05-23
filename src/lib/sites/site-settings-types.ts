@@ -73,6 +73,23 @@ export type SiteSectionVisibilitySettings = {
   trustBadges: SiteSectionVisibilityItem;
 };
 
+export type SitePageContentBlock = {
+  title: string;
+  body: string;
+  imagePlacement: "NONE" | "ABOVE_TEXT" | "BESIDE_TEXT";
+  imageUrl?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+};
+
+export type SitePageContentSettings = {
+  about: SitePageContentBlock;
+  contact: SitePageContentBlock & {
+    contactDetailsText?: string;
+    mapPlaceholderText?: string;
+  };
+};
+
 export type SiteServiceItem = {
   id: string;
   name: string;
@@ -164,6 +181,7 @@ export type CustomerSiteSettings = {
   branding: SiteBrandingSettings;
   businessDetails: SiteBusinessDetails;
   pageVisibility: SitePageVisibilitySettings;
+  pageContent: SitePageContentSettings;
   sectionVisibility: SiteSectionVisibilitySettings;
   services: SiteServiceItem[];
   legal: SiteLegalSettings;

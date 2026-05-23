@@ -40,7 +40,11 @@ export function DemoBookingPage({ template, initialServiceId }: DemoBookingPageP
           Choose your service, date, and time. Available slots are grouped by morning, afternoon, and evening.
         </p>
         <div className="mt-4">
-          <DemoSiteNav templateSlug={template.slug} />
+          <DemoSiteNav
+            templateSlug={template.slug}
+            showAbout={settings.pageVisibility.about.enabled}
+            showContact={settings.pageVisibility.contact.enabled}
+          />
         </div>
       </section>
 

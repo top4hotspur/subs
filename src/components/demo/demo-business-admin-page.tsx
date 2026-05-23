@@ -13,6 +13,8 @@ import { listLocalStaff, saveLocalStaff } from "@/lib/staff/local-staff";
 import { listLocalStaffRoles, saveLocalStaffRoles, seedLocalStaffRoles, type StaffRoleDefinition } from "@/lib/staff/staff-role-settings";
 import { StaffAvailabilityMode, StaffRoleType, type StaffMember } from "@/lib/staff/staff-types";
 import { formatSiteCurrency, formatUkDate, weekdayLabel } from "@/lib/ui/display-labels";
+import { listLocalCustomerRequests } from "@/lib/requests/local-customer-requests";
+import { CustomerRequestStatus } from "@/lib/requests/request-types";
 import { getLocalVoucherSettings, saveLocalVoucherSettings } from "@/lib/vouchers/local-vouchers";
 import { VoucherDeliveryMethod } from "@/lib/vouchers/voucher-types";
 
@@ -79,6 +81,17 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
   const [newRoleLabel, setNewRoleLabel] = useState("");
   const [expandedServiceIds, setExpandedServiceIds] = useState<string[]>([]);
   const [expandedStaffIds, setExpandedStaffIds] = useState<string[]>([]);
+  const [closureConflictMessage, setClosureConflictMessage] = useState<string | null>(null);
+  const [closureConflicts, setClosureConflicts] = useState<
+    {
+      id: string;
+      preferredTime?: string;
+      customerName: string;
+      serviceName?: string;
+      assignedStaffName?: string;
+      paymentStatus?: string;
+    }[]
+  >([]);
 
   const currency = settings.paymentSettings.currencyCode ?? "GBP";
 
@@ -175,7 +188,13 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
         <p className="text-xs uppercase tracking-[0.16em] text-slate-300">Business admin portal</p>
         <h1 className="mt-2 text-3xl font-bold">Site owner control centre</h1>
         <p className="mt-2 text-sm text-slate-200">This is the subscriber business-owner admin area for this site. Platform admin for MyExperiment.club is separate.</p>
-        <div className="mt-4"><DemoSiteNav templateSlug={template.slug} /></div>
+        <div className="mt-4">
+          <DemoSiteNav
+            templateSlug={template.slug}
+            showAbout={settings.pageVisibility.about.enabled}
+            showContact={settings.pageVisibility.contact.enabled}
+          />
+        </div>
       </section>
 
       <DemoAccessDetailsCard />
@@ -227,7 +246,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                     }))
                   }
                 >
-                  Remove logo preview
+                  Remove logo
                 </button>
               ) : null}
             </div>
@@ -251,7 +270,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                     }))
                   }
                 >
-                  Remove favicon preview
+                  Remove favicon
                 </button>
               ) : null}
             </div>
@@ -323,7 +342,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="text-sm font-semibold text-slate-900">{service.name}</p>
-                    <p className="text-xs text-slate-600">{getPublicServicePriceLabel(service, currency) || "Quote required"} â€¢ {service.durationMinutes ?? 45} min</p>
+                    <p className="text-xs text-slate-600">{getPublicServicePriceLabel(service, currency) || "Quote required"} - {service.durationMinutes ?? 45} min</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button type="button" className="text-xs font-semibold text-sky-700" onClick={() => toggleServiceExpanded(service.id)}>{expanded ? "Collapse" : "Edit"}</button>
@@ -380,7 +399,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="text-sm font-semibold text-slate-900">{staff.displayName}</p>
-                    <p className="text-xs text-slate-600">{staff.roleLabel || "Position not set"} â€¢ {summarizeDays(staff.availableWeekdays)}</p>
+                    <p className="text-xs text-slate-600">{staff.roleLabel || "Position not set"} - {summarizeDays(staff.availableWeekdays)}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button type="button" className="text-xs font-semibold text-sky-700" onClick={() => toggleStaffExpanded(staff.id)}>{expanded ? "Collapse" : "Edit"}</button>
@@ -481,7 +500,74 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
           <input type="date" className="rounded-md border border-slate-300 px-2 py-1 text-sm" value={newClosureDate} onChange={(event) => setNewClosureDate(event.target.value)} />
           <input className="rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="Closure label" value={newClosureLabel} onChange={(event) => setNewClosureLabel(event.target.value)} />
         </div>
-        <button type="button" className="mt-2 rounded-md bg-slate-800 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-900" onClick={() => { if(!newClosureDate) return; setClosures((current)=>[...current,{id:`closure_${Date.now()}`,industrySlug:template.slug,date:newClosureDate,label:newClosureLabel||"Closed",allDay:true,active:true,createdAtIso:new Date().toISOString(),updatedAtIso:new Date().toISOString()}]); setNewClosureDate(""); setNewClosureLabel(""); }}>Add closure</button>
+        <button
+          type="button"
+          className="mt-2 rounded-md bg-slate-800 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-900"
+          onClick={() => {
+            if (!newClosureDate) return;
+            const impacted = listLocalCustomerRequests()
+              .filter(
+                (request) =>
+                  request.templateSlug === template.slug &&
+                  request.preferredDate === newClosureDate &&
+                  request.status !== CustomerRequestStatus.CANCELLED &&
+                  request.status !== CustomerRequestStatus.NO_SHOW,
+              )
+              .map((request) => ({
+                id: request.id,
+                preferredTime: request.preferredTime,
+                customerName: request.customerName,
+                serviceName: request.serviceName,
+                assignedStaffName: request.assignedStaffName,
+                paymentStatus: request.paymentStatus,
+              }));
+            setClosureConflicts(impacted);
+            setClosureConflictMessage(
+              impacted.length === 0
+                ? "No appointments found for this closure date."
+                : "Appointments exist on this date. Contact customers before closing.",
+            );
+            setClosures((current) => [
+              ...current,
+              {
+                id: `closure_${Date.now()}`,
+                industrySlug: template.slug,
+                date: newClosureDate,
+                label: newClosureLabel || "Closed",
+                allDay: true,
+                active: true,
+                createdAtIso: new Date().toISOString(),
+                updatedAtIso: new Date().toISOString(),
+              },
+            ]);
+            setNewClosureDate("");
+            setNewClosureLabel("");
+          }}
+        >
+          Add closure
+        </button>
+        {closureConflictMessage ? (
+          <p
+            className={`mt-2 text-xs ${
+              closureConflicts.length > 0 ? "font-semibold text-rose-700" : "text-emerald-700"
+            }`}
+          >
+            {closureConflictMessage}
+          </p>
+        ) : null}
+        {closureConflicts.length > 0 ? (
+          <div className="mt-2 rounded-md border border-rose-200 bg-rose-50 p-2">
+            <p className="text-xs font-semibold text-rose-800">Affected appointments</p>
+            <ul className="mt-1 space-y-1 text-xs text-rose-900">
+              {closureConflicts.map((item) => (
+                <li key={item.id}>
+                  {item.preferredTime || "Time TBC"} - {item.customerName} - {item.serviceName || "Service"} -{" "}
+                  {item.assignedStaffName || "Unassigned"}{item.paymentStatus ? ` (${item.paymentStatus})` : ""}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
         <ul className="mt-3 space-y-2 text-sm text-slate-700">
           {closures.length === 0 ? <li>No closures added.</li> : null}
           {closures.map((closure) => (
@@ -516,8 +602,272 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
         </div>
       </CollapsibleSection>
 
-      <CollapsibleSection title="Page visibility/content" subtitle="Page toggles and content controls are available in this demo model.">
-        <p className="text-sm text-slate-600">Use this section in the live subscriber portal to enable/disable pages such as About, Contact, Gallery, Reviews, and Policies.</p>
+      <CollapsibleSection title="Page visibility/content" subtitle="Enable pages and edit About/Contact content shown on the demo site.">
+        <div className="space-y-4">
+          <div className="grid gap-2 sm:grid-cols-2">
+            <label className="flex items-center gap-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                checked={settings.pageVisibility.about.enabled}
+                onChange={(event) =>
+                  setSettings((current) => ({
+                    ...current,
+                    pageVisibility: {
+                      ...current.pageVisibility,
+                      about: { ...current.pageVisibility.about, enabled: event.target.checked },
+                    },
+                  }))
+                }
+              />
+              Enable About Us page
+            </label>
+            <label className="flex items-center gap-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                checked={settings.pageVisibility.contact.enabled}
+                onChange={(event) =>
+                  setSettings((current) => ({
+                    ...current,
+                    pageVisibility: {
+                      ...current.pageVisibility,
+                      contact: { ...current.pageVisibility.contact, enabled: event.target.checked },
+                    },
+                  }))
+                }
+              />
+              Enable Contact page
+            </label>
+          </div>
+
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+            <p className="text-sm font-semibold text-slate-900">About page content</p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              <label className="text-xs font-semibold text-slate-700">Page title
+                <input
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  value={settings.pageContent.about.title}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      pageContent: {
+                        ...current.pageContent,
+                        about: { ...current.pageContent.about, title: event.target.value },
+                      },
+                    }))
+                  }
+                />
+              </label>
+              <label className="text-xs font-semibold text-slate-700">Image placement
+                <select
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  value={settings.pageContent.about.imagePlacement}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      pageContent: {
+                        ...current.pageContent,
+                        about: {
+                          ...current.pageContent.about,
+                          imagePlacement: event.target.value as "NONE" | "ABOVE_TEXT" | "BESIDE_TEXT",
+                        },
+                      },
+                    }))
+                  }
+                >
+                  <option value="NONE">No image</option>
+                  <option value="ABOVE_TEXT">Image above text</option>
+                  <option value="BESIDE_TEXT">Image beside text</option>
+                </select>
+              </label>
+              <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Main text/body
+                <textarea
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  rows={3}
+                  value={settings.pageContent.about.body}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      pageContent: {
+                        ...current.pageContent,
+                        about: { ...current.pageContent.about, body: event.target.value },
+                      },
+                    }))
+                  }
+                />
+              </label>
+              <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Image placeholder or URL (optional)
+                <input
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  value={settings.pageContent.about.imageUrl ?? ""}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      pageContent: {
+                        ...current.pageContent,
+                        about: { ...current.pageContent.about, imageUrl: event.target.value || undefined },
+                      },
+                    }))
+                  }
+                />
+              </label>
+              <label className="text-xs font-semibold text-slate-700">CTA label (optional)
+                <input
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  value={settings.pageContent.about.ctaLabel ?? ""}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      pageContent: {
+                        ...current.pageContent,
+                        about: { ...current.pageContent.about, ctaLabel: event.target.value || undefined },
+                      },
+                    }))
+                  }
+                />
+              </label>
+              <label className="text-xs font-semibold text-slate-700">CTA link (optional)
+                <input
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  value={settings.pageContent.about.ctaHref ?? ""}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      pageContent: {
+                        ...current.pageContent,
+                        about: { ...current.pageContent.about, ctaHref: event.target.value || undefined },
+                      },
+                    }))
+                  }
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+            <p className="text-sm font-semibold text-slate-900">Contact page content</p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              <label className="text-xs font-semibold text-slate-700">Page title
+                <input
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  value={settings.pageContent.contact.title}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      pageContent: {
+                        ...current.pageContent,
+                        contact: { ...current.pageContent.contact, title: event.target.value },
+                      },
+                    }))
+                  }
+                />
+              </label>
+              <label className="text-xs font-semibold text-slate-700">Image placement
+                <select
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  value={settings.pageContent.contact.imagePlacement}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      pageContent: {
+                        ...current.pageContent,
+                        contact: {
+                          ...current.pageContent.contact,
+                          imagePlacement: event.target.value as "NONE" | "ABOVE_TEXT" | "BESIDE_TEXT",
+                        },
+                      },
+                    }))
+                  }
+                >
+                  <option value="NONE">No image</option>
+                  <option value="ABOVE_TEXT">Image above text</option>
+                  <option value="BESIDE_TEXT">Image beside text</option>
+                </select>
+              </label>
+              <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Intro text/body
+                <textarea
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  rows={3}
+                  value={settings.pageContent.contact.body}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      pageContent: {
+                        ...current.pageContent,
+                        contact: { ...current.pageContent.contact, body: event.target.value },
+                      },
+                    }))
+                  }
+                />
+              </label>
+              <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Contact details text
+                <input
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  value={settings.pageContent.contact.contactDetailsText ?? ""}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      pageContent: {
+                        ...current.pageContent,
+                        contact: {
+                          ...current.pageContent.contact,
+                          contactDetailsText: event.target.value || undefined,
+                        },
+                      },
+                    }))
+                  }
+                />
+              </label>
+              <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Map/location placeholder text
+                <input
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  value={settings.pageContent.contact.mapPlaceholderText ?? ""}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      pageContent: {
+                        ...current.pageContent,
+                        contact: {
+                          ...current.pageContent.contact,
+                          mapPlaceholderText: event.target.value || undefined,
+                        },
+                      },
+                    }))
+                  }
+                />
+              </label>
+              <label className="text-xs font-semibold text-slate-700">CTA label (optional)
+                <input
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  value={settings.pageContent.contact.ctaLabel ?? ""}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      pageContent: {
+                        ...current.pageContent,
+                        contact: { ...current.pageContent.contact, ctaLabel: event.target.value || undefined },
+                      },
+                    }))
+                  }
+                />
+              </label>
+              <label className="text-xs font-semibold text-slate-700">CTA link (optional)
+                <input
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  value={settings.pageContent.contact.ctaHref ?? ""}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      pageContent: {
+                        ...current.pageContent,
+                        contact: { ...current.pageContent.contact, ctaHref: event.target.value || undefined },
+                      },
+                    }))
+                  }
+                />
+              </label>
+            </div>
+          </div>
+        </div>
       </CollapsibleSection>
 
       <CollapsibleSection title="Payments/sales" subtitle="Local-only operational sales recording preferences.">
@@ -525,7 +875,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
           <input type="checkbox" checked={settings.paymentSettings.allowInStorePaymentRecording} onChange={(event) => setSettings((current) => ({ ...current, paymentSettings: { ...current.paymentSettings, allowInStorePaymentRecording: event.target.checked } }))} />
           Allow in-store payment recording
         </label>
-        <p className="mt-2 text-xs text-slate-600">Shows a staff tool for recording cash/card payments taken in store. This does not process payments.</p>
+        <p className="mt-2 text-xs text-slate-600">Shows a staff tool for recording cash/card payments taken in store. This does not process payments, but allows for accurate finance reporting.</p>
       </CollapsibleSection>
 
       <CollapsibleSection title="Super-user permissions" subtitle="Choose which areas delegated users can access.">

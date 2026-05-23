@@ -277,3 +277,14 @@ Still mock for infrastructure:
   - demo.staff@example.com / demo123
   - demo.admin@example.com / demo123
 - These credentials are demo-only and do not represent real account provisioning.
+
+## Demo readability and admin-controls fixes (2026-05)
+- Demo nav/menu pill styles were hardened with explicit high-contrast classes for dark-hero usage.
+- Active nav item now uses a dark background with white text.
+- Service/staff summary separators were normalized to safe ` - ` formatting to avoid hosted mojibake display issues.
+- Ad hoc closure creation now checks same-day local bookings:
+  - if none: `No appointments found for this closure date.`
+  - if found: warning plus affected appointment list (time, customer, service, assigned staff, payment status)
+- Page visibility/content now includes editable About and Contact content blocks (title/body/image placement/CTA + contact/map text placeholders).
+- Payments/sales helper copy updated to include finance reporting context.
+- Business branding controls now expose explicit `Remove logo` and `Remove favicon` actions.

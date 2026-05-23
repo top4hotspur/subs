@@ -123,3 +123,15 @@ Business-owner/staff/customer mock routes now display demo credential guidance f
 Important:
 - These are non-production preview credentials.
 - Platform admin credentials/access code are not shown in demo-site portal UI.
+
+## Business admin demo updates (local/mock)
+- Ad hoc closures now include a pre-close conflict check against local appointments and display impacted bookings when present.
+- Page visibility/content section now supports direct editing for About and Contact pages:
+  - title
+  - body text
+  - image placement (none/above/beside)
+  - placeholder image/url field
+  - optional CTA label/link
+  - contact details text and map placeholder text for Contact page
+- Branding controls include explicit remove actions for local logo/favicon previews.
+- Payments/sales helper text now clarifies local in-store recording supports finance reporting accuracy.

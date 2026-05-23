@@ -148,7 +148,13 @@ export function DemoStaffPage({ template }: DemoStaffPageProps) {
         <p className="text-xs uppercase tracking-[0.16em] text-slate-300">Staff portal</p>
         <h1 className="mt-2 text-3xl font-bold">Staff operations</h1>
         <p className="mt-2 text-sm text-slate-200">Staff login is for appointments, manual bookings, voucher checks, and in-store operations. Platform admin is a separate login.</p>
-        <div className="mt-4"><DemoSiteNav templateSlug={template.slug} /></div>
+        <div className="mt-4">
+          <DemoSiteNav
+            templateSlug={template.slug}
+            showAbout={settings.pageVisibility.about.enabled}
+            showContact={settings.pageVisibility.contact.enabled}
+          />
+        </div>
       </section>
 
       <DemoAccessDetailsCard />

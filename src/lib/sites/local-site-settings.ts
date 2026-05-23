@@ -9,6 +9,7 @@ function siteSettingsKey(industrySlug: WebsiteTemplateSlug): string {
 }
 
 function normalizeSettings(settings: CustomerSiteSettings): CustomerSiteSettings {
+  const templateSlug = settings.templateSlug;
   return {
     ...settings,
     paymentSettings: {
@@ -28,6 +29,36 @@ function normalizeSettings(settings: CustomerSiteSettings): CustomerSiteSettings
     businessDetails: {
       ...settings.businessDetails,
       socialLinks: settings.businessDetails?.socialLinks ?? {},
+    },
+    pageContent: {
+      about: {
+        title:
+          settings.pageContent?.about?.title ||
+          `About ${settings.businessDetails.businessName || settings.branding.siteName}`,
+        body:
+          settings.pageContent?.about?.body ||
+          "Share your story, experience, and what customers can expect when they book with you.",
+        imagePlacement: settings.pageContent?.about?.imagePlacement ?? "NONE",
+        imageUrl: settings.pageContent?.about?.imageUrl,
+        ctaLabel: settings.pageContent?.about?.ctaLabel ?? "Book now",
+        ctaHref: settings.pageContent?.about?.ctaHref ?? `/demo/${templateSlug}/booking`,
+      },
+      contact: {
+        title: settings.pageContent?.contact?.title || "Contact us",
+        body:
+          settings.pageContent?.contact?.body ||
+          "Get in touch by phone, email, or online booking request.",
+        imagePlacement: settings.pageContent?.contact?.imagePlacement ?? "NONE",
+        imageUrl: settings.pageContent?.contact?.imageUrl,
+        ctaLabel: settings.pageContent?.contact?.ctaLabel ?? "Send booking request",
+        ctaHref: settings.pageContent?.contact?.ctaHref ?? `/demo/${templateSlug}/booking`,
+        contactDetailsText:
+          settings.pageContent?.contact?.contactDetailsText ||
+          "Use your business profile details below, or add custom contact notes.",
+        mapPlaceholderText:
+          settings.pageContent?.contact?.mapPlaceholderText ||
+          "Map or directions content can be added here.",
+      },
     },
   };
 }

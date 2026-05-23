@@ -70,7 +70,13 @@ export function DemoAccountPage({ template }: DemoAccountPageProps) {
         <p className="text-xs uppercase tracking-[0.16em] text-slate-300">Customer account</p>
         <h1 className="mt-2 text-3xl font-bold">Welcome back</h1>
         <p className="mt-2 text-sm text-slate-200">This is the end-customer portal for bookings, profile details, and vouchers. Platform admin is separate from this site login flow.</p>
-        <div className="mt-4"><DemoSiteNav templateSlug={template.slug} /></div>
+        <div className="mt-4">
+          <DemoSiteNav
+            templateSlug={template.slug}
+            showAbout={settings.pageVisibility.about.enabled}
+            showContact={settings.pageVisibility.contact.enabled}
+          />
+        </div>
       </section>
 
       <DemoAccessDetailsCard />

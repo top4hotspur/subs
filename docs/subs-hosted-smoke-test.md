@@ -165,3 +165,16 @@ Add these checks after backend envs are configured:
 - Confirm platform admin link is not shown in global header/footer while on `/demo/*` routes.
 - Confirm demo access card is visible and lists preview-only credentials.
 - Confirm `/admin` platform login remains available from non-demo routes.
+
+## Hosted smoke additions: demo readability and page-content controls
+- Demo nav pills (`Home`, `Bookings`, `Customer login`, `Staff login`, `Business admin login`, `About us`, `Contact`) must be clearly readable on dark hero backgrounds.
+- Verify service/staff summary separators render cleanly as ` - ` (no mojibake characters).
+- In `/demo/[industry]/admin` > Ad hoc closures:
+  - adding a future closure with no bookings shows a green confirmation
+  - adding with bookings shows warning + affected booking list
+- In `/demo/[industry]/admin` > Page visibility/content:
+  - edit About/Contact title/body/image placement/CTA text
+  - verify `/demo/[industry]/about` and `/demo/[industry]/contact` render updated content
+- In business branding section:
+  - verify `Remove logo` clears visual logo and public demo falls back to text brand
+  - verify `Remove favicon` clears local favicon preview state
