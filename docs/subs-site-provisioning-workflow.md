@@ -122,3 +122,24 @@ Still local/mock in current product:
 - Server resolves tenant by slug and creates tenant-scoped booking.
 - Client does not send/choose arbitrary `tenantSiteId`.
 - Real payment/email/Twilio are still out of scope.
+
+## Custom-domain tenant resolution readiness (no automation)
+- Added shared resolver module: `src/lib/sites/tenant-resolver.ts`.
+- Resolver supports:
+  - host normalization (lowercase, strip protocol/path/port/trailing dot)
+  - candidate matching for root + www variants
+  - SiteDomain lookup and tenant resolution
+- Current status filtering is intentionally broad for provisioning/testing (`ARCHIVED`/`REMOVED`/`DELETED` excluded).
+- `/sites/[siteSlug]` remains the slug fallback/proof route until host routing is enabled.
+
+## Diagnostic route
+- Added guarded diagnostic route: `GET /api/site-resolve-debug`.
+- Platform-admin session required.
+- Returns safe metadata:
+  - received host
+  - normalized host
+  - matched true/false
+  - tenantSiteId/tenantSlug/domainStatus when matched
+- Supports test header:
+  - `x-test-site-host: example.com`
+  to validate domain mapping before real custom-domain attachment.

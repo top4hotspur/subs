@@ -90,3 +90,14 @@ Per-customer isolated deployments/databases can be considered later only for exc
 2. MyExperiment.club manages Route 53 zone and customer updates nameservers.
 
 No per-customer DB or code export is required for this model.
+
+## Host/domain resolver preparation
+- Shared app is now prepared with central host resolver logic (no middleware routing switch yet).
+- Planned custom-domain flow:
+  1. read request host
+  2. normalize host
+  3. resolve `SiteDomain.domain`
+  4. resolve `TenantSite`
+  5. render tenant-scoped customer site using same data model as slug route
+- Root and `www` hosts are handled through resolver candidate matching.
+- DNS and Amplify domain automation are still manual/out-of-scope in this phase.

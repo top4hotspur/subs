@@ -113,6 +113,8 @@ export default function AdminSitesPage() {
     } | null;
   } | null>(null);
   const [taskDrafts, setTaskDrafts] = useState<Record<string, string>>({});
+  const [domainTestHost, setDomainTestHost] = useState("");
+  const [domainTestResult, setDomainTestResult] = useState<string | null>(null);
 
   const selectedSite = useMemo(
     () => sites.find((site) => site.id === selectedSiteId) ?? detail?.site ?? null,
@@ -221,6 +223,51 @@ export default function AdminSitesPage() {
 
     setMessage(`Task updated: ${result.task.title} -> ${result.task.status}.`);
     await loadSiteDetail(selectedSiteId);
+  }
+
+  async function runDomainResolutionTest(): Promise<void> {
+    const candidate = domainTestHost.trim();
+    if (!candidate) {
+      setDomainTestResult("Enter a domain/host to test.");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/site-resolve-debug", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "x-test-site-host": candidate,
+        },
+      });
+      const body = (await response.json()) as
+        | {
+            ok?: boolean;
+            error?: string;
+            matched?: boolean;
+            tenantSiteId?: string | null;
+            tenantSlug?: string | null;
+            domainStatus?: string | null;
+            matchedDomain?: string | null;
+          }
+        | null;
+
+      if (!response.ok || !body?.ok) {
+        setDomainTestResult(`Domain resolution test failed: ${body?.error ?? "UNKNOWN_ERROR"}`);
+        return;
+      }
+
+      if (!body.matched) {
+        setDomainTestResult(`No tenant match for "${candidate}".`);
+        return;
+      }
+
+      setDomainTestResult(
+        `Matched tenant ${body.tenantSlug ?? "(unknown)"} (${body.tenantSiteId ?? "n/a"}) via ${body.matchedDomain ?? candidate} [${body.domainStatus ?? "status unknown"}].`,
+      );
+    } catch {
+      setDomainTestResult("Network error while testing domain resolution.");
+    }
   }
 
   return (
@@ -375,8 +422,32 @@ export default function AdminSitesPage() {
                   </div>
                 )}
                 <p className="mt-2 text-xs text-slate-600">
-                  DNS/domain automation is not live yet. Use this checklist to track manual setup.
+                  DNS/domain automation is not live yet. Custom-domain runtime will resolve SiteDomain to TenantSite in a later pass.
                 </p>
+                <div className="mt-3 rounded-md border border-slate-200 bg-white p-2">
+                  <p className="text-xs font-semibold text-slate-900">Test domain resolution</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <input
+                      type="text"
+                      value={domainTestHost}
+                      onChange={(event) => setDomainTestHost(event.target.value)}
+                      placeholder="example.com"
+                      className="min-w-[220px] flex-1 rounded-md border border-slate-300 px-2 py-1 text-xs"
+                    />
+                    <button
+                      type="button"
+                      className={`${outlineButtonClass} ${smallButtonClass}`}
+                      onClick={() => {
+                        void runDomainResolutionTest();
+                      }}
+                    >
+                      Test
+                    </button>
+                  </div>
+                  {domainTestResult ? (
+                    <p className="mt-2 text-xs text-slate-700">{domainTestResult}</p>
+                  ) : null}
+                </div>
               </div>
 
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">

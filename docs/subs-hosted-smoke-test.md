@@ -320,3 +320,11 @@ Add these checks after backend envs are configured:
 5. In admin, open `/admin/sites/[siteId]/preview` and confirm recent booking summary reflects new record.
 6. Try same staff/date/time and confirm conflict response behavior.
 7. Confirm route still uses slug path (no custom domain middleware required yet).
+
+## Hosted smoke checks: domain resolver readiness
+1. Sign in as platform admin.
+2. Call `/api/site-resolve-debug` with header `x-test-site-host` set to a known mapped domain.
+3. Verify response shows `matched: true` and tenant identifiers.
+4. Test an unknown host and verify `matched: false`.
+5. In `/admin/sites`, use Domain panel `Test domain resolution` UI and verify output matches API behavior.
+6. Confirm `/sites/[siteSlug]` still renders as slug fallback route.

@@ -357,3 +357,10 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Tenant is resolved server-side by slug; no client `tenantSiteId` trust.
 - Custom domain host routing is still a separate upcoming milestone.
 - No payment/email/auth automation added in this pass.
+
+## Public tenant route + domain readiness
+- Public tenant route now has two forms:
+  - slug route: `/sites/[siteSlug]` (active fallback/proof route)
+  - future host route: custom domain host -> `SiteDomain` -> `TenantSite` (prepared, not switched on yet)
+- Public booking route/API are tenant-resolved by slug or server-side host-resolution paths; client never submits arbitrary tenant ids.
+- Platform admin `/admin/sites` now includes a domain-resolution test utility to validate mappings before custom-domain rollout.

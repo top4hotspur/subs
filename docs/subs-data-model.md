@@ -100,3 +100,15 @@ Conflict behavior (v1):
 - `POST /api/sites/[siteSlug]/bookings` resolves tenant server-side.
 - Writes to `CustomerSiteBooking` with tenant scoping.
 - Conflict rule remains simple v1 check on active staff/date/time collisions.
+
+## Tenant host resolution utilities
+- Added `src/lib/sites/tenant-resolver.ts`:
+  - `normalizeHost(host)`
+  - `getTenantSiteByDomainHost(host)`
+  - `getTenantSiteBySlug(slug)`
+  - `resolveTenantFromRequestHost(headers)`
+- SiteDomain lookup now has a reusable path for future custom-domain runtime routing.
+
+## Diagnostic endpoint
+- Added `GET /api/site-resolve-debug` (platform-admin guarded).
+- Supports temporary test header `x-test-site-host` for pre-domain-attachment validation.
