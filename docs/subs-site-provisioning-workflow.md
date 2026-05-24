@@ -1,120 +1,92 @@
-﻿# Subs Site Provisioning Workflow (Persisted v1)
+# Subs Site Provisioning Workflow (Persisted v1)
 
 This workflow turns a persisted setup request into a persisted subscriber site record.
 
+## Core v1 Architecture Decision
+- v1 uses one shared platform app and one central Postgres/Neon database.
+- Site-scoped records are isolated by `tenantSiteId`.
+- Custom domains map to `TenantSite` records.
+- The shared app resolves tenant context from domain/site and renders the correct customer-facing site.
+- v1 does not use per-customer code export or per-customer databases by default.
+- Per-customer isolated deployments are a later exceptional enterprise option only.
+
 ## Scope
 - Persisted model + admin workflow only.
-- No AWS provisioning, no domain automation, no website generation.
-- No Auth.js yet (temporary admin header guard).
+- No AWS provisioning automation in this phase.
+- No payment/email/Twilio integrations in this phase.
 
-## Flow
+## Target Admin Workflow: Create Subscriber Site
 1. Setup request is submitted and persisted.
-2. Platform admin opens `/admin/setup-requests`.
-3. Platform admin clicks **Start site setup** for a setup request.
-4. Backend creates/returns a `TenantSite` linked to that setup request.
-5. Backend also creates:
-- subscription placeholder (`SubscriptionRecord`)
-- initial domain record when domain value exists
+2. Platform admin opens `/admin/setup-requests` or `/admin/sites`.
+3. Platform admin clicks `Create subscriber site` / `Start site setup`.
+4. Backend creates or links `TenantSite` for the setup request.
+5. Backend creates baseline records:
+- `SiteDomain`
+- `SubscriptionRecord` placeholder
 - default provisioning checklist tasks
-- status event timeline entry
-6. Platform admin uses `/admin/sites` to monitor and update provisioning checklist task states.
+- provisioning timeline/status events
+6. Backend copies available setup context:
+- persisted demo draft/settings (when available)
+- persisted services/pricing (when available)
+- staff/roles/rota/settings in later milestones as those modules become persisted
+7. Platform admin reviews generated DNS/domain instructions.
+8. Platform admin tracks statuses to go-live.
 
-## Status and task model
-- Site status fields: provisioning status, domain status, subscription status.
-- Domain model tracks status and instructions metadata (persisted only).
-- Provisioning tasks are checklist items (`TODO`, `IN_PROGRESS`, `DONE`, `BLOCKED`, `SKIPPED`).
+## Target Provisioning Status Sequence
+- `SETUP_REQUESTED`
+- `PAYMENT_PENDING`
+- `DOMAIN_DETAILS_REQUIRED`
+- `DNS_INSTRUCTIONS_SENT`
+- `SITE_PROVISIONING`
+- `SITE_READY`
+- `SITE_LIVE`
 
-## Temporary admin guard
-- API routes use `x-platform-admin-email` + `PLATFORM_ADMIN_EMAILS` allowlist.
-- This is temporary until Auth.js role-based protection is added.
+## Domain Routing Model (v1)
+- Incoming request host is read.
+- Host is matched against `SiteDomain.domain`.
+- Matching domain resolves to `TenantSite`.
+- App loads tenant-scoped site settings/services/content via `tenantSiteId`.
+- App renders subscriber customer site for that tenant.
+- If no domain match, app falls back to MyExperiment.club platform routes.
 
-## Not implemented yet
-- Route53/Amplify/custom-domain automation.
-- Real customer website deployment/provisioning.
-- Stripe billing activation.
-- Email/Twilio notifications.
-- Auth.js role/session hardening.
+Notes:
+- support root + `www` variants via separate domain rows/mapping strategy
+- support both customer-owned domains and newly registered domains
+- DNS setup is manual/semi-manual first; automation later
 
-## Migration state note (Neon dev DB)
+## Manual/Semi-manual Steps Remaining in v1
+- domain purchase/registration when managed by MyExperiment.club
+- customer DNS or nameserver updates
+- hosting/custom-domain attachment steps where needed
+- payment/subscription confirmation checks
+- final content/go-live review
 
-- Initial persistence tables already existed before provisioning migration deploy.
-- Baseline strategy used:
-  - mark initial migration as applied with `prisma migrate resolve`
-  - deploy pending provisioning migration with `prisma migrate deploy`
-- No reset/drop/destructive operations were used.
+Important:
+- database/site records should be created by workflow actions, not manually built from scratch.
 
-## Admin UX update: setup request -> subscriber site deep link
+## Recommended Admin Action Wording
+- `Create subscriber site`
+- `Start site setup`
+- `Generate DNS instructions`
+- `Mark site ready`
+- `Mark site live`
 
-- `/admin/setup-requests` now shows a clear success panel after **Start site setup**.
-- The success panel includes direct navigation to the created/existing site using:
-  - `/admin/sites?siteId=<siteId>`
-- This removes manual copy/paste of site IDs during provisioning.
-
-## Admin sites query behavior
-
-- `/admin/sites` supports `?siteId=<id>`.
-- When provided, the page auto-selects that site after loading persisted site list.
-
-## Site-scoped business settings handoff
-
-- Selected subscriber sites now include a direct action to open:
-  - `/admin/sites/[siteId]/settings`
-- This route is labeled as a **subscriber settings preview/support view** for that site.
-- Current implementation still uses local/mock settings tooling; persisted per-site settings storage remains a later milestone.
-- Platform admin is not the normal operator of subscriber site settings in the target architecture.
-- Live operational settings ownership belongs to the subscriber business admin portal.
-- The site-scoped settings preview route should be treated as support/provisioning visibility, not day-to-day subscriber operations tooling.
-
-
-## Provisioning admin security update
-
-- `/admin/setup-requests` and `/admin/sites` now require platform-admin session.
-- Setup request "Start site setup" still creates/links tenant site, but via authenticated admin APIs.
-- Domain/DNS tracking remains manual; no automation added.
-
-## Security note for provisioning admin flow
-
-- Start site setup and provisioning updates now require authenticated platform-admin session.
-- `/admin/sites?siteId=<id>` deep-link behavior remains in place after authenticated navigation.
-- No real domain automation, Stripe, or messaging integration in this milestone.
-
-## Persisted subscriber settings (first narrow backend step)
-- Subscriber-site records can now store initial persisted settings and services under a selected TenantSite.
-- Persisted section is available at `/admin/sites/[siteId]/settings`.
-- This editor is support/provisioning-focused until subscriber business-owner auth is introduced.
-
+## Persisted Scope So Far
 Persisted now:
-- site display/branding basics
-- visual theme id and colour palette id
-- currency
-- services (name, description, basePrice, duration, bufferAfter, active, sortOrder, rolePriceOverrides JSON)
+- basic site settings + branding/theme/currency
+- services/pricing
+- staff roles + staff members
+- scheduling: rota days, break windows, business closures, staff holidays
 
-Still local/mock in this phase:
-- staff, rota, closures, vouchers, pages/policies content, payments integration, files/logos, customer bookings/accounts.
+Still local/mock in current product:
+- vouchers
+- page content modules
+- policy content modules
+- payment processor integration
+- social media persistence
+- bookings/customers/accounts
+- media file storage
 
-## Persisted staff and roles (narrow milestone)
-- `/admin/sites/[siteId]/settings` now includes a persisted staff/roles section tied to TenantSite.
-- Platform-admin session is used for support/provisioning editing in this phase.
-
-Persisted now:
-- staff role definitions (label, platformRole, active, sortOrder)
-- staff members (role linkage, contact fields, active/customerSelectable/isSuperUser, availableWeekdays, notes, sortOrder)
-
-Current delete/deactivation behavior:
-- deleting a role clears `roleId` for linked staff and preserves `roleLabel` fallback text.
-
-Still local/demo in this phase:
-- rota/breaks/holidays/closures and other business-owner modules.
-
-## Persisted scheduling section (support/provisioning phase)
-- `/admin/sites/[siteId]/settings` now includes `Persisted rota, breaks and closures`.
-- Saved data is tenant-scoped and linked to persisted staff where required.
-
-Persisted now:
-- staff rota days (weekday, working flag, start/end)
-- staff break windows (weekday, label, start/end, active)
-- business closures (date, label, all-day/partial, active)
-- staff holidays (staff + date + label + all-day/partial + active)
-
-Current note:
-- booking conflict checks and live booking enforcement against these persisted records are not wired yet.
+## Security Note
+- Provisioning admin routes require platform-admin session.
+- Subscriber business-owner auth is a later milestone.
