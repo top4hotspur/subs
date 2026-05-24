@@ -672,6 +672,12 @@ export default function AdminSiteSettingsPage() {
           ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link
+            href={`/admin/sites/${encodeURIComponent(siteId)}/preview`}
+            className={`${outlineButtonClass} ${smallButtonClass}`}
+          >
+            Preview persisted customer site
+          </Link>
           <Link href={`/admin/sites?siteId=${encodeURIComponent(siteId)}`} className={`${outlineButtonClass} ${smallButtonClass}`}>
             Back to subscriber site
           </Link>

@@ -52,3 +52,12 @@ If no domain match exists, platform routes continue normally.
 
 ## Provisioning Data Behavior
 When creating a subscriber site from setup request, system should create baseline tenant entities and copy available persisted setup/demo/services data where present, rather than manually building records from scratch.
+
+## Persisted preview query model
+- New tenant-scoped preview aggregation reads:
+  - tenant metadata (`TenantSite`)
+  - persisted site settings (`CustomerSiteSettings`)
+  - persisted services (`CustomerSiteService`)
+  - persisted staff roles/staff members (`CustomerSiteStaffRole`, `CustomerSiteStaffMember`)
+  - persisted scheduling (`CustomerSiteStaffRotaDay`, `CustomerSiteStaffBreakWindow`, `CustomerSiteBusinessClosure`, `CustomerSiteStaffHoliday`)
+- Used by `/admin/sites/[siteId]/preview` as internal customer-facing render proof.

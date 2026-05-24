@@ -294,3 +294,11 @@ Add these checks after backend envs are configured:
 - Save rota/break/closure/holiday snapshot and reload page to verify persistence.
 - Verify business closure and staff holiday add/remove/edit behavior persists.
 - Verify warning copy notes that booking conflict checks/live booking usage of persisted scheduling comes later.
+
+## New hosted smoke checks: persisted site preview
+1. Sign in as platform admin.
+2. Open `/admin/sites` and select a subscriber site.
+3. Click `Open persisted site preview`.
+4. Confirm `/admin/sites/[siteId]/preview` renders persisted settings/services (not local demo data).
+5. From `/admin/sites/[siteId]/settings`, click `Preview persisted customer site` and confirm same tenant data appears.
+6. Confirm note clarifies this route is not custom-domain public routing yet.

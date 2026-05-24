@@ -66,3 +66,9 @@ From `/admin/setup-requests` or `/admin/sites`:
 
 ## Future Exception Path
 Per-customer isolated deployments/databases can be considered later only for exceptional enterprise/high-isolation requirements.
+
+## Persisted preview rendering route (platform-admin protected)
+- New route: `/admin/sites/[siteId]/preview`.
+- Uses persisted tenant-scoped records to render a customer-facing preview surface.
+- This is an internal provisioning/support preview under platform-admin session, not public runtime routing.
+- Public host/domain-based routing remains a later milestone.

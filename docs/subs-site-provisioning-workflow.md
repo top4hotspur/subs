@@ -90,3 +90,16 @@ Still local/mock in current product:
 ## Security Note
 - Provisioning admin routes require platform-admin session.
 - Subscriber business-owner auth is a later milestone.
+
+## New milestone: persisted subscriber site preview route
+- Added protected preview route: `/admin/sites/[siteId]/preview`.
+- Purpose: prove a customer-facing render can be produced from persisted TenantSite data before public domain routing.
+- Data source (tenant-scoped):
+  - `TenantSite`
+  - `CustomerSiteSettings`
+  - `CustomerSiteService[]`
+  - `CustomerSiteStaffRole[]`
+  - `CustomerSiteStaffMember[]`
+  - persisted scheduling snapshot (rota days, break windows, business closures, staff holidays)
+- This route is platform-admin protected and is not public custom-domain routing.
+- `/demo/[industry]` remains local/mock demo playground.

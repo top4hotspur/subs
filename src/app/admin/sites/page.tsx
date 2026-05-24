@@ -332,6 +332,12 @@ export default function AdminSitesPage() {
                 >
                   Persisted site settings
                 </Link>
+                <Link
+                  href={`/admin/sites/${encodeURIComponent(selectedSite.id)}/preview`}
+                  className={`ml-2 ${outlineButtonClass} ${smallButtonClass}`}
+                >
+                  Open persisted site preview
+                </Link>
                 <p className="mt-2 text-xs text-slate-600">
                   Support/provisioning settings editor until subscriber admin auth is added.
                 </p>

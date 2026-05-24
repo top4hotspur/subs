@@ -93,3 +93,12 @@ Not persisted yet (remain local/mock):
 - booking/customer accounts persistence
 - media/logo storage
 - payment provider integration
+
+## New milestone: persisted customer-facing render proof
+- Added backend-aware route `/admin/sites/[siteId]/preview` to validate persisted rendering.
+- Route reads persisted site settings/services/staff/scheduling in one tenant-scoped repository call.
+- This proves shared-app + central-DB + `tenantSiteId` model can drive customer-site output without local demo data.
+- Not included yet:
+  - custom domain host routing
+  - persisted booking writes
+  - subscriber business-owner auth
