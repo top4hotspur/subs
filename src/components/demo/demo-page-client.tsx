@@ -37,7 +37,8 @@ export function DemoPageClient({ template, defaultDraft }: DemoPageClientProps) 
             Showing your customised demo draft: {activeDraft?.draftName}
           </p>
           <p className="mt-1 text-sky-800">
-            The live site preview below reflects your latest saved draft.
+            The preview below shows how your customer site could work. Your live subscriber site starts clean,
+            ready for your real services, staff, pricing and content.
           </p>
         </div>
       ) : (

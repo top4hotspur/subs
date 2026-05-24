@@ -9,14 +9,14 @@
 
 ## Create Subscriber Site Workflow (Target)
 From `/admin/setup-requests` or `/admin/sites`:
-1. Click `Create subscriber site` / `Start site setup`.
+1. Click `Create subscriber site` / `Create blank subscriber site`.
 2. Create/link `TenantSite` from setup request.
 3. Create `SiteDomain` record.
 4. Create `SubscriptionRecord` placeholder.
 5. Create default provisioning tasks.
-6. Copy persisted demo/settings when available.
-7. Copy persisted services/pricing when available.
-8. Copy staff/roles/rota/settings in later milestones as those modules become persisted.
+6. Seed clean subscriber-site setup data (industry context + default theme structure).
+7. Keep services/staff/scheduling empty for business-owner input unless explicit import is requested later.
+8. Persist staffing/scheduling modules as milestones complete, without demo-data auto-copy.
 9. Generate and share DNS instructions.
 10. Track lifecycle statuses until live.
 
@@ -57,7 +57,7 @@ Phase 1:
 - provisioning checklist
 
 Phase 2:
-- copy persisted demo/settings/services/staff into site
+- optional explicit import tools (for example, import from approved draft) behind a deliberate action
 - DNS/domain instruction generator
 
 Phase 3:

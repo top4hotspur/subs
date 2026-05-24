@@ -1,14 +1,16 @@
 # Subs Product Flow
 
 ## Current v1 flow
-1. Homepage -> industry page -> demo page -> customise draft.
-2. Customer starts setup and submits a local mock setup request.
-3. Mock customer/admin pages show request lifecycle, services, staff, availability, notifications, and analytics previews.
+1. Homepage -> industry page -> demo page (customer/staff/admin views) -> setup order.
+2. Customer starts setup and submits setup details.
+3. Platform provisioning creates a clean subscriber site ready for real business data entry.
 
 ## Demo and preview clarity
 - Demo pages now keep control panels compact and show a clear divider before preview content:
   - "Website preview starts here"
 - Active/default draft switching remains available, but visual priority is on the website preview.
+- Demo header includes `Get your site now` CTA on all demo routes, linking to `/setup/[industry]`.
+- Demo wording avoids implying that demo data is copied into the live subscriber site by default.
 
 ## Appointment workflow (local mock)
 - Shared appointment workflow currently covers:

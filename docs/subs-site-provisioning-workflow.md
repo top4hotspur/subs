@@ -18,17 +18,17 @@ This workflow turns a persisted setup request into a persisted subscriber site r
 ## Target Admin Workflow: Create Subscriber Site
 1. Setup request is submitted and persisted.
 2. Platform admin opens `/admin/setup-requests` or `/admin/sites`.
-3. Platform admin clicks `Create subscriber site` / `Start site setup`.
+3. Platform admin clicks `Create subscriber site` / `Create blank subscriber site`.
 4. Backend creates or links `TenantSite` for the setup request.
 5. Backend creates baseline records:
 - `SiteDomain`
 - `SubscriptionRecord` placeholder
 - default provisioning checklist tasks
 - provisioning timeline/status events
-6. Backend copies available setup context:
-- persisted demo draft/settings (when available)
-- persisted services/pricing (when available)
-- staff/roles/rota/settings in later milestones as those modules become persisted
+6. Backend seeds a clean subscriber-site structure:
+- selected industry context
+- default theme/palette and baseline settings shape
+- empty/editable services, staff, scheduling, pages and policies
 7. Platform admin reviews generated DNS/domain instructions.
 8. Platform admin tracks statuses to go-live.
 
@@ -63,6 +63,7 @@ Notes:
 
 Important:
 - database/site records should be created by workflow actions, not manually built from scratch.
+- demo/sales data should not be copied into live subscriber-site records by default.
 
 ## Recommended Admin Action Wording
 - `Create subscriber site`

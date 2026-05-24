@@ -52,10 +52,14 @@ Still local/mock:
 ## Provisioning Workflow Entry Points
 From `/admin/setup-requests` or `/admin/sites`:
 - `Create subscriber site`
-- `Start site setup`
+- `Create blank subscriber site`
 - `Generate DNS instructions`
 - `Mark site ready`
 - `Mark site live`
+
+Provisioning note:
+- demo environments are sales/playground experiences
+- live subscriber sites are provisioned clean and then completed with real business data
 
 ## Manual Steps Still Expected in v1
 - domain purchase/registration where managed for customer

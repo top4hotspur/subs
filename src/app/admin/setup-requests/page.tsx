@@ -172,6 +172,9 @@ export default function AdminSetupRequestsPage() {
           <p className="mt-2 text-sm text-slate-600">
             Uses persisted backend setup requests. Platform-admin login required.
           </p>
+          <p className="mt-1 text-xs text-slate-600">
+            Starting setup creates a blank subscriber site structure; demo data is not copied automatically.
+          </p>
         </div>
         <Link href="/admin" className={`${outlineButtonClass} ${smallButtonClass}`}>
           Back to admin
@@ -312,7 +315,7 @@ export default function AdminSetupRequestsPage() {
                     className={`${outlineButtonClass} ${smallButtonClass}`}
                     onClick={() => startSiteSetup(selectedRequest.id)}
                   >
-                    Start site setup
+                    Create blank subscriber site
                   </button>
                   <Link
                     href={`/admin/sites${siteSetupResult ? `?siteId=${encodeURIComponent(siteSetupResult.siteId)}` : ""}`}

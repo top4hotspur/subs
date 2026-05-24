@@ -8,7 +8,7 @@ export const WEBSITE_SUBSCRIPTION_OFFER: WebsiteSubscriptionOffer = {
   emailIncluded: true,
   fullFeatureSetIncluded: true,
   summary:
-    "One simple website subscription: the demo you customise is the site you get.",
+    "One simple website subscription: explore the demo first, then launch a clean subscriber site ready for your real business data.",
   includedFeatures: [
     "Full industry-specific website",
     "Mobile-friendly design",

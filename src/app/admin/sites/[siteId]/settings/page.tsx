@@ -660,10 +660,13 @@ export default function AdminSiteSettingsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">
-            Persisted Subscriber Site Settings for {siteName ?? "Subscriber site"}
+            Subscriber Site Setup Data for {siteName ?? "Subscriber site"}
           </h1>
           <p className="mt-2 text-sm text-slate-600">
             Support/provisioning settings editor until subscriber admin auth is added.
+          </p>
+          <p className="mt-1 text-xs text-slate-600">
+            This edits live subscriber-site data. Demo data is not copied automatically.
           </p>
           {industrySlug ? (
             <p className="mt-1 text-sm text-slate-600">
@@ -704,7 +707,7 @@ export default function AdminSiteSettingsPage() {
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-xl font-semibold text-slate-900">Persisted site settings</h2>
             <p className="mt-2 text-sm text-slate-600">
-              This is the first persisted settings area for this subscriber site. Staff, rota, pages, vouchers and policies are still local/demo only.
+              This is the first persisted setup area for this subscriber site. Staff, rota, pages, vouchers and policies are still local/demo only.
             </p>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">

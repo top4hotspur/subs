@@ -40,7 +40,7 @@ export default async function IndustryPage({ params }: IndustryPageProps) {
         eyebrow={template.category}
         title={template.defaultConfig.heroHeadline}
         subtitle={template.defaultConfig.heroSubheading}
-        helperText="The demo is the starting point. Your customisations are saved to your own draft in this browser."
+        helperText="The demo is a preview playground. Your live subscriber site is created clean and ready for your real business details."
         actions={(
           <>
             <Link href={`/demo/${template.slug}`} target="_blank" rel="noreferrer" className={primaryButtonClass}>
@@ -97,9 +97,9 @@ export default async function IndustryPage({ params }: IndustryPageProps) {
           </SiteCard>
           <SiteCard title="What happens next" subtitle="Simple managed onboarding process.">
             <ol className="list-decimal space-y-2 pl-5 text-sm text-slate-600">
-              <li>We review your demo customisation</li>
-              <li>We confirm content and domain details</li>
-              <li>We provision the site and connect your domain</li>
+              <li>We confirm your business and domain details</li>
+              <li>We provision your new subscriber site with clean defaults</li>
+              <li>You add real services, staff, pricing and content in your site admin</li>
               <li>We host and manage it ongoing</li>
             </ol>
           </SiteCard>

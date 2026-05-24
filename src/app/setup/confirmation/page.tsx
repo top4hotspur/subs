@@ -175,18 +175,18 @@ export default function SetupConfirmationPage() {
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-xl font-semibold text-slate-900">What happens next</h2>
           <ol className="mt-4 space-y-3 text-sm text-slate-700">
-            <li>1. We review your demo/customisation</li>
+            <li>1. We review your setup details</li>
             <li>2. We confirm domain/payment details</li>
-            <li>3. We provision your website</li>
-            <li>4. We connect your domain</li>
-            <li>5. Your site goes live</li>
+            <li>3. We provision your clean subscriber site structure</li>
+            <li>4. You add your real services, staff, prices and page content</li>
+            <li>5. We connect your domain and take your site live</li>
           </ol>
         </section>
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
         <Link href="/account" className={primaryButtonClass}>View customer portal</Link>
-        <Link href={`/demo/${request.templateSlug}/customise`} className={outlineButtonClass}>Back to customise demo</Link>
+        <Link href={`/demo/${request.templateSlug}`} className={outlineButtonClass}>Back to demo site</Link>
         <Link href="/#industries" className={outlineButtonClass}>Choose another business type</Link>
       </div>
     </main>

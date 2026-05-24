@@ -300,7 +300,10 @@ export default function AdminSitesPage() {
         </div>
 
         <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <p className="text-sm font-semibold text-slate-900">Create site from setup request</p>
+          <p className="text-sm font-semibold text-slate-900">Create blank subscriber site from setup request</p>
+          <p className="mt-1 text-xs text-slate-600">
+            This creates live subscriber-site records with clean defaults. Demo data is not copied automatically.
+          </p>
           <div className="mt-2 flex flex-wrap gap-2">
             <input
               type="text"
@@ -314,7 +317,7 @@ export default function AdminSitesPage() {
               className={`${primaryButtonClass} ${smallButtonClass}`}
               onClick={startSiteSetup}
             >
-              Start site setup
+              Create blank subscriber site
             </button>
           </div>
         </div>

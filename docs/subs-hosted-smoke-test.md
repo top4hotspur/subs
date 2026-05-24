@@ -86,10 +86,23 @@ Add these checks after backend envs are configured:
 
 ## Hosted smoke additions: persisted provisioning UX
 
-- `/admin/setup-requests`: Start site setup should show success + direct button to `/admin/sites?siteId=<id>`.
+- `/admin/setup-requests`: `Create blank subscriber site` should show success + direct button to `/admin/sites?siteId=<id>`.
 - `/admin/sites?siteId=<id>`: target site should auto-select after loading.
 - Verify grouped provisioning checklist updates still persist via backend task PATCH route.
 - Verify domain panel shows setup-request domain context and manual DNS note.
+
+## Hosted smoke additions: demo CTA and clean provisioning messaging
+- On each route below, confirm demo header shows `Get your site now` and links to `/setup/[industry]`:
+  - `/demo/[industry]`
+  - `/demo/[industry]/booking`
+  - `/demo/[industry]/account`
+  - `/demo/[industry]/staff`
+  - `/demo/[industry]/admin`
+  - `/demo/[industry]/about`
+  - `/demo/[industry]/contact`
+  - `/demo/[industry]/policy`
+- Confirm demo banner copy describes the demo as a preview/playground and does not imply demo data is automatically copied into live subscriber sites.
+- Confirm `/admin/sites/[siteId]/settings` copy states it edits live subscriber-site setup data and that demo data is not copied automatically.
 
 ## Hosted smoke additions: admin auth
 

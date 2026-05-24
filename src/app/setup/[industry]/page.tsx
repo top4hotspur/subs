@@ -42,8 +42,11 @@ export default async function SetupIndustryPage({ params }: SetupIndustryPagePro
           One full website offer: £{offer.setupFeeGbp} setup, £{offer.monthlyFeeGbp}/month,
           with optional domain registration/management only where needed.
         </p>
-        <Link href={`/demo/${template.slug}/customise`} className="mt-4 inline-flex text-sm font-medium text-sky-700 hover:text-sky-900">
-          Back to customisation
+        <p className="mt-3 text-sm text-slate-600">
+          Your subscriber site is created as a clean setup. Demo content is not copied automatically.
+        </p>
+        <Link href={`/demo/${template.slug}`} className="mt-4 inline-flex text-sm font-medium text-sky-700 hover:text-sky-900">
+          Back to demo site
         </Link>
       </section>
 

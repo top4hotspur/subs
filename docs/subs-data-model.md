@@ -51,7 +51,7 @@ All site-scoped models above are keyed/scoped by `tenantSiteId`.
 If no domain match exists, platform routes continue normally.
 
 ## Provisioning Data Behavior
-When creating a subscriber site from setup request, system should create baseline tenant entities and copy available persisted setup/demo/services data where present, rather than manually building records from scratch.
+When creating a subscriber site from setup request, system should create baseline tenant entities and a clean editable subscriber-site structure. Demo data is not copied by default; any draft import should be an explicit future option.
 
 ## Persisted preview query model
 - New tenant-scoped preview aggregation reads:
