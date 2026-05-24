@@ -96,8 +96,8 @@ export default async function AdminSitePersistedPreviewPage({
             <h2 className="mt-4 text-4xl font-bold tracking-tight">{heroHeadline}</h2>
             {heroSubheading ? <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>{heroSubheading}</p> : null}
             <div className="mt-5 flex flex-wrap gap-3">
-              <Link href="#" className={`inline-flex rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${scheme.accentButtonClass}`}>
-                Book service
+              <Link href={`/admin/sites/${encodeURIComponent(siteId)}/preview/booking`} className={`inline-flex rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${scheme.accentButtonClass}`}>
+                Book from persisted preview
               </Link>
               <Link href="#" className={`inline-flex rounded-lg border ${scheme.borderClass} bg-white px-4 py-2 text-sm font-semibold text-slate-900`}>
                 Contact us
@@ -182,7 +182,32 @@ export default async function AdminSitePersistedPreviewPage({
                 {activeHolidays.length} active holiday entry/entries.
               </p>
             </div>
+            <div className={cardClass}>
+              <h3 className="text-base font-semibold">Recent persisted bookings</h3>
+              <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>
+                {preview.recentBookings.length} booking record(s) found.
+              </p>
+            </div>
           </div>
+
+          {preview.recentBookings.length > 0 ? (
+            <div className={cardClass}>
+              <h3 className="text-base font-semibold">Latest booking requests</h3>
+              <div className="mt-3 space-y-2">
+                {preview.recentBookings.slice(0, 5).map((booking) => (
+                  <div key={booking.id} className={`rounded-lg border ${scheme.borderClass} bg-white p-3 text-sm text-slate-800`}>
+                    <p className="font-semibold">{booking.customerName}</p>
+                    <p className="text-xs text-slate-600">
+                      {booking.serviceName || "Service"} | {booking.preferredDate || "Date TBD"} {booking.preferredTime || ""}
+                    </p>
+                    <p className="text-xs text-slate-600">
+                      Staff: {booking.staffName || "Unassigned"} | Status: {booking.status}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           <div className={cardClass}>
             <h3 className="text-base font-semibold">Preview status note</h3>
@@ -205,4 +230,3 @@ export default async function AdminSitePersistedPreviewPage({
     </main>
   );
 }
-

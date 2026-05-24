@@ -36,6 +36,7 @@ model TenantSite {
   customerSiteStaffBreakWindows CustomerSiteStaffBreakWindow[]
   customerSiteBusinessClosures CustomerSiteBusinessClosure[]
   customerSiteStaffHolidays CustomerSiteStaffHoliday[]
+  customerSiteBookings      CustomerSiteBooking[]
   setupRequest              SetupRequest?          @relation("SetupRequestToTenantSite", fields: [setupRequestId], references: [id])
 }
 
@@ -381,4 +382,32 @@ model CustomerSiteStaffHoliday {
   @@index([tenantSiteId, date])
   @@index([tenantSiteId, staffMemberId, date])
   @@index([tenantSiteId, active])
+}
+
+model CustomerSiteBooking {
+  id            String    @id @default(cuid())
+  tenantSiteId  String
+  serviceId     String?
+  serviceName   String?
+  customerName  String
+  customerEmail String?
+  customerPhone String?
+  preferredDate String?
+  preferredTime String?
+  staffMemberId String?
+  staffName     String?
+  status        String
+  paymentStatus String?
+  notes         String?
+  source        String?
+  rawPayload    Json?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  tenantSite    TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+
+  @@index([tenantSiteId])
+  @@index([tenantSiteId, preferredDate])
+  @@index([tenantSiteId, status])
+  @@index([tenantSiteId, staffMemberId])
+  @@index([tenantSiteId, serviceId])
 }

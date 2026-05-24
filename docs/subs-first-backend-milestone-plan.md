@@ -102,3 +102,14 @@ Not persisted yet (remain local/mock):
   - custom domain host routing
   - persisted booking writes
   - subscriber business-owner auth
+
+## New milestone: persisted booking/request records (preview-protected)
+- Added `CustomerSiteBooking` tenant-scoped persistence for subscriber sites.
+- Booking creation/read/update is currently exposed only through platform-admin protected preview/admin routes.
+- Added protected preview booking route:
+  - `/admin/sites/[siteId]/preview/booking`
+- Added protected admin booking APIs:
+  - `GET/POST /api/admin/sites/[id]/bookings`
+  - `PATCH /api/admin/sites/[id]/bookings/[bookingId]`
+- Conflict rule (v1): same `tenantSiteId + staffMemberId + preferredDate + preferredTime` cannot have overlapping active booking (`CANCELLED`/`NO_SHOW` ignored).
+- No public custom-domain booking route yet.

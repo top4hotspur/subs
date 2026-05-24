@@ -302,3 +302,12 @@ Add these checks after backend envs are configured:
 4. Confirm `/admin/sites/[siteId]/preview` renders persisted settings/services (not local demo data).
 5. From `/admin/sites/[siteId]/settings`, click `Preview persisted customer site` and confirm same tenant data appears.
 6. Confirm note clarifies this route is not custom-domain public routing yet.
+
+## New hosted smoke checks: persisted booking preview
+1. Sign in as platform admin.
+2. Open `/admin/sites/[siteId]/preview` and click `Book from persisted preview`.
+3. Submit booking form at `/admin/sites/[siteId]/preview/booking` with tenant-scoped service/staff.
+4. Confirm success message and booking appears in persisted booking list.
+5. Confirm booking appears in preview recent booking summary.
+6. Try same staff/date/time booking again and confirm conflict handling (`409`) message.
+7. Confirm this flow remains admin-protected and not public live booking routing.

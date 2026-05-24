@@ -61,3 +61,32 @@ When creating a subscriber site from setup request, system should create baselin
   - persisted staff roles/staff members (`CustomerSiteStaffRole`, `CustomerSiteStaffMember`)
   - persisted scheduling (`CustomerSiteStaffRotaDay`, `CustomerSiteStaffBreakWindow`, `CustomerSiteBusinessClosure`, `CustomerSiteStaffHoliday`)
 - Used by `/admin/sites/[siteId]/preview` as internal customer-facing render proof.
+
+## Persisted tenant booking model
+Added model:
+- `CustomerSiteBooking`
+
+Core fields include:
+- tenantSiteId
+- serviceId/serviceName
+- customer details (name/email/phone)
+- preferredDate/preferredTime
+- staffMemberId/staffName
+- status/paymentStatus
+- notes/source/rawPayload
+
+Indexes:
+- tenantSiteId
+- tenantSiteId + preferredDate
+- tenantSiteId + status
+- tenantSiteId + staffMemberId
+- tenantSiteId + serviceId
+
+Current API surface (platform-admin protected):
+- `GET/POST /api/admin/sites/[id]/bookings`
+- `PATCH /api/admin/sites/[id]/bookings/[bookingId]`
+
+Conflict behavior (v1):
+- prevents duplicate active staff slot bookings for same tenant/date/time
+- ignores `CANCELLED` and `NO_SHOW`
+- no production-grade locking/transactional slot reservation yet

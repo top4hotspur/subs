@@ -92,6 +92,16 @@ export type CustomerSitePreviewData = {
       active: boolean;
     }>;
   };
+  recentBookings: Array<{
+    id: string;
+    customerName: string;
+    serviceName: string | null;
+    preferredDate: string | null;
+    preferredTime: string | null;
+    staffName: string | null;
+    status: string;
+    createdAtIso: string;
+  }>;
 };
 
 function parseStringArray(value: unknown): string[] {
@@ -126,6 +136,10 @@ export async function getCustomerSitePreviewData(
       },
       customerSiteStaffHolidays: {
         orderBy: [{ date: "asc" }, { createdAt: "asc" }],
+      },
+      customerSiteBookings: {
+        orderBy: [{ createdAt: "desc" }],
+        take: 10,
       },
     },
   });
@@ -226,6 +240,15 @@ export async function getCustomerSitePreviewData(
         active: holiday.active,
       })),
     },
+    recentBookings: site.customerSiteBookings.map((booking) => ({
+      id: booking.id,
+      customerName: booking.customerName,
+      serviceName: booking.serviceName ?? null,
+      preferredDate: booking.preferredDate ?? null,
+      preferredTime: booking.preferredTime ?? null,
+      staffName: booking.staffName ?? null,
+      status: booking.status,
+      createdAtIso: booking.createdAt.toISOString(),
+    })),
   };
 }
-

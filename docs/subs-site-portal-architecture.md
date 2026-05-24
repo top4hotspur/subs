@@ -72,3 +72,9 @@ Per-customer isolated deployments/databases can be considered later only for exc
 - Uses persisted tenant-scoped records to render a customer-facing preview surface.
 - This is an internal provisioning/support preview under platform-admin session, not public runtime routing.
 - Public host/domain-based routing remains a later milestone.
+
+## Persisted preview booking capability (internal)
+- Added internal persisted booking route under admin preview context:
+  - `/admin/sites/[siteId]/preview/booking`
+- Customer-site public booking still relies on demo/local flows in this phase.
+- Tenant-scoped persisted bookings now exist for platform-admin testing and provisioning support.

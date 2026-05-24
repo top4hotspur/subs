@@ -103,3 +103,10 @@ Still local/mock in current product:
   - persisted scheduling snapshot (rota days, break windows, business closures, staff holidays)
 - This route is platform-admin protected and is not public custom-domain routing.
 - `/demo/[industry]` remains local/mock demo playground.
+
+## Persisted booking flow (support/provisioning preview phase)
+- Tenant-scoped booking requests can now be created for a selected subscriber site.
+- Route used in this milestone:
+  - `/admin/sites/[siteId]/preview/booking`
+- This route is platform-admin protected and intended to prove persisted booking rendering/creation before public live routing.
+- Booking APIs remain admin-protected in this phase.
