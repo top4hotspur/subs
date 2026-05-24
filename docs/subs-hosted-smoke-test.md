@@ -341,3 +341,16 @@ Add these checks after backend envs are configured:
 4. Test an unknown host and verify `matched: false`.
 5. In `/admin/sites`, use Domain panel `Test domain resolution` UI and verify output matches API behavior.
 6. Confirm `/sites/[siteSlug]` still renders as slug fallback route.
+
+## Hosted smoke checks: subscriber business-owner access foundation
+1. As platform admin, open `/admin/sites/[siteId]/settings`.
+2. In `Business owner access`, create a tenant business-owner user and capture one-time temporary access code.
+3. Open `/site-admin/login` and sign in with:
+   - site slug
+   - user email
+   - temporary access code
+4. Confirm `/site-admin/[siteSlug]` loads and allows editing persisted site settings/services.
+5. Confirm the same user cannot access:
+   - `/admin`
+   - another tenant slug under `/site-admin/[otherSlug]`
+6. Confirm platform admin can still access `/admin/*` with existing credentials flow.

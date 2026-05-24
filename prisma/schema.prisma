@@ -37,6 +37,7 @@ model TenantSite {
   customerSiteBusinessClosures CustomerSiteBusinessClosure[]
   customerSiteStaffHolidays CustomerSiteStaffHoliday[]
   customerSiteBookings      CustomerSiteBooking[]
+  customerSiteAdminUsers    CustomerSiteAdminUser[]
   setupRequest              SetupRequest?          @relation("SetupRequestToTenantSite", fields: [setupRequestId], references: [id])
 }
 
@@ -410,4 +411,23 @@ model CustomerSiteBooking {
   @@index([tenantSiteId, status])
   @@index([tenantSiteId, staffMemberId])
   @@index([tenantSiteId, serviceId])
+}
+
+model CustomerSiteAdminUser {
+  id               String    @id @default(cuid())
+  tenantSiteId     String
+  email            String
+  displayName      String?
+  role             String
+  active           Boolean   @default(true)
+  invitationStatus String
+  accessCodeHash   String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  tenantSite       TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+
+  @@index([tenantSiteId])
+  @@index([email])
+  @@index([tenantSiteId, active])
+  @@unique([tenantSiteId, email])
 }

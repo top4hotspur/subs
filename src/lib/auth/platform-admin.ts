@@ -12,6 +12,9 @@ function parsePlatformAdminEmails(): string[] {
 
 export async function isPlatformAdminSession(): Promise<boolean> {
   const session = await getServerSession(authOptions);
+  if (session?.user?.roleType && session.user.roleType !== "PLATFORM_ADMIN") {
+    return false;
+  }
   const email = session?.user?.email?.trim().toLowerCase();
   if (!email) return false;
   return parsePlatformAdminEmails().includes(email);

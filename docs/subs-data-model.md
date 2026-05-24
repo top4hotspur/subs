@@ -29,6 +29,7 @@
 - `CustomerSiteStaffBreakWindow`
 - `CustomerSiteBusinessClosure`
 - `CustomerSiteStaffHoliday`
+- `CustomerSiteAdminUser`
 
 All site-scoped models above are keyed/scoped by `tenantSiteId`.
 
@@ -40,6 +41,20 @@ All site-scoped models above are keyed/scoped by `tenantSiteId`.
 - booking/customer account persistence
 - media/logo file storage
 - payment provider integration data
+
+## CustomerSiteAdminUser (new)
+- Purpose: tenant-scoped subscriber business-owner/admin access.
+- Core fields:
+  - `tenantSiteId`
+  - `email`
+  - `displayName`
+  - `role` (`OWNER` | `ADMIN`)
+  - `active`
+  - `invitationStatus` (`INVITED` | `ACTIVE` | `DISABLED`)
+  - `accessCodeHash` (hashed only, no plaintext codes stored)
+- Security:
+  - unique per tenant on (`tenantSiteId`, `email`)
+  - used for site-admin auth scope, not platform-admin auth
 
 ## Domain Resolution Data Path (v1)
 1. read incoming host

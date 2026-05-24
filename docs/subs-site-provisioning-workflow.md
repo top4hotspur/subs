@@ -144,3 +144,10 @@ Still local/mock in current product:
 - Supports test header:
   - `x-test-site-host: example.com`
   to validate domain mapping before real custom-domain attachment.
+
+## Subscriber business-owner access bootstrap
+- Platform admin can now bootstrap tenant-scoped business-owner users in:
+  - `/admin/sites/[siteId]/settings` (`Business owner access` section)
+- Bootstrap creates/updates `CustomerSiteAdminUser` records for that tenant.
+- Temporary access code is generated for secure handoff (no plaintext persistence).
+- This is separate from platform-admin auth and does not grant platform admin access.

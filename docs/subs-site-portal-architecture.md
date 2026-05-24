@@ -105,3 +105,16 @@ No per-customer DB or code export is required for this model.
   5. render tenant-scoped customer site using same data model as slug route
 - Root and `www` hosts are handled through resolver candidate matching.
 - DNS and Amplify domain automation are still manual/out-of-scope in this phase.
+
+## Business-owner access foundation (tenant-scoped)
+- Added first subscriber business-owner auth path using dedicated site-admin login:
+  - `/site-admin/login`
+  - `/site-admin/[siteSlug]`
+- Session model is separated from platform admin:
+  - `roleType=SITE_ADMIN`
+  - `tenantSiteId`, `tenantSlug`, `siteAdminUserId`, `siteAdminRole`
+- Middleware now enforces route separation:
+  - `/admin/*` requires platform-admin session only
+  - `/site-admin/*` requires site-admin session only
+- Site-admin users can access only their own tenant slug/site; cross-tenant access is blocked.
+- Staff/customer auth is not included yet.

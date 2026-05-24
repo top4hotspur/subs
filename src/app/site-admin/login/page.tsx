@@ -6,28 +6,18 @@ import { useRouter } from "next/navigation";
 import { primaryButtonClass } from "@/lib/ui/button-styles";
 
 function toFriendlyLoginError(error: string | null | undefined): string {
-  if (!error) {
-    return "Login failed. Check your admin email and access code.";
-  }
-  if (error === "CredentialsSignin") {
-    return "Login failed. Check your admin email and access code.";
+  if (!error || error === "CredentialsSignin") {
+    return "Login failed. Check your site slug, email and access code.";
   }
   if (error === "Configuration") {
-    return "Login failed due to auth configuration. Please contact platform admin.";
-  }
-  if (error === "AccessDenied") {
-    return "Access denied for this account.";
+    return "Login failed due to auth configuration. Please contact support.";
   }
   return `Login failed: ${error}`;
 }
 
-export default function AdminLoginPage() {
+export default function SiteAdminLoginPage() {
   const router = useRouter();
-  const [callbackUrl] = useState(() => {
-    if (typeof window === "undefined") return "/admin";
-    return new URLSearchParams(window.location.search).get("callbackUrl") || "/admin";
-  });
-
+  const [siteSlug, setSiteSlug] = useState("");
   const [email, setEmail] = useState("");
   const [accessCode, setAccessCode] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -38,11 +28,12 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError(null);
 
-    const result = await signIn("platform-admin-credentials", {
-      email: email.trim(),
+    const result = await signIn("site-admin-credentials", {
+      siteSlug: siteSlug.trim(),
+      email: email.trim().toLowerCase(),
       accessCode: accessCode.trim(),
       redirect: false,
-      callbackUrl,
+      callbackUrl: `/site-admin/${encodeURIComponent(siteSlug.trim())}`,
     });
 
     if (!result) {
@@ -50,25 +41,34 @@ export default function AdminLoginPage() {
       setLoading(false);
       return;
     }
-
     if (result.error || !result.ok) {
       setError(toFriendlyLoginError(result.error));
       setLoading(false);
       return;
     }
 
-    router.push(result.url || callbackUrl || "/admin");
+    router.push(result.url || `/site-admin/${encodeURIComponent(siteSlug.trim())}`);
     setLoading(false);
   }
 
   return (
     <main className="mx-auto flex min-h-[70vh] w-full max-w-md items-center px-4 py-10">
       <section className="w-full rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-slate-900">Platform admin login</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Business admin login</h1>
         <p className="mt-2 text-sm text-slate-600">
-          Platform-admin only. Public setup pages remain accessible without login.
+          Subscriber site owner/admin access. Platform admin area is separate.
         </p>
         <form className="mt-5 space-y-3" onSubmit={handleSubmit}>
+          <label className="block text-sm font-medium text-slate-800">
+            Site slug
+            <input
+              type="text"
+              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              value={siteSlug}
+              onChange={(event) => setSiteSlug(event.target.value)}
+              required
+            />
+          </label>
           <label className="block text-sm font-medium text-slate-800">
             Email
             <input
@@ -89,7 +89,7 @@ export default function AdminLoginPage() {
               required
             />
           </label>
-          {error ? <p className="text-sm text-red-700">{error}</p> : null}
+          {error ? <p className="text-sm text-rose-700">{error}</p> : null}
           <button type="submit" className={primaryButtonClass} disabled={loading}>
             {loading ? "Signing in..." : "Sign in"}
           </button>
@@ -98,3 +98,4 @@ export default function AdminLoginPage() {
     </main>
   );
 }
+

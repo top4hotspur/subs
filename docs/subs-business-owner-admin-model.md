@@ -211,3 +211,27 @@ Important:
   - staff holidays
 - Current persisted editor is available via platform-admin support route `/admin/sites/[siteId]/settings`.
 - Rota/break logic is now storable in backend, but live customer booking enforcement remains a next-step integration.
+
+## Business-owner login foundation (v1)
+- Added persisted business-owner/admin user model:
+  - `CustomerSiteAdminUser`
+- Platform admin can bootstrap business-owner access per tenant site from:
+  - `/admin/sites/[siteId]/settings` -> `Business owner access`
+- Bootstrap fields:
+  - email
+  - display name
+  - role (`OWNER`/`ADMIN`)
+  - invitation status (`INVITED`/`ACTIVE`)
+  - active flag
+- Temporary access code is generated and shown once in UI; only hashed value is stored.
+- Subscriber business-owner login route:
+  - `/site-admin/login`
+- Subscriber business-owner area:
+  - `/site-admin/[siteSlug]`
+- First editable scope in this pass:
+  - persisted site settings
+  - persisted services
+- Not included yet:
+  - staff/customer auth
+  - invite email sending
+  - full tenant business-admin parity with all persisted modules

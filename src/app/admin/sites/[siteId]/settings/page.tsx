@@ -27,6 +27,11 @@ import {
   getPersistedScheduling,
   savePersistedScheduling,
 } from "@/lib/sites/admin-site-scheduling-client";
+import {
+  createPersistedSiteAdminUser,
+  listPersistedSiteAdminUsers,
+} from "@/lib/sites/admin-site-admin-users-client";
+import type { CustomerSiteAdminUserRecord } from "@/lib/sites/customer-site-admin-user-types";
 import type {
   CustomerSiteStaffMemberRecord,
   CustomerSiteStaffRoleRecord,
@@ -131,6 +136,14 @@ type PersistedStaffHolidayDraft = {
   allDay: boolean;
   startTime: string;
   endTime: string;
+  active: boolean;
+};
+
+type SiteAdminUserDraft = {
+  email: string;
+  displayName: string;
+  role: "OWNER" | "ADMIN";
+  invitationStatus: "INVITED" | "ACTIVE";
   active: boolean;
 };
 
@@ -364,6 +377,15 @@ export default function AdminSiteSettingsPage() {
   const [businessClosuresDraft, setBusinessClosuresDraft] = useState<PersistedBusinessClosureDraft[]>([]);
   const [staffHolidaysDraft, setStaffHolidaysDraft] = useState<PersistedStaffHolidayDraft[]>([]);
   const [selectedSchedulingStaffId, setSelectedSchedulingStaffId] = useState("");
+  const [siteAdminUsers, setSiteAdminUsers] = useState<CustomerSiteAdminUserRecord[]>([]);
+  const [generatedAccessCode, setGeneratedAccessCode] = useState<string | null>(null);
+  const [siteAdminUserDraft, setSiteAdminUserDraft] = useState<SiteAdminUserDraft>({
+    email: "",
+    displayName: "",
+    role: "OWNER",
+    invitationStatus: "INVITED",
+    active: true,
+  });
 
   const allowedPalettes = useMemo(() => {
     const theme = SITE_VISUAL_TEMPLATES.find((item) => item.id === settingsDraft.visualThemeId);
@@ -384,13 +406,14 @@ export default function AdminSiteSettingsPage() {
       setError(null);
       setMessage(null);
 
-      const [detailResult, settingsResult, servicesResult, rolesResult, staffResult, schedulingResult] = await Promise.all([
+      const [detailResult, settingsResult, servicesResult, rolesResult, staffResult, schedulingResult, siteAdminUsersResult] = await Promise.all([
         getAdminTenantSiteDetail(siteId),
         getAdminSitePersistedSettings(siteId),
         getAdminSitePersistedServices(siteId),
         listPersistedStaffRoles(siteId),
         listPersistedStaff(siteId),
         getPersistedScheduling(siteId),
+        listPersistedSiteAdminUsers(siteId),
       ]);
 
       if (!active) return;
@@ -429,6 +452,11 @@ export default function AdminSiteSettingsPage() {
         setLoading(false);
         return;
       }
+      if (!siteAdminUsersResult.ok) {
+        setError(toMessage(siteAdminUsersResult.error, siteAdminUsersResult.status));
+        setLoading(false);
+        return;
+      }
 
       setSettingsDraft(toSettingsDraft(settingsResult.settings));
       setServicesDraft(servicesResult.services.map(toServiceDraft));
@@ -438,6 +466,7 @@ export default function AdminSiteSettingsPage() {
       setBreakWindowsDraft(schedulingResult.scheduling.breakWindows.map(toBreakWindowDraft));
       setBusinessClosuresDraft(schedulingResult.scheduling.businessClosures.map(toBusinessClosureDraft));
       setStaffHolidaysDraft(schedulingResult.scheduling.staffHolidays.map(toStaffHolidayDraft));
+      setSiteAdminUsers(siteAdminUsersResult.users);
       setSelectedSchedulingStaffId(
         schedulingResult.scheduling.rotaDays[0]?.staffMemberId ??
           schedulingResult.scheduling.staffHolidays[0]?.staffMemberId ??
@@ -452,6 +481,30 @@ export default function AdminSiteSettingsPage() {
       active = false;
     };
   }, [siteId]);
+
+  async function createBusinessAdminAccessUser(): Promise<void> {
+    if (!siteId) return;
+    setGeneratedAccessCode(null);
+    setMessage("Creating business owner/admin access...");
+    const result = await createPersistedSiteAdminUser(siteId, {
+      email: siteAdminUserDraft.email.trim().toLowerCase(),
+      displayName: siteAdminUserDraft.displayName.trim() || null,
+      role: siteAdminUserDraft.role,
+      invitationStatus: siteAdminUserDraft.invitationStatus,
+      active: siteAdminUserDraft.active,
+    });
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status));
+      return;
+    }
+    setSiteAdminUsers((current) => {
+      const without = current.filter((item) => item.id !== result.user.id);
+      return [...without, result.user];
+    });
+    setGeneratedAccessCode(result.generatedAccessCode);
+    setSiteAdminUserDraft((current) => ({ ...current, email: "", displayName: "" }));
+    setMessage("Business owner/admin user saved. Share the one-time access code securely.");
+  }
 
   async function savePersistedSettings(): Promise<void> {
     if (!siteId) return;
@@ -1259,6 +1312,65 @@ export default function AdminSiteSettingsPage() {
               <button type="button" className={`${primaryButtonClass} ${smallButtonClass}`} onClick={savePersistedSchedulingSection}>
                 Save persisted scheduling
               </button>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-xl font-semibold text-slate-900">Business owner access</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Platform admin bootstrap for subscriber business-owner/admin login. This is tenant-scoped and separate from platform admin auth.
+            </p>
+            <p className="mt-1 text-xs text-slate-600">
+              Real invite email sending is not enabled in this pass.
+            </p>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <label className="text-xs font-semibold text-slate-700">Email
+                <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={siteAdminUserDraft.email} onChange={(event) => setSiteAdminUserDraft((current) => ({ ...current, email: event.target.value }))} />
+              </label>
+              <label className="text-xs font-semibold text-slate-700">Display name
+                <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={siteAdminUserDraft.displayName} onChange={(event) => setSiteAdminUserDraft((current) => ({ ...current, displayName: event.target.value }))} />
+              </label>
+              <label className="text-xs font-semibold text-slate-700">Role
+                <select className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={siteAdminUserDraft.role} onChange={(event) => setSiteAdminUserDraft((current) => ({ ...current, role: event.target.value as "OWNER" | "ADMIN" }))}>
+                  <option value="OWNER">OWNER</option>
+                  <option value="ADMIN">ADMIN</option>
+                </select>
+              </label>
+              <label className="text-xs font-semibold text-slate-700">Invitation status
+                <select className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={siteAdminUserDraft.invitationStatus} onChange={(event) => setSiteAdminUserDraft((current) => ({ ...current, invitationStatus: event.target.value as "INVITED" | "ACTIVE" }))}>
+                  <option value="INVITED">INVITED</option>
+                  <option value="ACTIVE">ACTIVE</option>
+                </select>
+              </label>
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700 sm:col-span-2">
+                <input type="checkbox" checked={siteAdminUserDraft.active} onChange={(event) => setSiteAdminUserDraft((current) => ({ ...current, active: event.target.checked }))} />
+                Active
+              </label>
+            </div>
+            <button type="button" className={`mt-3 ${primaryButtonClass} ${smallButtonClass}`} onClick={() => void createBusinessAdminAccessUser()}>
+              Create business owner/admin access
+            </button>
+
+            {generatedAccessCode ? (
+              <div className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 p-3">
+                <p className="text-sm font-semibold text-emerald-900">Temporary access code (shown once)</p>
+                <p className="mt-1 text-sm text-emerald-800">{generatedAccessCode}</p>
+              </div>
+            ) : null}
+
+            <div className="mt-4 space-y-2">
+              {siteAdminUsers.length === 0 ? (
+                <p className="text-sm text-slate-600">No business-owner users added yet.</p>
+              ) : (
+                siteAdminUsers.map((user) => (
+                  <div key={user.id} className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+                    <p className="font-semibold text-slate-900">{user.email}</p>
+                    <p>Role: {user.role} | Status: {user.invitationStatus} | Active: {user.active ? "Yes" : "No"}</p>
+                    <p>Name: {user.displayName || "Not set"}</p>
+                  </div>
+                ))
+              )}
             </div>
           </section>
 
