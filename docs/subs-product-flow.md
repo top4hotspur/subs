@@ -349,3 +349,11 @@ CSV import/export setup tools moved out of demo customisation and into business 
   - upcoming appointments (with cancel action)
   - completed/cancelled booking history.
 - Booking confirmation link now reads View in My Account and stays site-scoped.
+
+## Public slug route and booking flow (v1 proof)
+- Added customer-facing slug route: `/sites/[siteSlug]`.
+- Added customer-facing booking route: `/sites/[siteSlug]/booking`.
+- Added public booking API: `POST /api/sites/[siteSlug]/bookings`.
+- Tenant is resolved server-side by slug; no client `tenantSiteId` trust.
+- Custom domain host routing is still a separate upcoming milestone.
+- No payment/email/auth automation added in this pass.

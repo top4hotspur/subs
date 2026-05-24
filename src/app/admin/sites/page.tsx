@@ -324,6 +324,17 @@ export default function AdminSitesPage() {
                 <p><span className="font-semibold">Primary domain:</span> {formatOptional(selectedSite.domainPrimary)}</p>
                 <p><span className="font-semibold">WhatsApp add-on:</span> {selectedSite.whatsappAddonEnabled ? "Enabled" : "Disabled"}</p>
                 <p><span className="font-semibold">Created:</span> {formatUkDateTime(selectedSite.createdAt)}</p>
+                <p>
+                  <span className="font-semibold">Public URL:</span>{" "}
+                  <Link
+                    href={`/sites/${encodeURIComponent(selectedSite.slug)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sky-700 underline underline-offset-2"
+                  >
+                    /sites/{selectedSite.slug}
+                  </Link>
+                </p>
               </div>
               <div>
                 <Link

@@ -67,6 +67,14 @@ export default async function AdminSitePersistedPreviewPage({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link
+            href={`/sites/${encodeURIComponent(preview.tenantSite.slug)}`}
+            className={`${outlineButtonClass} ${smallButtonClass}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Open public site URL
+          </Link>
           <Link href={`/admin/sites/${encodeURIComponent(siteId)}/settings`} className={`${outlineButtonClass} ${smallButtonClass}`}>
             Back to persisted settings
           </Link>

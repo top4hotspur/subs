@@ -90,3 +90,13 @@ Conflict behavior (v1):
 - prevents duplicate active staff slot bookings for same tenant/date/time
 - ignores `CANCELLED` and `NO_SHOW`
 - no production-grade locking/transactional slot reservation yet
+
+## Slug-based tenant lookup path (new)
+- Public route `/sites/[siteSlug]` resolves `TenantSite.slug` and renders tenant-scoped persisted records.
+- Same tenant-scoped record set used as preview route:
+  - settings, services, staff/roles, scheduling, recent bookings.
+
+## Public booking API model (new)
+- `POST /api/sites/[siteSlug]/bookings` resolves tenant server-side.
+- Writes to `CustomerSiteBooking` with tenant scoping.
+- Conflict rule remains simple v1 check on active staff/date/time collisions.

@@ -110,3 +110,15 @@ Still local/mock in current product:
   - `/admin/sites/[siteId]/preview/booking`
 - This route is platform-admin protected and intended to prove persisted booking rendering/creation before public live routing.
 - Booking APIs remain admin-protected in this phase.
+
+## Public slug route milestone (`/sites/[siteSlug]`)
+- Added public tenant route: `/sites/[siteSlug]`.
+- Route resolves `TenantSite.slug` server-side and renders persisted tenant-scoped customer-site data.
+- Status gating preference is `SITE_READY` and `SITE_LIVE`; relaxed provisioning statuses are temporarily allowed for staged testing.
+- This route is the slug-based proof path before host/domain routing goes live.
+
+## Public booking endpoint (slug-resolved)
+- Added `POST /api/sites/[siteSlug]/bookings`.
+- Server resolves tenant by slug and creates tenant-scoped booking.
+- Client does not send/choose arbitrary `tenantSiteId`.
+- Real payment/email/Twilio are still out of scope.

@@ -311,3 +311,12 @@ Add these checks after backend envs are configured:
 5. Confirm booking appears in preview recent booking summary.
 6. Try same staff/date/time booking again and confirm conflict handling (`409`) message.
 7. Confirm this flow remains admin-protected and not public live booking routing.
+
+## New hosted smoke checks: public slug tenant routes
+1. Open `/sites/<existing-tenant-slug>` and confirm customer-facing persisted site renders.
+2. Confirm no admin/provisioning controls are exposed on this public route.
+3. Click booking CTA and open `/sites/<slug>/booking`.
+4. Submit booking request and confirm success response.
+5. In admin, open `/admin/sites/[siteId]/preview` and confirm recent booking summary reflects new record.
+6. Try same staff/date/time and confirm conflict response behavior.
+7. Confirm route still uses slug path (no custom domain middleware required yet).

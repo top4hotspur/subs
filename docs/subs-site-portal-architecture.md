@@ -78,3 +78,15 @@ Per-customer isolated deployments/databases can be considered later only for exc
   - `/admin/sites/[siteId]/preview/booking`
 - Customer-site public booking still relies on demo/local flows in this phase.
 - Tenant-scoped persisted bookings now exist for platform-admin testing and provisioning support.
+
+## Public tenant route before custom domains
+- New public route `/sites/[siteSlug]` proves shared-app tenant rendering without domain middleware.
+- Rendering path is the same conceptual flow as future domain routing:
+  - host/slug -> tenant lookup -> tenant-scoped query -> customer-site render
+- Future custom-domain runtime will swap slug lookup for `SiteDomain.domain` host lookup while keeping tenant-scoped rendering logic.
+
+## Domain setup approaches (later automation)
+1. Customer keeps DNS provider and adds target records.
+2. MyExperiment.club manages Route 53 zone and customer updates nameservers.
+
+No per-customer DB or code export is required for this model.

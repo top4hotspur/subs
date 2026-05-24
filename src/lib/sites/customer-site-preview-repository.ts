@@ -104,6 +104,19 @@ export type CustomerSitePreviewData = {
   }>;
 };
 
+const PREFERRED_PUBLIC_STATUSES = new Set(["SITE_READY", "SITE_LIVE"]);
+// Relaxed for current provisioning/testing environments where sites may still be
+// in transitional provisioning statuses.
+const RELAXED_PUBLIC_STATUSES = new Set([
+  "SETUP_REQUESTED",
+  "PAYMENT_PENDING",
+  "DOMAIN_DETAILS_REQUIRED",
+  "DNS_INSTRUCTIONS_SENT",
+  "SITE_PROVISIONING",
+  "SITE_READY",
+  "SITE_LIVE",
+]);
+
 function parseStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
@@ -251,4 +264,27 @@ export async function getCustomerSitePreviewData(
       createdAtIso: booking.createdAt.toISOString(),
     })),
   };
+}
+
+function canRenderPublicByStatus(provisioningStatus: string | null): boolean {
+  if (!provisioningStatus) return false;
+  if (PREFERRED_PUBLIC_STATUSES.has(provisioningStatus)) return true;
+  return RELAXED_PUBLIC_STATUSES.has(provisioningStatus);
+}
+
+export async function getCustomerSitePreviewDataBySlug(
+  siteSlug: string,
+): Promise<CustomerSitePreviewData | null> {
+  const slug = siteSlug.trim().toLowerCase();
+  if (!slug) return null;
+
+  const site = await prisma.tenantSite.findUnique({
+    where: { slug },
+    select: { id: true, provisioningStatus: true },
+  });
+
+  if (!site) return null;
+  if (!canRenderPublicByStatus(site.provisioningStatus ?? null)) return null;
+
+  return getCustomerSitePreviewData(site.id);
 }
