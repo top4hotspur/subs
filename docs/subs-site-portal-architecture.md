@@ -160,3 +160,8 @@ See also:
 - Staff roles and staff members now have tenant-scoped persisted models under TenantSite.
 - Persisted editing currently lives under platform-admin support route `/admin/sites/[siteId]/settings`.
 - Demo business-admin (`/demo/[industry]/admin`) remains local/mock for rota and broader operational modules in this milestone.
+
+## Persisted scheduling layer (tenant-scoped)
+- Scheduling configuration now has a backend tenant-scoped layer for provisioning/support editing.
+- Staff-linked scheduling writes validate staff membership within the same TenantSite.
+- Demo business admin and booking flows still use local/mock scheduling in this phase; integration to persisted scheduling is a follow-up milestone.

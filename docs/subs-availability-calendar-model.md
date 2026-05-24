@@ -182,3 +182,22 @@ Current behavior:
 - Customer account upcoming-bookings cards now include local cancellation action.
 - Cancellation/refund note is derived from site policy settings for customer visibility.
 - No real refund transaction handling is performed.
+
+## Persisted scheduling snapshot (backend milestone)
+Backend snapshot now supports:
+- rotaDays
+- breakWindows
+- businessClosures
+- staffHolidays
+
+Route:
+- GET/PUT `/api/admin/sites/[id]/scheduling`
+
+Validation highlights:
+- weekday limited to monday-sunday
+- date format YYYY-MM-DD
+- time format HH:mm where present
+- staff-linked rows require staff member belonging to the same tenant site
+
+Current limitation:
+- persisted scheduling is configuration storage only in this phase; live booking conflict resolution wiring is pending.

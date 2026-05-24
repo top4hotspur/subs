@@ -202,3 +202,12 @@ Important:
   - CustomerSiteStaffMember
 - Persisted staff editor is now available in platform-admin support route `/admin/sites/[siteId]/settings`.
 - Rota/breaks/holidays remain local/mock and are the next persistence milestone.
+
+## Persisted scheduling bridge (current milestone)
+- Added persisted scheduling entities for subscriber sites:
+  - rota days
+  - break windows
+  - business closures
+  - staff holidays
+- Current persisted editor is available via platform-admin support route `/admin/sites/[siteId]/settings`.
+- Rota/break logic is now storable in backend, but live customer booking enforcement remains a next-step integration.

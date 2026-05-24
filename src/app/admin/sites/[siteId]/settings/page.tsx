@@ -23,11 +23,21 @@ import {
   savePersistedStaff,
   savePersistedStaffRoles,
 } from "@/lib/sites/admin-site-staff-client";
+import {
+  getPersistedScheduling,
+  savePersistedScheduling,
+} from "@/lib/sites/admin-site-scheduling-client";
 import type {
   CustomerSiteStaffMemberRecord,
   CustomerSiteStaffRoleRecord,
   WeekdayValue,
 } from "@/lib/sites/customer-site-staff-types";
+import type {
+  CustomerSiteBusinessClosureRecord,
+  CustomerSiteStaffBreakWindowRecord,
+  CustomerSiteStaffHolidayRecord,
+  CustomerSiteStaffRotaDayRecord,
+} from "@/lib/sites/customer-site-scheduling-types";
 import { SITE_VISUAL_TEMPLATES } from "@/lib/sites/site-visual-templates";
 import { SITE_COLOUR_SCHEMES } from "@/lib/sites/site-colour-schemes";
 import { outlineButtonClass, primaryButtonClass, smallButtonClass } from "@/lib/ui/button-styles";
@@ -81,6 +91,47 @@ type PersistedStaffMemberDraft = {
   availableWeekdays: WeekdayValue[];
   notes: string;
   sortOrder: string;
+};
+
+type PersistedRotaDayDraft = {
+  id?: string;
+  staffMemberId: string;
+  weekday: WeekdayValue;
+  working: boolean;
+  startTime: string;
+  endTime: string;
+};
+
+type PersistedBreakWindowDraft = {
+  id?: string;
+  staffMemberId: string;
+  rotaDayId?: string;
+  weekday: WeekdayValue;
+  label: string;
+  startTime: string;
+  endTime: string;
+  active: boolean;
+};
+
+type PersistedBusinessClosureDraft = {
+  id?: string;
+  date: string;
+  label: string;
+  allDay: boolean;
+  startTime: string;
+  endTime: string;
+  active: boolean;
+};
+
+type PersistedStaffHolidayDraft = {
+  id?: string;
+  staffMemberId: string;
+  date: string;
+  label: string;
+  allDay: boolean;
+  startTime: string;
+  endTime: string;
+  active: boolean;
 };
 
 function toMessage(error: string, status: number): string {
@@ -210,6 +261,89 @@ function emptyStaffMemberDraft(sortOrder: number): PersistedStaffMemberDraft {
   };
 }
 
+function toRotaDayDraft(day: CustomerSiteStaffRotaDayRecord): PersistedRotaDayDraft {
+  return {
+    id: day.id,
+    staffMemberId: day.staffMemberId,
+    weekday: day.weekday,
+    working: day.working,
+    startTime: day.startTime ?? "",
+    endTime: day.endTime ?? "",
+  };
+}
+
+function toBreakWindowDraft(window: CustomerSiteStaffBreakWindowRecord): PersistedBreakWindowDraft {
+  return {
+    id: window.id,
+    staffMemberId: window.staffMemberId,
+    rotaDayId: window.rotaDayId ?? undefined,
+    weekday: window.weekday,
+    label: window.label ?? "",
+    startTime: window.startTime,
+    endTime: window.endTime,
+    active: window.active,
+  };
+}
+
+function toBusinessClosureDraft(closure: CustomerSiteBusinessClosureRecord): PersistedBusinessClosureDraft {
+  return {
+    id: closure.id,
+    date: closure.date,
+    label: closure.label,
+    allDay: closure.allDay,
+    startTime: closure.startTime ?? "",
+    endTime: closure.endTime ?? "",
+    active: closure.active,
+  };
+}
+
+function toStaffHolidayDraft(holiday: CustomerSiteStaffHolidayRecord): PersistedStaffHolidayDraft {
+  return {
+    id: holiday.id,
+    staffMemberId: holiday.staffMemberId,
+    date: holiday.date,
+    label: holiday.label,
+    allDay: holiday.allDay,
+    startTime: holiday.startTime ?? "",
+    endTime: holiday.endTime ?? "",
+    active: holiday.active,
+  };
+}
+
+function emptyBreakWindowDraft(staffMemberId = "", weekday: WeekdayValue = "monday"): PersistedBreakWindowDraft {
+  return {
+    staffMemberId,
+    weekday,
+    label: "",
+    startTime: "12:00",
+    endTime: "13:00",
+    active: true,
+  };
+}
+
+function emptyBusinessClosureDraft(): PersistedBusinessClosureDraft {
+  return {
+    date: "",
+    label: "",
+    allDay: true,
+    startTime: "",
+    endTime: "",
+    active: true,
+  };
+}
+
+function emptyStaffHolidayDraft(staffMemberId = ""): PersistedStaffHolidayDraft {
+  return {
+    staffMemberId,
+    date: "",
+    label: "",
+    allDay: true,
+    startTime: "",
+    endTime: "",
+    active: true,
+  };
+}
+
 export default function AdminSiteSettingsPage() {
   const params = useParams<{ siteId: string }>();
   const siteId = typeof params?.siteId === "string" ? params.siteId : "";
@@ -225,6 +359,11 @@ export default function AdminSiteSettingsPage() {
   const [servicesDraft, setServicesDraft] = useState<PersistedServiceDraft[]>([]);
   const [staffRolesDraft, setStaffRolesDraft] = useState<PersistedStaffRoleDraft[]>([]);
   const [staffMembersDraft, setStaffMembersDraft] = useState<PersistedStaffMemberDraft[]>([]);
+  const [rotaDaysDraft, setRotaDaysDraft] = useState<PersistedRotaDayDraft[]>([]);
+  const [breakWindowsDraft, setBreakWindowsDraft] = useState<PersistedBreakWindowDraft[]>([]);
+  const [businessClosuresDraft, setBusinessClosuresDraft] = useState<PersistedBusinessClosureDraft[]>([]);
+  const [staffHolidaysDraft, setStaffHolidaysDraft] = useState<PersistedStaffHolidayDraft[]>([]);
+  const [selectedSchedulingStaffId, setSelectedSchedulingStaffId] = useState("");
 
   const allowedPalettes = useMemo(() => {
     const theme = SITE_VISUAL_TEMPLATES.find((item) => item.id === settingsDraft.visualThemeId);
@@ -245,12 +384,13 @@ export default function AdminSiteSettingsPage() {
       setError(null);
       setMessage(null);
 
-      const [detailResult, settingsResult, servicesResult, rolesResult, staffResult] = await Promise.all([
+      const [detailResult, settingsResult, servicesResult, rolesResult, staffResult, schedulingResult] = await Promise.all([
         getAdminTenantSiteDetail(siteId),
         getAdminSitePersistedSettings(siteId),
         getAdminSitePersistedServices(siteId),
         listPersistedStaffRoles(siteId),
         listPersistedStaff(siteId),
+        getPersistedScheduling(siteId),
       ]);
 
       if (!active) return;
@@ -284,11 +424,26 @@ export default function AdminSiteSettingsPage() {
         setLoading(false);
         return;
       }
+      if (!schedulingResult.ok) {
+        setError(toMessage(schedulingResult.error, schedulingResult.status));
+        setLoading(false);
+        return;
+      }
 
       setSettingsDraft(toSettingsDraft(settingsResult.settings));
       setServicesDraft(servicesResult.services.map(toServiceDraft));
       setStaffRolesDraft(rolesResult.roles.map(toStaffRoleDraft));
       setStaffMembersDraft(staffResult.staff.map(toStaffMemberDraft));
+      setRotaDaysDraft(schedulingResult.scheduling.rotaDays.map(toRotaDayDraft));
+      setBreakWindowsDraft(schedulingResult.scheduling.breakWindows.map(toBreakWindowDraft));
+      setBusinessClosuresDraft(schedulingResult.scheduling.businessClosures.map(toBusinessClosureDraft));
+      setStaffHolidaysDraft(schedulingResult.scheduling.staffHolidays.map(toStaffHolidayDraft));
+      setSelectedSchedulingStaffId(
+        schedulingResult.scheduling.rotaDays[0]?.staffMemberId ??
+          schedulingResult.scheduling.staffHolidays[0]?.staffMemberId ??
+          staffResult.staff[0]?.id ??
+          "",
+      );
       setLoading(false);
     }
 
@@ -441,6 +596,63 @@ export default function AdminSiteSettingsPage() {
     }
     setStaffMembersDraft((current) => current.filter((member) => member.id !== id));
     setMessage("Staff member deleted.");
+  }
+
+  async function savePersistedSchedulingSection(): Promise<void> {
+    if (!siteId) return;
+    setMessage("Saving persisted scheduling...");
+
+    const payload = {
+      rotaDays: rotaDaysDraft.map((day) => ({
+        id: day.id,
+        staffMemberId: day.staffMemberId,
+        weekday: day.weekday,
+        working: day.working,
+        startTime: day.startTime.trim() || null,
+        endTime: day.endTime.trim() || null,
+      })),
+      breakWindows: breakWindowsDraft.map((window) => ({
+        id: window.id,
+        staffMemberId: window.staffMemberId,
+        rotaDayId: window.rotaDayId ?? null,
+        weekday: window.weekday,
+        label: window.label.trim() || null,
+        startTime: window.startTime,
+        endTime: window.endTime,
+        active: window.active,
+      })),
+      businessClosures: businessClosuresDraft.map((closure) => ({
+        id: closure.id,
+        date: closure.date,
+        label: closure.label.trim(),
+        allDay: closure.allDay,
+        startTime: closure.allDay ? null : closure.startTime.trim() || null,
+        endTime: closure.allDay ? null : closure.endTime.trim() || null,
+        active: closure.active,
+      })),
+      staffHolidays: staffHolidaysDraft.map((holiday) => ({
+        id: holiday.id,
+        staffMemberId: holiday.staffMemberId,
+        date: holiday.date,
+        label: holiday.label.trim(),
+        allDay: holiday.allDay,
+        startTime: holiday.allDay ? null : holiday.startTime.trim() || null,
+        endTime: holiday.allDay ? null : holiday.endTime.trim() || null,
+        active: holiday.active,
+      })),
+    };
+
+    const result = await savePersistedScheduling(siteId, payload);
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status));
+      return;
+    }
+
+    setRotaDaysDraft(result.scheduling.rotaDays.map(toRotaDayDraft));
+    setBreakWindowsDraft(result.scheduling.breakWindows.map(toBreakWindowDraft));
+    setBusinessClosuresDraft(result.scheduling.businessClosures.map(toBusinessClosureDraft));
+    setStaffHolidaysDraft(result.scheduling.staffHolidays.map(toStaffHolidayDraft));
+    setMessage("Persisted scheduling saved.");
   }
 
   return (
@@ -795,6 +1007,249 @@ export default function AdminSiteSettingsPage() {
                   </button>
                 </div>
               </div>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-xl font-semibold text-slate-900">Persisted rota, breaks and closures</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Booking conflict checks and live customer booking use of these persisted scheduling records will be wired in a later pass. This stores the site&apos;s scheduling configuration.
+            </p>
+
+            <div className="mt-4">
+              <label className="text-xs font-semibold text-slate-700">Selected staff member
+                <select
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm sm:max-w-sm"
+                  value={selectedSchedulingStaffId}
+                  onChange={(event) => setSelectedSchedulingStaffId(event.target.value)}
+                >
+                  <option value="">Select staff member</option>
+                  {staffMembersDraft.map((staff, index) => (
+                    <option key={`${staff.id ?? "new"}-${index}`} value={staff.id ?? ""}>
+                      {staff.displayName || "Unnamed staff"}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <div className="mt-4 grid gap-6 lg:grid-cols-2">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900">Staff rota days</h3>
+                <div className="mt-2 space-y-2">
+                  {weekdayValues.map((weekday) => {
+                    const selectedStaff = staffMembersDraft.find((staff) => staff.id === selectedSchedulingStaffId);
+                    const allowedWeekday = selectedStaff
+                      ? selectedStaff.availableWeekdays.includes(weekday)
+                      : true;
+                    const existing = rotaDaysDraft.find(
+                      (day) => day.staffMemberId === selectedSchedulingStaffId && day.weekday === weekday,
+                    );
+                    const row = existing ?? {
+                      staffMemberId: selectedSchedulingStaffId,
+                      weekday,
+                      working: false,
+                      startTime: "",
+                      endTime: "",
+                    };
+                    return (
+                      <div key={weekday} className={`rounded-md border p-2 ${allowedWeekday ? "border-slate-200 bg-slate-50" : "border-amber-300 bg-amber-50"}`}>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="w-24 text-xs font-semibold text-slate-800">{weekdayLabel(weekday)}</p>
+                          <label className="flex items-center gap-1 text-xs text-slate-700">
+                            <input
+                              type="checkbox"
+                              checked={row.working}
+                              disabled={!selectedSchedulingStaffId || !allowedWeekday}
+                              onChange={(event) => {
+                                if (!selectedSchedulingStaffId) return;
+                                const next = { ...row, working: event.target.checked };
+                                setRotaDaysDraft((current) => {
+                                  const without = current.filter((item) => !(item.staffMemberId === selectedSchedulingStaffId && item.weekday === weekday));
+                                  return [...without, next];
+                                });
+                              }}
+                            />
+                            Working
+                          </label>
+                          <input
+                            className="rounded-md border border-slate-300 px-2 py-1 text-xs"
+                            placeholder="09:00"
+                            value={row.startTime}
+                            disabled={!row.working || !selectedSchedulingStaffId || !allowedWeekday}
+                            onChange={(event) => {
+                              if (!selectedSchedulingStaffId) return;
+                              const next = { ...row, startTime: event.target.value };
+                              setRotaDaysDraft((current) => {
+                                const without = current.filter((item) => !(item.staffMemberId === selectedSchedulingStaffId && item.weekday === weekday));
+                                return [...without, next];
+                              });
+                            }}
+                          />
+                          <input
+                            className="rounded-md border border-slate-300 px-2 py-1 text-xs"
+                            placeholder="17:00"
+                            value={row.endTime}
+                            disabled={!row.working || !selectedSchedulingStaffId || !allowedWeekday}
+                            onChange={(event) => {
+                              if (!selectedSchedulingStaffId) return;
+                              const next = { ...row, endTime: event.target.value };
+                              setRotaDaysDraft((current) => {
+                                const without = current.filter((item) => !(item.staffMemberId === selectedSchedulingStaffId && item.weekday === weekday));
+                                return [...without, next];
+                              });
+                            }}
+                          />
+                        </div>
+                        {!allowedWeekday ? (
+                          <p className="mt-1 text-xs text-amber-800">This day is not in the staff member&apos;s available weekdays.</p>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-sm font-semibold text-slate-900">Break windows</h3>
+                  <button
+                    type="button"
+                    className={`${outlineButtonClass} ${smallButtonClass}`}
+                    onClick={() =>
+                      setBreakWindowsDraft((current) => [
+                        ...current,
+                        emptyBreakWindowDraft(selectedSchedulingStaffId || "", "monday"),
+                      ])
+                    }
+                  >
+                    Add break
+                  </button>
+                </div>
+                <div className="mt-2 space-y-2">
+                  {breakWindowsDraft.length === 0 ? (
+                    <p className="text-sm text-slate-600">No persisted breaks yet.</p>
+                  ) : (
+                    breakWindowsDraft.map((window, index) => (
+                      <div key={`${window.id ?? "new"}-${index}`} className="rounded-md border border-slate-200 bg-slate-50 p-2">
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <label className="text-xs font-semibold text-slate-700">Staff
+                            <select className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs" value={window.staffMemberId} onChange={(event) => setBreakWindowsDraft((current) => current.map((row, i) => i === index ? { ...row, staffMemberId: event.target.value } : row))}>
+                              <option value="">Select staff</option>
+                              {staffMembersDraft.map((staff, staffIndex) => (
+                                <option key={`${staff.id ?? "new"}-${staffIndex}`} value={staff.id ?? ""}>{staff.displayName || "Unnamed staff"}</option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="text-xs font-semibold text-slate-700">Weekday
+                            <select className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs" value={window.weekday} onChange={(event) => setBreakWindowsDraft((current) => current.map((row, i) => i === index ? { ...row, weekday: event.target.value as WeekdayValue } : row))}>
+                              {weekdayValues.map((weekday) => (
+                                <option key={weekday} value={weekday}>{weekdayLabel(weekday)}</option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="text-xs font-semibold text-slate-700">Label
+                            <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs" value={window.label} onChange={(event) => setBreakWindowsDraft((current) => current.map((row, i) => i === index ? { ...row, label: event.target.value } : row))} />
+                          </label>
+                          <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 mt-5">
+                            <input type="checkbox" checked={window.active} onChange={(event) => setBreakWindowsDraft((current) => current.map((row, i) => i === index ? { ...row, active: event.target.checked } : row))} />
+                            Active
+                          </label>
+                          <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" value={window.startTime} onChange={(event) => setBreakWindowsDraft((current) => current.map((row, i) => i === index ? { ...row, startTime: event.target.value } : row))} placeholder="12:00" />
+                          <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" value={window.endTime} onChange={(event) => setBreakWindowsDraft((current) => current.map((row, i) => i === index ? { ...row, endTime: event.target.value } : row))} placeholder="13:00" />
+                        </div>
+                        <button type="button" className="mt-2 rounded-md border border-rose-300 bg-white px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50" onClick={() => setBreakWindowsDraft((current) => current.filter((_, i) => i !== index))}>Remove</button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-6 lg:grid-cols-2">
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-sm font-semibold text-slate-900">Business closures</h3>
+                  <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setBusinessClosuresDraft((current) => [...current, emptyBusinessClosureDraft()])}>Add closure</button>
+                </div>
+                <div className="mt-2 space-y-2">
+                  {businessClosuresDraft.length === 0 ? (
+                    <p className="text-sm text-slate-600">No persisted business closures yet.</p>
+                  ) : (
+                    businessClosuresDraft.map((closure, index) => (
+                      <div key={`${closure.id ?? "new"}-${index}`} className="rounded-md border border-slate-200 bg-slate-50 p-2">
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="YYYY-MM-DD" value={closure.date} onChange={(event) => setBusinessClosuresDraft((current) => current.map((row, i) => i === index ? { ...row, date: event.target.value } : row))} />
+                          <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Label" value={closure.label} onChange={(event) => setBusinessClosuresDraft((current) => current.map((row, i) => i === index ? { ...row, label: event.target.value } : row))} />
+                          <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                            <input type="checkbox" checked={closure.allDay} onChange={(event) => setBusinessClosuresDraft((current) => current.map((row, i) => i === index ? { ...row, allDay: event.target.checked } : row))} />
+                            All day
+                          </label>
+                          <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                            <input type="checkbox" checked={closure.active} onChange={(event) => setBusinessClosuresDraft((current) => current.map((row, i) => i === index ? { ...row, active: event.target.checked } : row))} />
+                            Active
+                          </label>
+                          {!closure.allDay ? (
+                            <>
+                              <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Start HH:mm" value={closure.startTime} onChange={(event) => setBusinessClosuresDraft((current) => current.map((row, i) => i === index ? { ...row, startTime: event.target.value } : row))} />
+                              <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="End HH:mm" value={closure.endTime} onChange={(event) => setBusinessClosuresDraft((current) => current.map((row, i) => i === index ? { ...row, endTime: event.target.value } : row))} />
+                            </>
+                          ) : null}
+                        </div>
+                        <button type="button" className="mt-2 rounded-md border border-rose-300 bg-white px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50" onClick={() => setBusinessClosuresDraft((current) => current.filter((_, i) => i !== index))}>Remove</button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-sm font-semibold text-slate-900">Staff holidays</h3>
+                  <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setStaffHolidaysDraft((current) => [...current, emptyStaffHolidayDraft(selectedSchedulingStaffId || "")])}>Add holiday</button>
+                </div>
+                <div className="mt-2 space-y-2">
+                  {staffHolidaysDraft.length === 0 ? (
+                    <p className="text-sm text-slate-600">No persisted staff holidays yet.</p>
+                  ) : (
+                    staffHolidaysDraft.map((holiday, index) => (
+                      <div key={`${holiday.id ?? "new"}-${index}`} className="rounded-md border border-slate-200 bg-slate-50 p-2">
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <select className="rounded-md border border-slate-300 px-2 py-1 text-xs" value={holiday.staffMemberId} onChange={(event) => setStaffHolidaysDraft((current) => current.map((row, i) => i === index ? { ...row, staffMemberId: event.target.value } : row))}>
+                            <option value="">Select staff</option>
+                            {staffMembersDraft.map((staff, staffIndex) => (
+                              <option key={`${staff.id ?? "new"}-${staffIndex}`} value={staff.id ?? ""}>{staff.displayName || "Unnamed staff"}</option>
+                            ))}
+                          </select>
+                          <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="YYYY-MM-DD" value={holiday.date} onChange={(event) => setStaffHolidaysDraft((current) => current.map((row, i) => i === index ? { ...row, date: event.target.value } : row))} />
+                          <input className="rounded-md border border-slate-300 px-2 py-1 text-xs sm:col-span-2" placeholder="Label" value={holiday.label} onChange={(event) => setStaffHolidaysDraft((current) => current.map((row, i) => i === index ? { ...row, label: event.target.value } : row))} />
+                          <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                            <input type="checkbox" checked={holiday.allDay} onChange={(event) => setStaffHolidaysDraft((current) => current.map((row, i) => i === index ? { ...row, allDay: event.target.checked } : row))} />
+                            All day
+                          </label>
+                          <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                            <input type="checkbox" checked={holiday.active} onChange={(event) => setStaffHolidaysDraft((current) => current.map((row, i) => i === index ? { ...row, active: event.target.checked } : row))} />
+                            Active
+                          </label>
+                          {!holiday.allDay ? (
+                            <>
+                              <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Start HH:mm" value={holiday.startTime} onChange={(event) => setStaffHolidaysDraft((current) => current.map((row, i) => i === index ? { ...row, startTime: event.target.value } : row))} />
+                              <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="End HH:mm" value={holiday.endTime} onChange={(event) => setStaffHolidaysDraft((current) => current.map((row, i) => i === index ? { ...row, endTime: event.target.value } : row))} />
+                            </>
+                          ) : null}
+                        </div>
+                        <button type="button" className="mt-2 rounded-md border border-rose-300 bg-white px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50" onClick={() => setStaffHolidaysDraft((current) => current.filter((_, i) => i !== index))}>Remove</button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <button type="button" className={`${primaryButtonClass} ${smallButtonClass}`} onClick={savePersistedSchedulingSection}>
+                Save persisted scheduling
+              </button>
             </div>
           </section>
 

@@ -105,3 +105,16 @@ Current delete/deactivation behavior:
 
 Still local/demo in this phase:
 - rota/breaks/holidays/closures and other business-owner modules.
+
+## Persisted scheduling section (support/provisioning phase)
+- `/admin/sites/[siteId]/settings` now includes `Persisted rota, breaks and closures`.
+- Saved data is tenant-scoped and linked to persisted staff where required.
+
+Persisted now:
+- staff rota days (weekday, working flag, start/end)
+- staff break windows (weekday, label, start/end, active)
+- business closures (date, label, all-day/partial, active)
+- staff holidays (staff + date + label + all-day/partial + active)
+
+Current note:
+- booking conflict checks and live booking enforcement against these persisted records are not wired yet.

@@ -497,3 +497,25 @@ Still out of scope (local/demo only):
 - bookings/customers/accounts
 - file/logo storage
 - real subscriber auth roles
+
+## New milestone: persisted subscriber scheduling controls (2026-05-24)
+Scope of this backend pass:
+- Persist staff rota day configuration.
+- Persist staff break windows.
+- Persist business closure dates.
+- Persist staff holiday dates.
+
+In scope models:
+- CustomerSiteStaffRotaDay
+- CustomerSiteStaffBreakWindow
+- CustomerSiteBusinessClosure
+- CustomerSiteStaffHoliday
+
+In scope API route:
+- GET/PUT `/api/admin/sites/[id]/scheduling`
+
+Still out of scope (local/demo only):
+- vouchers/pages/policies/social/payment setup integration
+- bookings/customers/account flows
+- file/logo media persistence
+- subscriber auth roles

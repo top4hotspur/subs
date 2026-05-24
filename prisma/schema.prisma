@@ -32,6 +32,10 @@ model TenantSite {
   customerSiteServices      CustomerSiteService[]
   customerSiteStaffRoles    CustomerSiteStaffRole[]
   customerSiteStaffMembers  CustomerSiteStaffMember[]
+  customerSiteStaffRotaDays CustomerSiteStaffRotaDay[]
+  customerSiteStaffBreakWindows CustomerSiteStaffBreakWindow[]
+  customerSiteBusinessClosures CustomerSiteBusinessClosure[]
+  customerSiteStaffHolidays CustomerSiteStaffHoliday[]
   setupRequest              SetupRequest?          @relation("SetupRequestToTenantSite", fields: [setupRequestId], references: [id])
 }
 
@@ -288,9 +292,93 @@ model CustomerSiteStaffMember {
   updatedAt         DateTime               @updatedAt
   tenantSite        TenantSite             @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
   role              CustomerSiteStaffRole? @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  rotaDays          CustomerSiteStaffRotaDay[]
+  breakWindows      CustomerSiteStaffBreakWindow[]
+  holidays          CustomerSiteStaffHoliday[]
 
   @@index([tenantSiteId])
   @@index([tenantSiteId, active])
   @@index([tenantSiteId, sortOrder])
   @@index([roleId])
+}
+
+model CustomerSiteStaffRotaDay {
+  id            String                  @id @default(cuid())
+  tenantSiteId  String
+  staffMemberId String
+  weekday       String
+  working       Boolean                 @default(false)
+  startTime     String?
+  endTime       String?
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+  tenantSite    TenantSite              @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  staffMember   CustomerSiteStaffMember @relation(fields: [staffMemberId], references: [id], onDelete: Cascade)
+  breakWindows  CustomerSiteStaffBreakWindow[]
+
+  @@index([tenantSiteId])
+  @@index([staffMemberId])
+  @@index([tenantSiteId, staffMemberId, weekday])
+}
+
+model CustomerSiteStaffBreakWindow {
+  id            String                  @id @default(cuid())
+  tenantSiteId  String
+  staffMemberId String
+  rotaDayId     String?
+  weekday       String
+  label         String?
+  startTime     String
+  endTime       String
+  active        Boolean                 @default(true)
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+  tenantSite    TenantSite              @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  staffMember   CustomerSiteStaffMember @relation(fields: [staffMemberId], references: [id], onDelete: Cascade)
+  rotaDay       CustomerSiteStaffRotaDay? @relation(fields: [rotaDayId], references: [id], onDelete: SetNull)
+
+  @@index([tenantSiteId])
+  @@index([staffMemberId])
+  @@index([rotaDayId])
+  @@index([tenantSiteId, staffMemberId, weekday])
+}
+
+model CustomerSiteBusinessClosure {
+  id           String    @id @default(cuid())
+  tenantSiteId String
+  date         String
+  label        String
+  allDay       Boolean   @default(true)
+  startTime    String?
+  endTime      String?
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  tenantSite   TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+
+  @@index([tenantSiteId])
+  @@index([tenantSiteId, date])
+  @@index([tenantSiteId, active])
+}
+
+model CustomerSiteStaffHoliday {
+  id            String                  @id @default(cuid())
+  tenantSiteId  String
+  staffMemberId String
+  date          String
+  label         String
+  allDay        Boolean                 @default(true)
+  startTime     String?
+  endTime       String?
+  active        Boolean                 @default(true)
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+  tenantSite    TenantSite              @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  staffMember   CustomerSiteStaffMember @relation(fields: [staffMemberId], references: [id], onDelete: Cascade)
+
+  @@index([tenantSiteId])
+  @@index([staffMemberId])
+  @@index([tenantSiteId, date])
+  @@index([tenantSiteId, staffMemberId, date])
+  @@index([tenantSiteId, active])
 }

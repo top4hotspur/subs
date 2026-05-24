@@ -88,3 +88,15 @@ Tenant scoping/indexes:
 - both models indexed by tenantSiteId, active, sortOrder
 - staff members indexed by roleId
 - role delete behavior preserves member roleLabel fallback while clearing roleId
+
+## Persisted scheduling models (Postgres)
+Added Prisma models:
+- CustomerSiteStaffRotaDay
+- CustomerSiteStaffBreakWindow
+- CustomerSiteBusinessClosure
+- CustomerSiteStaffHoliday
+
+Scoping/relations:
+- all models are tenant-scoped via `tenantSiteId`
+- staff-linked rows reference `CustomerSiteStaffMember`
+- repository validates staff membership against tenant before writes

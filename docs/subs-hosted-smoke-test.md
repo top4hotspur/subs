@@ -287,3 +287,10 @@ Add these checks after backend envs are configured:
   - set available weekdays and notes
   - save and reload confirms persistence
 - Confirm note states rota/breaks/holidays are still local/demo only.
+
+## Hosted smoke additions: persisted scheduling
+- Open `/admin/sites/[siteId]/settings` and confirm `Persisted rota, breaks and closures` section appears.
+- Confirm staff selector controls rota editing rows.
+- Save rota/break/closure/holiday snapshot and reload page to verify persistence.
+- Verify business closure and staff holiday add/remove/edit behavior persists.
+- Verify warning copy notes that booking conflict checks/live booking usage of persisted scheduling comes later.
