@@ -235,3 +235,17 @@ Important:
   - staff/customer auth
   - invite email sending
   - full tenant business-admin parity with all persisted modules
+
+## Site-admin staff and scheduling scope (tenant-scoped)
+- `/site-admin/[siteSlug]` now includes section-based management for:
+  - Staff & roles
+  - Rota & breaks
+  - Closures & holidays
+  - Bookings summary (read-only)
+- Site-admin API routes are tenant-scoped by slug and session:
+  - `GET/PUT /api/site-admin/[siteSlug]/staff-roles`
+  - `GET/PUT /api/site-admin/[siteSlug]/staff`
+  - `GET/PUT /api/site-admin/[siteSlug]/scheduling`
+  - `GET /api/site-admin/[siteSlug]/bookings`
+- Security rule: session tenant must match slug-resolved TenantSite; cross-tenant access is denied.
+- Staff and customer auth are still out of scope in this milestone.

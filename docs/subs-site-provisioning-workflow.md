@@ -151,3 +151,15 @@ Still local/mock in current product:
 - Bootstrap creates/updates `CustomerSiteAdminUser` records for that tenant.
 - Temporary access code is generated for secure handoff (no plaintext persistence).
 - This is separate from platform-admin auth and does not grant platform admin access.
+
+## Business-owner operational expansion
+- Initial business-owner dashboard now manages persisted:
+  - staff roles
+  - staff members
+  - available weekdays
+  - rota days
+  - break windows
+  - business closures
+  - staff holidays
+- Booking list is available as read-only summary in this pass.
+- No customer/staff auth and no payment/email/Twilio integrations are added here.

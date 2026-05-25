@@ -2,6 +2,20 @@ import type {
   PersistedCustomerSiteService,
   PersistedCustomerSiteSettings,
 } from "@/lib/sites/admin-site-settings-client";
+import type {
+  CustomerSiteStaffMemberInput,
+  CustomerSiteStaffMemberRecord,
+  CustomerSiteStaffRoleInput,
+  CustomerSiteStaffRoleRecord,
+} from "@/lib/sites/customer-site-staff-types";
+import type {
+  CustomerSiteSchedulingSnapshot,
+  CustomerSiteBusinessClosureInput,
+  CustomerSiteStaffBreakWindowInput,
+  CustomerSiteStaffHolidayInput,
+  CustomerSiteStaffRotaDayInput,
+} from "@/lib/sites/customer-site-scheduling-types";
+import type { CustomerSiteBookingRecord } from "@/lib/sites/customer-site-booking-types";
 
 type ClientFailure = {
   ok: false;
@@ -122,3 +136,181 @@ export async function putSiteAdminServices(
     return { ok: false, error: "NETWORK_ERROR", status: 0 };
   }
 }
+
+export async function listSiteAdminStaffRoles(
+  siteSlug: string,
+): Promise<ClientResult<{ roles: CustomerSiteStaffRoleRecord[] }>> {
+  try {
+    const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/staff-roles`);
+    const body = (await parseJsonSafe(response)) as
+      | { ok?: boolean; roles?: CustomerSiteStaffRoleRecord[]; error?: string; details?: unknown }
+      | null;
+    if (!response.ok || !body?.ok || !Array.isArray(body.roles)) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_STAFF_ROLES_GET_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, roles: body.roles };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function saveSiteAdminStaffRoles(
+  siteSlug: string,
+  roles: CustomerSiteStaffRoleInput[],
+): Promise<ClientResult<{ roles: CustomerSiteStaffRoleRecord[] }>> {
+  try {
+    const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/staff-roles`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ roles }),
+    });
+    const body = (await parseJsonSafe(response)) as
+      | { ok?: boolean; roles?: CustomerSiteStaffRoleRecord[]; error?: string; details?: unknown }
+      | null;
+    if (!response.ok || !body?.ok || !Array.isArray(body.roles)) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_STAFF_ROLES_SAVE_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, roles: body.roles };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function listSiteAdminStaff(
+  siteSlug: string,
+): Promise<ClientResult<{ staff: CustomerSiteStaffMemberRecord[] }>> {
+  try {
+    const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/staff`);
+    const body = (await parseJsonSafe(response)) as
+      | { ok?: boolean; staff?: CustomerSiteStaffMemberRecord[]; error?: string; details?: unknown }
+      | null;
+    if (!response.ok || !body?.ok || !Array.isArray(body.staff)) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_STAFF_GET_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, staff: body.staff };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function saveSiteAdminStaff(
+  siteSlug: string,
+  staff: CustomerSiteStaffMemberInput[],
+): Promise<ClientResult<{ staff: CustomerSiteStaffMemberRecord[] }>> {
+  try {
+    const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/staff`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ staff }),
+    });
+    const body = (await parseJsonSafe(response)) as
+      | { ok?: boolean; staff?: CustomerSiteStaffMemberRecord[]; error?: string; details?: unknown }
+      | null;
+    if (!response.ok || !body?.ok || !Array.isArray(body.staff)) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_STAFF_SAVE_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, staff: body.staff };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function getSiteAdminScheduling(
+  siteSlug: string,
+): Promise<ClientResult<{ scheduling: CustomerSiteSchedulingSnapshot }>> {
+  try {
+    const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/scheduling`);
+    const body = (await parseJsonSafe(response)) as
+      | { ok?: boolean; scheduling?: CustomerSiteSchedulingSnapshot; error?: string; details?: unknown }
+      | null;
+    if (!response.ok || !body?.ok || !body.scheduling) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_SCHEDULING_GET_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, scheduling: body.scheduling };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function saveSiteAdminScheduling(
+  siteSlug: string,
+  snapshot: {
+    rotaDays: CustomerSiteStaffRotaDayInput[];
+    breakWindows: CustomerSiteStaffBreakWindowInput[];
+    businessClosures: CustomerSiteBusinessClosureInput[];
+    staffHolidays: CustomerSiteStaffHolidayInput[];
+  },
+): Promise<ClientResult<{ scheduling: CustomerSiteSchedulingSnapshot }>> {
+  try {
+    const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/scheduling`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(snapshot),
+    });
+    const body = (await parseJsonSafe(response)) as
+      | { ok?: boolean; scheduling?: CustomerSiteSchedulingSnapshot; error?: string; details?: unknown }
+      | null;
+    if (!response.ok || !body?.ok || !body.scheduling) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_SCHEDULING_SAVE_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, scheduling: body.scheduling };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function listSiteAdminBookings(
+  siteSlug: string,
+  take = 20,
+): Promise<ClientResult<{ bookings: CustomerSiteBookingRecord[] }>> {
+  try {
+    const response = await fetch(
+      `/api/site-admin/${encodeURIComponent(siteSlug)}/bookings?take=${encodeURIComponent(String(take))}`,
+    );
+    const body = (await parseJsonSafe(response)) as
+      | { ok?: boolean; bookings?: CustomerSiteBookingRecord[]; error?: string; details?: unknown }
+      | null;
+    if (!response.ok || !body?.ok || !Array.isArray(body.bookings)) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_BOOKINGS_GET_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, bookings: body.bookings };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+

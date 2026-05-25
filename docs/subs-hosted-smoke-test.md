@@ -354,3 +354,22 @@ Add these checks after backend envs are configured:
    - `/admin`
    - another tenant slug under `/site-admin/[otherSlug]`
 6. Confirm platform admin can still access `/admin/*` with existing credentials flow.
+
+## Hosted smoke checks: site-admin staff and scheduling
+1. Sign in at `/site-admin/login` with valid tenant slug + business-owner credentials.
+2. Open `/site-admin/[siteSlug]` and verify section tiles are visible.
+3. Staff & roles:
+   - add/edit/remove roles and save
+   - add/edit/remove staff, available weekdays, and save
+4. Rota & breaks:
+   - select staff
+   - update weekday rota and breaks
+   - save and reload to confirm persistence
+5. Closures & holidays:
+   - add/edit/remove business closures and staff holidays
+   - save and reload to confirm persistence
+6. Bookings summary:
+   - verify recent bookings show customer/service/date/staff/status/payment status
+7. Security:
+   - verify cannot load another slug under `/site-admin/[otherSlug]`
+   - verify `/api/site-admin/[otherSlug]/*` returns forbidden for mismatched tenant session.

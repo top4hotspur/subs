@@ -118,3 +118,11 @@ No per-customer DB or code export is required for this model.
   - `/site-admin/*` requires site-admin session only
 - Site-admin users can access only their own tenant slug/site; cross-tenant access is blocked.
 - Staff/customer auth is not included yet.
+
+## Site-admin API expansion
+- Added tenant-scoped business-owner APIs for staff and scheduling management under `/api/site-admin/[siteSlug]/*`.
+- Route authorization enforces:
+  - valid site-admin session
+  - slug resolves to TenantSite
+  - `session.tenantSiteId` must match resolved tenant id
+- Platform admin APIs remain separate under `/api/admin/*`.

@@ -127,3 +127,12 @@ Conflict behavior (v1):
 ## Diagnostic endpoint
 - Added `GET /api/site-resolve-debug` (platform-admin guarded).
 - Supports temporary test header `x-test-site-host` for pre-domain-attachment validation.
+
+## Site-admin scope update
+- Business-owner site-admin now has persisted edit access (tenant-scoped) for:
+  - site settings
+  - services
+  - staff roles
+  - staff members
+  - scheduling snapshot (rota, breaks, closures, holidays)
+- Read-only access for bookings summary is provided in `/site-admin/[siteSlug]`.
