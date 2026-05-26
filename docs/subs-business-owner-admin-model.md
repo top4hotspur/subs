@@ -273,3 +273,8 @@ Important:
   - cancellation/refund timing and policy note
 - Copy explicitly warns not to enter API keys or passwords.
 - This does not connect any provider in this milestone.
+
+## Social link icon behavior
+- Social links in customer-facing demo pages are rendered as icon buttons from local static assets.
+- Icons are served from `public/icons/social` and mapped via `src/lib/sites/social-platforms.ts`.
+- No external social API integrations are used.

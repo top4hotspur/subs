@@ -172,3 +172,16 @@ No real provider credentials/API keys are stored or connected in this phase.
 ## Contact/About/Policy visibility rule update
 - Contact page is standard and always visible in demo-site navigation.
 - About and Policy remain optional buildable pages controlled by visibility toggles.
+
+## Social media icons (local static assets)
+- Customer-facing social links now use local PNG assets from `public/icons/social`.
+- Supported visible platforms:
+  - Facebook
+  - Instagram
+  - TikTok
+  - X / Twitter
+  - LinkedIn (text fallback badge when icon asset is not present)
+  - YouTube
+- Social links render only when enabled and a URL is present.
+- Links open in a new tab (`target="_blank"`, `rel="noreferrer"`).
+- Website is not included as a social platform option.

@@ -14,6 +14,7 @@ import {
   getLocalCustomerSiteSettingsStorageKey,
 } from "@/lib/sites/local-site-settings";
 import { getSiteVisualTemplateById } from "@/lib/sites/site-visual-templates";
+import { getSocialPlatform } from "@/lib/sites/social-platforms";
 import { DemoCustomisationDraft, WebsiteTemplate } from "@/lib/sites/types";
 import { getLocalVoucherSettings } from "@/lib/vouchers/local-vouchers";
 import { VoucherDeliveryMethod } from "@/lib/vouchers/voucher-types";
@@ -21,24 +22,6 @@ import { VoucherDeliveryMethod } from "@/lib/vouchers/voucher-types";
 type DemoPreviewProps = {
   template: WebsiteTemplate;
   draft: DemoCustomisationDraft;
-};
-
-const SOCIAL_LABELS: Record<string, string> = {
-  facebook: "Facebook",
-  instagram: "Instagram",
-  tiktok: "TikTok",
-  x: "X",
-  linkedin: "LinkedIn",
-  youtube: "YouTube",
-};
-
-const SOCIAL_ICON_LABELS: Record<string, string> = {
-  facebook: "f",
-  instagram: "ig",
-  tiktok: "tt",
-  x: "x",
-  linkedin: "in",
-  youtube: "yt",
 };
 
 const DELIVERY_METHOD_LABELS: Record<string, string> = {
@@ -259,17 +242,34 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
             {socialEntries.length > 0 ? (
               <div className="flex flex-wrap gap-2 md:justify-end">
                 {socialEntries.map(([key, value]) => (
-                  <a
-                    key={key}
-                    href={value}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label={`Visit us on ${SOCIAL_LABELS[key] ?? key}`}
-                    title={SOCIAL_LABELS[key] ?? key}
-                    className={`inline-flex h-8 min-w-8 items-center justify-center rounded-full border px-2 text-[11px] font-bold uppercase ${scheme.borderClass} ${scheme.heroPanelClass}`}
-                  >
-                    {SOCIAL_ICON_LABELS[key] ?? key.slice(0, 2)}
-                  </a>
+                  (() => {
+                    const platform = getSocialPlatform(key);
+                    if (!platform) return null;
+                    return (
+                      <a
+                        key={key}
+                        href={value}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={platform.accessibleLabel}
+                        title={platform.label}
+                        className={`inline-flex h-8 w-8 items-center justify-center rounded-full border ${scheme.borderClass} ${scheme.heroPanelClass}`}
+                      >
+                        {platform.iconPath ? (
+                          <img
+                            src={platform.iconPath}
+                            alt=""
+                            aria-hidden="true"
+                            className="h-5 w-5"
+                          />
+                        ) : (
+                          <span className="text-[11px] font-bold uppercase text-slate-800">
+                            in
+                          </span>
+                        )}
+                      </a>
+                    );
+                  })()
                 ))}
               </div>
             ) : null}

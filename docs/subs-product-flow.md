@@ -373,3 +373,8 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Business owner sets accepted methods and booking prepayment preference.
 - Cancellation/refund timing is stored for policy messaging.
 - This phase does not include real provider integration, checkout, or charge capture.
+
+## Customer-facing social links
+- Social media links are displayed in the `Contact and opening hours` tile.
+- Icon buttons are used instead of text-only links.
+- Website links are not part of the social list.

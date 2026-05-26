@@ -396,3 +396,11 @@ Add these checks after backend envs are configured:
 7. Confirm reload persists all values.
 8. Confirm platform admin support view (`/admin/sites/[siteId]/settings`) shows/edits same values.
 9. Confirm no provider connection/payment processing occurs.
+
+## Hosted smoke: social media icons
+1. Verify icon assets exist under `public/icons/social`.
+2. In business admin demo social settings, set valid URLs for Facebook/Instagram/TikTok/X/LinkedIn/YouTube.
+3. Open customer-facing demo homepage and confirm social links appear in the Contact/opening tile.
+4. Confirm each icon button opens in a new tab.
+5. Confirm disabled/empty platforms are hidden.
+6. Confirm Website is not listed as a social platform option.
