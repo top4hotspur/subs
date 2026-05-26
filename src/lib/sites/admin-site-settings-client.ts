@@ -12,6 +12,14 @@ export type PersistedCustomerSiteSettings = {
   visualThemeId: string | null;
   colourPaletteId: string | null;
   currency: string | null;
+  logoUrl: string | null;
+  logoStorageKey: string | null;
+  logoContentType: string | null;
+  logoFileName: string | null;
+  faviconUrl: string | null;
+  faviconStorageKey: string | null;
+  faviconContentType: string | null;
+  faviconFileName: string | null;
   createdAt: string;
   updatedAt: string;
 };

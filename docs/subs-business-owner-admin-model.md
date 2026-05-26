@@ -249,3 +249,14 @@ Important:
   - `GET /api/site-admin/[siteSlug]/bookings`
 - Security rule: session tenant must match slug-resolved TenantSite; cross-tenant access is denied.
 - Staff and customer auth are still out of scope in this milestone.
+
+## Business owner branding controls (persisted)
+- Site-admin `Site settings` now includes persisted branding controls:
+  - Upload logo
+  - Remove logo
+  - Upload favicon
+  - Remove favicon
+- Guidance shown in UI:
+  - Logo: PNG/SVG recommended, max 1MB
+  - Favicon: PNG/ICO recommended, max 512KB
+- These controls write real tenant-scoped media metadata and no longer rely on local-only preview as source of truth.

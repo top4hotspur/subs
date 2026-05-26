@@ -15,6 +15,14 @@ export const upsertCustomerSiteSettingsSchema = z.object({
   visualThemeId: z.string().trim().min(1).max(80).nullable().optional(),
   colourPaletteId: z.string().trim().min(1).max(80).nullable().optional(),
   currency: z.enum(["GBP", "EUR", "USD"]).nullable().optional(),
+  logoUrl: z.string().trim().url().max(1200).nullable().optional(),
+  logoStorageKey: z.string().trim().min(1).max(600).nullable().optional(),
+  logoContentType: z.string().trim().min(1).max(120).nullable().optional(),
+  logoFileName: z.string().trim().min(1).max(220).nullable().optional(),
+  faviconUrl: z.string().trim().url().max(1200).nullable().optional(),
+  faviconStorageKey: z.string().trim().min(1).max(600).nullable().optional(),
+  faviconContentType: z.string().trim().min(1).max(120).nullable().optional(),
+  faviconFileName: z.string().trim().min(1).max(220).nullable().optional(),
 });
 
 export const customerSiteServiceInputSchema = z.object({

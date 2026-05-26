@@ -98,6 +98,13 @@ export default async function AdminSitePersistedPreviewPage({
       <section className={`mt-6 overflow-hidden rounded-3xl border ${scheme.borderClass} ${shellClass} shadow-sm`}>
         <div className="space-y-6 px-6 py-8 sm:px-8">
           <div className={heroClass}>
+            {settings?.logoUrl ? (
+              <img
+                src={settings.logoUrl}
+                alt={`${siteName} logo`}
+                className="h-14 w-auto max-w-[220px] rounded-md border border-white/20 bg-white/10 p-1"
+              />
+            ) : null}
             <p className={`text-xs font-semibold uppercase tracking-wider ${scheme.accentTextClass}`}>
               Persisted customer-facing site
             </p>

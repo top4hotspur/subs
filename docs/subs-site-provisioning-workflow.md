@@ -163,3 +163,8 @@ Still local/mock in current product:
   - staff holidays
 - Booking list is available as read-only summary in this pass.
 - No customer/staff auth and no payment/email/Twilio integrations are added here.
+
+## Provisioning note: branding media
+- Subscriber sites are still created as clean/blank data structures.
+- Branding media can then be uploaded by site-admin per tenant site using tenant-scoped storage keys.
+- Logo/favicon upload is now available as first real media storage slice; broader media remains future scope.

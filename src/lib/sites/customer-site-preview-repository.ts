@@ -22,6 +22,8 @@ export type CustomerSitePreviewData = {
     visualThemeId: string | null;
     colourPaletteId: string | null;
     currency: string | null;
+    logoUrl: string | null;
+    faviconUrl: string | null;
   } | null;
   services: Array<{
     id: string;
@@ -182,6 +184,8 @@ export async function getCustomerSitePreviewData(
           visualThemeId: site.customerSiteSettings.visualThemeId ?? null,
           colourPaletteId: site.customerSiteSettings.colourPaletteId ?? null,
           currency: site.customerSiteSettings.currency ?? null,
+          logoUrl: site.customerSiteSettings.logoUrl ?? null,
+          faviconUrl: site.customerSiteSettings.faviconUrl ?? null,
         }
       : null,
     services: site.customerSiteServices.map((service) => ({

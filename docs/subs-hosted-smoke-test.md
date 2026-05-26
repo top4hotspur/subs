@@ -373,3 +373,15 @@ Add these checks after backend envs are configured:
 7. Security:
    - verify cannot load another slug under `/site-admin/[otherSlug]`
    - verify `/api/site-admin/[otherSlug]/*` returns forbidden for mismatched tenant session.
+
+## Hosted smoke checks: site-admin branding media (persisted)
+1. Sign in to `/site-admin/login` for a test tenant.
+2. In `Site settings`, upload a valid logo (`png/svg/jpeg/webp`, <=1MB).
+3. Confirm upload succeeds and preview updates.
+4. Upload a valid favicon (`png/ico/svg`, <=512KB).
+5. Confirm `/sites/[siteSlug]` renders logo when set, and text fallback when removed.
+6. Remove logo and favicon and confirm persisted metadata clears.
+7. Negative checks:
+   - oversize files return validation error
+   - unsupported mime types return validation error
+   - storage not configured returns `STORAGE_NOT_CONFIGURED` without crashing build/runtime.

@@ -17,6 +17,10 @@ import {
   getSiteAdminScheduling,
   saveSiteAdminScheduling,
   listSiteAdminBookings,
+  removeSiteAdminBrandingFavicon,
+  removeSiteAdminBrandingLogo,
+  uploadSiteAdminBrandingFavicon,
+  uploadSiteAdminBrandingLogo,
 } from "@/lib/sites/site-admin-client";
 import { outlineButtonClass, primaryButtonClass, smallButtonClass } from "@/lib/ui/button-styles";
 import type {
@@ -163,6 +167,15 @@ function toMessage(error: string, status: number): string {
   if (error === "SITE_NOT_FOUND" || status === 404) {
     return "Subscriber site was not found for this login session.";
   }
+  if (error === "STORAGE_NOT_CONFIGURED") {
+    return "Branding storage is not configured in this environment yet.";
+  }
+  if (error === "FILE_TOO_LARGE") {
+    return "Selected file is too large for this upload type.";
+  }
+  if (error === "UNSUPPORTED_MEDIA_TYPE") {
+    return "File type is not supported for this upload type.";
+  }
   return `Request failed: ${error}`;
 }
 
@@ -278,6 +291,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   const [activeSection, setActiveSection] = useState<SectionKey>("settings");
 
   const [settingsDraft, setSettingsDraft] = useState<SettingsDraft>(() => toSettingsDraft(null));
+  const [persistedSettings, setPersistedSettings] = useState<PersistedCustomerSiteSettings | null>(null);
   const [servicesDraft, setServicesDraft] = useState<ServiceDraft[]>([]);
   const [rolesDraft, setRolesDraft] = useState<StaffRoleDraft[]>([]);
   const [staffDraft, setStaffDraft] = useState<StaffMemberDraft[]>([]);
@@ -347,6 +361,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       }
 
       setSettingsDraft(toSettingsDraft(settingsResult.settings));
+      setPersistedSettings(settingsResult.settings);
       setServicesDraft(servicesResult.services.map(toServiceDraft));
       setRolesDraft(rolesResult.roles.map(toRoleDraft));
       setStaffDraft(staffResult.staff.map(toStaffDraft));
@@ -389,7 +404,52 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       return;
     }
     setSettingsDraft(toSettingsDraft(result.settings));
+    setPersistedSettings(result.settings);
     setMessage("Site settings saved.");
+  }
+
+  async function uploadLogo(file: File) {
+    setMessage("Uploading logo...");
+    const result = await uploadSiteAdminBrandingLogo(siteSlug, file);
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status));
+      return;
+    }
+    setPersistedSettings(result.settings);
+    setMessage("Logo uploaded.");
+  }
+
+  async function removeLogo() {
+    setMessage("Removing logo...");
+    const result = await removeSiteAdminBrandingLogo(siteSlug);
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status));
+      return;
+    }
+    setPersistedSettings(result.settings);
+    setMessage("Logo removed.");
+  }
+
+  async function uploadFavicon(file: File) {
+    setMessage("Uploading favicon...");
+    const result = await uploadSiteAdminBrandingFavicon(siteSlug, file);
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status));
+      return;
+    }
+    setPersistedSettings(result.settings);
+    setMessage("Favicon uploaded.");
+  }
+
+  async function removeFavicon() {
+    setMessage("Removing favicon...");
+    const result = await removeSiteAdminBrandingFavicon(siteSlug);
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status));
+      return;
+    }
+    setPersistedSettings(result.settings);
+    setMessage("Favicon removed.");
   }
 
   async function saveServices() {
@@ -582,6 +642,83 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
             <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Hero headline
               <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.heroHeadline} onChange={(event) => setSettingsDraft((current) => ({ ...current, heroHeadline: event.target.value }))} />
             </label>
+            <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Hero subheading
+              <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.heroSubheading} onChange={(event) => setSettingsDraft((current) => ({ ...current, heroSubheading: event.target.value }))} />
+            </label>
+          </div>
+
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <h4 className="text-sm font-semibold text-slate-900">Business logo</h4>
+              <p className="mt-1 text-xs text-slate-600">
+                Recommended PNG or SVG. 512 x 512 px square icon or 1200 x 400 px wide logo. Max 1MB.
+              </p>
+              {persistedSettings?.logoUrl ? (
+                <img
+                  src={persistedSettings.logoUrl}
+                  alt={persistedSettings.logoFileName ?? "Business logo"}
+                  className="mt-2 h-16 w-auto max-w-full rounded-md border border-slate-200 bg-white p-1"
+                />
+              ) : (
+                <p className="mt-2 text-xs text-slate-600">No logo uploaded yet.</p>
+              )}
+              <div className="mt-2 flex flex-wrap gap-2">
+                <label className={`${outlineButtonClass} ${smallButtonClass} cursor-pointer`}>
+                  Upload logo
+                  <input
+                    type="file"
+                    accept=".png,.svg,.jpg,.jpeg,.webp,image/png,image/svg+xml,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) void uploadLogo(file);
+                      event.currentTarget.value = "";
+                    }}
+                  />
+                </label>
+                {persistedSettings?.logoUrl ? (
+                  <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void removeLogo()}>
+                    Remove logo
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <h4 className="text-sm font-semibold text-slate-900">Favicon</h4>
+              <p className="mt-1 text-xs text-slate-600">
+                Recommended PNG or ICO. 512 x 512 px source. Max 512KB.
+              </p>
+              {persistedSettings?.faviconUrl ? (
+                <img
+                  src={persistedSettings.faviconUrl}
+                  alt={persistedSettings.faviconFileName ?? "Favicon"}
+                  className="mt-2 h-10 w-10 rounded-md border border-slate-200 bg-white p-1"
+                />
+              ) : (
+                <p className="mt-2 text-xs text-slate-600">No favicon uploaded yet.</p>
+              )}
+              <div className="mt-2 flex flex-wrap gap-2">
+                <label className={`${outlineButtonClass} ${smallButtonClass} cursor-pointer`}>
+                  Upload favicon
+                  <input
+                    type="file"
+                    accept=".png,.ico,.svg,image/png,image/x-icon,image/vnd.microsoft.icon,image/svg+xml"
+                    className="hidden"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) void uploadFavicon(file);
+                      event.currentTarget.value = "";
+                    }}
+                  />
+                </label>
+                {persistedSettings?.faviconUrl ? (
+                  <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void removeFavicon()}>
+                    Remove favicon
+                  </button>
+                ) : null}
+              </div>
+            </div>
           </div>
           <button type="button" className={`mt-4 ${primaryButtonClass} ${smallButtonClass}`} onClick={() => void saveSettings()}>
             Save site settings
@@ -1011,4 +1148,3 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
     </div>
   );
 }
-

@@ -232,6 +232,14 @@ model CustomerSiteSettings {
   visualThemeId       String?
   colourPaletteId     String?
   currency            String?    @default("GBP")
+  logoUrl             String?
+  logoStorageKey      String?
+  logoContentType     String?
+  logoFileName        String?
+  faviconUrl          String?
+  faviconStorageKey   String?
+  faviconContentType  String?
+  faviconFileName     String?
   createdAt           DateTime   @default(now())
   updatedAt           DateTime   @updatedAt
   tenantSite          TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)

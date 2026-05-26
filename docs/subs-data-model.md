@@ -136,3 +136,25 @@ Conflict behavior (v1):
   - staff members
   - scheduling snapshot (rota, breaks, closures, holidays)
 - Read-only access for bookings summary is provided in `/site-admin/[siteSlug]`.
+
+## Tenant branding media storage (first real slice)
+- Added first real persisted media scope for subscriber sites: `logo` and `favicon` only.
+- Storage is S3-compatible and tenant-scoped by key pattern:
+  - `sites/{tenantSiteId}/branding/logo/{file}`
+  - `sites/{tenantSiteId}/branding/favicon/{file}`
+- `CustomerSiteSettings` now stores metadata only (no file bytes in Postgres):
+  - `logoUrl`, `logoStorageKey`, `logoContentType`, `logoFileName`
+  - `faviconUrl`, `faviconStorageKey`, `faviconContentType`, `faviconFileName`
+- Site-admin API routes:
+  - `POST/DELETE /api/site-admin/[siteSlug]/branding/logo`
+  - `POST/DELETE /api/site-admin/[siteSlug]/branding/favicon`
+- Validation:
+  - Logo: png/svg/jpeg/webp, max 1MB
+  - Favicon: png/ico/svg, max 512KB
+- Security:
+  - tenant-scoped session checks; no cross-tenant writes
+  - no public write route
+- Public rendering:
+  - `/sites/[siteSlug]` uses `logoUrl` when available, otherwise text brand fallback.
+  - favicon metadata is now wired when `faviconUrl` is present.
+- Out of scope in this slice: gallery images, about/staff images, general media library.

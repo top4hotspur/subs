@@ -126,3 +126,10 @@ No per-customer DB or code export is required for this model.
   - slug resolves to TenantSite
   - `session.tenantSiteId` must match resolved tenant id
 - Platform admin APIs remain separate under `/api/admin/*`.
+
+## Branding media upload (tenant-scoped, v1 slice)
+- Business owner site-admin now has real upload/remove controls for logo and favicon.
+- Upload APIs are tenant-scoped (`/api/site-admin/[siteSlug]/branding/*`) and require matching site-admin session scope.
+- Files are stored in S3-compatible object storage under tenant-scoped paths; database stores metadata only.
+- Limits and file types are enforced server-side.
+- This is intentionally limited to branding media only in this pass.

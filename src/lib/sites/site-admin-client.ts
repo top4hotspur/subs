@@ -314,3 +314,112 @@ export async function listSiteAdminBookings(
   }
 }
 
+export async function uploadSiteAdminBrandingLogo(
+  siteSlug: string,
+  file: File,
+): Promise<ClientResult<{ settings: PersistedCustomerSiteSettings }>> {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/branding/logo`, {
+      method: "POST",
+      body: formData,
+    });
+    const body = (await parseJsonSafe(response)) as
+      | { ok?: boolean; settings?: PersistedCustomerSiteSettings; error?: string; details?: unknown }
+      | null;
+    if (!response.ok || !body?.ok || !body.settings) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_LOGO_UPLOAD_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, settings: body.settings };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function removeSiteAdminBrandingLogo(
+  siteSlug: string,
+): Promise<ClientResult<{ settings: PersistedCustomerSiteSettings }>> {
+  try {
+    const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/branding/logo`, {
+      method: "DELETE",
+    });
+    const body = (await parseJsonSafe(response)) as
+      | { ok?: boolean; settings?: PersistedCustomerSiteSettings; error?: string; details?: unknown }
+      | null;
+    if (!response.ok || !body?.ok || !body.settings) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_LOGO_DELETE_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, settings: body.settings };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function uploadSiteAdminBrandingFavicon(
+  siteSlug: string,
+  file: File,
+): Promise<ClientResult<{ settings: PersistedCustomerSiteSettings }>> {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await fetch(
+      `/api/site-admin/${encodeURIComponent(siteSlug)}/branding/favicon`,
+      {
+        method: "POST",
+        body: formData,
+      },
+    );
+    const body = (await parseJsonSafe(response)) as
+      | { ok?: boolean; settings?: PersistedCustomerSiteSettings; error?: string; details?: unknown }
+      | null;
+    if (!response.ok || !body?.ok || !body.settings) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_FAVICON_UPLOAD_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, settings: body.settings };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function removeSiteAdminBrandingFavicon(
+  siteSlug: string,
+): Promise<ClientResult<{ settings: PersistedCustomerSiteSettings }>> {
+  try {
+    const response = await fetch(
+      `/api/site-admin/${encodeURIComponent(siteSlug)}/branding/favicon`,
+      {
+        method: "DELETE",
+      },
+    );
+    const body = (await parseJsonSafe(response)) as
+      | { ok?: boolean; settings?: PersistedCustomerSiteSettings; error?: string; details?: unknown }
+      | null;
+    if (!response.ok || !body?.ok || !body.settings) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_FAVICON_DELETE_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, settings: body.settings };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}

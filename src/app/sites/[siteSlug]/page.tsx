@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { getCustomerSitePreviewDataBySlug } from "@/lib/sites/customer-site-preview-repository";
 import { getSiteColourSchemeById } from "@/lib/sites/site-colour-schemes";
 import { getSiteVisualTemplateById } from "@/lib/sites/site-visual-templates";
@@ -19,6 +20,31 @@ function formatServiceSummary(durationMinutes: number | null, bufferAfterMinutes
   if (durationMinutes !== null) segments.push(`${durationMinutes} min`);
   if (bufferAfterMinutes !== null) segments.push(`${bufferAfterMinutes} min buffer`);
   return segments.length > 0 ? segments.join(" - ") : "Duration available at booking";
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ siteSlug: string }>;
+}): Promise<Metadata> {
+  const { siteSlug } = await params;
+  const preview = await getCustomerSitePreviewDataBySlug(siteSlug);
+  if (!preview) {
+    return {
+      title: "Subscriber site",
+    };
+  }
+  const settings = preview.settings;
+  const siteName = settings?.siteDisplayName || settings?.businessName || preview.tenantSite.displayName;
+  return {
+    title: siteName,
+    icons: settings?.faviconUrl
+      ? {
+          icon: settings.faviconUrl,
+          shortcut: settings.faviconUrl,
+        }
+      : undefined,
+  };
 }
 
 export default async function PublicSiteSlugPage({
@@ -55,6 +81,13 @@ export default async function PublicSiteSlugPage({
         <section className={`overflow-hidden rounded-3xl border ${scheme.borderClass} shadow-sm`}>
           <div className="space-y-6 px-6 py-8 sm:px-8">
             <div className={heroClass}>
+              {settings?.logoUrl ? (
+                <img
+                  src={settings.logoUrl}
+                  alt={`${siteName} logo`}
+                  className="h-14 w-auto max-w-[220px] rounded-md border border-white/20 bg-white/10 p-1"
+                />
+              ) : null}
               <p className={`text-xs font-semibold uppercase tracking-wider ${scheme.accentTextClass}`}>
                 {siteName}
               </p>
@@ -132,4 +165,3 @@ export default async function PublicSiteSlugPage({
     </main>
   );
 }
-
