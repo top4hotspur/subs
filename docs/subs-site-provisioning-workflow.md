@@ -173,3 +173,9 @@ Still local/mock in current product:
 - New subscriber sites can now carry persisted payment setup intent fields from day one.
 - These fields support onboarding and support workflows before real provider integration.
 - Sites remain shared-app, tenant-scoped records in the central database.
+
+## Current commercial payment step
+- Setup submission captures order intent and provisioning details.
+- Live checkout/payment capture is not automated in this phase.
+- Platform admin confirms payment/subscription onboarding manually after setup request submission.
+- Domain confirmation and payment confirmation happen before final go-live status is set.

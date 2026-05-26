@@ -166,6 +166,9 @@ export default function SetupConfirmationPage() {
             ? "Saved successfully."
             : "Request reference created."}
         </p>
+        <p className="mt-2 text-sm text-emerald-800">
+          No payment has been taken yet. We&apos;ll confirm domain details and payment setup with you during onboarding.
+        </p>
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">

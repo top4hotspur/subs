@@ -244,24 +244,24 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
               type="radio"
               name="domain-option"
               className="mr-2"
-              checked={draft.domainOption === DomainOption.CUSTOMER_BUYS_DOMAIN}
+              checked={draft.domainOption === DomainOption.WE_REGISTER_DOMAIN}
               onChange={() =>
-                setDraft((c) => ({ ...c, domainOption: DomainOption.CUSTOMER_BUYS_DOMAIN }))
+                setDraft((c) => ({ ...c, domainOption: DomainOption.WE_REGISTER_DOMAIN }))
               }
             />
-            I will buy my own domain and point it to you
+            I need a new domain
           </label>
           <label className="block text-sm text-slate-700">
             <input
               type="radio"
               name="domain-option"
               className="mr-2"
-              checked={draft.domainOption === DomainOption.WE_REGISTER_DOMAIN}
+              checked={draft.domainOption === DomainOption.CUSTOMER_BUYS_DOMAIN}
               onChange={() =>
-                setDraft((c) => ({ ...c, domainOption: DomainOption.WE_REGISTER_DOMAIN }))
+                setDraft((c) => ({ ...c, domainOption: DomainOption.CUSTOMER_BUYS_DOMAIN }))
               }
             />
-            I want you to register/manage a domain for me (+{formatGbp(offer.domainRegistrationFeeGbp)} one-off)
+            I am not sure yet
           </label>
 
           {draft.domainOption === DomainOption.EXISTING_DOMAIN ? (
@@ -281,15 +281,15 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
             </label>
           ) : null}
 
-          {draft.domainOption === DomainOption.CUSTOMER_BUYS_DOMAIN ? (
+          {draft.domainOption === DomainOption.WE_REGISTER_DOMAIN ? (
             <label className="block text-sm font-medium text-slate-700">
-              Planned domain
+              Preferred domain ideas
               <p className="mt-1 text-xs font-normal text-slate-600">
-                Optional - tell us the domain you plan to buy or have already found.
+                We can register/manage a new domain for a {formatGbp(offer.domainRegistrationFeeGbp)} domain service fee.
               </p>
-              <input
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-                placeholder="example.co.uk"
+              <textarea
+                className="mt-1 min-h-24 w-full rounded-lg border border-slate-300 px-3 py-2"
+                placeholder={"firstchoice.co.uk\nsecondchoice.com\nmybusinessname.co.uk"}
                 value={draft.desiredDomain ?? ""}
                 onChange={(event) =>
                   setDraft((c) => ({ ...c, desiredDomain: event.target.value }))
@@ -298,15 +298,15 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
             </label>
           ) : null}
 
-          {draft.domainOption === DomainOption.WE_REGISTER_DOMAIN ? (
+          {draft.domainOption === DomainOption.CUSTOMER_BUYS_DOMAIN ? (
             <label className="block text-sm font-medium text-slate-700">
-              Domain name ideas
+              Domain notes (optional)
               <p className="mt-1 text-xs font-normal text-slate-600">
-                Give us a few options you would be happy with. We will check availability before confirming.
+                We&apos;ll help you choose the best option during setup. You can keep your current registrar and point DNS/nameservers when we provide instructions.
               </p>
-              <textarea
-                className="mt-1 min-h-24 w-full rounded-lg border border-slate-300 px-3 py-2"
-                placeholder={"firstchoice.co.uk\nsecondchoice.com\nmybusinessname.co.uk"}
+              <input
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                placeholder="Any ideas so far (optional)"
                 value={draft.desiredDomain ?? ""}
                 onChange={(event) =>
                   setDraft((c) => ({ ...c, desiredDomain: event.target.value }))
@@ -395,7 +395,7 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
       </form>
 
       <aside className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Live setup summary</h2>
+        <h2 className="text-lg font-semibold text-slate-900">Order summary</h2>
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
           <p>
             <span className="font-semibold">Industry:</span> {template.name}
@@ -417,7 +417,7 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
             <span className="font-semibold">Setup fee:</span> {formatGbp(offer.setupFeeGbp)}
           </p>
           <p>
-            <span className="font-semibold">Domain fee:</span> {formatGbp(domainFee)}
+            <span className="font-semibold">Domain service:</span> {formatGbp(offer.domainRegistrationFeeGbp)} only if we register a new domain
           </p>
           <p>
             <span className="font-semibold">Setup total:</span> {formatGbp(setupTotal)}
@@ -426,7 +426,13 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
             <span className="font-semibold">Monthly fee:</span> {formatGbp(monthlyFee)}
           </p>
           <p>
-            <span className="font-semibold">Next step:</span> Submit your setup request and we will confirm domain details and payment/setup onboarding.
+            <span className="font-semibold">Existing domain:</span> no domain charge if you can point DNS/nameservers.
+          </p>
+          <p>
+            <span className="font-semibold">Payment/subscription setup:</span> confirmed after request submission during onboarding.
+          </p>
+          <p>
+            <span className="font-semibold">Next step:</span> Submit your setup request today. We&apos;ll confirm your domain details and payment setup before your site goes live.
           </p>
         </div>
       </aside>

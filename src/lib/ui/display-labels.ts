@@ -28,9 +28,9 @@ export function domainOptionLabel(option: DomainOption): string {
     case DomainOption.EXISTING_DOMAIN:
       return "Existing domain";
     case DomainOption.CUSTOMER_BUYS_DOMAIN:
-      return "Customer buys domain";
+      return "Not sure yet";
     case DomainOption.WE_REGISTER_DOMAIN:
-      return "We register/manage domain";
+      return "Need a new domain";
     default:
       return option;
   }
@@ -39,11 +39,11 @@ export function domainOptionLabel(option: DomainOption): string {
 export function domainOptionDescription(option: DomainOption): string {
   switch (option) {
     case DomainOption.EXISTING_DOMAIN:
-      return "Customer already owns a domain and can point DNS/nameservers.";
+      return "You already own a domain and can point DNS/nameservers when instructions are provided.";
     case DomainOption.CUSTOMER_BUYS_DOMAIN:
-      return "Customer will buy a new domain and then point it to us.";
+      return "You can continue now and we will help you choose the best domain path during setup.";
     case DomainOption.WE_REGISTER_DOMAIN:
-      return "We register/manage domain as an optional paid setup extra.";
+      return "We can register/manage a new domain as an optional £49 domain service.";
     default:
       return "Domain option selected.";
   }
@@ -51,14 +51,14 @@ export function domainOptionDescription(option: DomainOption): string {
 
 export function communicationOptionLabel(option: CommunicationOption): string {
   return option === CommunicationOption.EMAIL_AND_WHATSAPP
-    ? "Email + WhatsApp"
-    : "Email only";
+    ? "Email notifications"
+    : "Email notifications";
 }
 
 export function communicationOptionDescription(option: CommunicationOption): string {
   return option === CommunicationOption.EMAIL_AND_WHATSAPP
-    ? "Email plus optional WhatsApp add-on notifications."
-    : "Standard email notifications included.";
+    ? "Standard email notifications are included."
+    : "Standard email notifications are included.";
 }
 
 export function customerRequestKindLabel(kind: CustomerRequestKind): string {

@@ -454,3 +454,17 @@ Add these checks after backend envs are configured:
 3. Confirm `/admin/contact-enquiries` lists the new enquiry.
 4. Change status and confirm persisted update.
 5. Confirm homepage, setup page, and setup confirmation include `/contact` links.
+
+## Hosted smoke: setup order/payment clarity
+1. Open `/setup/barbers` and confirm order summary includes:
+   - Website setup: £149 one-time
+   - Monthly subscription: £30/month
+   - Domain service: £49 only when we register/manage a new domain
+2. Confirm setup copy states payment/subscription setup is confirmed after request submission during onboarding.
+3. In Domain option section, confirm choices are:
+   - I already own a domain
+   - I need a new domain
+   - I am not sure yet
+4. Submit a setup request and open `/setup/confirmation`.
+5. Confirm confirmation page states no payment has been taken yet.
+6. In `/admin/setup-requests`, open a request and confirm commercial status panel shows manual payment/domain follow-up guidance.

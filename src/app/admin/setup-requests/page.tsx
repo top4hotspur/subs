@@ -21,6 +21,7 @@ import {
   formatOptional,
   formatUkDateTime,
 } from "@/lib/ui/display-labels";
+import { getWebsiteSubscriptionOffer } from "@/lib/pricing/subscription-offer";
 import {
   dangerButtonClass,
   outlineButtonClass,
@@ -69,6 +70,7 @@ function parseCommunicationValue(value: string): CommunicationOption {
 }
 
 export default function AdminSetupRequestsPage() {
+  const offer = getWebsiteSubscriptionOffer();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [requests, setRequests] = useState<BackendSetupRequestRecord[]>([]);
@@ -270,6 +272,22 @@ export default function AdminSetupRequestsPage() {
                 <p><span className="font-semibold">Contact phone:</span> {formatOptional(selectedRequest.contactPhone)}</p>
                 <p className="sm:col-span-2"><span className="font-semibold">Domain value:</span> {formatOptional(selectedRequest.existingDomain || selectedRequest.desiredDomain)}</p>
                 <p className="sm:col-span-2"><span className="font-semibold">Notes:</span> {formatOptional(selectedRequest.notes)}</p>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+                <p className="font-semibold text-slate-900">Commercial status</p>
+                <p className="mt-1">Setup fee due: {formatGbp(offer.setupFeeGbp)}</p>
+                <p>Monthly subscription due: {formatGbp(offer.monthlyFeeGbp)}/month</p>
+                <p>
+                  Domain fee applicable:{" "}
+                  {parseOptionValue(selectedRequest.domainOption) === DomainOption.WE_REGISTER_DOMAIN
+                    ? `${formatGbp(offer.domainRegistrationFeeGbp)} (new domain registration/management)`
+                    : "No domain fee expected (customer-managed domain option)"}
+                </p>
+                <p>Payment status: Manual confirmation required (no automated checkout in this phase).</p>
+                <p className="mt-1">
+                  Next action: confirm domain path, contact customer, then send payment/setup onboarding details.
+                </p>
               </div>
 
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">

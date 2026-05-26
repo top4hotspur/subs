@@ -410,3 +410,19 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - If backend persistence is unavailable, the UI returns a clear error and asks users to retry.
 - Platform admin triage route: `/admin/contact-enquiries` with status workflow: NEW -> REVIEWED -> REPLIED -> CLOSED.
 - No real email sending is included in this pass.
+
+## Setup order and payment clarity (2026-05-26)
+- Setup is an order-intent flow, not live checkout.
+- Setup page summary now states:
+  - Website setup: £149 one-time
+  - Monthly subscription: £30/month
+  - Domain service: £49 only when we register/manage a new domain
+  - Existing domain: no domain service charge when customer can point DNS/nameservers
+- Setup flow messaging now confirms:
+  - payment/subscription setup is handled during onboarding after request submission
+  - no payment is taken at request submission in the current phase
+- Domain choices are now presented as:
+  - I already own a domain
+  - I need a new domain
+  - I am not sure yet
+- Platform admin setup queue now includes a commercial-status panel for manual payment/domain follow-up actions.

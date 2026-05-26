@@ -1,4 +1,4 @@
-# Subs Full Site Audit
+Ôªø# Subs Full Site Audit
 
 ## 1. Executive Summary
 MyExperiment.club has a strong foundation with clear multi-tenant architecture, persisted subscriber data layers, and protected platform/site-admin boundaries. The main blocker is not backend capability; it is **journey consistency** between marketing, demo exploration, setup flow, and legacy mock routes.
@@ -49,10 +49,10 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - What works:
   - Homepage value proposition and pricing are clear.
   - Category-first industry browser exists.
-  - Demo intro banner includes ìGet your site nowî linking to setup.
+  - Demo intro banner includes ‚ÄúGet your site now‚Äù linking to setup.
 - Gaps:
   - Industry page CTA still pushes `Create my own site` to `/demo/[industry]/customise` as a primary path.
-  - `/demo/[industry]/customise` still contains legacy ìcreate my own siteî and mock login placeholders.
+  - `/demo/[industry]/customise` still contains legacy ‚Äúcreate my own site‚Äù and mock login placeholders.
 
 ### Journey B: Demo exploration confidence
 - Status: **Partially working**
@@ -62,7 +62,7 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
   - Demo subpages use shared shell (`DemoSitePageShell`) with intro + nav + CTA.
 - Gaps:
   - Root demo page (`/demo/[industry]`) uses a different composition than subpages; intro consistency is close but not fully unified.
-  - Blue ìdraftî explanatory box appears only in the root demo preview state, not across all demo subpages.
+  - Blue ‚Äúdraft‚Äù explanatory box appears only in the root demo preview state, not across all demo subpages.
 
 ### Journey C: Setup submission -> provisioning
 - Status: **Working (with honest fallback)**
@@ -80,7 +80,7 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
   - Site-admin can manage persisted settings/services/staff/scheduling and now page/content/social.
   - Public `/sites/[siteSlug]` consumes persisted data.
 - Gaps:
-  - Business-owner experience still mixed with ìmockî terminology in some areas of broader app.
+  - Business-owner experience still mixed with ‚Äúmock‚Äù terminology in some areas of broader app.
 
 ## 5. Feature Wiring Table
 | Feature | Current Status | Route/Component | Risk | Next Step |
@@ -89,7 +89,7 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 | Industry category browser | Working | `industry-category-browser.tsx` | Low | UX telemetry later |
 | Demo browsing | Working | `/demo/[industry]` + `DemoPreview` | Medium | Unify root/subpage explanation pattern |
 | Demo nav readability | Working | `demo-site-nav.tsx` | Medium | Regression tests/screenshots |
-| Demo ìGet your site nowî CTA | Working | `demo-site-intro-banner.tsx` | Low | Keep on all demo pages |
+| Demo ‚ÄúGet your site now‚Äù CTA | Working | `demo-site-intro-banner.tsx` | Low | Keep on all demo pages |
 | Demo save/customisation flow | Partially working/confusing | `/demo/[industry]/customise`, `demo-customizer.tsx` | **High** | Demote/replace legacy customiser flow |
 | Booking submit in demo | Working (local) | `customer-request-form.tsx` | Medium | Connect to persisted public flow later |
 | Booking confirmation visibility | Working | `customer-request-form.tsx` | Low | Keep focus/scroll behavior |
@@ -141,7 +141,7 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 ### Gaps
 1. Legacy customiser page still reads as a primary editing flow and includes obsolete mock login credentials display.
 2. Public/global `/account` route is still a mock portal and can confuse prospects if discovered via header/footer.
-3. Some public-facing areas still include ìmock/local demo foundationî wording that weakens commercial trust.
+3. Some public-facing areas still include ‚Äúmock/local demo foundation‚Äù wording that weakens commercial trust.
 4. Demo root vs subpage explanatory pattern is not fully unified.
 5. Template/theme combinations likely still need visual QA pass on real devices (no automated visual checks in repo).
 
@@ -162,7 +162,7 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 2. Remove obsolete demo login credential placeholder content from any conversion-facing flow (especially customiser panel).
 3. Harden setup request read endpoint (`GET /api/setup-requests/[id]`) with signed token or scoped auth.
 4. Ensure every funnel CTA sequence is consistent: industry page + demo routes should push `Get your site now` / `Start setup` without mixed legacy wording.
-5. Remove or isolate public-facing ìmock/local foundationî language from prospect-facing surfaces.
+5. Remove or isolate public-facing ‚Äúmock/local foundation‚Äù language from prospect-facing surfaces.
 6. Decide and present payment-step truth clearly in setup (explicit placeholder, no ambiguity).
 
 ## P1 (Should fix before beta customers)
@@ -187,7 +187,7 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 3. **Public copy trust pass**: eliminate non-essential mock/local wording on marketing/prospect routes.
 4. **Demo consistency pass**: standardize intro/blue explanation module across all demo pages.
 5. **Support/contact pass**: add clear platform-level contact/help route and link from homepage/setup.
-6. **Setup/payment truth pass**: explicit ìpayment step pending/manualî messaging + state model.
+6. **Setup/payment truth pass**: explicit ‚Äúpayment step pending/manual‚Äù messaging + state model.
 7. **Tenant public UX parity pass**: polish `/sites/[slug]` + about/contact/policy rendering and nav consistency.
 8. **Domain routing integration pass**: wire host-based tenant resolution (without DNS automation).
 9. **Subscriber admin UX pass**: improve site-admin IA and save-state feedback for day-to-day owner tasks.
@@ -198,7 +198,7 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 2. Do we want global `/account` accessible publicly at all before customer auth exists?
 3. For setup confirmation lookup, is signed token preferred over authenticated retrieval for v1?
 4. What is the intended pre-payment process: manual invoice, payment link, or deferred billing?
-5. Should platform-level ìContact usî be email-only first, or include a minimal persisted lead form?
+5. Should platform-level ‚ÄúContact us‚Äù be email-only first, or include a minimal persisted lead form?
 ## P0 conversion cleanup applied (2026-05-26)
 - `/demo/[industry]/customise` is retained only as a transition page and no longer presents the full editing workflow.
 - Transition page now directs users to:
@@ -224,3 +224,14 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - Added persisted `ContactEnquiry` backend model and admin handling workflow.
 - Contact route is designed for pre-order and setup help without requiring login.
 - No email provider integration yet; enquiries are persisted and handled from platform admin.
+
+ # #   P 1   s e t u p / p a y m e n t   m e s s a g i n g   c l e a n u p   a p p l i e d   ( 2 0 2 6 - 0 5 - 2 6 ) 
+ -   S e t u p   p a g e   n o w   p r e s e n t s   a   c l e a r e r   o r d e r   s u m m a r y   w i t h   e x p l i c i t   s e t u p / m o n t h l y / d o m a i n   a m o u n t s . 
+ -   D o m a i n   c h o i c e   w o r d i n g   n o w   s u p p o r t s : 
+     -   e x i s t i n g   d o m a i n 
+     -   n e e d   a   n e w   d o m a i n 
+     -   n o t   s u r e   y e t 
+ -   S e t u p   c o n f i r m a t i o n   n o w   e x p l i c i t l y   s t a t e s   n o   p a y m e n t   h a s   b e e n   t a k e n   y e t . 
+ -   P l a t f o r m   a d m i n   s e t u p - r e q u e s t   d e t a i l   n o w   i n c l u d e s   a   m a n u a l   c o m m e r c i a l - s t a t u s   p a n e l   f o r   d o m a i n / p a y m e n t   f o l l o w - u p . 
+ -   F l o w   r e m a i n s   i n t e n t i o n a l l y   n o n - c h e c k o u t   i n   t h i s   p h a s e   ( n o   l i v e   S t r i p e / S q u a r e / P a y P a l   c a p t u r e ) .  
+ 

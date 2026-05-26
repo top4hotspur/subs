@@ -39,11 +39,14 @@ export default async function SetupIndustryPage({ params }: SetupIndustryPagePro
         <p className="text-sm font-semibold uppercase tracking-wide text-sky-600">Setup Request</p>
         <h1 className="mt-2 text-3xl font-bold text-slate-900">{template.name}</h1>
         <p className="mt-3 text-slate-600">
-          One full website offer: GBP{offer.setupFeeGbp} setup, GBP{offer.monthlyFeeGbp}/month,
+          One full website offer: £{offer.setupFeeGbp} setup, £{offer.monthlyFeeGbp}/month,
           with optional domain registration/management only where needed.
         </p>
         <p className="mt-3 text-sm text-slate-600">
           Your subscriber site is created as a clean setup. Demo content is not copied automatically.
+        </p>
+        <p className="mt-2 text-sm text-slate-600">
+          Submit your setup request today. We&apos;ll confirm your domain details and payment setup before your site goes live.
         </p>
         <div className="mt-4 flex flex-wrap gap-3 text-sm font-medium">
           <Link href={`/demo/${template.slug}`} className="text-sky-700 hover:text-sky-900">
