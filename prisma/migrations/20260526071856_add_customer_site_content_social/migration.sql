@@ -1,0 +1,18 @@
+-- AlterTable
+ALTER TABLE "CustomerSiteSettings" ADD COLUMN     "aboutBody" TEXT,
+ADD COLUMN     "aboutImageOneUrl" TEXT,
+ADD COLUMN     "aboutImagePlacement" TEXT,
+ADD COLUMN     "aboutImageTwoUrl" TEXT,
+ADD COLUMN     "aboutPageEnabled" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "aboutPageMode" TEXT,
+ADD COLUMN     "aboutStaffProfilesJson" JSONB,
+ADD COLUMN     "aboutTitle" TEXT,
+ADD COLUMN     "contactIntro" TEXT,
+ADD COLUMN     "contactMapEnabled" BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN     "contactMapNote" TEXT,
+ADD COLUMN     "contactTitle" TEXT,
+ADD COLUMN     "policyBody" TEXT,
+ADD COLUMN     "policyIntro" TEXT,
+ADD COLUMN     "policyPageEnabled" BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN     "policyTitle" TEXT,
+ADD COLUMN     "socialLinks" JSONB;

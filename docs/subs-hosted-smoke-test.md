@@ -404,3 +404,24 @@ Add these checks after backend envs are configured:
 4. Confirm each icon button opens in a new tab.
 5. Confirm disabled/empty platforms are hidden.
 6. Confirm Website is not listed as a social platform option.
+
+## Hosted smoke: persisted page/content and social settings
+1. Sign in at `/site-admin/login` and open `/site-admin/[siteSlug]`.
+2. In `Site settings`:
+   - Enable About page, set title/body, save.
+   - Enable Policy page, set title/intro/body, save.
+   - Update Contact title/intro/map note and keep Contact visible, save.
+3. In Social media settings:
+   - Enable at least two platforms and provide valid `https://` URLs.
+   - Confirm LinkedIn icon is present and rendered.
+4. Open public routes:
+   - `/sites/[siteSlug]`
+   - `/sites/[siteSlug]/about`
+   - `/sites/[siteSlug]/contact`
+   - `/sites/[siteSlug]/policy`
+5. Verify behavior:
+   - About route 404s when About is disabled.
+   - Policy route 404s when Policy is disabled.
+   - Contact route remains available.
+   - Social icon links open in new tabs.
+   - Google Maps link appears when address + map toggle are set.

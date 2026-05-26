@@ -378,3 +378,10 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Social media links are displayed in the `Contact and opening hours` tile.
 - Icon buttons are used instead of text-only links.
 - Website links are not part of the social list.
+
+## Subscriber pages/content and social settings
+- Public tenant sites now read persisted page/content/social settings from `CustomerSiteSettings`.
+- Contact is standard and always available.
+- About and Policy are optional and controlled per tenant site.
+- Social links are persisted and rendered with static icon assets (Facebook, Instagram, TikTok, X/Twitter, LinkedIn, YouTube).
+- No external social integrations are added in this pass.

@@ -15,6 +15,34 @@ const paymentProcessorNameEnum = z.enum([
   "Zettle",
   "Other",
 ]);
+const aboutPageModeEnum = z.enum(["GENERAL", "STAFF_PROFILES"]);
+const aboutImagePlacementEnum = z.enum(["ABOVE", "BESIDE", "BELOW"]);
+
+const socialUrlSchema = z
+  .string()
+  .trim()
+  .max(1200)
+  .optional()
+  .transform((value) => value ?? "")
+  .refine((value) => !value || /^https?:\/\//i.test(value), {
+    message: "URL must start with http:// or https://",
+  });
+
+const socialPlatformLinkSchema = z.object({
+  enabled: z.boolean().optional().default(false),
+  url: socialUrlSchema,
+});
+
+const socialLinksSchema = z
+  .object({
+    facebook: socialPlatformLinkSchema.optional(),
+    instagram: socialPlatformLinkSchema.optional(),
+    tiktok: socialPlatformLinkSchema.optional(),
+    xTwitter: socialPlatformLinkSchema.optional(),
+    linkedin: socialPlatformLinkSchema.optional(),
+    youtube: socialPlatformLinkSchema.optional(),
+  })
+  .strict();
 
 export const upsertCustomerSiteSettingsSchema = z.object({
   tenantSiteId: cuid,
@@ -48,6 +76,23 @@ export const upsertCustomerSiteSettingsSchema = z.object({
   cancellationFullRefundNoticeDays: z.number().int().min(0).max(14).nullable().optional(),
   cancellationNoRefundWithinDays: z.number().int().min(0).max(14).nullable().optional(),
   cancellationPolicyNote: z.string().trim().min(1).max(1600).nullable().optional(),
+  aboutPageEnabled: z.boolean().optional(),
+  policyPageEnabled: z.boolean().optional(),
+  aboutPageMode: aboutPageModeEnum.nullable().optional(),
+  aboutTitle: z.string().trim().min(1).max(180).nullable().optional(),
+  aboutBody: z.string().trim().min(1).max(8000).nullable().optional(),
+  aboutImageOneUrl: z.string().trim().url().max(1200).nullable().optional(),
+  aboutImageTwoUrl: z.string().trim().url().max(1200).nullable().optional(),
+  aboutImagePlacement: aboutImagePlacementEnum.nullable().optional(),
+  aboutStaffProfilesJson: z.unknown().nullable().optional(),
+  contactTitle: z.string().trim().min(1).max(180).nullable().optional(),
+  contactIntro: z.string().trim().min(1).max(2000).nullable().optional(),
+  contactMapEnabled: z.boolean().optional(),
+  contactMapNote: z.string().trim().min(1).max(2000).nullable().optional(),
+  policyTitle: z.string().trim().min(1).max(180).nullable().optional(),
+  policyIntro: z.string().trim().min(1).max(2000).nullable().optional(),
+  policyBody: z.string().trim().min(1).max(8000).nullable().optional(),
+  socialLinks: socialLinksSchema.nullable().optional(),
 });
 
 export const customerSiteServiceInputSchema = z.object({

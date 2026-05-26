@@ -27,6 +27,23 @@ export type CustomerSitePreviewData = {
     cancellationFullRefundNoticeDays: number | null;
     cancellationNoRefundWithinDays: number | null;
     cancellationPolicyNote: string | null;
+    aboutPageEnabled: boolean;
+    policyPageEnabled: boolean;
+    aboutPageMode: string | null;
+    aboutTitle: string | null;
+    aboutBody: string | null;
+    aboutImageOneUrl: string | null;
+    aboutImageTwoUrl: string | null;
+    aboutImagePlacement: string | null;
+    aboutStaffProfilesJson: unknown;
+    contactTitle: string | null;
+    contactIntro: string | null;
+    contactMapEnabled: boolean;
+    contactMapNote: string | null;
+    policyTitle: string | null;
+    policyIntro: string | null;
+    policyBody: string | null;
+    socialLinks: unknown;
   } | null;
   services: Array<{
     id: string;
@@ -110,8 +127,6 @@ export type CustomerSitePreviewData = {
 };
 
 const PREFERRED_PUBLIC_STATUSES = new Set(["SITE_READY", "SITE_LIVE"]);
-// Relaxed for current provisioning/testing environments where sites may still be
-// in transitional provisioning statuses.
 const RELAXED_PUBLIC_STATUSES = new Set([
   "SETUP_REQUESTED",
   "PAYMENT_PENDING",
@@ -194,6 +209,23 @@ export async function getCustomerSitePreviewData(
           cancellationNoRefundWithinDays:
             site.customerSiteSettings.cancellationNoRefundWithinDays ?? null,
           cancellationPolicyNote: site.customerSiteSettings.cancellationPolicyNote ?? null,
+          aboutPageEnabled: site.customerSiteSettings.aboutPageEnabled,
+          policyPageEnabled: site.customerSiteSettings.policyPageEnabled,
+          aboutPageMode: site.customerSiteSettings.aboutPageMode ?? null,
+          aboutTitle: site.customerSiteSettings.aboutTitle ?? null,
+          aboutBody: site.customerSiteSettings.aboutBody ?? null,
+          aboutImageOneUrl: site.customerSiteSettings.aboutImageOneUrl ?? null,
+          aboutImageTwoUrl: site.customerSiteSettings.aboutImageTwoUrl ?? null,
+          aboutImagePlacement: site.customerSiteSettings.aboutImagePlacement ?? null,
+          aboutStaffProfilesJson: site.customerSiteSettings.aboutStaffProfilesJson ?? null,
+          contactTitle: site.customerSiteSettings.contactTitle ?? null,
+          contactIntro: site.customerSiteSettings.contactIntro ?? null,
+          contactMapEnabled: site.customerSiteSettings.contactMapEnabled,
+          contactMapNote: site.customerSiteSettings.contactMapNote ?? null,
+          policyTitle: site.customerSiteSettings.policyTitle ?? null,
+          policyIntro: site.customerSiteSettings.policyIntro ?? null,
+          policyBody: site.customerSiteSettings.policyBody ?? null,
+          socialLinks: site.customerSiteSettings.socialLinks ?? null,
         }
       : null,
     services: site.customerSiteServices.map((service) => ({

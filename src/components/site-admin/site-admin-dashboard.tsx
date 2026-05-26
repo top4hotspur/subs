@@ -67,6 +67,8 @@ function weekdayLabel(weekday: WeekdayValue): string {
   return weekday.charAt(0).toUpperCase() + weekday.slice(1);
 }
 
+type SocialPlatformDraft = { enabled: boolean; url: string };
+
 type SettingsDraft = {
   siteDisplayName: string;
   businessName: string;
@@ -90,8 +92,31 @@ type SettingsDraft = {
   cancellationFullRefundNoticeDays: string;
   cancellationNoRefundWithinDays: string;
   cancellationPolicyNote: string;
+  aboutPageEnabled: boolean;
+  policyPageEnabled: boolean;
+  aboutPageMode: "GENERAL" | "STAFF_PROFILES";
+  aboutTitle: string;
+  aboutBody: string;
+  aboutImageOneUrl: string;
+  aboutImageTwoUrl: string;
+  aboutImagePlacement: "ABOVE" | "BESIDE" | "BELOW";
+  aboutStaffProfilesJson: string;
+  contactTitle: string;
+  contactIntro: string;
+  contactMapEnabled: boolean;
+  contactMapNote: string;
+  policyTitle: string;
+  policyIntro: string;
+  policyBody: string;
+  socialLinks: {
+    facebook: SocialPlatformDraft;
+    instagram: SocialPlatformDraft;
+    tiktok: SocialPlatformDraft;
+    xTwitter: SocialPlatformDraft;
+    linkedin: SocialPlatformDraft;
+    youtube: SocialPlatformDraft;
+  };
 };
-
 type ServiceDraft = {
   id?: string;
   name: string;
@@ -190,6 +215,36 @@ function toMessage(error: string, status: number): string {
   return `Request failed: ${error}`;
 }
 
+
+type SettingsSocialKey = keyof SettingsDraft["socialLinks"];
+
+function emptySocialDraft(): SettingsDraft["socialLinks"] {
+  return {
+    facebook: { enabled: false, url: "" },
+    instagram: { enabled: false, url: "" },
+    tiktok: { enabled: false, url: "" },
+    xTwitter: { enabled: false, url: "" },
+    linkedin: { enabled: false, url: "" },
+    youtube: { enabled: false, url: "" },
+  };
+}
+
+function parseSocialDraft(input: unknown): SettingsDraft["socialLinks"] {
+  const base = emptySocialDraft();
+  if (!input || typeof input !== "object") return base;
+  const source = input as Record<string, unknown>;
+  const keys: SettingsSocialKey[] = ["facebook", "instagram", "tiktok", "xTwitter", "linkedin", "youtube"];
+  for (const key of keys) {
+    const value = source[key];
+    if (!value || typeof value !== "object") continue;
+    const row = value as Record<string, unknown>;
+    base[key] = {
+      enabled: row.enabled === true,
+      url: typeof row.url === "string" ? row.url : "",
+    };
+  }
+  return base;
+}
 function toSettingsDraft(settings: PersistedCustomerSiteSettings | null): SettingsDraft {
   return {
     siteDisplayName: settings?.siteDisplayName ?? "",
@@ -214,9 +269,27 @@ function toSettingsDraft(settings: PersistedCustomerSiteSettings | null): Settin
     cancellationFullRefundNoticeDays: String(settings?.cancellationFullRefundNoticeDays ?? 1),
     cancellationNoRefundWithinDays: String(settings?.cancellationNoRefundWithinDays ?? 1),
     cancellationPolicyNote: settings?.cancellationPolicyNote ?? "",
+    aboutPageEnabled: settings?.aboutPageEnabled ?? false,
+    policyPageEnabled: settings?.policyPageEnabled ?? true,
+    aboutPageMode: settings?.aboutPageMode ?? "GENERAL",
+    aboutTitle: settings?.aboutTitle ?? "",
+    aboutBody: settings?.aboutBody ?? "",
+    aboutImageOneUrl: settings?.aboutImageOneUrl ?? "",
+    aboutImageTwoUrl: settings?.aboutImageTwoUrl ?? "",
+    aboutImagePlacement: settings?.aboutImagePlacement ?? "ABOVE",
+    aboutStaffProfilesJson: settings?.aboutStaffProfilesJson
+      ? JSON.stringify(settings.aboutStaffProfilesJson, null, 2)
+      : "",
+    contactTitle: settings?.contactTitle ?? "",
+    contactIntro: settings?.contactIntro ?? "",
+    contactMapEnabled: settings?.contactMapEnabled ?? true,
+    contactMapNote: settings?.contactMapNote ?? "",
+    policyTitle: settings?.policyTitle ?? "",
+    policyIntro: settings?.policyIntro ?? "",
+    policyBody: settings?.policyBody ?? "",
+    socialLinks: parseSocialDraft(settings?.socialLinks),
   };
 }
-
 function toServiceDraft(service: PersistedCustomerSiteService): ServiceDraft {
   return {
     id: service.id,
@@ -408,6 +481,16 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
 
   async function saveSettings() {
     setMessage("Saving site settings...");
+    let aboutStaffProfilesJson: unknown = null;
+    if (settingsDraft.aboutStaffProfilesJson.trim()) {
+      try {
+        aboutStaffProfilesJson = JSON.parse(settingsDraft.aboutStaffProfilesJson);
+      } catch {
+        setMessage("About staff profiles JSON is invalid. Please fix it before saving.");
+        return;
+      }
+    }
+
     const result = await patchSiteAdminSettings(siteSlug, {
       siteDisplayName: settingsDraft.siteDisplayName || null,
       businessName: settingsDraft.businessName || null,
@@ -435,6 +518,23 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
         ? Number(settingsDraft.cancellationNoRefundWithinDays)
         : null,
       cancellationPolicyNote: settingsDraft.cancellationPolicyNote.trim() || null,
+      aboutPageEnabled: settingsDraft.aboutPageEnabled,
+      policyPageEnabled: settingsDraft.policyPageEnabled,
+      aboutPageMode: settingsDraft.aboutPageMode,
+      aboutTitle: settingsDraft.aboutTitle.trim() || null,
+      aboutBody: settingsDraft.aboutBody.trim() || null,
+      aboutImageOneUrl: settingsDraft.aboutImageOneUrl.trim() || null,
+      aboutImageTwoUrl: settingsDraft.aboutImageTwoUrl.trim() || null,
+      aboutImagePlacement: settingsDraft.aboutImagePlacement,
+      aboutStaffProfilesJson,
+      contactTitle: settingsDraft.contactTitle.trim() || null,
+      contactIntro: settingsDraft.contactIntro.trim() || null,
+      contactMapEnabled: settingsDraft.contactMapEnabled,
+      contactMapNote: settingsDraft.contactMapNote.trim() || null,
+      policyTitle: settingsDraft.policyTitle.trim() || null,
+      policyIntro: settingsDraft.policyIntro.trim() || null,
+      policyBody: settingsDraft.policyBody.trim() || null,
+      socialLinks: settingsDraft.socialLinks,
     });
     if (!result.ok) {
       setMessage(toMessage(result.error, result.status));
@@ -921,6 +1021,99 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
               </label>
             </div>
           </div>
+
+          <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <h4 className="text-sm font-semibold text-slate-900">Pages & content</h4>
+            <p className="mt-1 text-xs text-slate-600">
+              Contact page is standard and always visible. About and Policy are optional.
+            </p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                <input type="checkbox" checked={settingsDraft.aboutPageEnabled} onChange={(event) => setSettingsDraft((current) => ({ ...current, aboutPageEnabled: event.target.checked }))} />
+                Enable About page
+              </label>
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                <input type="checkbox" checked={settingsDraft.policyPageEnabled} onChange={(event) => setSettingsDraft((current) => ({ ...current, policyPageEnabled: event.target.checked }))} />
+                Enable Policy page
+              </label>
+              <label className="text-xs font-semibold text-slate-700">
+                About mode
+                <select className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.aboutPageMode} onChange={(event) => setSettingsDraft((current) => ({ ...current, aboutPageMode: event.target.value as SettingsDraft["aboutPageMode"] }))}>
+                  <option value="GENERAL">General page</option>
+                  <option value="STAFF_PROFILES">Staff profiles</option>
+                </select>
+              </label>
+              <label className="text-xs font-semibold text-slate-700">
+                About image placement
+                <select className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.aboutImagePlacement} onChange={(event) => setSettingsDraft((current) => ({ ...current, aboutImagePlacement: event.target.value as SettingsDraft["aboutImagePlacement"] }))}>
+                  <option value="ABOVE">Images above text</option>
+                  <option value="BESIDE">Images beside text</option>
+                  <option value="BELOW">Images below text</option>
+                </select>
+              </label>
+              <label className="text-xs font-semibold text-slate-700 sm:col-span-2">About title
+                <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.aboutTitle} onChange={(event) => setSettingsDraft((current) => ({ ...current, aboutTitle: event.target.value }))} />
+              </label>
+              <label className="text-xs font-semibold text-slate-700 sm:col-span-2">About body
+                <textarea className="mt-1 min-h-[96px] w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.aboutBody} onChange={(event) => setSettingsDraft((current) => ({ ...current, aboutBody: event.target.value }))} />
+              </label>
+              <label className="text-xs font-semibold text-slate-700">About image one placeholder URL
+                <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.aboutImageOneUrl} onChange={(event) => setSettingsDraft((current) => ({ ...current, aboutImageOneUrl: event.target.value }))} />
+              </label>
+              <label className="text-xs font-semibold text-slate-700">About image two placeholder URL
+                <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.aboutImageTwoUrl} onChange={(event) => setSettingsDraft((current) => ({ ...current, aboutImageTwoUrl: event.target.value }))} />
+              </label>
+              <label className="text-xs font-semibold text-slate-700 sm:col-span-2">About staff profiles JSON (optional)
+                <textarea className="mt-1 min-h-[110px] w-full rounded-md border border-slate-300 px-2 py-1 text-xs" value={settingsDraft.aboutStaffProfilesJson} onChange={(event) => setSettingsDraft((current) => ({ ...current, aboutStaffProfilesJson: event.target.value }))} />
+              </label>
+              <label className="text-xs font-semibold text-slate-700">Contact page title
+                <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.contactTitle} onChange={(event) => setSettingsDraft((current) => ({ ...current, contactTitle: event.target.value }))} />
+              </label>
+              <label className="text-xs font-semibold text-slate-700">Map/location note
+                <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.contactMapNote} onChange={(event) => setSettingsDraft((current) => ({ ...current, contactMapNote: event.target.value }))} />
+              </label>
+              <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Contact intro text
+                <textarea className="mt-1 min-h-[80px] w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.contactIntro} onChange={(event) => setSettingsDraft((current) => ({ ...current, contactIntro: event.target.value }))} />
+              </label>
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">
+                <input type="checkbox" checked={settingsDraft.contactMapEnabled} onChange={(event) => setSettingsDraft((current) => ({ ...current, contactMapEnabled: event.target.checked }))} />
+                Show Google Maps link from business address
+              </label>
+              <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Policy title
+                <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.policyTitle} onChange={(event) => setSettingsDraft((current) => ({ ...current, policyTitle: event.target.value }))} />
+              </label>
+              <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Policy intro
+                <textarea className="mt-1 min-h-[70px] w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.policyIntro} onChange={(event) => setSettingsDraft((current) => ({ ...current, policyIntro: event.target.value }))} />
+              </label>
+              <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Policy body
+                <textarea className="mt-1 min-h-[100px] w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.policyBody} onChange={(event) => setSettingsDraft((current) => ({ ...current, policyBody: event.target.value }))} />
+              </label>
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <h4 className="text-sm font-semibold text-slate-900">Social media</h4>
+            <p className="mt-1 text-xs text-slate-600">Only enabled profiles with valid URLs appear on the public site.</p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              {([
+                ["facebook", "Facebook"],
+                ["instagram", "Instagram"],
+                ["tiktok", "TikTok"],
+                ["xTwitter", "X / Twitter"],
+                ["linkedin", "LinkedIn"],
+                ["youtube", "YouTube"],
+              ] as Array<[SettingsSocialKey, string]>).map(([key, label]) => (
+                <div key={key} className="rounded-lg border border-slate-200 bg-white p-3">
+                  <label className="flex items-center justify-between gap-2 text-xs font-semibold text-slate-700">
+                    <span>{label}</span>
+                    <input type="checkbox" checked={settingsDraft.socialLinks[key].enabled} onChange={(event) => setSettingsDraft((current) => ({ ...current, socialLinks: { ...current.socialLinks, [key]: { ...current.socialLinks[key], enabled: event.target.checked } } }))} />
+                  </label>
+                  <input className="mt-2 w-full rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="https://..." value={settingsDraft.socialLinks[key].url} onChange={(event) => setSettingsDraft((current) => ({ ...current, socialLinks: { ...current.socialLinks, [key]: { ...current.socialLinks[key], url: event.target.value } } }))} />
+                </div>
+              ))}
+            </div>
+          </div>
+
           <button type="button" className={`mt-4 ${primaryButtonClass} ${smallButtonClass}`} onClick={() => void saveSettings()}>
             Save site settings
           </button>

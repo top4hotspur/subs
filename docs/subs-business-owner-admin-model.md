@@ -278,3 +278,12 @@ Important:
 - Social links in customer-facing demo pages are rendered as icon buttons from local static assets.
 - Icons are served from `public/icons/social` and mapped via `src/lib/sites/social-platforms.ts`.
 - No external social API integrations are used.
+
+## Site-admin content controls (persisted)
+- `/site-admin/[siteSlug]` now includes persisted:
+  - About page toggle and content fields.
+  - Contact page title/intro/map note/map link toggle (Contact remains standard and visible).
+  - Policy page toggle and content fields.
+  - Social media toggles + profile URLs for Facebook, Instagram, TikTok, X/Twitter, LinkedIn and YouTube.
+- These values update tenant-scoped `CustomerSiteSettings` and are used by `/sites/[siteSlug]` public routes.
+- No real About/Contact image upload is added in this pass; placeholder URL fields only.

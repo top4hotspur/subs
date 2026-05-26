@@ -185,3 +185,16 @@ No real provider credentials/API keys are stored or connected in this phase.
 - Social links render only when enabled and a URL is present.
 - Links open in a new tab (`target="_blank"`, `rel="noreferrer"`).
 - Website is not included as a social platform option.
+
+## Persisted content/social defaults
+- Contact page is standard and should always be treated as available.
+- About and Policy visibility are persisted via `aboutPageEnabled` and `policyPageEnabled`.
+- Social platforms in persisted settings:
+  - Facebook
+  - Instagram
+  - TikTok
+  - X / Twitter
+  - LinkedIn
+  - YouTube
+- Icons are served from `/public/icons/social` and rendered as accessible link buttons.
+- `Website` is not included as a social platform.

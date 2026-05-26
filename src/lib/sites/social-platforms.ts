@@ -9,7 +9,7 @@ export type SocialPlatformId =
 export type SocialPlatformDefinition = {
   id: SocialPlatformId;
   label: string;
-  iconPath: string | null;
+  iconPath: string;
   accessibleLabel: string;
 };
 
@@ -41,7 +41,7 @@ export const SOCIAL_PLATFORM_DEFINITIONS: SocialPlatformDefinition[] = [
   {
     id: "linkedin",
     label: "LinkedIn",
-    iconPath: null,
+    iconPath: "/icons/social/icons8-linkedin-50.png",
     accessibleLabel: "Visit us on LinkedIn",
   },
   {
@@ -72,4 +72,41 @@ export function getSocialPlatform(value: string): SocialPlatformDefinition | nul
   const id = normalizeSocialPlatformId(value);
   if (!id) return null;
   return SOCIAL_PLATFORM_BY_ID.get(id) ?? null;
+}
+
+export type PersistedSocialLink = {
+  enabled?: boolean;
+  url?: string;
+};
+
+export type PersistedSocialLinks = Partial<
+  Record<"facebook" | "instagram" | "tiktok" | "xTwitter" | "linkedin" | "youtube", PersistedSocialLink>
+>;
+
+export function normalizePersistedSocialLinks(input: unknown): PersistedSocialLinks {
+  if (!input || typeof input !== "object") return {};
+  const source = input as Record<string, unknown>;
+  const keys: Array<keyof PersistedSocialLinks> = [
+    "facebook",
+    "instagram",
+    "tiktok",
+    "xTwitter",
+    "linkedin",
+    "youtube",
+  ];
+  const result: PersistedSocialLinks = {};
+  for (const key of keys) {
+    const value = source[key];
+    if (!value || typeof value !== "object") continue;
+    const candidate = value as Record<string, unknown>;
+    const url =
+      typeof candidate.url === "string" && candidate.url.trim().length > 0
+        ? candidate.url.trim()
+        : "";
+    result[key] = {
+      enabled: candidate.enabled === true,
+      url,
+    };
+  }
+  return result;
 }

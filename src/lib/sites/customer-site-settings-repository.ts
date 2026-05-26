@@ -42,6 +42,23 @@ export type CustomerSiteSettingsRecord = {
   cancellationFullRefundNoticeDays: number | null;
   cancellationNoRefundWithinDays: number | null;
   cancellationPolicyNote: string | null;
+  aboutPageEnabled: boolean;
+  policyPageEnabled: boolean;
+  aboutPageMode: string | null;
+  aboutTitle: string | null;
+  aboutBody: string | null;
+  aboutImageOneUrl: string | null;
+  aboutImageTwoUrl: string | null;
+  aboutImagePlacement: string | null;
+  aboutStaffProfilesJson: unknown;
+  contactTitle: string | null;
+  contactIntro: string | null;
+  contactMapEnabled: boolean;
+  contactMapNote: string | null;
+  policyTitle: string | null;
+  policyIntro: string | null;
+  policyBody: string | null;
+  socialLinks: unknown;
   createdAt: string;
   updatedAt: string;
 };
@@ -109,6 +126,23 @@ function serializeSettings(record: {
   cancellationFullRefundNoticeDays: number | null;
   cancellationNoRefundWithinDays: number | null;
   cancellationPolicyNote: string | null;
+  aboutPageEnabled: boolean;
+  policyPageEnabled: boolean;
+  aboutPageMode: string | null;
+  aboutTitle: string | null;
+  aboutBody: string | null;
+  aboutImageOneUrl: string | null;
+  aboutImageTwoUrl: string | null;
+  aboutImagePlacement: string | null;
+  aboutStaffProfilesJson: unknown;
+  contactTitle: string | null;
+  contactIntro: string | null;
+  contactMapEnabled: boolean;
+  contactMapNote: string | null;
+  policyTitle: string | null;
+  policyIntro: string | null;
+  policyBody: string | null;
+  socialLinks: unknown;
   createdAt: Date;
   updatedAt: Date;
 }): CustomerSiteSettingsRecord {
@@ -191,6 +225,33 @@ export async function upsertCustomerSiteSettings(
     cancellationFullRefundNoticeDays: parsed.cancellationFullRefundNoticeDays ?? 1,
     cancellationNoRefundWithinDays: parsed.cancellationNoRefundWithinDays ?? 1,
     cancellationPolicyNote: parsed.cancellationPolicyNote ?? null,
+    aboutPageEnabled: parsed.aboutPageEnabled ?? false,
+    policyPageEnabled: parsed.policyPageEnabled ?? true,
+    aboutPageMode: parsed.aboutPageMode ?? null,
+    aboutTitle: parsed.aboutTitle ?? null,
+    aboutBody: parsed.aboutBody ?? null,
+    aboutImageOneUrl: parsed.aboutImageOneUrl ?? null,
+    aboutImageTwoUrl: parsed.aboutImageTwoUrl ?? null,
+    aboutImagePlacement: parsed.aboutImagePlacement ?? null,
+    aboutStaffProfilesJson:
+      parsed.aboutStaffProfilesJson === undefined
+        ? undefined
+        : parsed.aboutStaffProfilesJson === null
+          ? Prisma.DbNull
+          : toJson(parsed.aboutStaffProfilesJson),
+    contactTitle: parsed.contactTitle ?? null,
+    contactIntro: parsed.contactIntro ?? null,
+    contactMapEnabled: parsed.contactMapEnabled ?? true,
+    contactMapNote: parsed.contactMapNote ?? null,
+    policyTitle: parsed.policyTitle ?? null,
+    policyIntro: parsed.policyIntro ?? null,
+    policyBody: parsed.policyBody ?? null,
+    socialLinks:
+      parsed.socialLinks === undefined
+        ? undefined
+        : parsed.socialLinks === null
+          ? Prisma.DbNull
+          : toJson(parsed.socialLinks),
   };
   const updateData: Prisma.CustomerSiteSettingsUncheckedUpdateInput = {};
   if (parsed.siteDisplayName !== undefined) updateData.siteDisplayName = parsed.siteDisplayName;
@@ -246,6 +307,33 @@ export async function upsertCustomerSiteSettings(
   }
   if (parsed.cancellationPolicyNote !== undefined) {
     updateData.cancellationPolicyNote = parsed.cancellationPolicyNote;
+  }
+  if (parsed.aboutPageEnabled !== undefined) updateData.aboutPageEnabled = parsed.aboutPageEnabled;
+  if (parsed.policyPageEnabled !== undefined) updateData.policyPageEnabled = parsed.policyPageEnabled;
+  if (parsed.aboutPageMode !== undefined) updateData.aboutPageMode = parsed.aboutPageMode;
+  if (parsed.aboutTitle !== undefined) updateData.aboutTitle = parsed.aboutTitle;
+  if (parsed.aboutBody !== undefined) updateData.aboutBody = parsed.aboutBody;
+  if (parsed.aboutImageOneUrl !== undefined) updateData.aboutImageOneUrl = parsed.aboutImageOneUrl;
+  if (parsed.aboutImageTwoUrl !== undefined) updateData.aboutImageTwoUrl = parsed.aboutImageTwoUrl;
+  if (parsed.aboutImagePlacement !== undefined) updateData.aboutImagePlacement = parsed.aboutImagePlacement;
+  if (parsed.aboutStaffProfilesJson !== undefined) {
+    updateData.aboutStaffProfilesJson =
+      parsed.aboutStaffProfilesJson === null
+        ? Prisma.DbNull
+        : toJson(parsed.aboutStaffProfilesJson);
+  }
+  if (parsed.contactTitle !== undefined) updateData.contactTitle = parsed.contactTitle;
+  if (parsed.contactIntro !== undefined) updateData.contactIntro = parsed.contactIntro;
+  if (parsed.contactMapEnabled !== undefined) updateData.contactMapEnabled = parsed.contactMapEnabled;
+  if (parsed.contactMapNote !== undefined) updateData.contactMapNote = parsed.contactMapNote;
+  if (parsed.policyTitle !== undefined) updateData.policyTitle = parsed.policyTitle;
+  if (parsed.policyIntro !== undefined) updateData.policyIntro = parsed.policyIntro;
+  if (parsed.policyBody !== undefined) updateData.policyBody = parsed.policyBody;
+  if (parsed.socialLinks !== undefined) {
+    updateData.socialLinks =
+      parsed.socialLinks === null
+        ? Prisma.DbNull
+        : toJson(parsed.socialLinks);
   }
 
   const record = await prisma.customerSiteSettings.upsert({

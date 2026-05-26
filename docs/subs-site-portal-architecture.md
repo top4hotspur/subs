@@ -139,3 +139,13 @@ No per-customer DB or code export is required for this model.
 - Site-admin and platform support views read/write the same tenant-scoped configuration.
 - Current scope is intent/configuration only; runtime payment integrations remain out of scope.
 - No payment secrets or customer card data are collected in this pass.
+
+## Update: persisted subscriber pages + social controls
+- Business owner at `/site-admin/[siteSlug]` now manages persisted page/content settings for their own tenant site.
+- Public tenant routes use persisted data:
+  - `/sites/[siteSlug]`
+  - `/sites/[siteSlug]/about` (visible when About is enabled)
+  - `/sites/[siteSlug]/contact` (always standard)
+  - `/sites/[siteSlug]/policy` (visible when Policy is enabled)
+- Social links are rendered from persisted `socialLinks` and shown with static icon assets from `/public/icons/social`.
+- Contact page map support is link-based (`google.com/maps/search`) generated from persisted address. No Google Maps API key is used.

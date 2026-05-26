@@ -174,3 +174,13 @@ Conflict behavior (v1):
   - `cancellationPolicyNote`
 - This remains configuration/preparation only.
 - No API keys, card details, checkout, payment capture, refunds, or provider webhooks are stored/implemented.
+
+## Persisted page/content + social media settings (tenant-scoped)
+- `CustomerSiteSettings` now stores page/content and social settings per `tenantSiteId`:
+  - Page visibility: `aboutPageEnabled`, `policyPageEnabled`.
+  - About: `aboutPageMode`, `aboutTitle`, `aboutBody`, `aboutImageOneUrl`, `aboutImageTwoUrl`, `aboutImagePlacement`, `aboutStaffProfilesJson`.
+  - Contact: `contactTitle`, `contactIntro`, `contactMapEnabled`, `contactMapNote`.
+  - Policy: `policyTitle`, `policyIntro`, `policyBody`.
+  - Social: `socialLinks` JSON with `facebook`, `instagram`, `tiktok`, `xTwitter`, `linkedin`, `youtube`.
+- `Website` is not a supported social platform.
+- About/Contact images remain placeholder URL fields only in this pass (no new media upload workflow).
