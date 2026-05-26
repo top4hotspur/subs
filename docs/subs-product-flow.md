@@ -396,3 +396,10 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Setup flow messaging now states that payment/subscription onboarding is confirmed after setup request submission.
 - Public-facing copy has been tightened to avoid mock/local technical wording in conversion surfaces.
 - Global `/account` is no longer promoted in public header/footer navigation; site-scoped account flows remain under demo routes.
+
+## Setup confirmation security update (2026-05)
+- Setup confirmation now uses signed-style secret token verification (`requestId + token`) for public confirmation reads.
+- Request ID alone no longer grants public access to setup-request detail.
+- Token plaintext is generated at create-time only; backend stores hash and usage timestamps/count.
+- Platform admin setup-request management remains session-protected.
+- Local browser fallback remains available for backend-unavailable setup submissions.

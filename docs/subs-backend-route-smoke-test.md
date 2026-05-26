@@ -68,3 +68,14 @@ No real secrets should be committed in repo files.
 - Route: `GET /api/admin-auth-health`
 - Purpose: safe hosted diagnostics for auth environment readiness.
 - Returns booleans/count/host metadata only; no secret values are returned.
+
+## Setup request confirmation token checks
+1. Submit `POST /api/setup-requests` and confirm response includes:
+   - `setupRequest.id`
+   - `confirmationToken`
+   - `confirmationUrl`
+2. Open `confirmationUrl` and verify setup request loads.
+3. Request `GET /api/setup-requests/{id}` without token as public user and verify denied/not-found response.
+4. Request `GET /api/setup-requests/{id}?token=invalid` and verify denied/not-found response.
+5. Request `GET /api/setup-requests/{id}?token={valid}` and verify success.
+6. Verify platform admin can still read setup request detail through admin UI.

@@ -439,3 +439,10 @@ Add these checks after backend envs are configured:
 5. Open `/setup/barbers` and confirm copy states setup request submission and onboarding/payment steps are confirmed afterwards.
 6. Open `/setup/confirmation` from a submitted request and confirm no links direct prospects to global `/account`.
 7. Confirm public header/footer do not expose customer `/account`.
+
+## Hosted smoke: setup confirmation token hardening
+1. Submit setup request via `/setup/[industry]`.
+2. Confirm redirect URL includes `requestId`, `source=backend`, and `token` when backend path is used.
+3. Confirm `/setup/confirmation` loads with valid token.
+4. Remove/alter token and confirm page shows verification failure.
+5. Confirm local fallback (`source=local`) still loads from browser data when backend is unavailable.

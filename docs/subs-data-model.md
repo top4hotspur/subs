@@ -184,3 +184,15 @@ Conflict behavior (v1):
   - Social: `socialLinks` JSON with `facebook`, `instagram`, `tiktok`, `xTwitter`, `linkedin`, `youtube`.
 - `Website` is not a supported social platform.
 - About/Contact images remain placeholder URL fields only in this pass (no new media upload workflow).
+
+## SetupRequest confirmation security fields
+`SetupRequest` now includes:
+- `confirmationTokenHash`
+- `confirmationTokenCreatedAt`
+- `confirmationTokenLastUsedAt`
+- `confirmationAccessCount`
+
+Notes:
+- Plaintext token is not stored in database.
+- Public confirmation lookups require a valid token that matches stored hash.
+- Platform-admin reads remain session-authorized.

@@ -151,9 +151,22 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
               createdAtIso: backendResult.setupRequest.createdAt,
               status: SubscriptionSetupStatus.SETUP_REVIEW_REQUESTED,
             });
-            router.push(
-              `/setup/confirmation?requestId=${encodeURIComponent(backendResult.setupRequest.id)}&source=backend`,
-            );
+            if (backendResult.confirmationUrl) {
+              router.push(backendResult.confirmationUrl);
+              return;
+            }
+
+            if (backendResult.confirmationToken) {
+              router.push(
+                `/setup/confirmation?requestId=${encodeURIComponent(backendResult.setupRequest.id)}&source=backend&token=${encodeURIComponent(backendResult.confirmationToken)}`,
+              );
+              return;
+            }
+
+            setErrors([
+              "We could not verify your confirmation link token. Please submit again.",
+            ]);
+            setSubmitting(false);
             return;
           }
 

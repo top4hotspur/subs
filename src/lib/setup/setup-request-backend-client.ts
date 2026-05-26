@@ -5,6 +5,8 @@ import {
 type BackendClientSuccess<T> = {
   ok: true;
   setupRequest: T;
+  confirmationToken?: string;
+  confirmationUrl?: string;
 };
 
 type BackendClientFailure = {
@@ -56,7 +58,14 @@ export async function submitSetupRequestToBackend(
     });
 
     const body = (await parseJsonSafe(response)) as
-      | { ok?: boolean; setupRequest?: BackendSetupRequestRecord; error?: string; details?: unknown }
+      | {
+          ok?: boolean;
+          setupRequest?: BackendSetupRequestRecord;
+          confirmationToken?: string;
+          confirmationUrl?: string;
+          error?: string;
+          details?: unknown;
+        }
       | null;
 
     if (!response.ok || !body?.ok || !body.setupRequest) {
@@ -68,7 +77,12 @@ export async function submitSetupRequestToBackend(
       };
     }
 
-    return { ok: true, setupRequest: body.setupRequest };
+    return {
+      ok: true,
+      setupRequest: body.setupRequest,
+      confirmationToken: body.confirmationToken,
+      confirmationUrl: body.confirmationUrl,
+    };
   } catch {
     return {
       ok: false,
@@ -80,9 +94,13 @@ export async function submitSetupRequestToBackend(
 
 export async function getSetupRequestFromBackend(
   id: string,
+  token?: string,
 ): Promise<BackendClientResult<BackendSetupRequestRecord>> {
   try {
-    const response = await fetch(`/api/setup-requests/${encodeURIComponent(id)}`, {
+    const path = token
+      ? `/api/setup-requests/${encodeURIComponent(id)}?token=${encodeURIComponent(token)}`
+      : `/api/setup-requests/${encodeURIComponent(id)}`;
+    const response = await fetch(path, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });

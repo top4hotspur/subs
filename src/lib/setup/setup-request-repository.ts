@@ -2,6 +2,11 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
 import {
+  generateSetupConfirmationToken,
+  hashSetupConfirmationToken,
+  verifySetupConfirmationToken,
+} from "@/lib/setup/setup-confirmation-token";
+import {
   createDemoDraftSnapshotSchema,
   createSetupRequestEventSchema,
   createSetupRequestSchema,
@@ -36,11 +41,15 @@ function toJson(value: unknown): Prisma.InputJsonValue {
 
 export async function createSetupRequest(input: CreateSetupRequestInput) {
   const parsed = parseOrThrow(createSetupRequestSchema, input, "setup request input");
+  const confirmationToken = generateSetupConfirmationToken();
+  const confirmationTokenHash = hashSetupConfirmationToken(confirmationToken);
 
-  return prisma.setupRequest.create({
+  const setupRequest = await prisma.setupRequest.create({
     data: {
       tenantSiteId: parsed.tenantSiteId,
       demoDraftSnapshotId: parsed.demoDraftSnapshotId,
+      confirmationTokenHash,
+      confirmationTokenCreatedAt: new Date(),
       industrySlug: parsed.industrySlug,
       businessName: parsed.businessName,
       contactName: parsed.contactName,
@@ -57,6 +66,11 @@ export async function createSetupRequest(input: CreateSetupRequestInput) {
       rawPayload: parsed.rawPayload === undefined ? undefined : toJson(parsed.rawPayload),
     },
   });
+
+  return {
+    setupRequest,
+    confirmationToken,
+  };
 }
 
 export async function getSetupRequestById(id: string) {
@@ -70,6 +84,41 @@ export async function getSetupRequestById(id: string) {
       tenantSite: true,
     },
   });
+}
+
+export async function getSetupRequestByIdForConfirmation(id: string, token: string) {
+  const parsedId = parseOrThrow(setupRequestIdSchema, id, "setup request id");
+  const safeToken = token.trim();
+  if (!safeToken) {
+    return null;
+  }
+
+  const setupRequest = await prisma.setupRequest.findUnique({
+    where: { id: parsedId },
+    include: {
+      demoDraftSnapshot: true,
+      events: { orderBy: { createdAt: "desc" } },
+      tenantSite: true,
+    },
+  });
+
+  if (!setupRequest?.confirmationTokenHash) {
+    return null;
+  }
+
+  if (!verifySetupConfirmationToken(safeToken, setupRequest.confirmationTokenHash)) {
+    return null;
+  }
+
+  await prisma.setupRequest.update({
+    where: { id: parsedId },
+    data: {
+      confirmationTokenLastUsedAt: new Date(),
+      confirmationAccessCount: { increment: 1 },
+    },
+  });
+
+  return setupRequest;
 }
 
 export async function listSetupRequests(options: Partial<ListSetupRequestsInput> = {}) {

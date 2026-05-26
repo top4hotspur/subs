@@ -113,3 +113,9 @@ Not persisted yet (remain local/mock):
   - `PATCH /api/admin/sites/[id]/bookings/[bookingId]`
 - Conflict rule (v1): same `tenantSiteId + staffMemberId + preferredDate + preferredTime` cannot have overlapping active booking (`CANCELLED`/`NO_SHOW` ignored).
 - No public custom-domain booking route yet.
+
+## Setup confirmation token hardening milestone
+- Added token-hash fields on `SetupRequest` for public confirmation-link protection.
+- Backend create flow now issues a high-entropy confirmation token and stores only SHA-256 hash.
+- Public confirmation lookup now requires `requestId + token`.
+- Platform-admin setup-request operations remain session-protected and unchanged in behavior.

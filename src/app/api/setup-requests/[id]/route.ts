@@ -4,6 +4,7 @@ import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin";
 import {
   getSetupRequestById,
+  getSetupRequestByIdForConfirmation,
   updateSetupRequestStatus,
 } from "@/lib/setup/setup-request-repository";
 import { updateSetupRequestStatusSchema } from "@/lib/setup/setup-request-schema";
@@ -17,18 +18,20 @@ function backendNotConfigured() {
 
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
   if (!isBackendPersistenceConfigured()) {
     return backendNotConfigured();
   }
 
-  // Temporary: public read by opaque id for confirmation flow.
-  // Future hardening should require a signed token or authenticated owner access.
   try {
     const { id } = await context.params;
-    const setupRequest = await getSetupRequestById(id);
+    const isAdmin = await isPlatformAdminSession();
+    const token = request.nextUrl.searchParams.get("token") ?? "";
+    const setupRequest = isAdmin
+      ? await getSetupRequestById(id)
+      : await getSetupRequestByIdForConfirmation(id, token);
 
     if (!setupRequest) {
       return NextResponse.json({ ok: false, error: "SETUP_REQUEST_NOT_FOUND" }, { status: 404 });

@@ -3,6 +3,9 @@ import { ZodError } from "zod";
 import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin";
 import {
+  buildSetupConfirmationParams,
+} from "@/lib/setup/setup-confirmation-token";
+import {
   createSetupRequest,
   listSetupRequests,
 } from "@/lib/setup/setup-request-repository";
@@ -26,8 +29,15 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const input = createSetupRequestSchema.parse(body);
-    const setupRequest = await createSetupRequest(input);
-    return NextResponse.json({ ok: true, setupRequest }, { status: 201 });
+    const { setupRequest, confirmationToken } = await createSetupRequest(input);
+    const confirmationUrl = `/setup/confirmation?${buildSetupConfirmationParams(
+      setupRequest.id,
+      confirmationToken,
+    ).toString()}`;
+    return NextResponse.json(
+      { ok: true, setupRequest, confirmationToken, confirmationUrl },
+      { status: 201 },
+    );
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(

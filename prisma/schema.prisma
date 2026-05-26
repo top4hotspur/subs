@@ -61,6 +61,10 @@ model SetupRequest {
   id                  String             @id @default(cuid())
   tenantSiteId        String?
   demoDraftSnapshotId String?            @unique
+  confirmationTokenHash String?
+  confirmationTokenCreatedAt DateTime?
+  confirmationTokenLastUsedAt DateTime?
+  confirmationAccessCount Int            @default(0)
   industrySlug        String
   businessName        String
   contactName         String?

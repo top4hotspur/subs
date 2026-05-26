@@ -26,25 +26,27 @@ import {
 
 type RequestSourceHint = "backend" | "local" | "unknown";
 
-function readParamsFromLocation(): { requestId: string | null; source: RequestSourceHint } {
+function readParamsFromLocation(): { requestId: string | null; source: RequestSourceHint; token: string | null } {
   if (typeof window === "undefined") {
-    return { requestId: null, source: "unknown" };
+    return { requestId: null, source: "unknown", token: null };
   }
   const params = new URLSearchParams(window.location.search);
   const requestId = params.get("requestId");
+  const token = params.get("token");
   const sourceParam = params.get("source");
   if (sourceParam === "backend") {
-    return { requestId, source: "backend" };
+    return { requestId, source: "backend", token };
   }
   if (sourceParam === "local") {
-    return { requestId, source: "local" };
+    return { requestId, source: "local", token };
   }
-  return { requestId, source: "unknown" };
+  return { requestId, source: "unknown", token };
 }
 
 export default function SetupConfirmationPage() {
-  const [{ requestId, source }] = useState(() => readParamsFromLocation());
+  const [{ requestId, source, token }] = useState(() => readParamsFromLocation());
   const [request, setRequest] = useState<SetupRequestDisplay | null>(null);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [recentRequests] = useState<LocalSetupRequest[]>(() =>
     typeof window === "undefined" ? [] : listLocalSetupRequests().slice(0, 5),
@@ -62,14 +64,26 @@ export default function SetupConfirmationPage() {
         return;
       }
       const safeRequestId = requestId;
+      const safeToken = token?.trim() || "";
 
       const local = getLocalSetupRequest(safeRequestId);
       const localMapped = local ? mapLocalSetupRequestToDisplay(local) : null;
 
       async function fetchBackend() {
-        const backendResult = await getSetupRequestFromBackend(safeRequestId);
+        const backendResult = await getSetupRequestFromBackend(safeRequestId, safeToken || undefined);
         if (backendResult.ok) {
           return mapBackendSetupRequestToDisplay(backendResult.setupRequest);
+        }
+        if (source === "backend") {
+          if (!safeToken) {
+            if (!cancelled) {
+              setVerificationError("We could not verify this setup confirmation link.");
+            }
+          } else if (backendResult.status === 403 || backendResult.status === 404) {
+            if (!cancelled) {
+              setVerificationError("We could not verify this setup confirmation link.");
+            }
+          }
         }
         return null;
       }
@@ -77,7 +91,7 @@ export default function SetupConfirmationPage() {
       let resolved: SetupRequestDisplay | null = null;
 
       if (source === "backend") {
-        resolved = (await fetchBackend()) ?? localMapped;
+        resolved = await fetchBackend();
       } else if (source === "local") {
         resolved = localMapped ?? (await fetchBackend());
       } else {
@@ -95,7 +109,7 @@ export default function SetupConfirmationPage() {
     return () => {
       cancelled = true;
     };
-  }, [requestId, source]);
+  }, [requestId, source, token]);
 
   if (loading) {
     return (
@@ -113,7 +127,8 @@ export default function SetupConfirmationPage() {
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h1 className="text-3xl font-bold text-slate-900">Setup request not found</h1>
           <p className="mt-3 text-slate-600">
-            We could not load that setup request. If you opened an older link or the request has expired, please submit setup details again.
+            {verificationError ??
+              "We could not load that setup request. If you opened an older link or the request has expired, please submit setup details again."}
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
             <Link href="/setup/barbers" className={primaryButtonClass}>Submit setup request</Link>

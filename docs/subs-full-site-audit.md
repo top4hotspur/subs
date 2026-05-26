@@ -211,3 +211,10 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - Public header/footer no longer promote the legacy global `/account` route.
 - Conversion-facing copy now avoids implying that demo content is automatically copied into live subscriber sites.
 - Setup wording now clearly frames payment as an onboarding confirmation step, not live checkout.
+
+## P0 security hardening applied: setup confirmation token (2026-05-26)
+- Public `GET /api/setup-requests/[id]` no longer allows read-by-id alone.
+- Confirmation access now requires a token query param for non-admin callers.
+- Platform admin session can still read setup requests without confirmation token.
+- Setup confirmation links now include a one-time-style high-entropy token parameter.
+- Token plaintext is returned only at create time and not exposed in list/admin reads.
