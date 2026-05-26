@@ -104,7 +104,7 @@ export function DemoCustomizer({ template, initialDraft }: DemoCustomizerProps) 
       <aside className="space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Create my own site</h1>
+            <h1 className="text-2xl font-bold text-slate-900">Create your demo site</h1>
             <p className="mt-1 text-sm text-slate-600">
               Add the key details now. We will use these to prepare your website setup.
             </p>
@@ -253,11 +253,11 @@ export function DemoCustomizer({ template, initialDraft }: DemoCustomizerProps) 
         <section className="space-y-3 rounded-xl border border-slate-200 p-4">
           <p className="text-sm font-semibold text-slate-900">Next: complete setup details</p>
           <p className="text-xs text-slate-600">
-            Choose domain option, confirm customer communications, review setup/monthly pricing, and continue to payment when payments are enabled.
+            Choose your domain option, submit setup details, and we will confirm onboarding and payment/setup steps with you.
           </p>
           <div className="flex flex-wrap gap-2">
             <Link href={`/setup/${template.slug}`} className={primaryButtonClass}>
-              Continue to setup
+              Get your site now
             </Link>
             <button
               type="button"
@@ -298,11 +298,6 @@ export function DemoCustomizer({ template, initialDraft }: DemoCustomizerProps) 
       </aside>
 
       <div className="space-y-4">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600 shadow-sm">
-          <p className="font-semibold text-slate-900">Demo login placeholder</p>
-          <p>{template.demoLogin.email}</p>
-          <p>{template.demoLogin.password}</p>
-        </div>
         <DemoPreview template={template} draft={draft} />
       </div>
     </div>

@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { HomeFaqAccordion } from "@/components/marketing/home-faq-accordion";
 import { IndustryCategoryBrowser } from "@/components/marketing/industry-category-browser";
 import { SimpleOfferCard } from "@/components/pricing/simple-offer-card";
@@ -77,7 +77,7 @@ const faqs = [
   },
   {
     q: "Do I need to buy my own domain name?",
-    a: "You have options. If you already own a domain, you can point it to us at no extra domain fee. If you need a new one, we can register and manage it for you for a flat £49 fee.",
+    a: "You have options. If you already own a domain, you can point it to us at no extra domain fee. If you need a new one, we can register and manage it for you for a flat GBP49 fee.",
   },
   {
     q: "Do I have to pay before seeing what my site looks like?",
@@ -89,7 +89,7 @@ const faqs = [
   },
   {
     q: "Who handles the hosting and technical updates?",
-    a: "We do. Your £30 monthly subscription covers the hosting, setup support, and ongoing platform management. We manage the tech so you can stay focused on running your business.",
+    a: "We do. Your GBP30 monthly subscription covers the hosting, setup support, and ongoing platform management. We manage the tech so you can stay focused on running your business.",
   },
   {
     q: "Does the website actually handle my customer bookings?",
@@ -136,7 +136,7 @@ export function MarketingHome() {
         <SiteHero
           title="Managed websites and booking tools for local service businesses"
           subtitle="Choose your industry, preview a working demo, and get a professional website with booking/request tools, customer features and ongoing support - all in one simple monthly package."
-          helperText="£149 setup + £30/month. Full managed website included. Live-site target within a day once domain name has been confirmed."
+          helperText="GBP149 setup + GBP30/month. Full managed website included. Live-site target within a day once domain name has been confirmed."
           actions={(
             <>
               <Link href="#industries" className={primaryButtonClass}>
@@ -204,7 +204,7 @@ export function MarketingHome() {
 
         <SiteCtaPanel
           title="Ready to see your website live direction?"
-          subtitle="Choose your industry, customise your demo, and start setup when you are happy."
+          subtitle="Choose your industry, explore the demo views, and start setup when you are ready."
           primaryHref="#industries"
           primaryLabel="Choose your business type"
           secondaryHref="/demo/taxi"

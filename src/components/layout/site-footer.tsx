@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { usePathname } from "next/navigation";
 import { SiteFooterBlock } from "@/components/site-ui/site-footer-block";
@@ -13,7 +13,7 @@ export function SiteFooter() {
     <footer className="mt-16 px-4 pb-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
         <SiteFooterBlock
-          brand="Subs / MyExperiment.club"
+          brand="MyExperiment.club"
           description="Subscription websites for local service businesses with demo-first onboarding, managed setup, and ongoing monthly support."
           groups={[
             {
@@ -24,22 +24,22 @@ export function SiteFooter() {
               ],
             },
             {
-              title: "Portals",
+              title: "Get started",
               links: [
-                { label: "Customer login (mock)", href: "/account" },
-                { label: "Platform admin", href: "/admin" },
+                { label: "View demo site", href: "/demo/barbers" },
+                { label: "Get your site now", href: "/setup/barbers" },
               ],
             },
             {
-              title: "Project",
+              title: "Platform",
               links: [
-                { label: "Business site settings demo", href: "/admin/settings" },
+                { label: "Platform admin", href: "/admin" },
                 { label: "Homepage", href: "/" },
               ],
             },
           ]}
         />
-        <p className="mt-4 text-center text-xs text-slate-500">© {new Date().getFullYear()} MyExperiment.club. Hosted demo/local mock foundation.</p>
+        <p className="mt-4 text-center text-xs text-slate-500">(c) {new Date().getFullYear()} MyExperiment.club.</p>
       </div>
     </footer>
   );

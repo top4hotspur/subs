@@ -425,3 +425,17 @@ Add these checks after backend envs are configured:
    - Contact route remains available.
    - Social icon links open in new tabs.
    - Google Maps link appears when address + map toggle are set.
+
+## Hosted smoke: P0 conversion cleanup
+1. Open `/barbers`.
+2. Confirm primary CTAs are:
+   - `View demo site` -> `/demo/barbers`
+   - `Get your site now` -> `/setup/barbers`
+3. Open `/demo/barbers/customise` and confirm it is a transition page only (no heavy customiser editor).
+4. Confirm `/demo/barbers/customise` has:
+   - `Open demo site`
+   - `Open Admin View`
+   - `Get your site now`
+5. Open `/setup/barbers` and confirm copy states setup request submission and onboarding/payment steps are confirmed afterwards.
+6. Open `/setup/confirmation` from a submitted request and confirm no links direct prospects to global `/account`.
+7. Confirm public header/footer do not expose customer `/account`.

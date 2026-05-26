@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getWebsiteTemplate } from "@/lib/sites/mock-repository";
 import { getLocalCustomerSiteSettings } from "@/lib/sites/local-site-settings";
@@ -21,14 +21,14 @@ export default async function IndustryPolicyPage({ params }: Props) {
   return (
     <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
       <h1 className="text-3xl font-bold text-slate-900">{template.name} Policy</h1>
-      <p className="mt-2 text-sm text-slate-600">Standard policy page placeholder for this site template.</p>
+      <p className="mt-2 text-sm text-slate-600">Example policy content for this website type.</p>
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-3">
         <h2 className="text-xl font-semibold text-slate-900">Payment options</h2>
         <p className="text-sm text-slate-700">Card payments: {settings.paymentSettings.cardPaymentsEnabled ? "Enabled" : "Disabled"}</p>
         <p className="text-sm text-slate-700">Cash payments: {settings.paymentSettings.cashPaymentsEnabled ? "Enabled" : "Disabled"}</p>
         {settings.paymentSettings.cashPaymentsEnabled ? (
-          <p className="text-xs text-amber-700">Cash bookings increase no-show risk because payment is not taken upfront.</p>
+          <p className="text-xs text-amber-700">Cash bookings can increase no-show risk because payment is not taken upfront.</p>
         ) : null}
         <p className="text-sm text-slate-700">Prepayment required: {settings.paymentSettings.requirePrepaymentForBookings ? "Yes" : "No"}</p>
       </section>
@@ -45,12 +45,10 @@ export default async function IndustryPolicyPage({ params }: Props) {
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-3">
         <h2 className="text-xl font-semibold text-slate-900">Communications</h2>
         <p className="text-sm text-slate-700">Email notifications are included as standard.</p>
-        <p className="text-sm text-slate-700">More features are being added all the time.</p>
+        <p className="text-sm text-slate-700">More features are being added over time.</p>
       </section>
 
-      <p className="mt-6 text-xs text-slate-500">Local/mock policy content only. No legal review or backend enforcement is applied in this demo.</p>
       <div className="mt-4"><Link href={`/${industry}`} className="text-sky-700 hover:text-sky-900">Back to {template.category} page</Link></div>
     </main>
   );
 }
-

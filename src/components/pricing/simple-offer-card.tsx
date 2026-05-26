@@ -48,7 +48,7 @@ export function SimpleOfferCard({ industrySlug, ctaLabel, showCta = true }: Simp
 
       {showCta ? (
         <Link href={href} className={`mt-6 ${primaryButtonClass}`}>
-          {ctaLabel ?? (industrySlug ? "Start setup" : "Choose your business type")}
+          {ctaLabel ?? (industrySlug ? "Get your site now" : "Choose your business type")}
         </Link>
       ) : null}
     </section>

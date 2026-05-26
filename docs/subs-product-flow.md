@@ -385,3 +385,14 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - About and Policy are optional and controlled per tenant site.
 - Social links are persisted and rendered with static icon assets (Facebook, Instagram, TikTok, X/Twitter, LinkedIn, YouTube).
 - No external social integrations are added in this pass.
+
+## P0 conversion path cleanup (2026-05-26)
+- `/demo/[industry]/customise` is now a lightweight transition/help page instead of the main customisation experience.
+- Primary customization path is demo Admin View (`/demo/[industry]/admin`).
+- Core conversion CTAs are standardized to:
+  - `View demo site`
+  - `Get your site now`
+  - `Submit setup request`
+- Setup flow messaging now states that payment/subscription onboarding is confirmed after setup request submission.
+- Public-facing copy has been tightened to avoid mock/local technical wording in conversion surfaces.
+- Global `/account` is no longer promoted in public header/footer navigation; site-scoped account flows remain under demo routes.

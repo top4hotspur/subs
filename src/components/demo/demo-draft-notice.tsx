@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { getActiveLocalDemoDraftId } from "@/lib/demo/local-demo-drafts";
@@ -25,8 +25,8 @@ export function DemoDraftNotice({ templateSlug }: DemoDraftNoticeProps) {
   return (
     <div className="mb-3 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800">
       You have a customised demo draft in this browser. {" "}
-      <Link href={`/demo/${templateSlug}/customise`} className="font-semibold underline">
-        Create my own site
+      <Link href={`/demo/${templateSlug}/admin`} className="font-semibold underline">
+        Open Admin View
       </Link>
       .
     </div>

@@ -149,3 +149,13 @@ No per-customer DB or code export is required for this model.
   - `/sites/[siteSlug]/policy` (visible when Policy is enabled)
 - Social links are rendered from persisted `socialLinks` and shown with static icon assets from `/public/icons/social`.
 - Contact page map support is link-based (`google.com/maps/search`) generated from persisted address. No Google Maps API key is used.
+
+## Conversion-path alignment update (2026-05-26)
+- Demo route intent is now explicit:
+  - `/demo/[industry]` family = exploratory sales/demo experience.
+  - `/demo/[industry]/admin` = feature demonstration for business-admin capabilities.
+  - `/demo/[industry]/customise` = transition helper only (no primary editing workflow).
+- Setup conversion path is standardized:
+  - `/[industry]` -> `/demo/[industry]` -> `/setup/[industry]` -> `/setup/confirmation`.
+- Public navigation no longer promotes global `/account` while customer auth remains pending.
+- Subscriber site provisioning remains clean-start by default; demo exploration does not imply automatic demo-data copy into live tenant records.

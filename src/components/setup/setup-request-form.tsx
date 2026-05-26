@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -197,7 +197,7 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
             Detailed booking, job, calendar, staff and admin tools are configured during setup based on your business type.
           </p>
           {draft.demoDraftName ? (
-            <p className="text-sm text-slate-600">Using draft: {draft.demoDraftName}</p>
+            <p className="text-sm text-slate-600">You explored: {draft.demoDraftName}. Your live site still starts clean, ready for your real business data.</p>
           ) : null}
           <label className="block text-sm font-medium text-slate-700">
             Business name
@@ -271,7 +271,7 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
             <label className="block text-sm font-medium text-slate-700">
               Planned domain
               <p className="mt-1 text-xs font-normal text-slate-600">
-                Optional — tell us the domain you plan to buy or have already found.
+                Optional - tell us the domain you plan to buy or have already found.
               </p>
               <input
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
@@ -305,7 +305,7 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
         <section className="space-y-3 rounded-xl border border-slate-200 p-4">
           <h2 className="text-lg font-semibold text-slate-900">Customer communications</h2>
           <p className="text-sm text-slate-600">
-            Email confirmations are included as standard. More features are being added all the time.
+            Email confirmations are included as standard. We will confirm the right communication setup during onboarding.
           </p>
         </section>
 
@@ -369,7 +369,7 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
           className={primaryButtonClass}
           disabled={submitting}
         >
-          {submitting ? "Saving..." : "Request setup review"}
+          {submitting ? "Saving..." : "Submit setup request"}
         </button>
       </form>
 
@@ -382,9 +382,11 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
           <p>
             <span className="font-semibold">Business name:</span> {draft.businessName || "-"}
           </p>
-          <p>
-            <span className="font-semibold">Demo draft:</span> {draft.demoDraftName || "Template defaults"}
-          </p>
+          {draft.demoDraftName ? (
+            <p>
+              <span className="font-semibold">Demo explored:</span> {draft.demoDraftName}
+            </p>
+          ) : null}
           <p>
             <span className="font-semibold">Domain option:</span> {domainOptionLabel(draft.domainOption)}
           </p>
@@ -403,11 +405,12 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
             <span className="font-semibold">Monthly fee:</span> {formatGbp(monthlyFee)}
           </p>
           <p>
-            <span className="font-semibold">Email included:</span> Yes
+            <span className="font-semibold">Next step:</span> Submit your setup request and we will confirm domain details and payment/setup onboarding.
           </p>
         </div>
       </aside>
     </div>
   );
 }
+
 

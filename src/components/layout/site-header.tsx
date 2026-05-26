@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -22,9 +22,6 @@ export function SiteHeader() {
           </Link>
           <Link href="/#how-it-works" className="rounded-md px-2 py-1 hover:bg-slate-100 hover:text-slate-900">
             How it works
-          </Link>
-          <Link href="/account" className="rounded-md px-2 py-1 hover:bg-slate-100 hover:text-slate-900">
-            Customer login
           </Link>
           <Link href="/admin" className="rounded-md px-2 py-1 hover:bg-slate-100 hover:text-slate-900">
             Platform admin

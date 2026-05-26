@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { OperationsBlueprintSummary } from "@/components/industry/operations-blueprint-summary";
 import { SimpleOfferCard } from "@/components/pricing/simple-offer-card";
@@ -46,17 +46,14 @@ export default async function IndustryPage({ params }: IndustryPageProps) {
             <Link href={`/demo/${template.slug}`} target="_blank" rel="noreferrer" className={primaryButtonClass}>
               View demo site
             </Link>
-            <Link href={`/demo/${template.slug}/customise`} className={secondaryButtonClass}>
-              Create my own site
-            </Link>
             <Link href={`/setup/${template.slug}`} className={secondaryButtonClass}>
-              Start setup
+              Get your site now
             </Link>
           </>
         )}
       />
 
-      <SimpleOfferCard industrySlug={template.slug} ctaLabel="Start setup" />
+      <SimpleOfferCard industrySlug={template.slug} ctaLabel="Get your site now" />
 
       <SiteSection title="What this website includes" eyebrow="Template highlights">
         <div className="grid gap-6 lg:grid-cols-2">
@@ -67,7 +64,7 @@ export default async function IndustryPage({ params }: IndustryPageProps) {
               ))}
             </ul>
           </SiteCard>
-          <SiteCard title="Default services in demo" subtitle="These are editable in your customised draft.">
+          <SiteCard title="Default services in demo" subtitle="These can be adjusted in your business admin area.">
             <SiteServiceGrid services={template.defaultConfig.services} />
           </SiteCard>
         </div>
@@ -107,14 +104,13 @@ export default async function IndustryPage({ params }: IndustryPageProps) {
       </SiteSection>
 
       <SiteCtaPanel
-        title="Ready to personalise your site?"
-        subtitle="Open your industry demo, customise it, then send your setup request."
-        primaryHref={`/demo/${template.slug}/customise`}
-        primaryLabel="Create my own site"
-        secondaryHref={`/setup/${template.slug}`}
-        secondaryLabel="Start setup"
+        title="Ready to launch your site?"
+        subtitle="Open your industry demo, then submit your setup request when you are ready."
+        primaryHref={`/setup/${template.slug}`}
+        primaryLabel="Get your site now"
+        secondaryHref={`/demo/${template.slug}`}
+        secondaryLabel="View demo site"
       />
     </main>
   );
 }
-

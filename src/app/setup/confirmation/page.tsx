@@ -111,18 +111,17 @@ export default function SetupConfirmationPage() {
     return (
       <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h1 className="text-3xl font-bold text-slate-900">Setup request not found in this browser or backend</h1>
+          <h1 className="text-3xl font-bold text-slate-900">Setup request not found</h1>
           <p className="mt-3 text-slate-600">
-            This demo may store setup requests locally in your browser, or in backend storage when configured. If you opened this link in a different browser, cleared site data, or the request was not saved, we cannot load it.
+            We could not load that setup request. If you opened an older link or the request has expired, please submit setup details again.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <Link href="/setup/barbers" className={primaryButtonClass}>Start setup again</Link>
-            <Link href="/account" className={outlineButtonClass}>Go to customer portal</Link>
+            <Link href="/setup/barbers" className={primaryButtonClass}>Submit setup request</Link>
             <Link href="/" className={outlineButtonClass}>Back to homepage</Link>
           </div>
           {recentRequests.length > 0 ? (
             <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-sm font-semibold text-slate-900">Recent local setup requests in this browser</p>
+              <p className="text-sm font-semibold text-slate-900">Recent setup requests found in this browser</p>
               <ul className="mt-2 space-y-2 text-sm text-slate-700">
                 {recentRequests.map((item) => (
                   <li key={item.id}>
@@ -148,8 +147,8 @@ export default function SetupConfirmationPage() {
         <h1 className="text-3xl font-bold text-emerald-900">Setup request received</h1>
         <p className="mt-3 text-emerald-800">
           {request.source === "backend"
-            ? "Saved to backend."
-            : "Saved locally in this browser."}
+            ? "Saved successfully."
+            : "Request reference created."}
         </p>
       </div>
 
@@ -176,7 +175,7 @@ export default function SetupConfirmationPage() {
           <h2 className="text-xl font-semibold text-slate-900">What happens next</h2>
           <ol className="mt-4 space-y-3 text-sm text-slate-700">
             <li>1. We review your setup details</li>
-            <li>2. We confirm domain/payment details</li>
+            <li>2. We confirm your domain details and onboarding/payment steps</li>
             <li>3. We provision your clean subscriber site structure</li>
             <li>4. You add your real services, staff, prices and page content</li>
             <li>5. We connect your domain and take your site live</li>
@@ -185,7 +184,7 @@ export default function SetupConfirmationPage() {
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
-        <Link href="/account" className={primaryButtonClass}>View customer portal</Link>
+        <Link href={`/setup/${request.templateSlug}`} className={primaryButtonClass}>Update setup details</Link>
         <Link href={`/demo/${request.templateSlug}`} className={outlineButtonClass}>Back to demo site</Link>
         <Link href="/#industries" className={outlineButtonClass}>Choose another business type</Link>
       </div>

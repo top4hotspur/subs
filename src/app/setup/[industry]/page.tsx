@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { OperationsBlueprintSummary } from "@/components/industry/operations-blueprint-summary";
 import { SetupRequestForm } from "@/components/setup/setup-request-form";
@@ -69,8 +69,7 @@ export default async function SetupIndustryPage({ params }: SetupIndustryPagePro
         <p className="mt-3 text-sm text-slate-600">
           Logo is optional and text-brand fallback works by default. Pages and sections can be adjusted during setup.
           Email notifications are included, and legal pages can be enabled/hidden and edited later.
-          Customer/business login areas are future admin-controlled features.
-        </p>
+                  </p>
       </section>
 
       <SetupRequestForm template={template} />
