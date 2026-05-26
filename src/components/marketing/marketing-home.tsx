@@ -117,7 +117,7 @@ const faqs = [
   },
   {
     q: "What if I get stuck?",
-    a: "Support is on hand to help you get up and running as quickly as possible. We guide you through setup, domain questions, and the key information needed to get your site live.",
+    a: "Support is on hand to help you get up and running as quickly as possible. We guide you through setup, domain questions, and the key information needed to get your site live. Use the Contact us page and we will get back to you.",
   },
   {
     q: "How do payment processors work?",
@@ -200,6 +200,13 @@ export function MarketingHome() {
 
         <SiteSection title="Frequently asked questions" eyebrow="FAQ">
           <HomeFaqAccordion items={faqs} />
+          <p className="mt-4 text-sm text-slate-600">
+            Still have questions?{" "}
+            <Link href="/contact" className="font-medium text-sky-700 hover:text-sky-900">
+              Contact us
+            </Link>{" "}
+            and we will help you choose the right setup path.
+          </p>
         </SiteSection>
 
         <SiteCtaPanel

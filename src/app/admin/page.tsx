@@ -196,7 +196,7 @@ export default function AdminPage() {
         <p className="mt-2 text-sm text-slate-600">
           Setup requests, subscriber sites, sales pipeline, and platform CRM.
         </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <Link href="/admin/setup-requests" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-sm font-semibold text-slate-900">Persisted setup requests</p>
             <p className="mt-1 text-xs text-slate-600">Backend setup queue</p>
@@ -208,6 +208,10 @@ export default function AdminPage() {
           <Link href="/admin/sales" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-sm font-semibold text-slate-900">Sales pipeline</p>
             <p className="mt-1 text-xs text-slate-600">Prospect outreach and follow-up</p>
+          </Link>
+          <Link href="/admin/contact-enquiries" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-slate-900">Contact enquiries</p>
+            <p className="mt-1 text-xs text-slate-600">Public support and pre-order questions</p>
           </Link>
           <Link href="/admin/crm" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-sm font-semibold text-slate-900">Customer CRM</p>

@@ -218,3 +218,9 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - Platform admin session can still read setup requests without confirmation token.
 - Setup confirmation links now include a one-time-style high-entropy token parameter.
 - Token plaintext is returned only at create time and not exposed in list/admin reads.
+
+## Public contact/support route (2026-05-26)
+- Added public `/contact` route for prospect questions and setup support.
+- Added persisted `ContactEnquiry` backend model and admin handling workflow.
+- Contact route is designed for pre-order and setup help without requiring login.
+- No email provider integration yet; enquiries are persisted and handled from platform admin.

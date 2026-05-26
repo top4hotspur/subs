@@ -23,6 +23,7 @@ import {
   domainOptionLabel,
   formatGbp,
 } from "@/lib/ui/display-labels";
+import Link from "next/link";
 
 type SetupRequestFormProps = {
   template: WebsiteTemplate;
@@ -384,6 +385,13 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
         >
           {submitting ? "Saving..." : "Submit setup request"}
         </button>
+        <p className="text-xs text-slate-600">
+          Need help before submitting?{" "}
+          <Link href="/contact" className="font-medium text-sky-700 hover:text-sky-900">
+            Contact us
+          </Link>
+          .
+        </p>
       </form>
 
       <aside className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

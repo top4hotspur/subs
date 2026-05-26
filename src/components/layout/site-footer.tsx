@@ -21,6 +21,7 @@ export function SiteFooter() {
               links: [
                 { label: "Business types", href: "/#industries" },
                 { label: "How it works", href: "/#how-it-works" },
+                { label: "Contact us", href: "/contact" },
               ],
             },
             {

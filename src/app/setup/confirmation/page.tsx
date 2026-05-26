@@ -132,6 +132,7 @@ export default function SetupConfirmationPage() {
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
             <Link href="/setup/barbers" className={primaryButtonClass}>Submit setup request</Link>
+            <Link href="/contact" className={outlineButtonClass}>Contact us</Link>
             <Link href="/" className={outlineButtonClass}>Back to homepage</Link>
           </div>
           {recentRequests.length > 0 ? (
@@ -201,6 +202,7 @@ export default function SetupConfirmationPage() {
       <div className="mt-6 flex flex-wrap gap-3">
         <Link href={`/setup/${request.templateSlug}`} className={primaryButtonClass}>Update setup details</Link>
         <Link href={`/demo/${request.templateSlug}`} className={outlineButtonClass}>Back to demo site</Link>
+        <Link href="/contact" className={outlineButtonClass}>Contact us</Link>
         <Link href="/#industries" className={outlineButtonClass}>Choose another business type</Link>
       </div>
     </main>

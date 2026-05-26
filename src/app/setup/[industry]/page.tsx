@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { notFound } from "next/navigation";
 import { OperationsBlueprintSummary } from "@/components/industry/operations-blueprint-summary";
 import { SetupRequestForm } from "@/components/setup/setup-request-form";
@@ -39,15 +39,20 @@ export default async function SetupIndustryPage({ params }: SetupIndustryPagePro
         <p className="text-sm font-semibold uppercase tracking-wide text-sky-600">Setup Request</p>
         <h1 className="mt-2 text-3xl font-bold text-slate-900">{template.name}</h1>
         <p className="mt-3 text-slate-600">
-          One full website offer: £{offer.setupFeeGbp} setup, £{offer.monthlyFeeGbp}/month,
+          One full website offer: GBP{offer.setupFeeGbp} setup, GBP{offer.monthlyFeeGbp}/month,
           with optional domain registration/management only where needed.
         </p>
         <p className="mt-3 text-sm text-slate-600">
           Your subscriber site is created as a clean setup. Demo content is not copied automatically.
         </p>
-        <Link href={`/demo/${template.slug}`} className="mt-4 inline-flex text-sm font-medium text-sky-700 hover:text-sky-900">
-          Back to demo site
-        </Link>
+        <div className="mt-4 flex flex-wrap gap-3 text-sm font-medium">
+          <Link href={`/demo/${template.slug}`} className="text-sky-700 hover:text-sky-900">
+            Back to demo site
+          </Link>
+          <Link href="/contact" className="text-sky-700 hover:text-sky-900">
+            Contact us
+          </Link>
+        </div>
       </section>
 
       {blueprint ? (
@@ -69,7 +74,7 @@ export default async function SetupIndustryPage({ params }: SetupIndustryPagePro
         <p className="mt-3 text-sm text-slate-600">
           Logo is optional and text-brand fallback works by default. Pages and sections can be adjusted during setup.
           Email notifications are included, and legal pages can be enabled/hidden and edited later.
-                  </p>
+        </p>
       </section>
 
       <SetupRequestForm template={template} />

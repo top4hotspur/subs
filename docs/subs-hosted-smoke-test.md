@@ -446,3 +446,11 @@ Add these checks after backend envs are configured:
 3. Confirm `/setup/confirmation` loads with valid token.
 4. Remove/alter token and confirm page shows verification failure.
 5. Confirm local fallback (`source=local`) still loads from browser data when backend is unavailable.
+
+## Hosted smoke: contact/support route
+1. Open `/contact` and confirm form renders with name, business name, email, phone, industry, message.
+2. Submit valid form and confirm success message:
+   - `Thanks - we've received your enquiry and will get back to you.`
+3. Confirm `/admin/contact-enquiries` lists the new enquiry.
+4. Change status and confirm persisted update.
+5. Confirm homepage, setup page, and setup confirmation include `/contact` links.

@@ -23,6 +23,9 @@ export function SiteHeader() {
           <Link href="/#how-it-works" className="rounded-md px-2 py-1 hover:bg-slate-100 hover:text-slate-900">
             How it works
           </Link>
+          <Link href="/contact" className="rounded-md px-2 py-1 hover:bg-slate-100 hover:text-slate-900">
+            Contact us
+          </Link>
           <Link href="/admin" className="rounded-md px-2 py-1 hover:bg-slate-100 hover:text-slate-900">
             Platform admin
           </Link>

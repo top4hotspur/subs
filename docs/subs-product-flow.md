@@ -403,3 +403,10 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Token plaintext is generated at create-time only; backend stores hash and usage timestamps/count.
 - Platform admin setup-request management remains session-protected.
 - Local browser fallback remains available for backend-unavailable setup submissions.
+
+## Contact/support flow update
+- Public support route: `/contact`.
+- Form submits to `POST /api/contact-enquiries` and stores persisted enquiry records when backend is available.
+- If backend persistence is unavailable, the UI returns a clear error and asks users to retry.
+- Platform admin triage route: `/admin/contact-enquiries` with status workflow: NEW -> REVIEWED -> REPLIED -> CLOSED.
+- No real email sending is included in this pass.

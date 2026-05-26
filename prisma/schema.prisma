@@ -471,3 +471,22 @@ model CustomerSiteAdminUser {
   @@index([tenantSiteId, active])
   @@unique([tenantSiteId, email])
 }
+
+model ContactEnquiry {
+  id           String   @id @default(cuid())
+  name         String
+  businessName String?
+  email        String
+  phone        String?
+  industrySlug String?
+  message      String
+  source       String?
+  status       String   @default("NEW")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([email])
+  @@index([status])
+  @@index([createdAt])
+  @@index([industrySlug])
+}

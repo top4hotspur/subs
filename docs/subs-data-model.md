@@ -196,3 +196,27 @@ Notes:
 - Plaintext token is not stored in database.
 - Public confirmation lookups require a valid token that matches stored hash.
 - Platform-admin reads remain session-authorized.
+
+## ContactEnquiry model
+`ContactEnquiry` fields:
+- id (cuid)
+- name
+- businessName
+- email
+- phone
+- industrySlug
+- message
+- source
+- status (`NEW`, `REVIEWED`, `REPLIED`, `CLOSED`)
+- createdAt
+- updatedAt
+
+Indexes:
+- email
+- status
+- createdAt
+- industrySlug
+
+Notes:
+- This model powers the public contact/support form.
+- No email sending integration in this pass.

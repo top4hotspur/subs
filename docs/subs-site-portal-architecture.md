@@ -159,3 +159,10 @@ No per-customer DB or code export is required for this model.
   - `/[industry]` -> `/demo/[industry]` -> `/setup/[industry]` -> `/setup/confirmation`.
 - Public navigation no longer promotes global `/account` while customer auth remains pending.
 - Subscriber site provisioning remains clean-start by default; demo exploration does not imply automatic demo-data copy into live tenant records.
+
+## Public contact enquiries route
+- Added public `POST /api/contact-enquiries` for prospect support requests.
+- Added platform-admin management route `/admin/contact-enquiries`.
+- Public route writes persisted enquiries only and does not expose admin data.
+- Admin handling remains under platform-admin auth/session controls.
+- Notification/email provider wiring is intentionally deferred.
