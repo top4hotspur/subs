@@ -140,6 +140,23 @@ export default async function PublicSiteSlugPage({
                   <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>
                     {settings?.openingHoursSummary || "Opening hours summary not set"}
                   </p>
+                  {(settings?.cancellationFullRefundNoticeDays !== null ||
+                    settings?.cancellationNoRefundWithinDays !== null ||
+                    settings?.cancellationPolicyNote) ? (
+                    <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3">
+                      <p className="text-xs font-semibold text-slate-900">Cancellation policy</p>
+                      <p className="mt-1 text-xs text-slate-700">
+                        Full refund when cancelled at least{" "}
+                        {settings?.cancellationFullRefundNoticeDays ?? 1} day(s) before appointment.
+                      </p>
+                      <p className="text-xs text-slate-700">
+                        No refund within {settings?.cancellationNoRefundWithinDays ?? 1} day(s) of appointment.
+                      </p>
+                      {settings?.cancellationPolicyNote ? (
+                        <p className="mt-1 text-xs text-slate-700">{settings.cancellationPolicyNote}</p>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className={cardClass}>

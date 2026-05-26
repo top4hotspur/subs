@@ -366,3 +366,10 @@ CSV import/export setup tools moved out of demo customisation and into business 
   - future host route: custom domain host -> `SiteDomain` -> `TenantSite` (prepared, not switched on yet)
 - Public booking route/API are tenant-resolved by slug or server-side host-resolution paths; client never submits arbitrary tenant ids.
 - Platform admin `/admin/sites` now includes a domain-resolution test utility to validate mappings before custom-domain rollout.
+
+## Payment setup flow (persisted intent only)
+- Business owner configures payment setup intent from site-admin:
+  - existing processor, need help, or manual-only recording.
+- Business owner sets accepted methods and booking prepayment preference.
+- Cancellation/refund timing is stored for policy messaging.
+- This phase does not include real provider integration, checkout, or charge capture.

@@ -260,3 +260,16 @@ Important:
   - Logo: PNG/SVG recommended, max 1MB
   - Favicon: PNG/ICO recommended, max 512KB
 - These controls write real tenant-scoped media metadata and no longer rely on local-only preview as source of truth.
+
+## Business-owner payment setup (persisted)
+- Site-admin (`/site-admin/[siteSlug]`) now includes a persisted `Payments and policies` panel.
+- Business owner can set:
+  - payment setup mode
+  - preferred provider
+  - non-secret account reference/notes
+  - accepted payment methods (cash/card)
+  - prepayment preference
+  - in-store payment recording toggle
+  - cancellation/refund timing and policy note
+- Copy explicitly warns not to enter API keys or passwords.
+- This does not connect any provider in this milestone.

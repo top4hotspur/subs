@@ -24,6 +24,9 @@ export type CustomerSitePreviewData = {
     currency: string | null;
     logoUrl: string | null;
     faviconUrl: string | null;
+    cancellationFullRefundNoticeDays: number | null;
+    cancellationNoRefundWithinDays: number | null;
+    cancellationPolicyNote: string | null;
   } | null;
   services: Array<{
     id: string;
@@ -186,6 +189,11 @@ export async function getCustomerSitePreviewData(
           currency: site.customerSiteSettings.currency ?? null,
           logoUrl: site.customerSiteSettings.logoUrl ?? null,
           faviconUrl: site.customerSiteSettings.faviconUrl ?? null,
+          cancellationFullRefundNoticeDays:
+            site.customerSiteSettings.cancellationFullRefundNoticeDays ?? null,
+          cancellationNoRefundWithinDays:
+            site.customerSiteSettings.cancellationNoRefundWithinDays ?? null,
+          cancellationPolicyNote: site.customerSiteSettings.cancellationPolicyNote ?? null,
         }
       : null,
     services: site.customerSiteServices.map((service) => ({

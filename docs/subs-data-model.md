@@ -158,3 +158,19 @@ Conflict behavior (v1):
   - `/sites/[siteSlug]` uses `logoUrl` when available, otherwise text brand fallback.
   - favicon metadata is now wired when `faviconUrl` is present.
 - Out of scope in this slice: gallery images, about/staff images, general media library.
+
+## Persisted payment setup configuration (tenant-scoped)
+- `CustomerSiteSettings` now persists payment setup intent fields:
+  - `paymentProcessorSetupMode` (`EXISTING_PROCESSOR` | `NEED_HELP_SETUP` | `MANUAL_RECORDING_ONLY`)
+  - `paymentProcessorName` (`Stripe`, `Square`, `SumUp`, `PayPal`, `Worldpay`, `Zettle`, `Other`)
+  - `paymentProcessorAccountRef` (reference only, no secrets)
+  - `paymentProcessorNotes`
+  - `acceptCashPayments`
+  - `acceptCardPayments`
+  - `requireBookingPrepayment`
+  - `allowInStorePaymentRecording`
+  - `cancellationFullRefundNoticeDays`
+  - `cancellationNoRefundWithinDays`
+  - `cancellationPolicyNote`
+- This remains configuration/preparation only.
+- No API keys, card details, checkout, payment capture, refunds, or provider webhooks are stored/implemented.

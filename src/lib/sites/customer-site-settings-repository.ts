@@ -31,6 +31,17 @@ export type CustomerSiteSettingsRecord = {
   faviconStorageKey: string | null;
   faviconContentType: string | null;
   faviconFileName: string | null;
+  paymentProcessorSetupMode: string | null;
+  paymentProcessorName: string | null;
+  paymentProcessorAccountRef: string | null;
+  paymentProcessorNotes: string | null;
+  acceptCashPayments: boolean;
+  acceptCardPayments: boolean;
+  requireBookingPrepayment: boolean;
+  allowInStorePaymentRecording: boolean;
+  cancellationFullRefundNoticeDays: number | null;
+  cancellationNoRefundWithinDays: number | null;
+  cancellationPolicyNote: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -87,6 +98,17 @@ function serializeSettings(record: {
   faviconStorageKey: string | null;
   faviconContentType: string | null;
   faviconFileName: string | null;
+  paymentProcessorSetupMode: string | null;
+  paymentProcessorName: string | null;
+  paymentProcessorAccountRef: string | null;
+  paymentProcessorNotes: string | null;
+  acceptCashPayments: boolean;
+  acceptCardPayments: boolean;
+  requireBookingPrepayment: boolean;
+  allowInStorePaymentRecording: boolean;
+  cancellationFullRefundNoticeDays: number | null;
+  cancellationNoRefundWithinDays: number | null;
+  cancellationPolicyNote: string | null;
   createdAt: Date;
   updatedAt: Date;
 }): CustomerSiteSettingsRecord {
@@ -158,6 +180,17 @@ export async function upsertCustomerSiteSettings(
     faviconStorageKey: parsed.faviconStorageKey ?? null,
     faviconContentType: parsed.faviconContentType ?? null,
     faviconFileName: parsed.faviconFileName ?? null,
+    paymentProcessorSetupMode: parsed.paymentProcessorSetupMode ?? null,
+    paymentProcessorName: parsed.paymentProcessorName ?? null,
+    paymentProcessorAccountRef: parsed.paymentProcessorAccountRef ?? null,
+    paymentProcessorNotes: parsed.paymentProcessorNotes ?? null,
+    acceptCashPayments: parsed.acceptCashPayments ?? false,
+    acceptCardPayments: parsed.acceptCardPayments ?? true,
+    requireBookingPrepayment: parsed.requireBookingPrepayment ?? false,
+    allowInStorePaymentRecording: parsed.allowInStorePaymentRecording ?? false,
+    cancellationFullRefundNoticeDays: parsed.cancellationFullRefundNoticeDays ?? 1,
+    cancellationNoRefundWithinDays: parsed.cancellationNoRefundWithinDays ?? 1,
+    cancellationPolicyNote: parsed.cancellationPolicyNote ?? null,
   };
   const updateData: Prisma.CustomerSiteSettingsUncheckedUpdateInput = {};
   if (parsed.siteDisplayName !== undefined) updateData.siteDisplayName = parsed.siteDisplayName;
@@ -181,6 +214,39 @@ export async function upsertCustomerSiteSettings(
   if (parsed.faviconStorageKey !== undefined) updateData.faviconStorageKey = parsed.faviconStorageKey;
   if (parsed.faviconContentType !== undefined) updateData.faviconContentType = parsed.faviconContentType;
   if (parsed.faviconFileName !== undefined) updateData.faviconFileName = parsed.faviconFileName;
+  if (parsed.paymentProcessorSetupMode !== undefined) {
+    updateData.paymentProcessorSetupMode = parsed.paymentProcessorSetupMode;
+  }
+  if (parsed.paymentProcessorName !== undefined) {
+    updateData.paymentProcessorName = parsed.paymentProcessorName;
+  }
+  if (parsed.paymentProcessorAccountRef !== undefined) {
+    updateData.paymentProcessorAccountRef = parsed.paymentProcessorAccountRef;
+  }
+  if (parsed.paymentProcessorNotes !== undefined) {
+    updateData.paymentProcessorNotes = parsed.paymentProcessorNotes;
+  }
+  if (parsed.acceptCashPayments !== undefined) {
+    updateData.acceptCashPayments = parsed.acceptCashPayments;
+  }
+  if (parsed.acceptCardPayments !== undefined) {
+    updateData.acceptCardPayments = parsed.acceptCardPayments;
+  }
+  if (parsed.requireBookingPrepayment !== undefined) {
+    updateData.requireBookingPrepayment = parsed.requireBookingPrepayment;
+  }
+  if (parsed.allowInStorePaymentRecording !== undefined) {
+    updateData.allowInStorePaymentRecording = parsed.allowInStorePaymentRecording;
+  }
+  if (parsed.cancellationFullRefundNoticeDays !== undefined) {
+    updateData.cancellationFullRefundNoticeDays = parsed.cancellationFullRefundNoticeDays;
+  }
+  if (parsed.cancellationNoRefundWithinDays !== undefined) {
+    updateData.cancellationNoRefundWithinDays = parsed.cancellationNoRefundWithinDays;
+  }
+  if (parsed.cancellationPolicyNote !== undefined) {
+    updateData.cancellationPolicyNote = parsed.cancellationPolicyNote;
+  }
 
   const record = await prisma.customerSiteSettings.upsert({
     where: { tenantSiteId: parsed.tenantSiteId },

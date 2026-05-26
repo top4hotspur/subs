@@ -60,6 +60,17 @@ type PersistedSettingsDraft = {
   visualThemeId: string;
   colourPaletteId: string;
   currency: "GBP" | "EUR" | "USD";
+  paymentProcessorSetupMode: "EXISTING_PROCESSOR" | "NEED_HELP_SETUP" | "MANUAL_RECORDING_ONLY";
+  paymentProcessorName: "Stripe" | "Square" | "SumUp" | "PayPal" | "Worldpay" | "Zettle" | "Other";
+  paymentProcessorAccountRef: string;
+  paymentProcessorNotes: string;
+  acceptCashPayments: boolean;
+  acceptCardPayments: boolean;
+  requireBookingPrepayment: boolean;
+  allowInStorePaymentRecording: boolean;
+  cancellationFullRefundNoticeDays: string;
+  cancellationNoRefundWithinDays: string;
+  cancellationPolicyNote: string;
 };
 
 type PersistedServiceDraft = {
@@ -173,6 +184,17 @@ function toSettingsDraft(record: PersistedCustomerSiteSettings | null): Persiste
     visualThemeId: record?.visualThemeId ?? "",
     colourPaletteId: record?.colourPaletteId ?? "",
     currency: (record?.currency as "GBP" | "EUR" | "USD" | null) ?? "GBP",
+    paymentProcessorSetupMode: record?.paymentProcessorSetupMode ?? "MANUAL_RECORDING_ONLY",
+    paymentProcessorName: record?.paymentProcessorName ?? "Stripe",
+    paymentProcessorAccountRef: record?.paymentProcessorAccountRef ?? "",
+    paymentProcessorNotes: record?.paymentProcessorNotes ?? "",
+    acceptCashPayments: record?.acceptCashPayments ?? false,
+    acceptCardPayments: record?.acceptCardPayments ?? true,
+    requireBookingPrepayment: record?.requireBookingPrepayment ?? false,
+    allowInStorePaymentRecording: record?.allowInStorePaymentRecording ?? false,
+    cancellationFullRefundNoticeDays: String(record?.cancellationFullRefundNoticeDays ?? 1),
+    cancellationNoRefundWithinDays: String(record?.cancellationNoRefundWithinDays ?? 1),
+    cancellationPolicyNote: record?.cancellationPolicyNote ?? "",
   };
 }
 
@@ -522,6 +544,21 @@ export default function AdminSiteSettingsPage() {
       visualThemeId: settingsDraft.visualThemeId || null,
       colourPaletteId: settingsDraft.colourPaletteId || null,
       currency: settingsDraft.currency,
+      paymentProcessorSetupMode: settingsDraft.paymentProcessorSetupMode,
+      paymentProcessorName: settingsDraft.paymentProcessorName,
+      paymentProcessorAccountRef: settingsDraft.paymentProcessorAccountRef.trim() || null,
+      paymentProcessorNotes: settingsDraft.paymentProcessorNotes.trim() || null,
+      acceptCashPayments: settingsDraft.acceptCashPayments,
+      acceptCardPayments: settingsDraft.acceptCardPayments,
+      requireBookingPrepayment: settingsDraft.requireBookingPrepayment,
+      allowInStorePaymentRecording: settingsDraft.allowInStorePaymentRecording,
+      cancellationFullRefundNoticeDays: settingsDraft.cancellationFullRefundNoticeDays.trim()
+        ? Number(settingsDraft.cancellationFullRefundNoticeDays)
+        : null,
+      cancellationNoRefundWithinDays: settingsDraft.cancellationNoRefundWithinDays.trim()
+        ? Number(settingsDraft.cancellationNoRefundWithinDays)
+        : null,
+      cancellationPolicyNote: settingsDraft.cancellationPolicyNote.trim() || null,
     });
 
     if (!result.ok) {
@@ -762,6 +799,9 @@ export default function AdminSiteSettingsPage() {
             <p className="mt-2 text-sm text-slate-600">
               This is the first persisted setup area for this subscriber site. Staff, rota, pages, vouchers and policies are still local/demo only.
             </p>
+            <p className="mt-1 text-xs text-slate-600">
+              Support/provisioning view only. Business owner controls this from their site admin.
+            </p>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <label className="text-xs font-semibold text-slate-700">Site display name
@@ -811,6 +851,76 @@ export default function AdminSiteSettingsPage() {
                   <option value="USD">USD</option>
                 </select>
               </label>
+            </div>
+
+            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <h3 className="text-sm font-semibold text-slate-900">Payments and policies</h3>
+              <p className="mt-1 text-xs text-slate-600">
+                This records setup intent only. No payment provider is connected and no payment processing happens in this pass.
+              </p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
+                  Payment setup mode
+                  <select className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.paymentProcessorSetupMode} onChange={(event) => setSettingsDraft((current) => ({ ...current, paymentProcessorSetupMode: event.target.value as PersistedSettingsDraft["paymentProcessorSetupMode"] }))}>
+                    <option value="EXISTING_PROCESSOR">I already have a payment processor</option>
+                    <option value="NEED_HELP_SETUP">I need help setting one up</option>
+                    <option value="MANUAL_RECORDING_ONLY">I only want to record payments manually for now</option>
+                  </select>
+                </label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Provider
+                  <select className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.paymentProcessorName} onChange={(event) => setSettingsDraft((current) => ({ ...current, paymentProcessorName: event.target.value as PersistedSettingsDraft["paymentProcessorName"] }))}>
+                    <option value="Stripe">Stripe</option>
+                    <option value="Square">Square</option>
+                    <option value="SumUp">SumUp</option>
+                    <option value="PayPal">PayPal</option>
+                    <option value="Worldpay">Worldpay</option>
+                    <option value="Zettle">Zettle</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Account reference / provider email
+                  <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.paymentProcessorAccountRef} onChange={(event) => setSettingsDraft((current) => ({ ...current, paymentProcessorAccountRef: event.target.value }))} />
+                  <span className="mt-1 block text-[11px] font-normal text-slate-600">Do not enter API keys or passwords.</span>
+                </label>
+                <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
+                  Setup notes
+                  <textarea className="mt-1 min-h-[72px] w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.paymentProcessorNotes} onChange={(event) => setSettingsDraft((current) => ({ ...current, paymentProcessorNotes: event.target.value }))} />
+                </label>
+              </div>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                  <input type="checkbox" checked={settingsDraft.acceptCardPayments} onChange={(event) => setSettingsDraft((current) => ({ ...current, acceptCardPayments: event.target.checked }))} />
+                  Accept card payments
+                </label>
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                  <input type="checkbox" checked={settingsDraft.acceptCashPayments} onChange={(event) => setSettingsDraft((current) => ({ ...current, acceptCashPayments: event.target.checked }))} />
+                  Accept cash payments
+                </label>
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                  <input type="checkbox" checked={settingsDraft.requireBookingPrepayment} onChange={(event) => setSettingsDraft((current) => ({ ...current, requireBookingPrepayment: event.target.checked }))} />
+                  Require prepayment for online bookings
+                </label>
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                  <input type="checkbox" checked={settingsDraft.allowInStorePaymentRecording} onChange={(event) => setSettingsDraft((current) => ({ ...current, allowInStorePaymentRecording: event.target.checked }))} />
+                  Allow in-store payment recording
+                </label>
+              </div>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <label className="text-xs font-semibold text-slate-700">
+                  Full refund notice period (days)
+                  <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.cancellationFullRefundNoticeDays} onChange={(event) => setSettingsDraft((current) => ({ ...current, cancellationFullRefundNoticeDays: event.target.value }))} />
+                </label>
+                <label className="text-xs font-semibold text-slate-700">
+                  No refund within (days)
+                  <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.cancellationNoRefundWithinDays} onChange={(event) => setSettingsDraft((current) => ({ ...current, cancellationNoRefundWithinDays: event.target.value }))} />
+                </label>
+                <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
+                  Cancellation policy note
+                  <textarea className="mt-1 min-h-[72px] w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.cancellationPolicyNote} onChange={(event) => setSettingsDraft((current) => ({ ...current, cancellationPolicyNote: event.target.value }))} />
+                </label>
+              </div>
             </div>
 
             <div className="mt-4">

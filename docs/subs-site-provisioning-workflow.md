@@ -168,3 +168,8 @@ Still local/mock in current product:
 - Subscriber sites are still created as clean/blank data structures.
 - Branding media can then be uploaded by site-admin per tenant site using tenant-scoped storage keys.
 - Logo/favicon upload is now available as first real media storage slice; broader media remains future scope.
+
+## Provisioning note: payment setup fields
+- New subscriber sites can now carry persisted payment setup intent fields from day one.
+- These fields support onboarding and support workflows before real provider integration.
+- Sites remain shared-app, tenant-scoped records in the central database.

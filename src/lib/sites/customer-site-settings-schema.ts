@@ -1,6 +1,20 @@
 import { z } from "zod";
 
 const cuid = z.string().cuid();
+const paymentSetupModeEnum = z.enum([
+  "EXISTING_PROCESSOR",
+  "NEED_HELP_SETUP",
+  "MANUAL_RECORDING_ONLY",
+]);
+const paymentProcessorNameEnum = z.enum([
+  "Stripe",
+  "Square",
+  "SumUp",
+  "PayPal",
+  "Worldpay",
+  "Zettle",
+  "Other",
+]);
 
 export const upsertCustomerSiteSettingsSchema = z.object({
   tenantSiteId: cuid,
@@ -23,6 +37,17 @@ export const upsertCustomerSiteSettingsSchema = z.object({
   faviconStorageKey: z.string().trim().min(1).max(600).nullable().optional(),
   faviconContentType: z.string().trim().min(1).max(120).nullable().optional(),
   faviconFileName: z.string().trim().min(1).max(220).nullable().optional(),
+  paymentProcessorSetupMode: paymentSetupModeEnum.nullable().optional(),
+  paymentProcessorName: paymentProcessorNameEnum.nullable().optional(),
+  paymentProcessorAccountRef: z.string().trim().min(1).max(200).nullable().optional(),
+  paymentProcessorNotes: z.string().trim().min(1).max(1200).nullable().optional(),
+  acceptCashPayments: z.boolean().optional(),
+  acceptCardPayments: z.boolean().optional(),
+  requireBookingPrepayment: z.boolean().optional(),
+  allowInStorePaymentRecording: z.boolean().optional(),
+  cancellationFullRefundNoticeDays: z.number().int().min(0).max(14).nullable().optional(),
+  cancellationNoRefundWithinDays: z.number().int().min(0).max(14).nullable().optional(),
+  cancellationPolicyNote: z.string().trim().min(1).max(1600).nullable().optional(),
 });
 
 export const customerSiteServiceInputSchema = z.object({

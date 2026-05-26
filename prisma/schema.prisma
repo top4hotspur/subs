@@ -240,6 +240,17 @@ model CustomerSiteSettings {
   faviconStorageKey   String?
   faviconContentType  String?
   faviconFileName     String?
+  paymentProcessorSetupMode String?
+  paymentProcessorName String?
+  paymentProcessorAccountRef String?
+  paymentProcessorNotes String?
+  acceptCashPayments   Boolean   @default(false)
+  acceptCardPayments   Boolean   @default(true)
+  requireBookingPrepayment Boolean @default(false)
+  allowInStorePaymentRecording Boolean @default(false)
+  cancellationFullRefundNoticeDays Int? @default(1)
+  cancellationNoRefundWithinDays Int? @default(1)
+  cancellationPolicyNote String?
   createdAt           DateTime   @default(now())
   updatedAt           DateTime   @updatedAt
   tenantSite          TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)

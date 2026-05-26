@@ -20,6 +20,17 @@ export type PersistedCustomerSiteSettings = {
   faviconStorageKey: string | null;
   faviconContentType: string | null;
   faviconFileName: string | null;
+  paymentProcessorSetupMode: "EXISTING_PROCESSOR" | "NEED_HELP_SETUP" | "MANUAL_RECORDING_ONLY" | null;
+  paymentProcessorName: "Stripe" | "Square" | "SumUp" | "PayPal" | "Worldpay" | "Zettle" | "Other" | null;
+  paymentProcessorAccountRef: string | null;
+  paymentProcessorNotes: string | null;
+  acceptCashPayments: boolean;
+  acceptCardPayments: boolean;
+  requireBookingPrepayment: boolean;
+  allowInStorePaymentRecording: boolean;
+  cancellationFullRefundNoticeDays: number | null;
+  cancellationNoRefundWithinDays: number | null;
+  cancellationPolicyNote: string | null;
   createdAt: string;
   updatedAt: string;
 };

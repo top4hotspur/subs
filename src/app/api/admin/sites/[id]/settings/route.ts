@@ -76,6 +76,17 @@ export async function PATCH(
       visualThemeId: body?.visualThemeId,
       colourPaletteId: body?.colourPaletteId,
       currency: body?.currency,
+      paymentProcessorSetupMode: body?.paymentProcessorSetupMode,
+      paymentProcessorName: body?.paymentProcessorName,
+      paymentProcessorAccountRef: body?.paymentProcessorAccountRef,
+      paymentProcessorNotes: body?.paymentProcessorNotes,
+      acceptCashPayments: body?.acceptCashPayments,
+      acceptCardPayments: body?.acceptCardPayments,
+      requireBookingPrepayment: body?.requireBookingPrepayment,
+      allowInStorePaymentRecording: body?.allowInStorePaymentRecording,
+      cancellationFullRefundNoticeDays: body?.cancellationFullRefundNoticeDays,
+      cancellationNoRefundWithinDays: body?.cancellationNoRefundWithinDays,
+      cancellationPolicyNote: body?.cancellationPolicyNote,
     });
 
     const settings = await upsertCustomerSiteSettings(id, {
@@ -90,6 +101,17 @@ export async function PATCH(
       visualThemeId: parsed.visualThemeId,
       colourPaletteId: parsed.colourPaletteId,
       currency: parsed.currency,
+      paymentProcessorSetupMode: parsed.paymentProcessorSetupMode,
+      paymentProcessorName: parsed.paymentProcessorName,
+      paymentProcessorAccountRef: parsed.paymentProcessorAccountRef,
+      paymentProcessorNotes: parsed.paymentProcessorNotes,
+      acceptCashPayments: parsed.acceptCashPayments,
+      acceptCardPayments: parsed.acceptCardPayments,
+      requireBookingPrepayment: parsed.requireBookingPrepayment,
+      allowInStorePaymentRecording: parsed.allowInStorePaymentRecording,
+      cancellationFullRefundNoticeDays: parsed.cancellationFullRefundNoticeDays,
+      cancellationNoRefundWithinDays: parsed.cancellationNoRefundWithinDays,
+      cancellationPolicyNote: parsed.cancellationPolicyNote,
     });
 
     return NextResponse.json({ ok: true, settings });

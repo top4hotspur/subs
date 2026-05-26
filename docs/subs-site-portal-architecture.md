@@ -133,3 +133,9 @@ No per-customer DB or code export is required for this model.
 - Files are stored in S3-compatible object storage under tenant-scoped paths; database stores metadata only.
 - Limits and file types are enforced server-side.
 - This is intentionally limited to branding media only in this pass.
+
+## Payment setup architecture scope (current)
+- Payment setup is now persisted per tenant through `CustomerSiteSettings`.
+- Site-admin and platform support views read/write the same tenant-scoped configuration.
+- Current scope is intent/configuration only; runtime payment integrations remain out of scope.
+- No payment secrets or customer card data are collected in this pass.

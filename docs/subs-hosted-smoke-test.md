@@ -385,3 +385,14 @@ Add these checks after backend envs are configured:
    - oversize files return validation error
    - unsupported mime types return validation error
    - storage not configured returns `STORAGE_NOT_CONFIGURED` without crashing build/runtime.
+
+## Hosted smoke checks: persisted payment setup
+1. Sign in as site-admin at `/site-admin/login`.
+2. Open `/site-admin/[siteSlug]` -> `Site settings`.
+3. In `Payments and policies`, set each setup mode and save.
+4. Set provider, account reference and notes (non-secret) and save.
+5. Toggle card/cash/prepayment/in-store recording settings and save.
+6. Set cancellation windows and custom policy note and save.
+7. Confirm reload persists all values.
+8. Confirm platform admin support view (`/admin/sites/[siteId]/settings`) shows/edits same values.
+9. Confirm no provider connection/payment processing occurs.
