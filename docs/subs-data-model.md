@@ -219,4 +219,14 @@ Indexes:
 
 Notes:
 - This model powers the public contact/support form.
-- No email sending integration in this pass.
+- Transactional admin notification is now sent when email provider env is configured.
+
+## Transactional email config (environment)
+- `RESEND_API_KEY`
+- `EMAIL_FROM`
+- `PLATFORM_NOTIFICATION_EMAIL`
+
+Notes:
+- Email body content is generated from server-side templates.
+- Email provider failures do not block core record creation flows (fail-soft behavior).
+- No email secrets are persisted in database models.

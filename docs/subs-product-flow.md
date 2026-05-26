@@ -426,3 +426,20 @@ CSV import/export setup tools moved out of demo customisation and into business 
   - I need a new domain
   - I am not sure yet
 - Platform admin setup queue now includes a commercial-status panel for manual payment/domain follow-up actions.
+
+## Transactional email foundation (2026-05-26)
+- Added first real transactional email provider foundation using Resend.
+- Email is fail-soft:
+  - if env is missing, APIs continue and return safe skipped status (`EMAIL_NOT_CONFIGURED`)
+  - provider failures do not block contact/setup/booking record creation
+- Current transactional scope:
+  - contact enquiry notification to platform admin
+  - setup request confirmation to prospect
+  - setup request notification to platform admin
+  - persisted tenant booking confirmation to customer
+- Not included in this phase:
+  - bulk marketing sends
+  - unsubscribe/newsletter system
+  - Twilio/WhatsApp delivery
+  - payment/checkout emails
+  - attachments

@@ -468,3 +468,16 @@ Add these checks after backend envs are configured:
 4. Submit a setup request and open `/setup/confirmation`.
 5. Confirm confirmation page states no payment has been taken yet.
 6. In `/admin/setup-requests`, open a request and confirm commercial status panel shows manual payment/domain follow-up guidance.
+
+## Hosted smoke: transactional email provider foundation
+1. Configure no email env vars (`RESEND_API_KEY`, `EMAIL_FROM`, `PLATFORM_NOTIFICATION_EMAIL`) and verify:
+   - setup request creation still succeeds
+   - contact enquiry creation still succeeds
+   - persisted booking creation still succeeds
+   - APIs return safe skipped email status (`EMAIL_NOT_CONFIGURED`)
+2. Configure valid email env vars and verify:
+   - setup request sends customer confirmation email
+   - setup request sends platform admin notification email
+   - contact enquiry sends platform admin notification email
+   - public tenant booking sends customer confirmation email (when customer email provided)
+3. Confirm no payment capture language is included in booking/setup emails.

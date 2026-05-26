@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
+import { getOptionalServerEnv } from "@/lib/config/server-env";
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin";
 import {
   buildSetupConfirmationParams,
@@ -13,6 +14,11 @@ import {
   createSetupRequestSchema,
   listSetupRequestsSchema,
 } from "@/lib/setup/setup-request-schema";
+import { sendTransactionalEmail } from "@/lib/email/email-provider";
+import {
+  setupRequestAdminNotification,
+  setupRequestCustomerConfirmation,
+} from "@/lib/email/email-templates";
 
 function backendNotConfigured() {
   return NextResponse.json(
@@ -34,8 +40,35 @@ export async function POST(request: NextRequest) {
       setupRequest.id,
       confirmationToken,
     ).toString()}`;
+
+    const platformNotifyEmail = getOptionalServerEnv("PLATFORM_NOTIFICATION_EMAIL");
+    const adminEmailStatus = platformNotifyEmail
+      ? await sendTransactionalEmail({
+          to: platformNotifyEmail,
+          ...setupRequestAdminNotification(setupRequest),
+          replyTo: setupRequest.contactEmail ?? undefined,
+        })
+      : { ok: false as const, skipped: true as const, reason: "EMAIL_NOT_CONFIGURED" as const };
+
+    const customerEmailStatus = setupRequest.contactEmail
+      ? await sendTransactionalEmail({
+          to: setupRequest.contactEmail,
+          ...setupRequestCustomerConfirmation(setupRequest, confirmationUrl),
+          replyTo: platformNotifyEmail ?? undefined,
+        })
+      : { ok: false as const, skipped: true as const, reason: "EMAIL_NOT_CONFIGURED" as const };
+
     return NextResponse.json(
-      { ok: true, setupRequest, confirmationToken, confirmationUrl },
+      {
+        ok: true,
+        setupRequest,
+        confirmationToken,
+        confirmationUrl,
+        emailStatus: {
+          adminNotification: adminEmailStatus,
+          customerConfirmation: customerEmailStatus,
+        },
+      },
       { status: 201 },
     );
   } catch (error) {

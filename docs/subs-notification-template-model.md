@@ -101,3 +101,14 @@ Not implemented in this phase:
 - These events are browser-local and do not send real email.
 - UI wording should remain explicit: `Auto-response prepared` rather than claiming delivery.
 
+## Transactional provider foundation (current)
+- Added a real transactional provider layer (`src/lib/email/email-provider.ts`) using Resend env configuration.
+- Added server-side transactional templates (`src/lib/email/email-templates.ts`) for:
+  - contact enquiry admin notifications
+  - setup request customer confirmation
+  - setup request admin notification
+  - persisted booking customer confirmation
+- Delivery is fail-soft:
+  - if not configured: safe skipped status (`EMAIL_NOT_CONFIGURED`)
+  - provider failures do not block setup/contact/booking record creation.
+

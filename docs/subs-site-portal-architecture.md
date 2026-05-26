@@ -166,3 +166,29 @@ No per-customer DB or code export is required for this model.
 - Public route writes persisted enquiries only and does not expose admin data.
 - Admin handling remains under platform-admin auth/session controls.
 - Notification/email provider wiring is intentionally deferred.
+
+## Transactional email provider layer (Resend)
+- Added `src/lib/email/email-provider.ts` as the shared transactional send layer.
+- Environment variables:
+  - `RESEND_API_KEY`
+  - `EMAIL_FROM`
+  - `PLATFORM_NOTIFICATION_EMAIL`
+- `sendTransactionalEmail(...)` returns safe result objects and does not throw for expected provider failures.
+- Email is intentionally fail-soft so critical write flows remain available even if provider/env is unavailable.
+
+## Current transactional email triggers
+- `POST /api/contact-enquiries`:
+  - sends platform admin notification when configured
+- `POST /api/setup-requests`:
+  - sends setup confirmation to prospect contact email
+  - sends platform admin setup notification
+- `POST /api/sites/[siteSlug]/bookings`:
+  - sends customer booking confirmation when customer email is present
+- `POST /api/admin/sites/[id]/bookings`:
+  - mirrors booking confirmation behavior for admin-created persisted bookings
+
+## Out of scope (unchanged)
+- No Twilio/WhatsApp integration
+- No bulk marketing sends
+- No unsubscribe/newsletter system
+- No payment provider emails

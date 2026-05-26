@@ -4,6 +4,8 @@ import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
 import { createCustomerSiteBooking } from "@/lib/sites/customer-site-booking-repository";
 import { createCustomerSiteBookingSchema } from "@/lib/sites/customer-site-booking-schema";
 import { getCustomerSitePreviewDataBySlug } from "@/lib/sites/customer-site-preview-repository";
+import { tenantBookingCustomerConfirmation } from "@/lib/email/email-templates";
+import { sendTransactionalEmail } from "@/lib/email/email-provider";
 
 function backendNotConfigured() {
   return NextResponse.json(
@@ -31,8 +33,20 @@ export async function POST(
       ...parsed,
       source: "customer_site",
     });
+    const siteName =
+      site.settings?.siteDisplayName ||
+      site.settings?.businessName ||
+      site.tenantSite.displayName ||
+      "Your business";
+    const bookingEmailStatus = booking.customerEmail
+      ? await sendTransactionalEmail({
+          to: booking.customerEmail,
+          ...tenantBookingCustomerConfirmation(booking, { siteName }),
+          replyTo: site.settings?.email ?? undefined,
+        })
+      : { ok: false as const, skipped: true as const, reason: "EMAIL_NOT_CONFIGURED" as const };
 
-    return NextResponse.json({ ok: true, booking }, { status: 201 });
+    return NextResponse.json({ ok: true, booking, emailStatus: bookingEmailStatus }, { status: 201 });
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(
@@ -53,4 +67,3 @@ export async function POST(
     );
   }
 }
-

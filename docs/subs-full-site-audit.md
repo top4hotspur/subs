@@ -235,3 +235,10 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
  -   P l a t f o r m   a d m i n   s e t u p - r e q u e s t   d e t a i l   n o w   i n c l u d e s   a   m a n u a l   c o m m e r c i a l - s t a t u s   p a n e l   f o r   d o m a i n / p a y m e n t   f o l l o w - u p . 
  -   F l o w   r e m a i n s   i n t e n t i o n a l l y   n o n - c h e c k o u t   i n   t h i s   p h a s e   ( n o   l i v e   S t r i p e / S q u a r e / P a y P a l   c a p t u r e ) .  
  
+
+## Transactional email foundation applied (2026-05-26)
+- Added Resend-based transactional email provider abstraction with fail-soft behavior.
+- Setup, contact enquiry, and persisted booking flows now attempt email sends when configured.
+- Missing or failed provider configuration no longer blocks core write flows.
+- Bulk marketing, Twilio/WhatsApp, unsubscribe systems, and payment emails remain out of scope.
+
