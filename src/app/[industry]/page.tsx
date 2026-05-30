@@ -1,16 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { OperationsBlueprintSummary } from "@/components/industry/operations-blueprint-summary";
-import { SimpleOfferCard } from "@/components/pricing/simple-offer-card";
 import { SiteCard } from "@/components/site-ui/site-card";
-import { SiteCtaPanel } from "@/components/site-ui/site-cta-panel";
 import { SiteHero } from "@/components/site-ui/site-hero";
 import { SiteSection } from "@/components/site-ui/site-section";
-import { SiteServiceGrid } from "@/components/site-ui/site-service-grid";
 import { getBlueprintForTemplate } from "@/lib/industry/operations-repository";
 import { getWebsiteTemplate } from "@/lib/sites/mock-repository";
 import { isWebsiteTemplateSlug, WEBSITE_TEMPLATE_SLUGS } from "@/lib/sites/types";
-import { primaryButtonClass, secondaryButtonClass } from "@/lib/ui/button-styles";
+import { primaryButtonClass } from "@/lib/ui/button-styles";
 
 type IndustryPageProps = {
   params: Promise<{ industry: string }>;
@@ -18,6 +15,121 @@ type IndustryPageProps = {
 
 export function generateStaticParams() {
   return WEBSITE_TEMPLATE_SLUGS.map((industry) => ({ industry }));
+}
+
+function getStakeholderHighlights(industry: string) {
+  if (["barbers", "hairdressers", "beauticians", "nail-salon", "massage"].includes(industry)) {
+    return {
+      customer: [
+        "View services, prices and durations",
+        "Choose a preferred staff member where enabled",
+        "Book appointments and receive confirmations",
+        "Manage upcoming bookings through My Account",
+      ],
+      owner: [
+        "Manage services, pricing and appointment timings",
+        "Control staff, roles, rotas, breaks and closures",
+        "Configure vouchers, policies and page content",
+        "Run daily operations without needing a developer",
+      ],
+      staff: [
+        "View today's and upcoming appointments",
+        "Create manual or telephone bookings",
+        "Check booking and payment status quickly",
+        "Redeem/check gift vouchers where enabled",
+      ],
+    };
+  }
+
+  if (["gardeners", "cleaners", "window-cleaning", "mobile-valeting", "dog-grooming"].includes(industry)) {
+    return {
+      customer: [
+        "View services and request clear quotes",
+        "Book recurring-friendly services where enabled",
+        "Receive confirmations and visit updates",
+        "Track upcoming service visits in My Account",
+      ],
+      owner: [
+        "Manage quote/request and recurring service options",
+        "Control staffing, availability, closures and policies",
+        "Configure service rules, pricing and local coverage pages",
+        "Review incoming orders and customer requests in one place",
+      ],
+      staff: [
+        "View daily and upcoming job schedules",
+        "Create manual/phone bookings and updates",
+        "Track job status and payment requirements",
+        "Support field operations from the staff view",
+      ],
+    };
+  }
+
+  if (["driving-instructors", "tutors"].includes(industry)) {
+    return {
+      customer: [
+        "Browse lesson options and pricing",
+        "Book lessons or submit enquiries quickly",
+        "Use block-booking options where enabled",
+        "Manage upcoming and past bookings in My Account",
+      ],
+      owner: [
+        "Manage lesson services, durations and pricing",
+        "Control staff availability, rotas and closures",
+        "Configure booking rules, policies and page content",
+        "Review bookings and operational updates centrally",
+      ],
+      staff: [
+        "See today's and upcoming lessons",
+        "Add manual/telephone bookings fast",
+        "Check customer, booking and payment status",
+        "Keep daily schedules organised in one view",
+      ],
+    };
+  }
+
+  if (["bus-hire", "taxi"].includes(industry)) {
+    return {
+      customer: [
+        "Submit transport and journey requests clearly",
+        "Request group/event transport packages",
+        "Receive confirmations and updates",
+        "Manage upcoming requests in My Account where enabled",
+      ],
+      owner: [
+        "Manage routes/services, pricing and request handling",
+        "Control staff allocation, availability and closures",
+        "Configure booking rules, policies and contact pages",
+        "Track requests and operational workflow from one dashboard",
+      ],
+      staff: [
+        "View today's and future transport jobs",
+        "Create manual/phone bookings where needed",
+        "Check request/payment status at a glance",
+        "Support dispatch and customer operations efficiently",
+      ],
+    };
+  }
+
+  return {
+    customer: [
+      "View services and prices",
+      "Book appointments or submit enquiries",
+      "Receive confirmations and updates",
+      "Manage upcoming bookings through My Account where available",
+    ],
+    owner: [
+      "Manage services, prices and durations",
+      "Control staff, roles, rotas, breaks and closures",
+      "Configure booking rules, vouchers, policies and content",
+      "Review bookings and customer requests in one place",
+    ],
+    staff: [
+      "View today's and upcoming appointments",
+      "Create manual or telephone bookings",
+      "Check booking/payment status quickly",
+      "Support daily operations from the staff view",
+    ],
+  };
 }
 
 export default async function IndustryPage({ params }: IndustryPageProps) {
@@ -33,6 +145,7 @@ export default async function IndustryPage({ params }: IndustryPageProps) {
   }
 
   const blueprint = getBlueprintForTemplate(template.slug);
+  const highlights = getStakeholderHighlights(template.slug);
 
   return (
     <main className="mx-auto max-w-6xl space-y-8 px-4 py-10 sm:px-6 lg:px-8">
@@ -46,26 +159,38 @@ export default async function IndustryPage({ params }: IndustryPageProps) {
             <Link href={`/demo/${template.slug}`} target="_blank" rel="noreferrer" className={primaryButtonClass}>
               View demo site
             </Link>
-            <Link href={`/setup/${template.slug}`} className={secondaryButtonClass}>
+            <Link href={`/setup/${template.slug}`} className={primaryButtonClass}>
               Get your site now
             </Link>
           </>
         )}
       />
 
-      <SimpleOfferCard industrySlug={template.slug} ctaLabel="Get your site now" />
-
-      <SiteSection title="What this website includes" eyebrow="Template highlights">
-        <div className="grid gap-6 lg:grid-cols-2">
-          <SiteCard title="Included features" subtitle="Professional local-business website foundation.">
+      <SiteSection title="Built around how your business works">
+        <p className="text-slate-600">
+          Your website supports the full journey for customers, business owners and staff — not just a basic online brochure.
+        </p>
+        <div className="mt-5 grid gap-6 lg:grid-cols-3">
+          <SiteCard title="Customer journey">
             <ul className="list-disc space-y-2 pl-5 text-sm text-slate-600">
-              {template.featureBullets.map((bullet) => (
-                <li key={bullet}>{bullet}</li>
+              {highlights.customer.map((point) => (
+                <li key={point}>{point}</li>
               ))}
             </ul>
           </SiteCard>
-          <SiteCard title="Default services in demo" subtitle="These can be adjusted in your business admin area.">
-            <SiteServiceGrid services={template.defaultConfig.services} />
+          <SiteCard title="Business owner / manager journey">
+            <ul className="list-disc space-y-2 pl-5 text-sm text-slate-600">
+              {highlights.owner.map((point) => (
+                <li key={point}>{point}</li>
+              ))}
+            </ul>
+          </SiteCard>
+          <SiteCard title="Staff journey">
+            <ul className="list-disc space-y-2 pl-5 text-sm text-slate-600">
+              {highlights.staff.map((point) => (
+                <li key={point}>{point}</li>
+              ))}
+            </ul>
           </SiteCard>
         </div>
       </SiteSection>
@@ -103,14 +228,20 @@ export default async function IndustryPage({ params }: IndustryPageProps) {
         </div>
       </SiteSection>
 
-      <SiteCtaPanel
-        title="Ready to launch your site?"
-        subtitle="Open your industry demo, then submit your setup request when you are ready."
-        primaryHref={`/setup/${template.slug}`}
-        primaryLabel="Get your site now"
-        secondaryHref={`/demo/${template.slug}`}
-        secondaryLabel="View demo site"
-      />
+      <section className="rounded-3xl border border-slate-800 bg-slate-900 px-6 py-7 sm:px-8">
+        <h2 className="text-2xl font-semibold text-white">Ready to launch your site?</h2>
+        <p className="mt-2 text-slate-300">
+          Open your industry demo, then place your order when you are ready.
+        </p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Link href={`/setup/${template.slug}`} className={primaryButtonClass}>
+            Get your site now
+          </Link>
+          <Link href={`/demo/${template.slug}`} className={primaryButtonClass}>
+            View demo site
+          </Link>
+        </div>
+      </section>
     </main>
   );
 }

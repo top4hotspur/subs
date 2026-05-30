@@ -578,3 +578,11 @@ Add these checks after backend envs are configured:
 - Verify old sections are removed from /admin: demo/site-owner tools, business site settings demo, mock booking panels, and local analytics preview.
 - Verify Payment Fails shows real failures if present, otherwise honest placeholder text.
 - Verify Revenue by Industry table uses persisted platform data and shows month-on-month placeholder note.
+
+## Industry sales journey smoke checks (2026-05-30)
+- Homepage hero CTAs:
+  - Choose your business type -> #industries`n  - View example demo -> #industries`n  - Order now -> /setup/barbers`n- Clicking an industry card still opens the demo in a new tab and keeps current-page navigation to /<industry>.
+- On industry pages (/[industry]):
+  - Get your site now styling matches View demo site`n  - no repeated One simple website subscription / No confusing packages block
+  - no Default services in demo block
+  - Built around how your business works stakeholder section is present.

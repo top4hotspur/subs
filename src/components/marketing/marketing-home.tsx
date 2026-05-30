@@ -145,7 +145,7 @@ export function MarketingHome() {
               <Link href="#industries" className={primaryButtonClass}>
                 Choose your business type
               </Link>
-              <Link href="/demo/barbers" className={primaryButtonClass}>
+              <Link href="#industries" className={primaryButtonClass}>
                 View example demo
               </Link>
               <Link href="/setup/barbers" className={primaryButtonClass}>
@@ -182,7 +182,7 @@ export function MarketingHome() {
                   <Link href="#industries" className={primaryButtonClass}>
                     Choose your business type
                   </Link>
-                  <Link href="/demo/barbers" className={primaryButtonClass}>
+                  <Link href="#industries" className={primaryButtonClass}>
                     View example demo
                   </Link>
                 </div>
@@ -272,7 +272,7 @@ export function MarketingHome() {
           subtitle="Choose your industry, explore the demo views, and start setup when you are ready."
           primaryHref="#industries"
           primaryLabel="Choose your business type"
-          secondaryHref="/demo/barbers"
+          secondaryHref="#industries"
           secondaryLabel="View example demo"
         />
       </div>

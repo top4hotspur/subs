@@ -277,3 +277,8 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - Replaced setup queue wording with Order Requests and added in-page report selector behaviour.
 - Added Payment Fails and Revenue by Industry platform reports with honest pre-webhook placeholders.
 - Removed obsolete local/demo booking and analytics panels from the main platform dashboard.
+
+## P0/P1 conversion follow-up applied (2026-05-30)
+- Homepage View example demo now routes visitors to industry selection instead of forcing a single demo path.
+- Industry pages now focus on stakeholder outcomes (customer, business owner/manager, staff) rather than repeating homepage pricing content.
+- Industry CTA presentation is now more consistent, with Get your site now visually aligned with View demo site.

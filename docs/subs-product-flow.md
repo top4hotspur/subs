@@ -493,3 +493,8 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - /admin now acts as a platform operations dashboard instead of a demo/business-owner workspace.
 - Main tiles are report selectors: Order Requests, Subscriber Sites, Payment Fails, Sales Pipeline, Contact Enquiries, Revenue by Industry.
 - Payment Fails and Revenue by Industry use real persisted platform data where available and show honest placeholders when Stripe/webhook data is not yet populated.
+
+## 2026-05-30 industry sales journey polish
+- Homepage View example demo now scrolls to #industries so visitors choose the most relevant demo by business type.
+- Industry pages are now a focused sales step between homepage and demo/order, with stakeholder journey messaging for customer, business owner/manager and staff.
+- Repeated homepage pricing/package block and weak default-services demo block were removed from industry pages.
