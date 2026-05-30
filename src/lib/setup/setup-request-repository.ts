@@ -62,6 +62,8 @@ export async function createSetupRequest(input: CreateSetupRequestInput) {
       setupTotalGbp: parsed.setupTotalGbp,
       monthlyTotalGbp: parsed.monthlyTotalGbp,
       status: parsed.status,
+      paymentStatus: "NOT_STARTED",
+      paymentProvider: "STRIPE",
       notes: parsed.notes,
       rawPayload: parsed.rawPayload === undefined ? undefined : toJson(parsed.rawPayload),
     },
@@ -186,6 +188,72 @@ export async function updateSetupRequestStatus(input: UpdateSetupRequestStatusIn
     });
 
     return updated;
+  });
+}
+
+export async function markSetupRequestCheckoutStarted(
+  setupRequestId: string,
+  payload: {
+    stripeCheckoutSessionId: string;
+    stripeCustomerId?: string;
+  },
+) {
+  const parsedId = parseOrThrow(setupRequestIdSchema, setupRequestId, "setup request id");
+  return prisma.setupRequest.update({
+    where: { id: parsedId },
+    data: {
+      paymentStatus: "CHECKOUT_STARTED",
+      paymentProvider: "STRIPE",
+      stripeCheckoutSessionId: payload.stripeCheckoutSessionId,
+      stripeCustomerId: payload.stripeCustomerId,
+      paymentStartedAt: new Date(),
+    },
+  });
+}
+
+export async function markSetupRequestPaidByCheckout(input: {
+  setupRequestId: string;
+  stripeCheckoutSessionId: string;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+}) {
+  const parsedId = parseOrThrow(setupRequestIdSchema, input.setupRequestId, "setup request id");
+  return prisma.setupRequest.update({
+    where: { id: parsedId },
+    data: {
+      paymentStatus: "PAID",
+      paymentProvider: "STRIPE",
+      stripeCheckoutSessionId: input.stripeCheckoutSessionId,
+      stripeCustomerId: input.stripeCustomerId,
+      stripeSubscriptionId: input.stripeSubscriptionId,
+      paymentCompletedAt: new Date(),
+      status: "SITE_PROVISIONING",
+    },
+  });
+}
+
+export async function markSetupRequestPaymentFailedBySubscriptionId(
+  stripeSubscriptionId: string,
+) {
+  if (!stripeSubscriptionId) {
+    return null;
+  }
+
+  const existing = await prisma.setupRequest.findFirst({
+    where: { stripeSubscriptionId },
+    select: { id: true },
+  });
+
+  if (!existing) {
+    return null;
+  }
+
+  return prisma.setupRequest.update({
+    where: { id: existing.id },
+    data: {
+      paymentStatus: "PAYMENT_FAILED",
+      paymentProvider: "STRIPE",
+    },
   });
 }
 

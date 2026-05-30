@@ -565,3 +565,9 @@ Add these checks after backend envs are configured:
   - show Recurring available badge when enabled
   - show Block bookings available badge when enabled
 - Confirm no real recurring payment processing occurs.
+
+## Stripe checkout smoke checks (2026-05-30)
+- Env required: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_MONTHLY_SUBSCRIPTION, STRIPE_PRICE_SETUP_FEE, STRIPE_PRICE_DOMAIN_SERVICE, NEXT_PUBLIC_SITE_URL.
+- If Stripe env is missing, checkout endpoint returns STRIPE_NOT_CONFIGURED and setup confirmation still works.
+- With valid env + price IDs, POST /api/setup-requests/[id]/checkout returns checkoutUrl.
+- Webhook must reject invalid signatures and accept valid Stripe events for status updates.

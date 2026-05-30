@@ -482,3 +482,9 @@ CSV import/export setup tools moved out of demo customisation and into business 
   - per-service block booking enable + suggested block counts
 - Public/demo service cards now show `Recurring available` and `Block bookings available` badges when enabled.
 - Recurring payment issue reporting is a placeholder panel in this pass; no real provider sync exists yet.
+
+## 2026-05-30 Stripe checkout foundation
+- Order flow can now start Stripe Checkout after setup request creation when Stripe env vars are configured.
+- Checkout line items include: setup fee (one-off), monthly subscription, and optional domain service fee when we manage registration.
+- Payment is confirmed only by Stripe webhook events; no card details are stored in app data.
+- If Stripe is not configured, the flow falls back to manual onboarding payment confirmation messaging.

@@ -266,12 +266,15 @@ export default function AdminSetupRequestsPage() {
                 <p><span className="font-semibold">Setup total:</span> {formatGbp(selectedRequest.setupTotalGbp)}</p>
                 <p><span className="font-semibold">Monthly total:</span> {formatGbp(selectedRequest.monthlyTotalGbp)}</p>
                 <p><span className="font-semibold">Status:</span> {setupStatusLabel(selectedRequest.status as SubscriptionSetupStatus)}</p>
+                <p><span className="font-semibold">Payment status:</span> {formatOptional(selectedRequest.paymentStatus)}</p>
                 <p><span className="font-semibold">Created:</span> {formatUkDateTime(selectedRequest.createdAt)}</p>
                 <p><span className="font-semibold">Contact:</span> {formatOptional(selectedRequest.contactName)}</p>
                 <p><span className="font-semibold">Contact email:</span> {formatOptional(selectedRequest.contactEmail)}</p>
                 <p><span className="font-semibold">Contact phone:</span> {formatOptional(selectedRequest.contactPhone)}</p>
                 <p className="sm:col-span-2"><span className="font-semibold">Domain value:</span> {formatOptional(selectedRequest.existingDomain || selectedRequest.desiredDomain)}</p>
                 <p className="sm:col-span-2"><span className="font-semibold">Notes:</span> {formatOptional(selectedRequest.notes)}</p>
+                <p className="sm:col-span-2"><span className="font-semibold">Stripe checkout session:</span> {formatOptional(selectedRequest.stripeCheckoutSessionId)}</p>
+                <p className="sm:col-span-2"><span className="font-semibold">Stripe subscription:</span> {formatOptional(selectedRequest.stripeSubscriptionId)}</p>
               </div>
 
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
@@ -284,9 +287,14 @@ export default function AdminSetupRequestsPage() {
                     ? `${formatGbp(offer.domainRegistrationFeeGbp)} (new domain registration/management)`
                     : "No domain fee expected (customer-managed domain option)"}
                 </p>
-                <p>Payment status: Manual confirmation required (no automated checkout in this phase).</p>
+                <p>
+                  Payment status:{" "}
+                  {selectedRequest.paymentStatus
+                    ? selectedRequest.paymentStatus
+                    : "NOT_STARTED (checkout not started)"}
+                </p>
                 <p className="mt-1">
-                  Next action: confirm domain path, contact customer, then send payment/setup onboarding details.
+                  Next action: contact customer, confirm domain path, then complete checkout/subscription onboarding.
                 </p>
               </div>
 

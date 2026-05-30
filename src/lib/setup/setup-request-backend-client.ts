@@ -32,6 +32,13 @@ export type BackendSetupRequestRecord = {
   setupTotalGbp: number;
   monthlyTotalGbp: number;
   status: string;
+  paymentStatus?: string | null;
+  paymentProvider?: string | null;
+  stripeCheckoutSessionId?: string | null;
+  stripeCustomerId?: string | null;
+  stripeSubscriptionId?: string | null;
+  paymentStartedAt?: string | null;
+  paymentCompletedAt?: string | null;
   notes?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -44,6 +51,41 @@ async function parseJsonSafe(response: Response): Promise<unknown> {
     return await response.json();
   } catch {
     return null;
+  }
+}
+
+export async function createSetupCheckoutSession(
+  id: string,
+  token?: string,
+): Promise<
+  | { ok: true; checkoutUrl: string; paymentStatus?: string }
+  | { ok: false; error: string; status: number; details?: unknown }
+> {
+  try {
+    const path = token
+      ? `/api/setup-requests/${encodeURIComponent(id)}/checkout?token=${encodeURIComponent(token)}`
+      : `/api/setup-requests/${encodeURIComponent(id)}/checkout`;
+
+    const response = await fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    const body = (await parseJsonSafe(response)) as
+      | { ok?: boolean; checkoutUrl?: string; paymentStatus?: string; error?: string; details?: unknown }
+      | null;
+
+    if (!response.ok || !body?.ok || !body.checkoutUrl) {
+      return {
+        ok: false,
+        error: body?.error ?? "SETUP_CHECKOUT_CREATE_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+
+    return { ok: true, checkoutUrl: body.checkoutUrl, paymentStatus: body.paymentStatus };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
   }
 }
 

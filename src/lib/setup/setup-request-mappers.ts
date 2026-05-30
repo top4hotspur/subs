@@ -23,6 +23,9 @@ export type SetupRequestDisplay = {
   setupTotalGbp: number;
   monthlyTotalGbp: number;
   status: SubscriptionSetupStatus;
+  paymentStatus?: string;
+  stripeCheckoutSessionId?: string;
+  stripeSubscriptionId?: string;
   createdAtIso: string;
   source: "backend" | "local";
   demoDraftName?: string;
@@ -66,6 +69,9 @@ export function mapBackendSetupRequestToDisplay(
     setupTotalGbp: request.setupTotalGbp,
     monthlyTotalGbp: request.monthlyTotalGbp,
     status: mapStatus(request.status),
+    paymentStatus: request.paymentStatus ?? undefined,
+    stripeCheckoutSessionId: request.stripeCheckoutSessionId ?? undefined,
+    stripeSubscriptionId: request.stripeSubscriptionId ?? undefined,
     createdAtIso: request.createdAt,
     source: "backend",
   };

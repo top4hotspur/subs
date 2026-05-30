@@ -265,3 +265,9 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - Added controlled recurring service and block-booking configuration in business-admin surfaces.
 - Added public/demo service badges to make recurring/block-booking availability visible without overpromising automation.
 - Added recurring-payment-issues placeholder panel for operational readiness (no provider sync yet).
+
+## P1 checkout foundation applied (2026-05-30)
+- Added Stripe Checkout/Billing foundation for MyExperiment.club order flow.
+- Public payment capture now starts in Stripe-hosted checkout (when configured), not in local forms.
+- Token-hardened setup confirmation links are used to authorize checkout creation.
+- Missing Stripe env yields explicit STRIPE_NOT_CONFIGURED fallback without blocking setup request persistence.

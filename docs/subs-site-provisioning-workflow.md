@@ -184,3 +184,8 @@ Still local/mock in current product:
 - Public CTA language now emphasizes `Order now` for setup start.
 - `/setup/[industry]` is treated as the order-start route with a selectable website type in Step 1.
 - Internal persistence remains `SetupRequest`; this is naming at the data layer, not a public checkout claim.
+
+## Stripe billing foundation (v1)
+- Setup requests can launch Stripe Checkout from confirmation links using token-hardened access.
+- Webhook events update payment status and Stripe IDs on SetupRequest before provisioning progresses.
+- Fallback remains manual onboarding when Stripe env/config is missing.

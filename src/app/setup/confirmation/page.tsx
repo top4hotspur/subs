@@ -18,6 +18,7 @@ import {
   formatGbp,
 } from "@/lib/ui/display-labels";
 import { getSetupRequestFromBackend } from "@/lib/setup/setup-request-backend-client";
+import { createSetupCheckoutSession } from "@/lib/setup/setup-request-backend-client";
 import {
   mapBackendSetupRequestToDisplay,
   mapLocalSetupRequestToDisplay,
@@ -51,6 +52,8 @@ export default function SetupConfirmationPage() {
   const [recentRequests] = useState<LocalSetupRequest[]>(() =>
     typeof window === "undefined" ? [] : listLocalSetupRequests().slice(0, 5),
   );
+  const [checkoutMessage, setCheckoutMessage] = useState<string | null>(null);
+  const [startingCheckout, setStartingCheckout] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -169,6 +172,11 @@ export default function SetupConfirmationPage() {
         <p className="mt-2 text-sm text-emerald-800">
           No payment has been taken yet. We&apos;ll confirm domain details and payment setup with you during onboarding.
         </p>
+        {request.paymentStatus ? (
+          <p className="mt-2 text-sm font-semibold text-emerald-900">
+            Payment status: {request.paymentStatus}
+          </p>
+        ) : null}
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
@@ -203,11 +211,41 @@ export default function SetupConfirmationPage() {
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
+        {request.source === "backend" ? (
+          <button
+            type="button"
+            className={primaryButtonClass}
+            disabled={startingCheckout}
+            onClick={async () => {
+              setCheckoutMessage(null);
+              setStartingCheckout(true);
+              const result = await createSetupCheckoutSession(request.id, token ?? undefined);
+              if (result.ok) {
+                window.location.href = result.checkoutUrl;
+                return;
+              }
+
+              if (result.error === "STRIPE_NOT_CONFIGURED") {
+                setCheckoutMessage(
+                  "Online checkout is not available in this environment yet. We’ll confirm payment setup during onboarding.",
+                );
+              } else {
+                setCheckoutMessage("We could not start checkout right now. Please try again shortly.");
+              }
+              setStartingCheckout(false);
+            }}
+          >
+            {startingCheckout ? "Starting payment..." : "Continue to payment"}
+          </button>
+        ) : null}
         <Link href={`/setup/${request.templateSlug}`} className={primaryButtonClass}>Update setup details</Link>
         <Link href={`/demo/${request.templateSlug}`} className={outlineButtonClass}>Back to demo site</Link>
         <Link href="/contact" className={outlineButtonClass}>Contact us</Link>
         <Link href="/#industries" className={outlineButtonClass}>Choose another business type</Link>
       </div>
+      {checkoutMessage ? (
+        <p className="mt-3 text-sm text-slate-700">{checkoutMessage}</p>
+      ) : null}
     </main>
   );
 }

@@ -241,3 +241,13 @@ Notes:
   - lockBookingEnabled (Boolean)
   - lockBookingSuggestedCounts (Json)
 - No recurring payment transaction model/provider webhook model was added in this pass.
+
+## SetupRequest Stripe fields (2026-05-30)
+- paymentStatus (NOT_STARTED, CHECKOUT_STARTED, PAID, PAYMENT_FAILED, CANCELLED)
+- paymentProvider (STRIPE)
+- stripeCheckoutSessionId
+- stripeCustomerId
+- stripeSubscriptionId
+- paymentStartedAt
+- paymentCompletedAt
+- No card PAN/CVC or other sensitive payment details are stored.

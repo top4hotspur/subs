@@ -29,6 +29,13 @@ export type BackendSetupRequestRecord = {
   setupTotalGbp: number;
   monthlyTotalGbp: number;
   status: string;
+  paymentStatus?: string | null;
+  paymentProvider?: string | null;
+  stripeCheckoutSessionId?: string | null;
+  stripeCustomerId?: string | null;
+  stripeSubscriptionId?: string | null;
+  paymentStartedAt?: string | null;
+  paymentCompletedAt?: string | null;
   notes?: string | null;
   createdAt: string;
   updatedAt: string;
