@@ -189,6 +189,18 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
               >
                 <div>
                   <p className="text-sm font-semibold">{service.name}</p>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {service.recurringEnabled ? (
+                      <span className="rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
+                        Recurring available
+                      </span>
+                    ) : null}
+                    {service.blockBookingEnabled ? (
+                      <span className="rounded-full border border-sky-300 bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-800">
+                        Block bookings available
+                      </span>
+                    ) : null}
+                  </div>
                   <p className={`mt-1 text-xs ${serviceSummaryClass}`}>
                     {service.description || "Professional service tailored to local customers."}
                   </p>

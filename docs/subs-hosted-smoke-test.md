@@ -548,3 +548,20 @@ Add these checks after backend envs are configured:
   - keeps fees/domain option and concise onboarding confirmation note
 - Confirmation security:
   - setup confirmation backend flow still uses token-hardened link access.
+
+## 2026-05-30 hosted smoke additions (recurring + block-booking foundations)
+- Homepage combined value/pricing section:
+  - pricing card contains pricing details only
+  - Choose your business type and View example demo CTAs sit under value content
+- Site-admin /site-admin/[siteSlug]:
+  - in Payments and policies, verify toggles for recurring services/payments and customer block bookings
+  - verify Recurring payment issues placeholder appears
+- Services editor:
+  - verify per-service recurring enable toggle
+  - verify interval checkboxes (Weekly/Monthly/Annually)
+  - verify per-service block booking toggle
+  - verify suggested block counts input
+- Public /sites/[siteSlug] and demo preview service cards:
+  - show Recurring available badge when enabled
+  - show Block bookings available badge when enabled
+- Confirm no real recurring payment processing occurs.

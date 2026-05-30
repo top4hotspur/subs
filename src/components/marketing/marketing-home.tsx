@@ -178,6 +178,14 @@ export function MarketingHome() {
                     </div>
                   ))}
                 </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Link href="#industries" className={primaryButtonClass}>
+                    Choose your business type
+                  </Link>
+                  <Link href="/demo/barbers" className={primaryButtonClass}>
+                    View example demo
+                  </Link>
+                </div>
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -216,18 +224,6 @@ export function MarketingHome() {
                       Once domain name has been confirmed.
                     </p>
                   </div>
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Link href="#industries" className={primaryButtonClass}>
-                    Choose your business type
-                  </Link>
-                  <Link
-                    href="/demo/barbers"
-                    className="inline-flex rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-100"
-                  >
-                    View example demo
-                  </Link>
                 </div>
               </div>
             </div>

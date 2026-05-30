@@ -260,3 +260,8 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - Setup page removed non-essential explainer sections that were adding friction in the funnel.
 - Order summary copy is now cleaner and keeps payment/domain confirmation as a concise next-step note.
 - Backend model naming remains SetupRequest and confirmation remains token-hardened.
+
+## P1 follow-up applied (2026-05-30): recurring/block-booking foundations
+- Added controlled recurring service and block-booking configuration in business-admin surfaces.
+- Added public/demo service badges to make recurring/block-booking availability visible without overpromising automation.
+- Added recurring-payment-issues placeholder panel for operational readiness (no provider sync yet).

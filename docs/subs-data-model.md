@@ -230,3 +230,14 @@ Notes:
 - Email body content is generated from server-side templates.
 - Email provider failures do not block core record creation flows (fail-soft behavior).
 - No email secrets are persisted in database models.
+
+## Recurring and block-booking fields (CustomerSiteSettings, CustomerSiteService)
+- CustomerSiteSettings additions:
+  - ecurringPaymentsEnabled (Boolean)
+  - customerBlockBookingsEnabled (Boolean)
+- CustomerSiteService additions:
+  - ecurringEnabled (Boolean)
+  - ecurringIntervals (Json)
+  - lockBookingEnabled (Boolean)
+  - lockBookingSuggestedCounts (Json)
+- No recurring payment transaction model/provider webhook model was added in this pass.

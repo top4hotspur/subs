@@ -93,6 +93,8 @@ export const upsertCustomerSiteSettingsSchema = z.object({
   policyIntro: z.string().trim().min(1).max(2000).nullable().optional(),
   policyBody: z.string().trim().min(1).max(8000).nullable().optional(),
   socialLinks: socialLinksSchema.nullable().optional(),
+  recurringPaymentsEnabled: z.boolean().optional(),
+  customerBlockBookingsEnabled: z.boolean().optional(),
 });
 
 export const customerSiteServiceInputSchema = z.object({
@@ -105,6 +107,10 @@ export const customerSiteServiceInputSchema = z.object({
   active: z.boolean().optional().default(true),
   sortOrder: z.number().int().min(0).max(100000).optional().default(0),
   rolePriceOverrides: z.unknown().nullable().optional(),
+  recurringEnabled: z.boolean().optional().default(false),
+  recurringIntervals: z.array(z.enum(["WEEKLY", "MONTHLY", "ANNUALLY"])).max(3).nullable().optional(),
+  blockBookingEnabled: z.boolean().optional().default(false),
+  blockBookingSuggestedCounts: z.array(z.number().int().min(2).max(52)).max(8).nullable().optional(),
 });
 
 export const replaceCustomerSiteServicesSchema = z.object({

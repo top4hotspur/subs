@@ -59,6 +59,8 @@ export type CustomerSiteSettingsRecord = {
   policyIntro: string | null;
   policyBody: string | null;
   socialLinks: unknown;
+  recurringPaymentsEnabled: boolean;
+  customerBlockBookingsEnabled: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -74,6 +76,10 @@ export type CustomerSiteServiceRecord = {
   active: boolean;
   sortOrder: number;
   rolePriceOverrides: unknown;
+  recurringEnabled: boolean;
+  recurringIntervals: unknown;
+  blockBookingEnabled: boolean;
+  blockBookingSuggestedCounts: unknown;
   createdAt: string;
   updatedAt: string;
 };
@@ -143,6 +149,8 @@ function serializeSettings(record: {
   policyIntro: string | null;
   policyBody: string | null;
   socialLinks: unknown;
+  recurringPaymentsEnabled: boolean;
+  customerBlockBookingsEnabled: boolean;
   createdAt: Date;
   updatedAt: Date;
 }): CustomerSiteSettingsRecord {
@@ -164,6 +172,10 @@ function serializeService(record: {
   active: boolean;
   sortOrder: number;
   rolePriceOverrides: unknown;
+  recurringEnabled: boolean;
+  recurringIntervals: unknown;
+  blockBookingEnabled: boolean;
+  blockBookingSuggestedCounts: unknown;
   createdAt: Date;
   updatedAt: Date;
 }): CustomerSiteServiceRecord {
@@ -252,6 +264,8 @@ export async function upsertCustomerSiteSettings(
         : parsed.socialLinks === null
           ? Prisma.DbNull
           : toJson(parsed.socialLinks),
+    recurringPaymentsEnabled: parsed.recurringPaymentsEnabled ?? false,
+    customerBlockBookingsEnabled: parsed.customerBlockBookingsEnabled ?? false,
   };
   const updateData: Prisma.CustomerSiteSettingsUncheckedUpdateInput = {};
   if (parsed.siteDisplayName !== undefined) updateData.siteDisplayName = parsed.siteDisplayName;
@@ -334,6 +348,12 @@ export async function upsertCustomerSiteSettings(
       parsed.socialLinks === null
         ? Prisma.DbNull
         : toJson(parsed.socialLinks);
+  }
+  if (parsed.recurringPaymentsEnabled !== undefined) {
+    updateData.recurringPaymentsEnabled = parsed.recurringPaymentsEnabled;
+  }
+  if (parsed.customerBlockBookingsEnabled !== undefined) {
+    updateData.customerBlockBookingsEnabled = parsed.customerBlockBookingsEnabled;
   }
 
   const record = await prisma.customerSiteSettings.upsert({
@@ -429,6 +449,20 @@ export async function replaceCustomerSiteServices(
               : service.rolePriceOverrides === null
                 ? Prisma.DbNull
                 : toJson(service.rolePriceOverrides),
+          recurringEnabled: service.recurringEnabled ?? false,
+          recurringIntervals:
+            service.recurringIntervals === undefined
+              ? undefined
+              : service.recurringIntervals === null
+                ? Prisma.DbNull
+                : toJson(service.recurringIntervals),
+          blockBookingEnabled: service.blockBookingEnabled ?? false,
+          blockBookingSuggestedCounts:
+            service.blockBookingSuggestedCounts === undefined
+              ? undefined
+              : service.blockBookingSuggestedCounts === null
+                ? Prisma.DbNull
+                : toJson(service.blockBookingSuggestedCounts),
         })),
       });
     }
@@ -462,6 +496,20 @@ export async function upsertCustomerSiteService(
                 : parsedService.rolePriceOverrides === null
                   ? Prisma.DbNull
                   : toJson(parsedService.rolePriceOverrides),
+            recurringEnabled: parsedService.recurringEnabled ?? false,
+            recurringIntervals:
+              parsedService.recurringIntervals === undefined
+                ? undefined
+                : parsedService.recurringIntervals === null
+                  ? Prisma.DbNull
+                  : toJson(parsedService.recurringIntervals),
+            blockBookingEnabled: parsedService.blockBookingEnabled ?? false,
+            blockBookingSuggestedCounts:
+              parsedService.blockBookingSuggestedCounts === undefined
+                ? undefined
+                : parsedService.blockBookingSuggestedCounts === null
+                  ? Prisma.DbNull
+                  : toJson(parsedService.blockBookingSuggestedCounts),
           },
         });
 
@@ -493,6 +541,20 @@ export async function upsertCustomerSiteService(
               : parsedService.rolePriceOverrides === null
                 ? Prisma.DbNull
                 : toJson(parsedService.rolePriceOverrides),
+          recurringEnabled: parsedService.recurringEnabled ?? false,
+          recurringIntervals:
+            parsedService.recurringIntervals === undefined
+              ? undefined
+              : parsedService.recurringIntervals === null
+                ? Prisma.DbNull
+                : toJson(parsedService.recurringIntervals),
+          blockBookingEnabled: parsedService.blockBookingEnabled ?? false,
+          blockBookingSuggestedCounts:
+            parsedService.blockBookingSuggestedCounts === undefined
+              ? undefined
+              : parsedService.blockBookingSuggestedCounts === null
+                ? Prisma.DbNull
+                : toJson(parsedService.blockBookingSuggestedCounts),
         },
       });
 

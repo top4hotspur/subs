@@ -209,3 +209,14 @@ No real provider credentials/API keys are stored or connected in this phase.
 - Customer-facing demo vouchers now use a dedicated purchase route: `/demo/[industry]/vouchers`.
 - Voucher confirmations include a locally generated voucher reference and delivery method.
 - Payment is not processed in demo mode; checkout/payment remains informational.
+
+## Recurring and block-booking foundation fields
+- Site-level settings now include:
+  - recurring payments/services enabled
+  - customer block bookings enabled
+- Service-level settings now include:
+  - recurring enabled
+  - recurring intervals (WEEKLY, MONTHLY, ANNUALLY)
+  - block booking enabled
+  - suggested block counts
+- This pass stores configuration only; no provider-driven recurring billing is active.

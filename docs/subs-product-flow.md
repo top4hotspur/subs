@@ -467,3 +467,18 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Setup form submit wording is now `Order now` (loading: `Placing order...`).
 - Order summary copy is simplified and keeps payment/domain confirmation as the next onboarding step.
 - Internal persistence still uses `SetupRequest`, and confirmation access remains token-hardened.
+
+## 2026-05-30 recurring and block-booking foundations
+- Homepage hero CTA row keeps `Order now` as the third primary action.
+- Combined value/pricing section now keeps pricing card clean while `Choose your business type` and `View example demo` CTAs sit under the value column.
+- Industry marketing bullets were refreshed:
+  - Hairdresser: `Gift Vouchers`
+  - Gardeners: `Recurring payments available`
+  - Bus Hire and Tutor bullets simplified for conversion clarity.
+- Business admin foundations added for recurring/block booking controls:
+  - site-level recurring enable
+  - site-level customer block bookings enable
+  - per-service recurring enable + interval selection (`WEEKLY`, `MONTHLY`, `ANNUALLY`)
+  - per-service block booking enable + suggested block counts
+- Public/demo service cards now show `Recurring available` and `Block bookings available` badges when enabled.
+- Recurring payment issue reporting is a placeholder panel in this pass; no real provider sync exists yet.

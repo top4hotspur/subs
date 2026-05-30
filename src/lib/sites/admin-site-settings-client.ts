@@ -48,6 +48,8 @@ export type PersistedCustomerSiteSettings = {
   policyIntro: string | null;
   policyBody: string | null;
   socialLinks: unknown;
+  recurringPaymentsEnabled: boolean;
+  customerBlockBookingsEnabled: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -63,6 +65,10 @@ export type PersistedCustomerSiteService = {
   active: boolean;
   sortOrder: number;
   rolePriceOverrides: unknown;
+  recurringEnabled: boolean;
+  recurringIntervals: unknown;
+  blockBookingEnabled: boolean;
+  blockBookingSuggestedCounts: unknown;
   createdAt: string;
   updatedAt: string;
 };

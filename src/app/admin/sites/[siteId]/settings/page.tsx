@@ -75,6 +75,8 @@ type PersistedSettingsDraft = {
   cancellationFullRefundNoticeDays: string;
   cancellationNoRefundWithinDays: string;
   cancellationPolicyNote: string;
+  recurringPaymentsEnabled: boolean;
+  customerBlockBookingsEnabled: boolean;
 };
 
 type PersistedServiceDraft = {
@@ -87,6 +89,10 @@ type PersistedServiceDraft = {
   active: boolean;
   sortOrder: string;
   rolePriceOverrides: string;
+  recurringEnabled: boolean;
+  recurringIntervals: Array<"WEEKLY" | "MONTHLY" | "ANNUALLY">;
+  blockBookingEnabled: boolean;
+  blockBookingSuggestedCounts: string;
 };
 
 type PersistedStaffRoleDraft = {
@@ -200,6 +206,8 @@ function toSettingsDraft(record: PersistedCustomerSiteSettings | null): Persiste
     cancellationFullRefundNoticeDays: String(record?.cancellationFullRefundNoticeDays ?? 1),
     cancellationNoRefundWithinDays: String(record?.cancellationNoRefundWithinDays ?? 1),
     cancellationPolicyNote: record?.cancellationPolicyNote ?? "",
+    recurringPaymentsEnabled: record?.recurringPaymentsEnabled ?? false,
+    customerBlockBookingsEnabled: record?.customerBlockBookingsEnabled ?? false,
   };
 }
 
@@ -217,6 +225,17 @@ function toServiceDraft(service: PersistedCustomerSiteService): PersistedService
       service.rolePriceOverrides === null || service.rolePriceOverrides === undefined
         ? ""
         : JSON.stringify(service.rolePriceOverrides),
+    recurringEnabled: service.recurringEnabled ?? false,
+    recurringIntervals: Array.isArray(service.recurringIntervals)
+      ? service.recurringIntervals.filter(
+          (item): item is "WEEKLY" | "MONTHLY" | "ANNUALLY" =>
+            item === "WEEKLY" || item === "MONTHLY" || item === "ANNUALLY",
+        )
+      : [],
+    blockBookingEnabled: service.blockBookingEnabled ?? false,
+    blockBookingSuggestedCounts: Array.isArray(service.blockBookingSuggestedCounts)
+      ? service.blockBookingSuggestedCounts.join(", ")
+      : "",
   };
 }
 
@@ -230,6 +249,10 @@ function emptyServiceDraft(sortOrder: number): PersistedServiceDraft {
     active: true,
     sortOrder: String(sortOrder),
     rolePriceOverrides: "",
+    recurringEnabled: false,
+    recurringIntervals: [],
+    blockBookingEnabled: false,
+    blockBookingSuggestedCounts: "",
   };
 }
 
@@ -552,6 +575,8 @@ export default function AdminSiteSettingsPage() {
       acceptCardPayments: settingsDraft.acceptCardPayments,
       requireBookingPrepayment: settingsDraft.requireBookingPrepayment,
       allowInStorePaymentRecording: settingsDraft.allowInStorePaymentRecording,
+      recurringPaymentsEnabled: settingsDraft.recurringPaymentsEnabled,
+      customerBlockBookingsEnabled: settingsDraft.customerBlockBookingsEnabled,
       cancellationFullRefundNoticeDays: settingsDraft.cancellationFullRefundNoticeDays.trim()
         ? Number(settingsDraft.cancellationFullRefundNoticeDays)
         : null,
@@ -598,6 +623,15 @@ export default function AdminSiteSettingsPage() {
         active: service.active,
         sortOrder: service.sortOrder.trim() ? Number(service.sortOrder) : index,
         rolePriceOverrides: parsedOverrides ?? null,
+        recurringEnabled: service.recurringEnabled,
+        recurringIntervals: service.recurringIntervals,
+        blockBookingEnabled: service.blockBookingEnabled,
+        blockBookingSuggestedCounts: service.blockBookingSuggestedCounts
+          .split(",")
+          .map((value) => value.trim())
+          .filter((value) => value.length > 0)
+          .map((value) => Number(value))
+          .filter((value) => Number.isFinite(value) && value >= 2 && value <= 52),
       };
     });
 
@@ -895,11 +929,19 @@ export default function AdminSiteSettingsPage() {
                   <input type="checkbox" checked={settingsDraft.requireBookingPrepayment} onChange={(event) => setSettingsDraft((current) => ({ ...current, requireBookingPrepayment: event.target.checked }))} />
                   Require prepayment for online bookings
                 </label>
-                <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                  <input type="checkbox" checked={settingsDraft.allowInStorePaymentRecording} onChange={(event) => setSettingsDraft((current) => ({ ...current, allowInStorePaymentRecording: event.target.checked }))} />
-                  Allow in-store payment recording
-                </label>
-              </div>
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                <input type="checkbox" checked={settingsDraft.allowInStorePaymentRecording} onChange={(event) => setSettingsDraft((current) => ({ ...current, allowInStorePaymentRecording: event.target.checked }))} />
+                Allow in-store payment recording
+              </label>
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">
+                <input type="checkbox" checked={settingsDraft.recurringPaymentsEnabled} onChange={(event) => setSettingsDraft((current) => ({ ...current, recurringPaymentsEnabled: event.target.checked }))} />
+                Enable recurring services/payments options
+              </label>
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">
+                <input type="checkbox" checked={settingsDraft.customerBlockBookingsEnabled} onChange={(event) => setSettingsDraft((current) => ({ ...current, customerBlockBookingsEnabled: event.target.checked }))} />
+                Allow customer block bookings
+              </label>
+            </div>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <label className="text-xs font-semibold text-slate-700">
                   Full refund notice period (days)
@@ -909,12 +951,19 @@ export default function AdminSiteSettingsPage() {
                   No refund within (days)
                   <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.cancellationNoRefundWithinDays} onChange={(event) => setSettingsDraft((current) => ({ ...current, cancellationNoRefundWithinDays: event.target.value }))} />
                 </label>
-                <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
-                  Cancellation policy note
-                  <textarea className="mt-1 min-h-[72px] w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.cancellationPolicyNote} onChange={(event) => setSettingsDraft((current) => ({ ...current, cancellationPolicyNote: event.target.value }))} />
-                </label>
-              </div>
+              <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
+                Cancellation policy note
+                <textarea className="mt-1 min-h-[72px] w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.cancellationPolicyNote} onChange={(event) => setSettingsDraft((current) => ({ ...current, cancellationPolicyNote: event.target.value }))} />
+              </label>
             </div>
+            <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3">
+              <p className="text-xs font-semibold text-slate-900">Recurring payment issues</p>
+              <p className="mt-1 text-xs text-slate-600">No failed recurring payments to review.</p>
+              <p className="mt-1 text-[11px] text-slate-500">
+                Support placeholder only in this pass. Provider-linked issue reporting will come with real recurring billing integration.
+              </p>
+            </div>
+          </div>
 
             <div className="mt-4">
               <button type="button" className={`${primaryButtonClass} ${smallButtonClass}`} onClick={savePersistedSettings}>
@@ -974,6 +1023,47 @@ export default function AdminSiteSettingsPage() {
                       <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Description
                         <textarea className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" rows={2} value={service.description} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, description: event.target.value } : row))} />
                       </label>
+                      <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">
+                        <input type="checkbox" checked={service.recurringEnabled} disabled={!settingsDraft.recurringPaymentsEnabled} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, recurringEnabled: event.target.checked } : row))} />
+                        Allow this service to be sold as recurring
+                      </label>
+                      {service.recurringEnabled && settingsDraft.recurringPaymentsEnabled ? (
+                        <div className="sm:col-span-2">
+                          <p className="text-xs font-semibold text-slate-700">Recurring intervals</p>
+                          <div className="mt-1 flex flex-wrap gap-3">
+                            {(["WEEKLY", "MONTHLY", "ANNUALLY"] as const).map((interval) => (
+                              <label key={interval} className="flex items-center gap-1 text-xs text-slate-700">
+                                <input
+                                  type="checkbox"
+                                  checked={service.recurringIntervals.includes(interval)}
+                                  onChange={(event) =>
+                                    setServicesDraft((current) =>
+                                      current.map((row, i) => {
+                                        if (i !== index) return row;
+                                        const next = new Set(row.recurringIntervals);
+                                        if (event.target.checked) next.add(interval);
+                                        else next.delete(interval);
+                                        return { ...row, recurringIntervals: [...next] };
+                                      }),
+                                    )
+                                  }
+                                />
+                                {interval.charAt(0) + interval.slice(1).toLowerCase()}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                      <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">
+                        <input type="checkbox" checked={service.blockBookingEnabled} disabled={!settingsDraft.customerBlockBookingsEnabled} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, blockBookingEnabled: event.target.checked } : row))} />
+                        Allow block bookings for this service
+                      </label>
+                      {service.blockBookingEnabled && settingsDraft.customerBlockBookingsEnabled ? (
+                        <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
+                          Suggested block counts (comma separated)
+                          <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="5, 10, 12" value={service.blockBookingSuggestedCounts} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, blockBookingSuggestedCounts: event.target.value } : row))} />
+                        </label>
+                      ) : null}
                       <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Role price overrides JSON (optional)
                         <textarea className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 font-mono text-xs" rows={2} value={service.rolePriceOverrides} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, rolePriceOverrides: event.target.value } : row))} />
                       </label>

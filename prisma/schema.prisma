@@ -272,6 +272,8 @@ model CustomerSiteSettings {
   policyIntro           String?
   policyBody            String?
   socialLinks           Json?
+  recurringPaymentsEnabled Boolean @default(false)
+  customerBlockBookingsEnabled Boolean @default(false)
   createdAt           DateTime   @default(now())
   updatedAt           DateTime   @updatedAt
   tenantSite          TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
@@ -288,6 +290,10 @@ model CustomerSiteService {
   active             Boolean    @default(true)
   sortOrder          Int        @default(0)
   rolePriceOverrides Json?
+  recurringEnabled   Boolean    @default(false)
+  recurringIntervals Json?
+  blockBookingEnabled Boolean   @default(false)
+  blockBookingSuggestedCounts Json?
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
   tenantSite         TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)

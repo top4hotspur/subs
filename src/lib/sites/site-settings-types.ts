@@ -132,6 +132,10 @@ export type SiteServiceItem = {
     roleLabel: string;
     priceGbp: number;
   }[];
+  recurringEnabled?: boolean;
+  recurringIntervals?: ("WEEKLY" | "MONTHLY" | "ANNUALLY")[];
+  blockBookingEnabled?: boolean;
+  blockBookingSuggestedCounts?: number[];
   staffPriceOverrides?: {
     staffId: string;
     staffName: string;
@@ -204,11 +208,13 @@ export type SitePaymentSettings = {
   cashNoShowWarningEnabled: boolean;
   currencyCode: SiteCurrencyCode;
   allowInStorePaymentRecording: boolean;
+  recurringPaymentsEnabled?: boolean;
 };
 
 export type SiteAppointmentSettings = {
   appointmentSlotIntervalMinutes: 15 | 30 | 60;
   allowCustomerStaffSelection: boolean;
+  customerBlockBookingsEnabled?: boolean;
 };
 
 export type SiteCancellationPolicySettings = {

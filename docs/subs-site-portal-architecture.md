@@ -192,3 +192,8 @@ No per-customer DB or code export is required for this model.
 - No bulk marketing sends
 - No unsubscribe/newsletter system
 - No payment provider emails
+
+## Recurring and block-booking (v1 foundation)
+- Recurring and block-booking controls are tenant-scoped configuration under shared-app/central-DB architecture.
+- No payment provider subscription engine is wired in this phase.
+- Public rendering can surface service badges (Recurring available, Block bookings available) from persisted service settings.

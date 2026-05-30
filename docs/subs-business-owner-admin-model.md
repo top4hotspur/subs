@@ -300,3 +300,16 @@ Important:
   - Today
   - Future
 - Refund handling remains manual through the external payment provider.
+
+## Recurring and block-booking controls (foundation)
+- Site-admin now includes configuration-only controls for recurring service/payment options.
+- Site-admin can enable recurring options site-wide, then mark individual services as recurring-capable.
+- Supported recurring intervals in this pass: WEEKLY, MONTHLY, ANNUALLY.
+- Site-admin can enable customer block bookings site-wide and per service.
+- Per-service suggested block counts can be stored as guidance (for example 5, 10, 12).
+- No live recurring billing integration is connected yet.
+
+## Recurring payment issues placeholder
+- Site-admin and support/admin editors include a Recurring payment issues placeholder area.
+- Current behavior is informational only (No failed recurring payments to review.).
+- Real failed-payment ingestion and resolve workflows depend on future provider integration.

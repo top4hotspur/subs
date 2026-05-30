@@ -114,6 +114,8 @@ type SettingsDraft = {
   policyTitle: string;
   policyIntro: string;
   policyBody: string;
+  recurringPaymentsEnabled: boolean;
+  customerBlockBookingsEnabled: boolean;
   socialLinks: {
     facebook: SocialPlatformDraft;
     instagram: SocialPlatformDraft;
@@ -132,6 +134,10 @@ type ServiceDraft = {
   bufferAfterMinutes: string;
   active: boolean;
   sortOrder: string;
+  recurringEnabled: boolean;
+  recurringIntervals: Array<"WEEKLY" | "MONTHLY" | "ANNUALLY">;
+  blockBookingEnabled: boolean;
+  blockBookingSuggestedCounts: string;
 };
 
 type StaffRoleDraft = {
@@ -294,6 +300,8 @@ function toSettingsDraft(settings: PersistedCustomerSiteSettings | null): Settin
     policyTitle: settings?.policyTitle ?? "",
     policyIntro: settings?.policyIntro ?? "",
     policyBody: settings?.policyBody ?? "",
+    recurringPaymentsEnabled: settings?.recurringPaymentsEnabled ?? false,
+    customerBlockBookingsEnabled: settings?.customerBlockBookingsEnabled ?? false,
     socialLinks: parseSocialDraft(settings?.socialLinks),
   };
 }
@@ -307,6 +315,17 @@ function toServiceDraft(service: PersistedCustomerSiteService): ServiceDraft {
     bufferAfterMinutes: service.bufferAfterMinutes === null ? "" : String(service.bufferAfterMinutes),
     active: service.active,
     sortOrder: String(service.sortOrder),
+    recurringEnabled: service.recurringEnabled ?? false,
+    recurringIntervals: Array.isArray(service.recurringIntervals)
+      ? service.recurringIntervals.filter(
+          (item): item is "WEEKLY" | "MONTHLY" | "ANNUALLY" =>
+            item === "WEEKLY" || item === "MONTHLY" || item === "ANNUALLY",
+        )
+      : [],
+    blockBookingEnabled: service.blockBookingEnabled ?? false,
+    blockBookingSuggestedCounts: Array.isArray(service.blockBookingSuggestedCounts)
+      ? service.blockBookingSuggestedCounts.join(", ")
+      : "",
   };
 }
 
@@ -543,6 +562,8 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       policyIntro: settingsDraft.policyIntro.trim() || null,
       policyBody: settingsDraft.policyBody.trim() || null,
       socialLinks: settingsDraft.socialLinks,
+      recurringPaymentsEnabled: settingsDraft.recurringPaymentsEnabled,
+      customerBlockBookingsEnabled: settingsDraft.customerBlockBookingsEnabled,
     });
     if (!result.ok) {
       setMessage(toMessage(result.error, result.status));
@@ -613,6 +634,15 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
         active: service.active,
         sortOrder: service.sortOrder.trim() ? Number(service.sortOrder) : index,
         rolePriceOverrides: null,
+        recurringEnabled: service.recurringEnabled,
+        recurringIntervals: service.recurringIntervals,
+        blockBookingEnabled: service.blockBookingEnabled,
+        blockBookingSuggestedCounts: service.blockBookingSuggestedCounts
+          .split(",")
+          .map((value) => value.trim())
+          .filter((value) => value.length > 0)
+          .map((value) => Number(value))
+          .filter((value) => Number.isFinite(value) && value >= 2 && value <= 52),
       })),
     );
     if (!result.ok) {
@@ -1005,6 +1035,32 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                 />
                 Allow in-store payment recording
               </label>
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">
+                <input
+                  type="checkbox"
+                  checked={settingsDraft.recurringPaymentsEnabled}
+                  onChange={(event) =>
+                    setSettingsDraft((current) => ({
+                      ...current,
+                      recurringPaymentsEnabled: event.target.checked,
+                    }))
+                  }
+                />
+                Enable recurring services/payments options
+              </label>
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">
+                <input
+                  type="checkbox"
+                  checked={settingsDraft.customerBlockBookingsEnabled}
+                  onChange={(event) =>
+                    setSettingsDraft((current) => ({
+                      ...current,
+                      customerBlockBookingsEnabled: event.target.checked,
+                    }))
+                  }
+                />
+                Allow customer block bookings
+              </label>
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <label className="text-xs font-semibold text-slate-700">
@@ -1046,6 +1102,13 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                   }
                 />
               </label>
+            </div>
+            <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3">
+              <p className="text-xs font-semibold text-slate-900">Recurring payment issues</p>
+              <p className="mt-1 text-xs text-slate-600">No failed recurring payments to review.</p>
+              <p className="mt-1 text-[11px] text-slate-500">
+                This is a foundation placeholder. Provider-sync issue tracking will be connected in a later phase.
+              </p>
             </div>
           </div>
 
@@ -1165,6 +1228,10 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     bufferAfterMinutes: "",
                     active: true,
                     sortOrder: String(current.length),
+                    recurringEnabled: false,
+                    recurringIntervals: [],
+                    blockBookingEnabled: false,
+                    blockBookingSuggestedCounts: "",
                   },
                 ])
               }
@@ -1191,6 +1258,47 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                   <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Description
                     <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs" value={service.description} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, description: event.target.value } : row))} />
                   </label>
+                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">
+                    <input type="checkbox" checked={service.recurringEnabled} disabled={!settingsDraft.recurringPaymentsEnabled} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, recurringEnabled: event.target.checked } : row))} />
+                    Allow this service to be sold as recurring
+                  </label>
+                  {service.recurringEnabled && settingsDraft.recurringPaymentsEnabled ? (
+                    <div className="sm:col-span-2">
+                      <p className="text-xs font-semibold text-slate-700">Recurring intervals</p>
+                      <div className="mt-1 flex flex-wrap gap-3">
+                        {(["WEEKLY", "MONTHLY", "ANNUALLY"] as const).map((interval) => (
+                          <label key={interval} className="flex items-center gap-1 text-xs text-slate-700">
+                            <input
+                              type="checkbox"
+                              checked={service.recurringIntervals.includes(interval)}
+                              onChange={(event) =>
+                                setServicesDraft((current) =>
+                                  current.map((row, i) => {
+                                    if (i !== index) return row;
+                                    const next = new Set(row.recurringIntervals);
+                                    if (event.target.checked) next.add(interval);
+                                    else next.delete(interval);
+                                    return { ...row, recurringIntervals: [...next] };
+                                  }),
+                                )
+                              }
+                            />
+                            {interval.charAt(0) + interval.slice(1).toLowerCase()}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">
+                    <input type="checkbox" checked={service.blockBookingEnabled} disabled={!settingsDraft.customerBlockBookingsEnabled} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, blockBookingEnabled: event.target.checked } : row))} />
+                    Allow block bookings for this service
+                  </label>
+                  {service.blockBookingEnabled && settingsDraft.customerBlockBookingsEnabled ? (
+                    <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
+                      Suggested block counts (comma separated)
+                      <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="5, 10, 12" value={service.blockBookingSuggestedCounts} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, blockBookingSuggestedCounts: event.target.value } : row))} />
+                    </label>
+                  ) : null}
                 </div>
                 <button type="button" className="mt-2 rounded-md border border-rose-300 bg-white px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50" onClick={() => setServicesDraft((current) => current.filter((_, i) => i !== index))}>
                   Remove

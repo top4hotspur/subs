@@ -49,9 +49,9 @@ export const websiteTemplates: Record<WebsiteTemplate["slug"], WebsiteTemplate> 
     marketingSummary:
       "Managed bus and coach hire websites built to capture high-value group transport enquiries.",
     featureBullets: [
-      "Group transport request-first conversion flow",
-      "Service packages for events, schools, and airport groups",
-      "Clear enquiry handling for route, date, and group size",
+      "Group transport requests",
+      "Packages for multiple event groups",
+      "Clear enquiry handling",
     ],
     pricing: {
       setupFeeLabel: "From GBP 399 one-off setup",
@@ -186,7 +186,7 @@ export const websiteTemplates: Record<WebsiteTemplate["slug"], WebsiteTemplate> 
     featureBullets: [
       "Service categories and style menus",
       "Stylist/team presentation blocks",
-      "Seasonal offer and campaign-ready content",
+      "Gift Vouchers",
     ],
     pricing: {
       setupFeeLabel: "From GBP 359 one-off setup",
@@ -479,8 +479,8 @@ export const websiteTemplates: Record<WebsiteTemplate["slug"], WebsiteTemplate> 
       "Managed tutoring websites for individual tutors and small teams with lesson booking and enquiry flows.",
     featureBullets: [
       "Subject and lesson-format service tiles",
-      "Parent/student enquiry and lesson booking flow",
-      "Professional local tutoring brand presence",
+      "Parent/student enquiry and bookings",
+      "Block booking discounts",
     ],
     pricing: {
       setupFeeLabel: "From GBP 349 one-off setup",
@@ -602,7 +602,7 @@ export const websiteTemplates: Record<WebsiteTemplate["slug"], WebsiteTemplate> 
       "Managed gardener and landscaping websites built to attract regular maintenance and project enquiries.",
     featureBullets: [
       "Seasonal service and project showcase",
-      "Maintenance plan and landscaping messaging",
+      "Recurring payments available",
       "Quick quote and consultation CTAs",
     ],
     pricing: {

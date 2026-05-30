@@ -606,6 +606,46 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                     <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Description
                       <textarea className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={service.description} onChange={(event) => setSettings((current)=>{const next=[...current.services]; next[index]={...next[index],description:event.target.value}; return {...current,services:next};})} />
                     </label>
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">
+                      <input type="checkbox" checked={Boolean(service.recurringEnabled)} disabled={!settings.paymentSettings.recurringPaymentsEnabled} onChange={(event) => setSettings((current)=>{const next=[...current.services]; next[index]={...next[index],recurringEnabled:event.target.checked}; return {...current,services:next};})} />
+                      Allow this service to be sold as recurring
+                    </label>
+                    {service.recurringEnabled && settings.paymentSettings.recurringPaymentsEnabled ? (
+                      <div className="sm:col-span-2">
+                        <p className="text-xs font-semibold text-slate-700">Recurring intervals</p>
+                        <div className="mt-1 flex flex-wrap gap-3">
+                          {(["WEEKLY", "MONTHLY", "ANNUALLY"] as const).map((interval) => (
+                            <label key={interval} className="flex items-center gap-1 text-xs text-slate-700">
+                              <input
+                                type="checkbox"
+                                checked={(service.recurringIntervals ?? []).includes(interval)}
+                                onChange={(event) =>
+                                  setSettings((current) => {
+                                    const next = [...current.services];
+                                    const values = new Set(next[index].recurringIntervals ?? []);
+                                    if (event.target.checked) values.add(interval);
+                                    else values.delete(interval);
+                                    next[index] = { ...next[index], recurringIntervals: [...values] };
+                                    return { ...current, services: next };
+                                  })
+                                }
+                              />
+                              {interval.charAt(0) + interval.slice(1).toLowerCase()}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">
+                      <input type="checkbox" checked={Boolean(service.blockBookingEnabled)} disabled={!settings.appointmentSettings.customerBlockBookingsEnabled} onChange={(event) => setSettings((current)=>{const next=[...current.services]; next[index]={...next[index],blockBookingEnabled:event.target.checked}; return {...current,services:next};})} />
+                      Allow block bookings for this service
+                    </label>
+                    {service.blockBookingEnabled && settings.appointmentSettings.customerBlockBookingsEnabled ? (
+                      <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
+                        Suggested block counts (comma separated)
+                        <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={(service.blockBookingSuggestedCounts ?? []).join(", ")} placeholder="5, 10, 12" onChange={(event)=>setSettings((current)=>{const next=[...current.services]; next[index]={...next[index],blockBookingSuggestedCounts:event.target.value.split(',').map((v)=>Number(v.trim())).filter((n)=>Number.isFinite(n)&&n>=2&&n<=52)}; return {...current,services:next};})} />
+                      </label>
+                    ) : null}
                     {activeRoles.length > 0 ? (
                       <div className="sm:col-span-2 rounded-md border border-slate-200 bg-slate-50 p-2">
                         <p className="text-xs font-semibold text-slate-700">Role price overrides</p>
@@ -831,6 +871,22 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
               }
             />
             Allow customer staff selection
+          </label>
+          <label className="flex items-center gap-2 self-end text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={Boolean(settings.appointmentSettings.customerBlockBookingsEnabled)}
+              onChange={(event) =>
+                setSettings((current) => ({
+                  ...current,
+                  appointmentSettings: {
+                    ...current.appointmentSettings,
+                    customerBlockBookingsEnabled: event.target.checked,
+                  },
+                }))
+              }
+            />
+            Allow customer block bookings
           </label>
         </div>
         <p className="mt-2 text-xs text-slate-600">
@@ -1756,9 +1812,17 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
           <input type="checkbox" checked={settings.paymentSettings.allowInStorePaymentRecording} onChange={(event) => setSettings((current) => ({ ...current, paymentSettings: { ...current.paymentSettings, allowInStorePaymentRecording: event.target.checked } }))} />
           Allow in-store payment recording
         </label>
+        <label className="mt-2 flex items-center gap-2 text-sm text-slate-700">
+          <input type="checkbox" checked={Boolean(settings.paymentSettings.recurringPaymentsEnabled)} onChange={(event) => setSettings((current) => ({ ...current, paymentSettings: { ...current.paymentSettings, recurringPaymentsEnabled: event.target.checked } }))} />
+          Enable recurring services/payments options
+        </label>
         <div className="mt-2 rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-600">
           Card/cash/manual payment recording preferences can be configured here for local mock
           setup.
+        </div>
+        <div className="mt-2 rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-600">
+          <p className="font-semibold text-slate-800">Recurring payment issues</p>
+          <p className="mt-1">No failed recurring payments to review.</p>
         </div>
         <p className="mt-2 text-xs text-slate-600">Shows a staff tool for recording cash/card payments taken in store. This does not process payments, but allows for accurate finance reporting.</p>
       </CollapsibleSection>

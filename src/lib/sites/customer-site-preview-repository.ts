@@ -44,6 +44,8 @@ export type CustomerSitePreviewData = {
     policyIntro: string | null;
     policyBody: string | null;
     socialLinks: unknown;
+    recurringPaymentsEnabled: boolean;
+    customerBlockBookingsEnabled: boolean;
   } | null;
   services: Array<{
     id: string;
@@ -55,6 +57,10 @@ export type CustomerSitePreviewData = {
     active: boolean;
     sortOrder: number;
     rolePriceOverrides: unknown;
+    recurringEnabled: boolean;
+    recurringIntervals: unknown;
+    blockBookingEnabled: boolean;
+    blockBookingSuggestedCounts: unknown;
   }>;
   staffRoles: Array<{
     id: string;
@@ -226,6 +232,8 @@ export async function getCustomerSitePreviewData(
           policyIntro: site.customerSiteSettings.policyIntro ?? null,
           policyBody: site.customerSiteSettings.policyBody ?? null,
           socialLinks: site.customerSiteSettings.socialLinks ?? null,
+          recurringPaymentsEnabled: site.customerSiteSettings.recurringPaymentsEnabled,
+          customerBlockBookingsEnabled: site.customerSiteSettings.customerBlockBookingsEnabled,
         }
       : null,
     services: site.customerSiteServices.map((service) => ({
@@ -238,6 +246,10 @@ export async function getCustomerSitePreviewData(
       active: service.active,
       sortOrder: service.sortOrder,
       rolePriceOverrides: service.rolePriceOverrides ?? null,
+      recurringEnabled: service.recurringEnabled,
+      recurringIntervals: service.recurringIntervals ?? null,
+      blockBookingEnabled: service.blockBookingEnabled,
+      blockBookingSuggestedCounts: service.blockBookingSuggestedCounts ?? null,
     })),
     staffRoles: site.customerSiteStaffRoles.map((role) => ({
       id: role.id,

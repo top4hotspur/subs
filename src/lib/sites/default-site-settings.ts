@@ -146,6 +146,10 @@ export function buildDefaultCustomerSiteSettings(template: WebsiteTemplate): Cus
       bufferBeforeMinutes: undefined,
       bufferAfterMinutes: undefined,
       rolePriceOverrides: [],
+      recurringEnabled: false,
+      recurringIntervals: [],
+      blockBookingEnabled: false,
+      blockBookingSuggestedCounts: [5, 10],
       staffPriceOverrides: [],
       category: template.category,
       bookable: true,
@@ -180,10 +184,12 @@ export function buildDefaultCustomerSiteSettings(template: WebsiteTemplate): Cus
       cashNoShowWarningEnabled: true,
       currencyCode: "GBP",
       allowInStorePaymentRecording: false,
+      recurringPaymentsEnabled: false,
     },
     appointmentSettings: {
       appointmentSlotIntervalMinutes: 30,
       allowCustomerStaffSelection: shouldCustomersSelectStaffByDefault(template.slug),
+      customerBlockBookingsEnabled: false,
     },
     cancellationPolicy: {
       cancellationWindowHours: 24,

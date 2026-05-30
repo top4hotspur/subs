@@ -166,6 +166,18 @@ export default async function PublicSiteSlugPage({
                     {activeServices.map((service) => (
                       <article key={service.id} className={`rounded-xl border ${scheme.borderClass} bg-white p-4`}>
                         <p className="text-sm font-semibold text-slate-900">{service.name}</p>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {service.recurringEnabled ? (
+                            <span className="rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
+                              Recurring available
+                            </span>
+                          ) : null}
+                          {service.blockBookingEnabled ? (
+                            <span className="rounded-full border border-sky-300 bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-800">
+                              Block bookings available
+                            </span>
+                          ) : null}
+                        </div>
                         <p className="mt-1 text-xs text-slate-600">
                           {service.description || "Professional service details will appear here."}
                         </p>
