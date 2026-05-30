@@ -5,6 +5,7 @@ import { WEBSITE_TEMPLATE_SLUGS } from "@/lib/sites/types";
 import { primaryButtonClass } from "@/lib/ui/button-styles";
 
 type SubmitState = "idle" | "submitting" | "success" | "error";
+type EmailStatusState = "SENT" | "EMAIL_NOT_CONFIGURED" | "EMAIL_SEND_FAILED" | null;
 
 type ContactFormState = {
   name: string;
@@ -35,6 +36,7 @@ export function PublicContactForm() {
   const [form, setForm] = useState<ContactFormState>(INITIAL_STATE);
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [errorText, setErrorText] = useState<string>("");
+  const [emailStatusState, setEmailStatusState] = useState<EmailStatusState>(null);
 
   const industryOptions = useMemo(
     () => WEBSITE_TEMPLATE_SLUGS.map((slug) => ({ slug, label: toIndustryLabel(slug) })),
@@ -45,6 +47,7 @@ export function PublicContactForm() {
     event.preventDefault();
     setSubmitState("submitting");
     setErrorText("");
+    setEmailStatusState(null);
 
     try {
       const response = await fetch("/api/contact-enquiries", {
@@ -62,7 +65,12 @@ export function PublicContactForm() {
       });
 
       const payload = (await response.json().catch(() => null)) as
-        | { ok?: boolean; error?: string; details?: Array<{ message?: string }> }
+        | {
+            ok?: boolean;
+            error?: string;
+            details?: Array<{ message?: string }>;
+            emailStatus?: { ok?: boolean; skipped?: boolean; reason?: string };
+          }
         | null;
 
       if (!response.ok || !payload?.ok) {
@@ -77,6 +85,14 @@ export function PublicContactForm() {
       }
 
       setSubmitState("success");
+      if (!payload?.emailStatus?.ok) {
+        const reason = payload?.emailStatus?.reason;
+        if (reason === "EMAIL_NOT_CONFIGURED" || reason === "EMAIL_SEND_FAILED") {
+          setEmailStatusState(reason);
+        }
+      } else {
+        setEmailStatusState("SENT");
+      }
       setForm(INITIAL_STATE);
     } catch {
       setErrorText("We could not submit your enquiry right now. Please try again shortly.");
@@ -159,9 +175,19 @@ export function PublicContactForm() {
       </label>
 
       {submitState === "success" ? (
-        <p className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-          Thanks - we&apos;ve received your enquiry and will get back to you.
-        </p>
+        <div className="space-y-2">
+          <p className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+            Thanks - we&apos;ve received your enquiry and will get back to you.
+          </p>
+          {emailStatusState && emailStatusState !== "SENT" ? (
+            <p className="text-xs text-slate-600">
+              Your enquiry has been saved. Notification email status:{" "}
+              {emailStatusState === "EMAIL_NOT_CONFIGURED"
+                ? "not configured"
+                : "send delayed"}.
+            </p>
+          ) : null}
+        </div>
       ) : null}
       {submitState === "error" ? (
         <p className="rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-800">
@@ -175,4 +201,3 @@ export function PublicContactForm() {
     </form>
   );
 }
-

@@ -11,6 +11,9 @@ frontend:
         - echo "NEXTAUTH_SECRET=$NEXTAUTH_SECRET" >> .env.production
         - echo "NEXTAUTH_URL=$NEXTAUTH_URL" >> .env.production
         - echo "PLATFORM_ADMIN_ACCESS_CODE=$PLATFORM_ADMIN_ACCESS_CODE" >> .env.production
+        - echo "RESEND_API_KEY=$RESEND_API_KEY" >> .env.production
+        - echo "EMAIL_FROM=$EMAIL_FROM" >> .env.production
+        - echo "PLATFORM_NOTIFICATION_EMAIL=$PLATFORM_NOTIFICATION_EMAIL" >> .env.production
         - npm ci
     build:
       commands:

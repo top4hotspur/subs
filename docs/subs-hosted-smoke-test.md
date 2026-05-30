@@ -506,3 +506,26 @@ Add these checks after backend envs are configured:
   - bookings dashboard shows columns: Cancellations, Today, Future
 - `/demo/barbers/staff`:
   - cancelled appointments show clear red `Cancelled` badge.
+
+## 2026-05-30 hosted smoke additions (email diagnostics + industry card polish)
+- Open `/api/email-health` and confirm safe fields:
+  - `resendApiKeyPresent`
+  - `emailFromPresent`
+  - `platformNotificationEmailPresent`
+  - `emailConfigured`
+  - `nodeEnv`
+  - `fromDomain`
+- Submit `/contact` and confirm:
+  - enquiry persists with success message
+  - response includes `emailStatus`
+  - if email fails/skips, form still succeeds and shows a non-blocking note
+- Check Resend dashboard for delivered messages when `emailConfigured=true`.
+- Confirm deploy env wiring includes:
+  - `RESEND_API_KEY`
+  - `EMAIL_FROM`
+  - `PLATFORM_NOTIFICATION_EMAIL`
+  - (Amplify) values are written into `.env.production` during build.
+- Homepage card polish checks:
+  - industry category tabs remain readable/accessible
+  - child industry cards use subtle category tint/border/accent
+  - hover/focus states remain clear with good contrast.

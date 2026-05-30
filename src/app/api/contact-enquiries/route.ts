@@ -35,6 +35,17 @@ export async function POST(request: NextRequest) {
         })
       : { ok: false as const, skipped: true as const, reason: "EMAIL_NOT_CONFIGURED" as const };
 
+    if (!emailStatus.ok) {
+      console.info("[contact-enquiries] notification email not sent", {
+        status: emailStatus.skipped ? "SKIPPED" : "FAILED",
+        reason: emailStatus.reason,
+      });
+    } else {
+      console.info("[contact-enquiries] notification email sent", {
+        status: "SENT",
+      });
+    }
+
     return NextResponse.json(
       {
         ok: true,
