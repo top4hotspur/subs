@@ -571,3 +571,10 @@ Add these checks after backend envs are configured:
 - If Stripe env is missing, checkout endpoint returns STRIPE_NOT_CONFIGURED and setup confirmation still works.
 - With valid env + price IDs, POST /api/setup-requests/[id]/checkout returns checkoutUrl.
 - Webhook must reject invalid signatures and accept valid Stripe events for status updates.
+
+## Platform dashboard smoke checks (2026-05-30)
+- Open /admin and verify operation tiles are clickable report selectors on-page.
+- Verify top tiles: Order Requests, Subscriber Sites, Payment Fails, Sales Pipeline, Contact Enquiries, Revenue by Industry.
+- Verify old sections are removed from /admin: demo/site-owner tools, business site settings demo, mock booking panels, and local analytics preview.
+- Verify Payment Fails shows real failures if present, otherwise honest placeholder text.
+- Verify Revenue by Industry table uses persisted platform data and shows month-on-month placeholder note.

@@ -251,3 +251,8 @@ Notes:
 - paymentStartedAt
 - paymentCompletedAt
 - No card PAN/CVC or other sensitive payment details are stored.
+
+## Platform dashboard reporting sources (2026-05-30)
+- /admin report tiles aggregate persisted data from: SetupRequest, TenantSite, SubscriptionRecord, ContactEnquiry, SalesLead.
+- Payment Fails tile uses SubscriptionRecord failure status when available.
+- Revenue by Industry currently reports current-state estimates from persisted site/subscription/order data; month-on-month history depends on fuller webhook/payment event capture.

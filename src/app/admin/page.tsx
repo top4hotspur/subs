@@ -1,660 +1,413 @@
-﻿"use client";
+"use client";
 
-import { useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  listLocalSetupRequests,
-  seedLocalSetupRequests,
-  updateLocalSetupRequestStatus,
-} from "@/lib/setup/local-setup-requests";
-import { LocalAnalyticsDashboard } from "@/components/analytics/local-analytics-dashboard";
-import { StaffAssistedBookingForm } from "@/components/admin/staff-assisted-booking-form";
+import { useEffect, useMemo, useState } from "react";
 import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
 import { AdminPillNav } from "@/components/admin/admin-pill-nav";
-import { isSlotBlockedByExistingRequest } from "@/lib/calendar/local-appointment-conflicts";
-import {
-  assignLocalCustomerRequestStaff,
-  listLocalCustomerRequests,
-  seedLocalCustomerRequests,
-  updateLocalCustomerRequestStatus,
-} from "@/lib/requests/local-customer-requests";
-import { isAppointmentStyleIndustry } from "@/lib/requests/appointment-industries";
-import { flexibleJobAdminLabel, isFlexibleJobIndustry } from "@/lib/requests/flexible-job-industries";
-import { isTaxiIndustry, taxiAdminLabel } from "@/lib/requests/taxi-request";
-import {
-  CustomerRequest,
-  CustomerRequestStatus,
-} from "@/lib/requests/request-types";
-import {
-  listLocalNotificationTemplates,
-  renderNotificationPreview,
-} from "@/lib/notifications/local-notification-templates";
-import {
-  NotificationChannel,
-  NotificationEventType,
-} from "@/lib/notifications/notification-types";
-import { listLocalStaff } from "@/lib/staff/local-staff";
-import { StaffMember } from "@/lib/staff/staff-types";
-import {
-  CommunicationOption,
-  LocalSetupRequest,
-  SubscriptionSetupStatus,
-  WEBSITE_TEMPLATE_SLUGS,
-  WebsiteTemplateSlug,
-} from "@/lib/sites/types";
-import { getWebsiteTemplate } from "@/lib/sites/mock-repository";
-import { getLocalCustomerSiteSettings } from "@/lib/sites/local-site-settings";
-import { SetupStatusBadge } from "@/components/setup/setup-status-badge";
-import { RequestStatusBadge } from "@/components/requests/request-status-badge";
-import { listLocalCustomers } from "@/lib/crm/local-customers";
-import {
-  dangerButtonClass,
-  outlineButtonClass,
-  primaryButtonClass,
-  secondaryButtonClass,
-  smallButtonClass,
-} from "@/lib/ui/button-styles";
-import {
-  communicationOptionLabel,
-  customerRequestStatusDescription,
-  domainOptionLabel,
-  formatGbp,
-  formatIsoDateTime,
-  formatOptional,
-  formatUkDate,
-  notificationEventTypeLabel,
-} from "@/lib/ui/display-labels";
+import { outlineButtonClass, primaryButtonClass, smallButtonClass } from "@/lib/ui/button-styles";
+import { formatGbp, formatUkDateTime } from "@/lib/ui/display-labels";
 
-type AdminFilter = "ALL" | "REVIEW" | "DOMAIN" | "PAYMENT" | "PROVISIONING" | "LIVE";
+type ReportKey =
+  | "orders"
+  | "subscribers"
+  | "payment-fails"
+  | "sales"
+  | "contact"
+  | "revenue-by-industry";
 
-function toSlug(value: string): WebsiteTemplateSlug | null {
-  return WEBSITE_TEMPLATE_SLUGS.includes(value as WebsiteTemplateSlug)
-    ? (value as WebsiteTemplateSlug)
-    : null;
+type DashboardSummary = {
+  orderQueueCount: number;
+  liveSubscriberSiteCount: number;
+  paymentFailCount: number;
+  orderStatusCounts: Array<{ status: string; count: number }>;
+  subscriberStatusCounts: Array<{ status: string; count: number }>;
+  contactEnquiryCounts: Array<{ status: string; count: number }>;
+  salesLeadStatusCounts: Array<{ status: string; count: number }>;
+  recentOrders: Array<{
+    id: string;
+    businessName: string;
+    industrySlug: string;
+    status: string;
+    createdAt: string;
+    setupTotalGbp: number;
+    monthlyTotalGbp: number;
+    paymentStatus: string | null;
+  }>;
+  recentSites: Array<{
+    id: string;
+    slug: string;
+    displayName: string;
+    industrySlug: string | null;
+    status: string;
+    provisioningStatus: string | null;
+    subscriptionStatus: string | null;
+    createdAt: string;
+  }>;
+  recentContactEnquiries: Array<{
+    id: string;
+    name: string;
+    businessName: string | null;
+    email: string;
+    status: string;
+    createdAt: string;
+  }>;
+  recentSalesLeads: Array<{
+    id: string;
+    businessName: string;
+    industrySlug: string | null;
+    status: string;
+    createdAt: string;
+  }>;
+  paymentFailureRows: Array<{
+    siteId: string;
+    siteName: string;
+    industrySlug: string | null;
+    subscriptionStatus: string;
+    monthlyFeeGbp: number;
+  }>;
+  revenueByIndustry: Array<{
+    industry: string;
+    activeSubscriberSites: number;
+    monthlyRevenueEstimateGbp: number;
+    setupFeesKnownGbp: number;
+    domainFeesKnownGbp: number;
+    paymentFailuresKnown: number;
+  }>;
+};
+
+async function getSummary(): Promise<
+  | { ok: true; summary: DashboardSummary }
+  | { ok: false; error: string; status: number }
+> {
+  try {
+    const response = await fetch("/api/admin/dashboard-summary", {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    const body = (await response.json()) as
+      | { ok?: boolean; summary?: DashboardSummary; error?: string }
+      | null;
+    if (!response.ok || !body?.ok || !body.summary) {
+      return {
+        ok: false,
+        error: body?.error ?? "DASHBOARD_SUMMARY_FAILED",
+        status: response.status,
+      };
+    }
+    return { ok: true, summary: body.summary };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
 }
 
-function formatDateTime(date?: string, time?: string): string {
-  if (!date && !time) return "TBC";
-  if (date && time) return `${formatUkDate(date)} at ${time}`;
-  return date ? formatUkDate(date) : time ?? "TBC";
-}
-
-function plusMinutes(time: string, minutesToAdd: number): string {
-  const [hours, minutes] = time.split(":").map(Number);
-  const total = hours * 60 + minutes + minutesToAdd;
-  const h = Math.floor(total / 60) % 24;
-  const m = total % 60;
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+function statusLabel(value: string): string {
+  return value
+    .toLowerCase()
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 export default function AdminPage() {
-  const [setupRequests, setSetupRequests] = useState<LocalSetupRequest[]>(() => listLocalSetupRequests());
-  const [filter, setFilter] = useState<AdminFilter>("ALL");
-  const [customerRequests, setCustomerRequests] = useState<CustomerRequest[]>(() => listLocalCustomerRequests());
-  const [staffInputs, setStaffInputs] = useState<Record<string, string>>({});
-  const [analyticsIndustryFilter, setAnalyticsIndustryFilter] = useState<"ALL" | WebsiteTemplateSlug>("ALL");
+  const [selectedReport, setSelectedReport] = useState<ReportKey>("orders");
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function refreshSetup(): void {
-    setSetupRequests(listLocalSetupRequests());
-  }
-
-  function refreshCustomer(): void {
-    setCustomerRequests(listLocalCustomerRequests());
-  }
-
-  function setSetupStatus(id: string, status: SubscriptionSetupStatus): void {
-    updateLocalSetupRequestStatus(id, status);
-    refreshSetup();
-  }
-
-  function setCustomerStatus(id: string, status: CustomerRequestStatus): void {
-    updateLocalCustomerRequestStatus(id, status);
-    refreshCustomer();
-  }
-
-  const staffByIndustry = useMemo<Record<WebsiteTemplateSlug, StaffMember[]>>(() => {
-    const entries = WEBSITE_TEMPLATE_SLUGS.map((slug) => [slug, listLocalStaff(slug)] as const);
-    return Object.fromEntries(entries) as Record<WebsiteTemplateSlug, StaffMember[]>;
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      setError(null);
+      const result = await getSummary();
+      if (cancelled) return;
+      if (!result.ok) {
+        setSummary(null);
+        setError(
+          result.error === "BACKEND_PERSISTENCE_NOT_CONFIGURED"
+            ? "Backend persistence is not configured in this environment."
+            : "Could not load dashboard metrics right now.",
+        );
+      } else {
+        setSummary(result.summary);
+      }
+      setLoading(false);
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const counts = {
-    total: setupRequests.length,
-    review: setupRequests.filter((r) => r.status === SubscriptionSetupStatus.SETUP_REVIEW_REQUESTED).length,
-    domain: setupRequests.filter((r) => r.status === SubscriptionSetupStatus.DOMAIN_DETAILS_REQUIRED).length,
-    payment: setupRequests.filter((r) => r.status === SubscriptionSetupStatus.PAYMENT_PENDING).length,
-    provisioning: setupRequests.filter((r) => r.status === SubscriptionSetupStatus.SITE_PROVISIONING).length,
-    live: setupRequests.filter((r) => r.status === SubscriptionSetupStatus.SITE_LIVE).length,
-  };
-
-  const filteredRequests = useMemo(() => {
-    switch (filter) {
-      case "REVIEW":
-        return setupRequests.filter((r) => r.status === SubscriptionSetupStatus.SETUP_REVIEW_REQUESTED);
-      case "DOMAIN":
-        return setupRequests.filter((r) => r.status === SubscriptionSetupStatus.DOMAIN_DETAILS_REQUIRED);
-      case "PAYMENT":
-        return setupRequests.filter((r) => r.status === SubscriptionSetupStatus.PAYMENT_PENDING);
-      case "PROVISIONING":
-        return setupRequests.filter((r) => r.status === SubscriptionSetupStatus.SITE_PROVISIONING);
-      case "LIVE":
-        return setupRequests.filter((r) => r.status === SubscriptionSetupStatus.SITE_LIVE);
-      case "ALL":
-      default:
-        return setupRequests;
-    }
-  }, [setupRequests, filter]);
-
-  const analyticsRequests = useMemo(
-    () =>
-      analyticsIndustryFilter === "ALL"
-        ? customerRequests
-        : customerRequests.filter((request) => request.templateSlug === analyticsIndustryFilter),
-    [customerRequests, analyticsIndustryFilter],
+  const tiles = useMemo(
+    () => [
+      {
+        key: "orders" as const,
+        label: "Order Requests",
+        metric: summary ? String(summary.orderQueueCount) : "—",
+        hint: "Order/setup requests currently in queue",
+      },
+      {
+        key: "subscribers" as const,
+        label: "Subscriber Sites",
+        metric: summary ? String(summary.liveSubscriberSiteCount) : "—",
+        hint: "Live subscriber sites",
+      },
+      {
+        key: "payment-fails" as const,
+        label: "Payment Fails",
+        metric: summary ? String(summary.paymentFailCount) : "—",
+        hint: "Latest known payment failures",
+      },
+      {
+        key: "sales" as const,
+        label: "Sales Pipeline",
+        metric: summary ? String(summary.salesLeadStatusCounts.reduce((sum, row) => sum + row.count, 0)) : "—",
+        hint: "Current sales lead records",
+      },
+      {
+        key: "contact" as const,
+        label: "Contact Enquiries",
+        metric: summary ? String(summary.contactEnquiryCounts.reduce((sum, row) => sum + row.count, 0)) : "—",
+        hint: "Support and pre-order enquiries",
+      },
+      {
+        key: "revenue-by-industry" as const,
+        label: "Revenue by Industry",
+        metric: summary ? String(summary.revenueByIndustry.length) : "—",
+        hint: "Industries with revenue rows",
+      },
+    ],
+    [summary],
   );
-
-  const analyticsSetupRequests = useMemo(
-    () =>
-      analyticsIndustryFilter === "ALL"
-        ? setupRequests
-        : setupRequests.filter((request) => request.templateSlug === analyticsIndustryFilter),
-    [setupRequests, analyticsIndustryFilter],
-  );
-
-  const analyticsStaff = useMemo(() => {
-    if (analyticsIndustryFilter === "ALL") {
-      return WEBSITE_TEMPLATE_SLUGS.flatMap((slug) => staffByIndustry[slug] ?? []);
-    }
-    return staffByIndustry[analyticsIndustryFilter] ?? [];
-  }, [analyticsIndustryFilter, staffByIndustry]);
-
-  const analyticsServices = useMemo(() => {
-    const slugs = analyticsIndustryFilter === "ALL" ? WEBSITE_TEMPLATE_SLUGS : [analyticsIndustryFilter];
-    const allServices = slugs.flatMap((slug) => {
-      const template = getWebsiteTemplate(slug);
-      if (!template) return [];
-      return getLocalCustomerSiteSettings(slug, template).services.filter((service) => service.active);
-    });
-    const deduped = new Map(allServices.map((service) => [`${service.id}:${service.name}`, service]));
-    return Array.from(deduped.values());
-  }, [analyticsIndustryFilter]);
-
-  const crmCustomerCount = listLocalCustomers().length;
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+    <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-bold text-slate-900">Platform Admin Dashboard</h1>
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Platform Admin Dashboard</h1>
+          <p className="mt-2 text-sm text-slate-600">
+            Manage MyExperiment.club orders, subscriber sites, payments, enquiries and sales pipeline.
+          </p>
+        </div>
         <AdminLogoutButton />
       </div>
-      <p className="mt-3 text-slate-600">
-        Platform operations for MyExperiment.club. Subscriber/business-owner site settings are shown separately as a demo tool.
-      </p>
       <AdminPillNav />
 
-      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Platform operations</h2>
-        <p className="mt-2 text-sm text-slate-600">
-          Setup requests, subscriber sites, sales pipeline, and platform CRM.
-        </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <Link href="/admin/setup-requests" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-sm font-semibold text-slate-900">Persisted setup requests</p>
-            <p className="mt-1 text-xs text-slate-600">Backend setup queue</p>
-          </Link>
-          <Link href="/admin/sites" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-sm font-semibold text-slate-900">Subscriber sites</p>
-            <p className="mt-1 text-xs text-slate-600">Provisioning and domain tracking</p>
-          </Link>
-          <Link href="/admin/sales" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-sm font-semibold text-slate-900">Sales pipeline</p>
-            <p className="mt-1 text-xs text-slate-600">Prospect outreach and follow-up</p>
-          </Link>
-          <Link href="/admin/contact-enquiries" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-sm font-semibold text-slate-900">Contact enquiries</p>
-            <p className="mt-1 text-xs text-slate-600">Public support and pre-order questions</p>
-          </Link>
-          <Link href="/admin/crm" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-sm font-semibold text-slate-900">Customer CRM</p>
-            <p className="mt-1 text-xs text-slate-600">Customers and booking history</p>
-          </Link>
-        </div>
-      </section>
-
-      <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Demo/site-owner tools</h2>
-        <p className="mt-2 text-sm text-slate-600">
-          Business site settings demo. In the live product this area belongs to each subscriber/business owner.
-        </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <Link href="/admin/settings" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-sm font-semibold text-slate-900">Business site settings demo</p>
-            <p className="mt-1 text-xs text-slate-600">
-              Preview the tools a subscriber will use to manage services, staff, availability and notifications.
-            </p>
-          </Link>
-        </div>
-      </section>
+      {error ? (
+        <p className="mt-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">{error}</p>
+      ) : null}
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Persisted setup requests</h2>
-        <p className="mt-2 text-sm text-slate-600">
-          Backend setup queue when database is configured.
-        </p>
-        <div className="mt-3">
-          <Link href="/admin/setup-requests" className={`${primaryButtonClass} ${smallButtonClass}`}>
-            Open persisted setup queue
-          </Link>
-        </div>
-      </section>
-
-      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Customer CRM</h2>
-        <p className="mt-2 text-sm text-slate-600">
-          Local CRM records are now in a dedicated page to keep this dashboard focused on queues and analytics.
-        </p>
-        <p className="mt-2 text-sm text-slate-700">
-          Current local customers: <span className="font-semibold">{crmCustomerCount}</span>
-        </p>
-        <div className="mt-3">
-          <Link href="/admin/crm" className={`${primaryButtonClass} ${smallButtonClass}`}>
-            Open CRM
-          </Link>
-        </div>
-      </section>
-
-      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Business site settings scope</h2>
-        <p className="mt-2 text-sm text-slate-600">
-          These are not platform-wide settings. Platform setup requests, subscriber sites, sales pipeline and provisioning are
-          managed from this platform admin dashboard.
-        </p>
-        <p className="mt-2 text-sm text-slate-600">
-          This route stays at <span className="font-mono">/admin/settings</span> for now and may move later to a subscriber-scoped
-          settings path.
-        </p>
-      </section>
-
-      <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p className="text-xs text-slate-600">Total</p><p className="text-xl font-semibold">{counts.total}</p></article>
-        <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p className="text-xs text-slate-600">Review requested</p><p className="text-xl font-semibold">{counts.review}</p></article>
-        <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p className="text-xs text-slate-600">Domain required</p><p className="text-xl font-semibold">{counts.domain}</p></article>
-        <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p className="text-xs text-slate-600">Payment pending</p><p className="text-xl font-semibold">{counts.payment}</p></article>
-        <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p className="text-xs text-slate-600">Provisioning</p><p className="text-xl font-semibold">{counts.provisioning}</p></article>
-        <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p className="text-xs text-slate-600">Live</p><p className="text-xl font-semibold">{counts.live}</p></article>
-      </div>
-
-      <div className="mt-6 flex flex-wrap gap-2">
-        {[
-          ["ALL", "All"],
-          ["REVIEW", "Review requested"],
-          ["DOMAIN", "Domain details required"],
-          ["PAYMENT", "Payment pending"],
-          ["PROVISIONING", "Provisioning"],
-          ["LIVE", "Live"],
-        ].map(([value, label]) => (
-          <button
-            key={value}
-            type="button"
-            className={`${filter === value ? primaryButtonClass : outlineButtonClass} ${smallButtonClass}`}
-            onClick={() => setFilter(value as AdminFilter)}
-          >
-            {label}
-          </button>
-        ))}
-        <button
-          type="button"
-          className={`${secondaryButtonClass} ${smallButtonClass}`}
-          onClick={() => {
-            seedLocalSetupRequests();
-            refreshSetup();
-          }}
-        >
-          Load sample setup requests
-        </button>
-      </div>
-
-      <div className="mt-6 space-y-4">
-        {filteredRequests.length === 0 ? (
-          <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-slate-700">No setup requests match this filter.</p>
-          </article>
-        ) : (
-          filteredRequests.map((request) => (
-            <article key={request.id} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold text-slate-900">{request.businessName}</h2>
-                <SetupStatusBadge status={request.status} />
-              </div>
-
-              <div className="mt-3 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
-                <p><span className="font-semibold">Industry:</span> {request.templateSlug}</p>
-                <p><span className="font-semibold">Contact:</span> {formatOptional(request.contactName)}</p>
-                <p><span className="font-semibold">Contact email:</span> {formatOptional(request.contactEmail)}</p>
-                <p><span className="font-semibold">Contact phone:</span> {formatOptional(request.contactPhone)}</p>
-                <p><span className="font-semibold">Domain choice:</span> {domainOptionLabel(request.domainOption)}</p>
-                <p><span className="font-semibold">Domain value:</span> {formatOptional(request.existingDomain || request.desiredDomain)}</p>
-                <p><span className="font-semibold">Communication:</span> {communicationOptionLabel(request.communicationOption)}</p>
-                <p><span className="font-semibold">WhatsApp add-on:</span> {request.communicationOption === CommunicationOption.EMAIL_AND_WHATSAPP ? "Yes" : "No"}</p>
-                <p><span className="font-semibold">Setup total:</span> {formatGbp(request.setupTotalGbp)}</p>
-                <p><span className="font-semibold">Monthly total:</span> {formatGbp(request.monthlyTotalGbp)}</p>
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setSetupStatus(request.id, SubscriptionSetupStatus.DOMAIN_DETAILS_REQUIRED)}>
-                  Domain details required
-                </button>
-                <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setSetupStatus(request.id, SubscriptionSetupStatus.PAYMENT_PENDING)}>
-                  Payment pending
-                </button>
-                <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setSetupStatus(request.id, SubscriptionSetupStatus.SITE_PROVISIONING)}>
-                  Provisioning
-                </button>
-                <button type="button" className={`${primaryButtonClass} ${smallButtonClass}`} onClick={() => setSetupStatus(request.id, SubscriptionSetupStatus.SITE_LIVE)}>
-                  Live
-                </button>
-                <button type="button" className={`${dangerButtonClass} ${smallButtonClass}`} onClick={() => setSetupStatus(request.id, SubscriptionSetupStatus.CANCELLED)}>
-                  Cancelled
-                </button>
-              </div>
-            </article>
-          ))
-        )}
-      </div>
-
-      <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-xl font-semibold text-slate-900">Local analytics & income preview</h2>
-          <label className="text-sm font-medium text-slate-700">
-            Industry
-            <select
-              className="ml-2 rounded-md border border-slate-300 px-2 py-1 text-sm"
-              value={analyticsIndustryFilter}
-              onChange={(event) =>
-                setAnalyticsIndustryFilter(
-                  event.target.value === "ALL" ? "ALL" : (event.target.value as WebsiteTemplateSlug),
-                )
-              }
+        <h2 className="text-lg font-semibold text-slate-900">Platform Operations</h2>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {tiles.map((tile) => (
+            <button
+              key={tile.key}
+              type="button"
+              className={`rounded-xl border p-4 text-left ${
+                selectedReport === tile.key
+                  ? "border-sky-300 bg-sky-50"
+                  : "border-slate-200 bg-white hover:bg-slate-50"
+              }`}
+              onClick={() => setSelectedReport(tile.key)}
             >
-              <option value="ALL">All industries</option>
-              {WEBSITE_TEMPLATE_SLUGS.map((slug) => (
-                <option key={slug} value={slug}>
-                  {slug}
-                </option>
+              <p className="text-sm font-semibold text-slate-900">{tile.label}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{loading ? "…" : tile.metric}</p>
+              <p className="mt-1 text-xs text-slate-600">{tile.hint}</p>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        {selectedReport === "orders" ? (
+          <>
+            <h2 className="text-xl font-semibold text-slate-900">Order Requests</h2>
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              {summary?.orderStatusCounts.map((row) => (
+                <div key={row.status} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+                  <span className="font-semibold">{statusLabel(row.status)}:</span> {row.count}
+                </div>
               ))}
-            </select>
-          </label>
-        </div>
-        <LocalAnalyticsDashboard
-          industrySlug={analyticsIndustryFilter === "ALL" ? undefined : analyticsIndustryFilter}
-          requests={analyticsRequests}
-          setupRequests={analyticsSetupRequests}
-          services={analyticsServices}
-          staffMembers={analyticsStaff}
-        />
-      </section>
+            </div>
+            <div className="mt-4 space-y-2">
+              {summary?.recentOrders.map((order) => (
+                <div key={order.id} className="rounded-lg border border-slate-200 p-3 text-sm">
+                  <p className="font-semibold text-slate-900">{order.businessName}</p>
+                  <p className="text-slate-700">
+                    {order.industrySlug} · {statusLabel(order.status)} · {formatUkDateTime(order.createdAt)}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4">
+              <Link href="/admin/setup-requests" className={`${primaryButtonClass} ${smallButtonClass}`}>
+                Open full order requests
+              </Link>
+            </div>
+          </>
+        ) : null}
 
-      <section className="mt-8">
-        <StaffAssistedBookingForm onCreated={refreshCustomer} />
-      </section>
+        {selectedReport === "subscribers" ? (
+          <>
+            <h2 className="text-xl font-semibold text-slate-900">Subscriber Sites</h2>
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              {summary?.subscriberStatusCounts.map((row) => (
+                <div key={row.status} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+                  <span className="font-semibold">{statusLabel(row.status)}:</span> {row.count}
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 space-y-2">
+              {summary?.recentSites.map((site) => (
+                <div key={site.id} className="rounded-lg border border-slate-200 p-3 text-sm">
+                  <p className="font-semibold text-slate-900">{site.displayName}</p>
+                  <p className="text-slate-700">
+                    /sites/{site.slug} · {statusLabel(site.status)} · {formatUkDateTime(site.createdAt)}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4">
+              <Link href="/admin/sites" className={`${primaryButtonClass} ${smallButtonClass}`}>
+                Open subscriber sites
+              </Link>
+            </div>
+          </>
+        ) : null}
 
-      <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-xl font-semibold text-slate-900">Mock customer requests/jobs</h2>
-          <button
-            type="button"
-            className={`${secondaryButtonClass} ${smallButtonClass}`}
-            onClick={() => {
-              seedLocalCustomerRequests();
-              refreshCustomer();
-            }}
-          >
-            Load sample customer requests
-          </button>
-        </div>
-
-        {customerRequests.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-600">No local customer requests yet. Submit one from a demo page.</p>
-        ) : (
-          <div className="mt-4 space-y-4">
-            {customerRequests.map((request) => {
-              const requestSlug = toSlug(request.templateSlug);
-              const industryStaff = requestSlug ? staffByIndustry[requestSlug] ?? [] : [];
-              const activeStaff = industryStaff.filter((member) => member.active);
-              const selectableStaff = activeStaff.filter((member) => member.customerSelectable || member.active);
-
-              const notificationTemplates = requestSlug
-                ? listLocalNotificationTemplates(requestSlug, "MyExperiment.club")
-                : [];
-              const completedTemplate = notificationTemplates.find(
-                (template) =>
-                  template.eventType === NotificationEventType.JOB_COMPLETED &&
-                  template.channel === NotificationChannel.EMAIL,
-              );
-              const reviewTemplate = notificationTemplates.find(
-                (template) =>
-                  template.eventType === NotificationEventType.REVIEW_REQUEST &&
-                  template.channel === NotificationChannel.EMAIL,
-              );
-              const assignmentConflict =
-                request.assignedStaffId && request.preferredDate && request.preferredTime && requestSlug
-                  ? isSlotBlockedByExistingRequest({
-                      industrySlug: requestSlug,
-                      staffId: request.assignedStaffId,
-                      date: request.preferredDate,
-                      startTime: request.preferredTime,
-                      endTime: plusMinutes(request.preferredTime, request.estimatedDurationMinutes ?? 45),
-                      existingRequests: customerRequests,
-                      excludeRequestId: request.id,
-                    })
-                  : { blocked: false as const };
-
-              return (
-                <article key={request.id} className="rounded-xl border border-slate-200 p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-semibold text-slate-900">{request.serviceName || request.kind}</p>
-                    <RequestStatusBadge status={request.status} compact />
-                  </div>
-                  <div className="mt-2 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
-                    <p><span className="font-semibold">Industry:</span> {request.templateSlug}</p>
-                    <p><span className="font-semibold">Customer:</span> {request.customerName}</p>
-                    <p><span className="font-semibold">Email:</span> {request.customerEmail}</p>
-                    <p><span className="font-semibold">Phone:</span> {request.customerPhone}</p>
-                    <p><span className="font-semibold">Preferred date/time:</span> {formatDateTime(request.preferredDate, request.preferredTime)}</p>
-                    <p><span className="font-semibold">Preferred staff:</span> {formatOptional(request.preferredStaffName)}</p>
-                    <p><span className="font-semibold">Assigned staff:</span> {request.assignedStaffName || "Unassigned"}</p>
-                    {request.createdByStaff ? (
-                      <p><span className="font-semibold">Created by:</span> Staff-assisted booking</p>
-                    ) : null}
-                    {request.customerRegistrationRequired ? (
-                      <p><span className="font-semibold">Registration:</span> Required</p>
-                    ) : null}
-                    {request.paymentRequired ? (
-                      <p><span className="font-semibold">Payment:</span> Required</p>
-                    ) : null}
-                    {request.mockRegistrationPaymentLink ? (
-                      <p className="sm:col-span-2"><span className="font-semibold">Mock registration/payment link:</span> {request.mockRegistrationPaymentLink}</p>
-                    ) : null}
-                    {request.assignedStaffName ? (
-                      <p><span className="font-semibold">Schedule note:</span> {request.assignedStaffName} is currently assigned.</p>
-                    ) : null}
-                  </div>
-                  {requestSlug && isAppointmentStyleIndustry(requestSlug) ? (
-                    <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-                      <p className="font-semibold text-slate-900">
-                        {requestSlug === "beauticians"
-                          ? "Treatment workflow view"
-                          : requestSlug === "massage"
-                            ? "Massage session workflow view"
-                            : requestSlug === "dog-grooming"
-                              ? "Grooming appointment workflow view"
-                              : "Appointment workflow view"}
-                      </p>
-                      <p className="mt-1">
-                        Service: {request.serviceName || "TBC"} | Date: {request.preferredDate || "TBC"} | Time: {request.preferredTime || "TBC"}
-                      </p>
-                      <p className="mt-1">
-                        Preferred staff: {formatOptional(request.preferredStaffName, "No preference")} | Assigned: {formatOptional(request.assignedStaffName, "Unassigned")}
-                      </p>
-                      {requestSlug === "dog-grooming" && request.extraDetails ? (
-                        <p className="mt-1">
-                          Pet: {formatOptional(request.extraDetails.petName, "N/A")} | Breed: {formatOptional(request.extraDetails.breed, "N/A")} | Size: {formatOptional(request.extraDetails.dogSize, "N/A")}
-                          {request.extraDetails.temperamentNotes ? ` | Notes: ${request.extraDetails.temperamentNotes}` : ""}
-                        </p>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  {requestSlug && isFlexibleJobIndustry(requestSlug) ? (
-                    <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-                      <p className="font-semibold text-slate-900">{flexibleJobAdminLabel(requestSlug)}</p>
-                      <p className="mt-1">
-                        Service: {request.serviceName || "TBC"} | Address/location: {request.customerAddress || "TBC"}
-                      </p>
-                      <p className="mt-1">
-                        Frequency: {request.frequency || "Not set"} | Preferred date: {request.preferredDate || "TBC"} | Visit window: {request.preferredVisitWindow || "Not set"}
-                      </p>
-                      <p className="mt-1">
-                        Property type: {request.propertyType || "Not set"} | Vehicle details: {request.vehicleDetails || "N/A"}
-                      </p>
-                      <p className="mt-1">
-                        Access notes: {request.accessNotes || "None"} | Photo notes: {request.photoNotes || "None"}
-                      </p>
-                      <p className="mt-1">
-                        Assigned staff: {formatOptional(request.assignedStaffName, "Unassigned")}
-                      </p>
-                    </div>
-                  ) : null}
-                  {requestSlug && isTaxiIndustry(requestSlug) ? (
-                    <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-                      <p className="font-semibold text-slate-900">{taxiAdminLabel()}</p>
-                      <p className="mt-1">
-                        Journey type: {request.journeyType || "Not set"} | Pickup: {request.pickupAddress || "TBC"} | Destination: {request.destinationAddress || "TBC"}
-                      </p>
-                      <p className="mt-1">
-                        Pickup: {formatDateTime(request.preferredDate, request.preferredTime)} | Return:{" "}
-                        {request.returnJourneyRequired
-                          ? formatDateTime(request.returnDate, request.returnTime)
-                          : "No return journey requested"}
-                      </p>
-                      <p className="mt-1">
-                        Passengers: {request.passengerCount || "Not set"} | Luggage: {request.luggageCount || "Not set"} | Flight: {request.flightNumber || "N/A"}
-                      </p>
-                      <p className="mt-1">
-                        Accessibility: {request.accessibilityNotes || "None"} | Child seat: {request.childSeatNotes || "None"}
-                      </p>
-                      <p className="mt-1">
-                        Corporate ref: {request.corporateAccountReference || "None"} | Stops: {request.stops || "None"}
-                      </p>
-                      <p className="mt-1">
-                        Assigned staff/driver: {formatOptional(request.assignedStaffName, "Unassigned")}
-                      </p>
-                    </div>
-                  ) : null}
-                  <p className="mt-2 text-xs text-slate-600">{customerRequestStatusDescription(request.status)}</p>
-                  {assignmentConflict.blocked ? (
-                    <p className="mt-2 text-xs font-medium text-amber-700">
-                      Warning: assigned staff appears to have another local request at this time.
+        {selectedReport === "payment-fails" ? (
+          <>
+            <h2 className="text-xl font-semibold text-slate-900">Payment Fails</h2>
+            {summary?.paymentFailureRows.length ? (
+              <div className="mt-3 space-y-2">
+                {summary.paymentFailureRows.map((row) => (
+                  <div key={row.siteId} className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm">
+                    <p className="font-semibold text-rose-900">{row.siteName}</p>
+                    <p className="text-rose-800">
+                      {row.industrySlug ?? "unassigned"} · {statusLabel(row.subscriptionStatus)} · {formatGbp(row.monthlyFeeGbp)}/month
                     </p>
-                  ) : null}
-
-                  <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
-                    {selectableStaff.length > 0 ? (
-                      <select
-                        className="rounded-md border border-slate-300 px-2 py-1 text-sm"
-                        value={staffInputs[request.id] ?? request.assignedStaffId ?? ""}
-                        onChange={(event) => setStaffInputs((c) => ({ ...c, [request.id]: event.target.value }))}
-                      >
-                        <option value="">Select staff member</option>
-                        {selectableStaff.map((member) => (
-                          <option key={member.id} value={member.id}>
-                            {member.displayName}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        className="rounded-md border border-slate-300 px-2 py-1 text-sm"
-                        placeholder="Assign staff name"
-                        value={staffInputs[request.id] ?? request.assignedStaffName ?? ""}
-                        onChange={(event) => setStaffInputs((c) => ({ ...c, [request.id]: event.target.value }))}
-                      />
-                    )}
-                    <button
-                      type="button"
-                      className={`${outlineButtonClass} ${smallButtonClass}`}
-                      onClick={() => {
-                        const value = staffInputs[request.id] ?? "";
-                        if (selectableStaff.length > 0) {
-                          const selected = selectableStaff.find((member) => member.id === value);
-                          assignLocalCustomerRequestStaff(request.id, {
-                            staffId: selected?.id,
-                            staffName: selected?.displayName,
-                          });
-                        } else {
-                          assignLocalCustomerRequestStaff(request.id, { staffName: value });
-                        }
-                        refreshCustomer();
-                      }}
-                    >
-                      Save staff
-                    </button>
                   </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-3 text-sm text-slate-700">
+                No failed payments are currently available. Stripe/webhook payment failure reporting will populate this once checkout is live.
+              </p>
+            )}
+          </>
+        ) : null}
 
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setCustomerStatus(request.id, CustomerRequestStatus.REVIEWING)}>Reviewing</button>
-                    <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setCustomerStatus(request.id, CustomerRequestStatus.QUOTED)}>Quoted</button>
-                    <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setCustomerStatus(request.id, CustomerRequestStatus.CONFIRMED)}>Confirmed</button>
-                    <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setCustomerStatus(request.id, CustomerRequestStatus.STAFF_ALLOCATED)}>Staff allocated</button>
-                    <button type="button" className={`${primaryButtonClass} ${smallButtonClass}`} onClick={() => setCustomerStatus(request.id, CustomerRequestStatus.COMPLETED)}>Completed</button>
-                    <button type="button" className={`${dangerButtonClass} ${smallButtonClass}`} onClick={() => setCustomerStatus(request.id, CustomerRequestStatus.CANCELLED)}>Cancelled</button>
-                  </div>
+        {selectedReport === "sales" ? (
+          <>
+            <h2 className="text-xl font-semibold text-slate-900">Sales Pipeline</h2>
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              {summary?.salesLeadStatusCounts.map((row) => (
+                <div key={row.status} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+                  <span className="font-semibold">{statusLabel(row.status)}:</span> {row.count}
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 space-y-2">
+              {summary?.recentSalesLeads.map((lead) => (
+                <div key={lead.id} className="rounded-lg border border-slate-200 p-3 text-sm">
+                  <p className="font-semibold text-slate-900">{lead.businessName}</p>
+                  <p className="text-slate-700">
+                    {lead.industrySlug ?? "unassigned"} · {statusLabel(lead.status)} · {formatUkDateTime(lead.createdAt)}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4">
+              <Link href="/admin/sales" className={`${primaryButtonClass} ${smallButtonClass}`}>
+                Open full sales pipeline
+              </Link>
+            </div>
+          </>
+        ) : null}
 
-                  {request.status === CustomerRequestStatus.COMPLETED ? (
-                    <div className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
-                      <p>
-                        In the live version, this would send completion confirmation and review request messages
-                        (email by default, WhatsApp if enabled).
-                        {request.completionMessageSentAtIso ? ` Completion marked: ${formatIsoDateTime(request.completionMessageSentAtIso)}.` : ""}
-                        {request.reviewRequestSentAtIso ? ` Review request marked: ${formatIsoDateTime(request.reviewRequestSentAtIso)}.` : ""}
-                      </p>
-                      <p className="mt-2 font-semibold">
-                        Templates applied: {notificationEventTypeLabel(NotificationEventType.JOB_COMPLETED)} + {notificationEventTypeLabel(NotificationEventType.REVIEW_REQUEST)}
-                      </p>
-                      {completedTemplate ? (
-                        <p className="mt-1">Completion preview: {renderNotificationPreview(completedTemplate, {
-                          businessName: "MyExperiment.club",
-                          customerName: request.customerName,
-                          serviceName: request.serviceName,
-                          bookingDate: request.preferredDate,
-                          bookingTime: request.preferredTime,
-                          staffName: request.assignedStaffName,
-                          websiteUrl: "https://www.myexperiment.club",
-                          reviewUrl: "https://www.myexperiment.club/review",
-                          nextBookingDate: "2026-06-15",
-                        }).slice(0, 180)}...</p>
-                      ) : null}
-                      {reviewTemplate ? (
-                        <p className="mt-1">Review preview: {renderNotificationPreview(reviewTemplate, {
-                          businessName: "MyExperiment.club",
-                          customerName: request.customerName,
-                          serviceName: request.serviceName,
-                          bookingDate: request.preferredDate,
-                          bookingTime: request.preferredTime,
-                          staffName: request.assignedStaffName,
-                          websiteUrl: "https://www.myexperiment.club",
-                          reviewUrl: "https://www.myexperiment.club/review",
-                          nextBookingDate: "2026-06-15",
-                        }).slice(0, 180)}...</p>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </article>
-              );
-            })}
-          </div>
-        )}
+        {selectedReport === "contact" ? (
+          <>
+            <h2 className="text-xl font-semibold text-slate-900">Contact Enquiries</h2>
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              {summary?.contactEnquiryCounts.map((row) => (
+                <div key={row.status} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+                  <span className="font-semibold">{statusLabel(row.status)}:</span> {row.count}
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 space-y-2">
+              {summary?.recentContactEnquiries.map((enquiry) => (
+                <div key={enquiry.id} className="rounded-lg border border-slate-200 p-3 text-sm">
+                  <p className="font-semibold text-slate-900">{enquiry.businessName ?? enquiry.name}</p>
+                  <p className="text-slate-700">
+                    {enquiry.email} · {statusLabel(enquiry.status)} · {formatUkDateTime(enquiry.createdAt)}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4">
+              <Link href="/admin/contact-enquiries" className={`${primaryButtonClass} ${smallButtonClass}`}>
+                Open full contact enquiries
+              </Link>
+            </div>
+          </>
+        ) : null}
+
+        {selectedReport === "revenue-by-industry" ? (
+          <>
+            <h2 className="text-xl font-semibold text-slate-900">Revenue by Industry</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Month-on-month revenue will become available once subscription payment records/webhooks are connected.
+            </p>
+            <div className="mt-3 overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-left text-slate-600">
+                    <th className="px-2 py-2">Industry</th>
+                    <th className="px-2 py-2">Active subscriber sites</th>
+                    <th className="px-2 py-2">Monthly revenue estimate</th>
+                    <th className="px-2 py-2">Setup fees known</th>
+                    <th className="px-2 py-2">Domain fees known</th>
+                    <th className="px-2 py-2">Payment failures</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(summary?.revenueByIndustry ?? []).map((row) => (
+                    <tr key={row.industry} className="border-b border-slate-100">
+                      <td className="px-2 py-2">{row.industry}</td>
+                      <td className="px-2 py-2">{row.activeSubscriberSites}</td>
+                      <td className="px-2 py-2">{formatGbp(row.monthlyRevenueEstimateGbp)}</td>
+                      <td className="px-2 py-2">{formatGbp(row.setupFeesKnownGbp)}</td>
+                      <td className="px-2 py-2">{formatGbp(row.domainFeesKnownGbp)}</td>
+                      <td className="px-2 py-2">{row.paymentFailuresKnown}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {!summary?.revenueByIndustry.length ? (
+              <p className="mt-3 text-sm text-slate-700">No revenue rows are currently available.</p>
+            ) : null}
+          </>
+        ) : null}
+      </section>
+
+      <section className="mt-6 flex flex-wrap gap-2">
+        <Link href="/admin/setup-requests" className={`${outlineButtonClass} ${smallButtonClass}`}>
+          Order Requests
+        </Link>
+        <Link href="/admin/sites" className={`${outlineButtonClass} ${smallButtonClass}`}>
+          Subscriber Sites
+        </Link>
+        <Link href="/admin/sales" className={`${outlineButtonClass} ${smallButtonClass}`}>
+          Sales Pipeline
+        </Link>
+        <Link href="/admin/contact-enquiries" className={`${outlineButtonClass} ${smallButtonClass}`}>
+          Contact Enquiries
+        </Link>
       </section>
     </main>
   );
 }
-
-

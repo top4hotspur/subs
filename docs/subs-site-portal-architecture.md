@@ -197,3 +197,7 @@ No per-customer DB or code export is required for this model.
 - Recurring and block-booking controls are tenant-scoped configuration under shared-app/central-DB architecture.
 - No payment provider subscription engine is wired in this phase.
 - Public rendering can surface service badges (Recurring available, Block bookings available) from persisted service settings.
+
+## /admin platform boundary (2026-05-30)
+- Platform admin dashboard is now focused on operator-level reports (orders, subscriber sites, payment failures, sales and enquiries).
+- Business-owner/demo operational panels are removed from main /admin surface to keep platform and subscriber responsibilities separated.

@@ -488,3 +488,8 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Checkout line items include: setup fee (one-off), monthly subscription, and optional domain service fee when we manage registration.
 - Payment is confirmed only by Stripe webhook events; no card details are stored in app data.
 - If Stripe is not configured, the flow falls back to manual onboarding payment confirmation messaging.
+
+## 2026-05-30 platform admin dashboard refocus
+- /admin now acts as a platform operations dashboard instead of a demo/business-owner workspace.
+- Main tiles are report selectors: Order Requests, Subscriber Sites, Payment Fails, Sales Pipeline, Contact Enquiries, Revenue by Industry.
+- Payment Fails and Revenue by Industry use real persisted platform data where available and show honest placeholders when Stripe/webhook data is not yet populated.

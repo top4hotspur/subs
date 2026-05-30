@@ -271,3 +271,9 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - Public payment capture now starts in Stripe-hosted checkout (when configured), not in local forms.
 - Token-hardened setup confirmation links are used to authorize checkout creation.
 - Missing Stripe env yields explicit STRIPE_NOT_CONFIGURED fallback without blocking setup request persistence.
+
+## P1 platform-ops dashboard cleanup applied (2026-05-30)
+- /admin now reads as a platform operator dashboard, not a business-owner demo surface.
+- Replaced setup queue wording with Order Requests and added in-page report selector behaviour.
+- Added Payment Fails and Revenue by Industry platform reports with honest pre-webhook placeholders.
+- Removed obsolete local/demo booking and analytics panels from the main platform dashboard.

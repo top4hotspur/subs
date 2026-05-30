@@ -189,3 +189,8 @@ Still local/mock in current product:
 - Setup requests can launch Stripe Checkout from confirmation links using token-hardened access.
 - Webhook events update payment status and Stripe IDs on SetupRequest before provisioning progresses.
 - Fallback remains manual onboarding when Stripe env/config is missing.
+
+## Platform operations dashboard update
+- Order queue monitoring is now surfaced from /admin as Order Requests with in-page status reporting and link-out to /admin/setup-requests.
+- Subscriber provisioning visibility is surfaced from /admin as Subscriber Sites with live-site count and recent-site reporting.
+- Payment failure monitoring is prepared at platform level and will populate as Stripe/webhook subscription failures are connected.
