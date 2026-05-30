@@ -42,20 +42,22 @@ import {
 } from "@/lib/sites/site-appearance";
 
 type SectionKey =
+  | "bookings"
   | "settings"
+  | "appearance"
   | "services"
   | "staffRoles"
   | "rotaBreaks"
-  | "closuresHolidays"
-  | "bookings";
+  | "closuresHolidays";
 
 const SECTION_LIST: Array<{ key: SectionKey; label: string; description: string }> = [
-  { key: "settings", label: "Site settings", description: "Business contact and hero basics" },
-  { key: "services", label: "Services", description: "Service list, prices and durations" },
-  { key: "staffRoles", label: "Staff & roles", description: "Team roles and member setup" },
+  { key: "bookings", label: "Bookings", description: "Recent live site booking records" },
+  { key: "settings", label: "Business settings", description: "Business contact and hero basics" },
+  { key: "appearance", label: "Site appearance", description: "Light or dark appearance and branding assets" },
+  { key: "services", label: "Services and prices", description: "Service list, prices and durations" },
+  { key: "staffRoles", label: "Staff positions and staff", description: "Team roles and member setup" },
   { key: "rotaBreaks", label: "Rota & breaks", description: "Weekly rota and break windows" },
   { key: "closuresHolidays", label: "Closures & holidays", description: "Business closures and staff leave" },
-  { key: "bookings", label: "Bookings summary", description: "Recent live site booking records" },
 ];
 
 const weekdayValues: WeekdayValue[] = [
@@ -409,7 +411,7 @@ function toStaffHolidayDraft(holiday: CustomerSiteStaffHolidayRecord): StaffHoli
 export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
-  const [activeSection, setActiveSection] = useState<SectionKey>("settings");
+  const [activeSection, setActiveSection] = useState<SectionKey>("bookings");
 
   const [settingsDraft, setSettingsDraft] = useState<SettingsDraft>(() => toSettingsDraft(null));
   const [persistedSettings, setPersistedSettings] = useState<PersistedCustomerSiteSettings | null>(null);
@@ -820,25 +822,6 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
             <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Hero subheading
               <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.heroSubheading} onChange={(event) => setSettingsDraft((current) => ({ ...current, heroSubheading: event.target.value }))} />
             </label>
-            <label className="text-xs font-semibold text-slate-700">Site appearance
-              <select
-                className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
-                value={settingsDraft.appearanceMode}
-                onChange={(event) =>
-                  setSettingsDraft((current) => ({
-                    ...current,
-                    appearanceMode: event.target.value as SiteAppearanceMode,
-                  }))
-                }
-              >
-                <option value="LIGHT">Light</option>
-                <option value="DARK">Dark</option>
-              </select>
-            </label>
-            <p className="text-xs text-slate-600 sm:col-span-2">
-              Choose a simple light or dark appearance. The site layout stays professionally
-              controlled so your pages remain clean and consistent.
-            </p>
           </div>
 
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -1107,7 +1090,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
               <p className="text-xs font-semibold text-slate-900">Recurring payment issues</p>
               <p className="mt-1 text-xs text-slate-600">No failed recurring payments to review.</p>
               <p className="mt-1 text-[11px] text-slate-500">
-                This is a foundation placeholder. Provider-sync issue tracking will be connected in a later phase.
+                Provider-synced issue tracking will be connected in a later phase.
               </p>
             </div>
           </div>
@@ -1147,10 +1130,10 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
               <label className="text-xs font-semibold text-slate-700 sm:col-span-2">About body
                 <textarea className="mt-1 min-h-[96px] w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.aboutBody} onChange={(event) => setSettingsDraft((current) => ({ ...current, aboutBody: event.target.value }))} />
               </label>
-              <label className="text-xs font-semibold text-slate-700">About image one placeholder URL
+              <label className="text-xs font-semibold text-slate-700">About image one URL
                 <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.aboutImageOneUrl} onChange={(event) => setSettingsDraft((current) => ({ ...current, aboutImageOneUrl: event.target.value }))} />
               </label>
-              <label className="text-xs font-semibold text-slate-700">About image two placeholder URL
+              <label className="text-xs font-semibold text-slate-700">About image two URL
                 <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.aboutImageTwoUrl} onChange={(event) => setSettingsDraft((current) => ({ ...current, aboutImageTwoUrl: event.target.value }))} />
               </label>
               <label className="text-xs font-semibold text-slate-700 sm:col-span-2">About staff profiles JSON (optional)
@@ -1206,6 +1189,39 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
 
           <button type="button" className={`mt-4 ${primaryButtonClass} ${smallButtonClass}`} onClick={() => void saveSettings()}>
             Save site settings
+          </button>
+        </section>
+      ) : null}
+
+      {activeSection === "appearance" ? (
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h3 className="text-lg font-semibold text-slate-900">Site appearance</h3>
+          <p className="mt-2 text-sm text-slate-600">
+            Choose a simple light or dark appearance. The site layout stays professionally controlled so your pages remain clean and consistent.
+          </p>
+          <div className="mt-3 max-w-sm">
+            <label className="text-xs font-semibold text-slate-700">
+              Appearance mode
+              <select
+                className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                value={settingsDraft.appearanceMode}
+                onChange={(event) =>
+                  setSettingsDraft((current) => ({
+                    ...current,
+                    appearanceMode: event.target.value as SiteAppearanceMode,
+                  }))
+                }
+              >
+                <option value="LIGHT">Light</option>
+                <option value="DARK">Dark</option>
+              </select>
+            </label>
+          </div>
+          <p className="mt-3 text-xs text-slate-600">
+            Save from this section to apply your selected appearance to the live site.
+          </p>
+          <button type="button" className={`mt-4 ${primaryButtonClass} ${smallButtonClass}`} onClick={() => void saveSettings()}>
+            Save site appearance
           </button>
         </section>
       ) : null}

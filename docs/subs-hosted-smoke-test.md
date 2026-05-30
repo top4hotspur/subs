@@ -594,3 +594,10 @@ Add these checks after backend envs are configured:
 - Campaign builder allows industry + service area + level segmentation and Mark campaign prepared / Mark as sent manually actions.
 - Email previews are visible but no live bulk sending is executed.
 - /api/resend/webhook returns verification-required stub response (501) until signed verification is implemented.
+
+## 2026-05-30 hosted smoke additions (business admin visibility)
+- Site-admin `/site-admin/[siteSlug]` defaults to `Bookings` and shows section tiles in operational order.
+- Confirm `Site appearance` section is visible and includes `Light`/`Dark` selector.
+- Save appearance and verify `/sites/[siteSlug]` reflects the chosen mode.
+- Confirm branding upload controls (logo/favicon) remain available in site-admin.
+- Confirm recurring/block-booking and payment setup controls remain visible in business settings/services.

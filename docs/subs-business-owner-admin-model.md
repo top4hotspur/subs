@@ -313,3 +313,10 @@ Important:
 - Site-admin and support/admin editors include a Recurring payment issues placeholder area.
 - Current behavior is informational only (No failed recurring payments to review.).
 - Real failed-payment ingestion and resolve workflows depend on future provider integration.
+
+## 2026-05-30 update: settings visibility and ordering polish
+- `/site-admin/[siteSlug]` now defaults to `Bookings` so operational data is visible first.
+- `Site appearance` is now a dedicated top-level section in site-admin so Light/Dark is easy to find.
+- Launch appearance remains Light/Dark only for subscriber users; advanced theme/palette internals remain hidden.
+- Section order now surfaces key controls first: bookings, business settings, site appearance, services/prices, staff, rota/breaks, and closures/holidays.
+- Payment setup, recurring/block-booking controls, and branding uploads remain in business-admin with tenant-scoped persistence.

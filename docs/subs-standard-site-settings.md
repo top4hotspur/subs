@@ -220,3 +220,9 @@ No real provider credentials/API keys are stored or connected in this phase.
   - block booking enabled
   - suggested block counts
 - This pass stores configuration only; no provider-driven recurring billing is active.
+
+## 2026-05-30 update: business admin visibility polish
+- Launch appearance control for subscriber-facing admin is Light/Dark only and is now surfaced as a dedicated section.
+- Advanced theme and palette internals remain hidden from business owners to keep output consistent.
+- Recurring and block-booking controls remain visible in business settings and service-level editors.
+- Logo and favicon uploads remain available in site-admin branding controls.

@@ -206,3 +206,8 @@ No per-customer DB or code export is required for this model.
 - Sales leads remain persisted platform records with source/provider/service-area metadata and suppression fields (marketingStatus, unsubscribedAt, doNotContactReason).
 - Campaign foundation models (SalesCampaign, SalesCampaignRecipient, SalesCampaignEvent) now support prepared/sent tracking and future event ingestion.
 - Resend campaign webhook endpoint exists as a verification-required stub (/api/resend/webhook) and rejects unverified processing in this phase.
+
+## 2026-05-30 update: subscriber-owned settings visibility
+- Site-admin (`/site-admin/[siteSlug]`) now surfaces core controls in an operational order with `Bookings` first.
+- `Site appearance` is a dedicated section using Light/Dark mapping (`visualThemeId` + `colourPaletteId` under the hood).
+- Platform support view (`/admin/sites/[siteId]/settings`) wording now clearly distinguishes persisted subscriber data from demo tooling.

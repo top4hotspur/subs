@@ -831,7 +831,7 @@ export default function AdminSiteSettingsPage() {
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-xl font-semibold text-slate-900">Persisted site settings</h2>
             <p className="mt-2 text-sm text-slate-600">
-              This is the first persisted setup area for this subscriber site. Staff, rota, pages, vouchers and policies are still local/demo only.
+              Support/provisioning view only. Business owners manage this live subscriber-site data in their site admin area.
             </p>
             <p className="mt-1 text-xs text-slate-600">
               Support/provisioning view only. Business owner controls this from their site admin.
@@ -1083,7 +1083,7 @@ export default function AdminSiteSettingsPage() {
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-xl font-semibold text-slate-900">Persisted staff and roles</h2>
             <p className="mt-2 text-sm text-slate-600">
-              Rota, breaks and holidays are still local/demo only and will be persisted in a later pass.
+              Staff records and role definitions are persisted per subscriber site. Use this for support/provisioning changes.
             </p>
 
             <div className="mt-4 grid gap-6 lg:grid-cols-2">
@@ -1568,9 +1568,9 @@ export default function AdminSiteSettingsPage() {
           </section>
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">Demo/settings preview (local)</h2>
+            <h2 className="text-lg font-semibold text-slate-900">Demo/settings preview</h2>
             <p className="mt-2 text-sm text-slate-600">
-              This section remains browser-local demo data. It is separate from the persisted editor above.
+              This is demo-only tooling and is separate from live persisted subscriber-site data above.
             </p>
             <div className="mt-4">
               <BusinessSiteSettingsShell />
