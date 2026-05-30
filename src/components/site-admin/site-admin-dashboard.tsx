@@ -35,6 +35,11 @@ import type {
   CustomerSiteStaffRotaDayRecord,
 } from "@/lib/sites/customer-site-scheduling-types";
 import type { CustomerSiteBookingRecord } from "@/lib/sites/customer-site-booking-types";
+import {
+  mapAppearanceToTheme,
+  resolveAppearanceMode,
+  type SiteAppearanceMode,
+} from "@/lib/sites/site-appearance";
 
 type SectionKey =
   | "settings"
@@ -78,6 +83,7 @@ type SettingsDraft = {
   openingHoursSummary: string;
   heroHeadline: string;
   heroSubheading: string;
+  appearanceMode: SiteAppearanceMode;
   visualThemeId: string;
   colourPaletteId: string;
   currency: "GBP" | "EUR" | "USD";
@@ -255,6 +261,7 @@ function toSettingsDraft(settings: PersistedCustomerSiteSettings | null): Settin
     openingHoursSummary: settings?.openingHoursSummary ?? "",
     heroHeadline: settings?.heroHeadline ?? "",
     heroSubheading: settings?.heroSubheading ?? "",
+    appearanceMode: resolveAppearanceMode(settings?.visualThemeId),
     visualThemeId: settings?.visualThemeId ?? "",
     colourPaletteId: settings?.colourPaletteId ?? "",
     currency: (settings?.currency as "GBP" | "EUR" | "USD" | null) ?? "GBP",
@@ -491,6 +498,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       }
     }
 
+    const appearance = mapAppearanceToTheme(settingsDraft.appearanceMode);
     const result = await patchSiteAdminSettings(siteSlug, {
       siteDisplayName: settingsDraft.siteDisplayName || null,
       businessName: settingsDraft.businessName || null,
@@ -500,8 +508,8 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       openingHoursSummary: settingsDraft.openingHoursSummary || null,
       heroHeadline: settingsDraft.heroHeadline || null,
       heroSubheading: settingsDraft.heroSubheading || null,
-      visualThemeId: settingsDraft.visualThemeId || null,
-      colourPaletteId: settingsDraft.colourPaletteId || null,
+      visualThemeId: appearance.visualThemeId,
+      colourPaletteId: appearance.colourPaletteId,
       currency: settingsDraft.currency,
       paymentProcessorSetupMode: settingsDraft.paymentProcessorSetupMode,
       paymentProcessorName: settingsDraft.paymentProcessorName,
@@ -782,6 +790,25 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
             <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Hero subheading
               <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.heroSubheading} onChange={(event) => setSettingsDraft((current) => ({ ...current, heroSubheading: event.target.value }))} />
             </label>
+            <label className="text-xs font-semibold text-slate-700">Site appearance
+              <select
+                className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                value={settingsDraft.appearanceMode}
+                onChange={(event) =>
+                  setSettingsDraft((current) => ({
+                    ...current,
+                    appearanceMode: event.target.value as SiteAppearanceMode,
+                  }))
+                }
+              >
+                <option value="LIGHT">Light</option>
+                <option value="DARK">Dark</option>
+              </select>
+            </label>
+            <p className="text-xs text-slate-600 sm:col-span-2">
+              Choose a simple light or dark appearance. The site layout stays professionally
+              controlled so your pages remain clean and consistent.
+            </p>
           </div>
 
           <div className="mt-5 grid gap-4 sm:grid-cols-2">

@@ -443,3 +443,9 @@ CSV import/export setup tools moved out of demo customisation and into business 
   - Twilio/WhatsApp delivery
   - payment/checkout emails
   - attachments
+
+## 2026-05-30 update: conversion surface polish
+- Demo/public homepage hero no longer includes a generic booking CTA button.
+- Booking actions remain service-specific in service cards and booking routes.
+- Subscriber-facing appearance choice is simplified to `Light`/`Dark` for launch quality control.
+- Advanced theme/palette mappings remain internal for compatibility and future controlled rollout.

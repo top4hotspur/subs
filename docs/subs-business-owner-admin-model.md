@@ -287,3 +287,8 @@ Important:
   - Social media toggles + profile URLs for Facebook, Instagram, TikTok, X/Twitter, LinkedIn and YouTube.
 - These values update tenant-scoped `CustomerSiteSettings` and are used by `/sites/[siteSlug]` public routes.
 - No real About/Contact image upload is added in this pass; placeholder URL fields only.
+
+## 2026-05-30 update: business owner launch UX
+- Site-admin launch UI now presents a controlled `Site appearance` choice (`Light` or `Dark`) instead of the full theme/palette matrix.
+- This keeps customer-facing sites visually consistent while preserving internal theme/palette data compatibility.
+- Branding and social controls remain available; social icons display as clean platform icons in customer-facing contact areas.

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
 import { AdminPillNav } from "@/components/admin/admin-pill-nav";
@@ -43,8 +43,11 @@ import type {
   CustomerSiteStaffHolidayRecord,
   CustomerSiteStaffRotaDayRecord,
 } from "@/lib/sites/customer-site-scheduling-types";
-import { SITE_VISUAL_TEMPLATES } from "@/lib/sites/site-visual-templates";
-import { SITE_COLOUR_SCHEMES } from "@/lib/sites/site-colour-schemes";
+import {
+  mapAppearanceToTheme,
+  resolveAppearanceMode,
+  type SiteAppearanceMode,
+} from "@/lib/sites/site-appearance";
 import { outlineButtonClass, primaryButtonClass, smallButtonClass } from "@/lib/ui/button-styles";
 import { formatOptional } from "@/lib/ui/display-labels";
 
@@ -57,6 +60,7 @@ type PersistedSettingsDraft = {
   openingHoursSummary: string;
   heroHeadline: string;
   heroSubheading: string;
+  appearanceMode: SiteAppearanceMode;
   visualThemeId: string;
   colourPaletteId: string;
   currency: "GBP" | "EUR" | "USD";
@@ -181,6 +185,7 @@ function toSettingsDraft(record: PersistedCustomerSiteSettings | null): Persiste
     openingHoursSummary: record?.openingHoursSummary ?? "",
     heroHeadline: record?.heroHeadline ?? "",
     heroSubheading: record?.heroSubheading ?? "",
+    appearanceMode: resolveAppearanceMode(record?.visualThemeId),
     visualThemeId: record?.visualThemeId ?? "",
     colourPaletteId: record?.colourPaletteId ?? "",
     currency: (record?.currency as "GBP" | "EUR" | "USD" | null) ?? "GBP",
@@ -409,12 +414,6 @@ export default function AdminSiteSettingsPage() {
     active: true,
   });
 
-  const allowedPalettes = useMemo(() => {
-    const theme = SITE_VISUAL_TEMPLATES.find((item) => item.id === settingsDraft.visualThemeId);
-    if (!theme) return SITE_COLOUR_SCHEMES;
-    return SITE_COLOUR_SCHEMES.filter((palette) => theme.allowedPalettes.includes(palette.id));
-  }, [settingsDraft.visualThemeId]);
-
   useEffect(() => {
     let active = true;
     async function load(): Promise<void> {
@@ -532,6 +531,7 @@ export default function AdminSiteSettingsPage() {
     if (!siteId) return;
     setMessage("Saving persisted settings...");
 
+    const appearance = mapAppearanceToTheme(settingsDraft.appearanceMode);
     const result = await patchAdminSitePersistedSettings(siteId, {
       siteDisplayName: settingsDraft.siteDisplayName || null,
       businessName: settingsDraft.businessName || null,
@@ -541,8 +541,8 @@ export default function AdminSiteSettingsPage() {
       openingHoursSummary: settingsDraft.openingHoursSummary || null,
       heroHeadline: settingsDraft.heroHeadline || null,
       heroSubheading: settingsDraft.heroSubheading || null,
-      visualThemeId: settingsDraft.visualThemeId || null,
-      colourPaletteId: settingsDraft.colourPaletteId || null,
+      visualThemeId: appearance.visualThemeId,
+      colourPaletteId: appearance.colourPaletteId,
       currency: settingsDraft.currency,
       paymentProcessorSetupMode: settingsDraft.paymentProcessorSetupMode,
       paymentProcessorName: settingsDraft.paymentProcessorName,
@@ -828,21 +828,14 @@ export default function AdminSiteSettingsPage() {
               <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Hero subheading
                 <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.heroSubheading} onChange={(event) => setSettingsDraft((current) => ({ ...current, heroSubheading: event.target.value }))} />
               </label>
-              <label className="text-xs font-semibold text-slate-700">Visual theme id
-                <select className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.visualThemeId} onChange={(event) => setSettingsDraft((current) => ({ ...current, visualThemeId: event.target.value }))}>
-                  <option value="">Not set</option>
-                  {SITE_VISUAL_TEMPLATES.map((template) => (
-                    <option key={template.id} value={template.id}>{template.name}</option>
-                  ))}
+              <label className="text-xs font-semibold text-slate-700">Site appearance
+                <select className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.appearanceMode} onChange={(event) => setSettingsDraft((current) => ({ ...current, appearanceMode: event.target.value as SiteAppearanceMode }))}>
+                  <option value="LIGHT">Light</option>
+                  <option value="DARK">Dark</option>
                 </select>
-              </label>
-              <label className="text-xs font-semibold text-slate-700">Colour palette id
-                <select className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.colourPaletteId} onChange={(event) => setSettingsDraft((current) => ({ ...current, colourPaletteId: event.target.value }))}>
-                  <option value="">Not set</option>
-                  {allowedPalettes.map((palette) => (
-                    <option key={palette.id} value={palette.id}>{palette.name}</option>
-                  ))}
-                </select>
+                <span className="mt-1 block text-[11px] font-normal text-slate-600">
+                  Choose a simple light or dark appearance. Layout quality stays controlled.
+                </span>
               </label>
               <label className="text-xs font-semibold text-slate-700">Currency
                 <select className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.currency} onChange={(event) => setSettingsDraft((current) => ({ ...current, currency: event.target.value as "GBP" | "EUR" | "USD" }))}>

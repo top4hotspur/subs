@@ -152,11 +152,6 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
                 {heroSubheading ? (
                   <p className={`mt-3 max-w-2xl ${scheme.mutedTextClass}`}>{heroSubheading}</p>
                 ) : null}
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <Link href={`/demo/${template.slug}/booking`} className={accentButtonClass}>
-                    {config.ctaLabel}
-                  </Link>
-                </div>
               </div>
               <div className={`rounded-2xl border ${scheme.borderClass} ${scheme.heroPanelClass} p-6`}>
                 <p className={`text-xs font-semibold uppercase tracking-widest ${scheme.accentTextClass}`}>
@@ -180,11 +175,6 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
               {heroSubheading ? (
                 <p className={`mt-3 max-w-2xl ${scheme.mutedTextClass}`}>{heroSubheading}</p>
               ) : null}
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link href={`/demo/${template.slug}/booking`} className={accentButtonClass}>
-                  {config.ctaLabel}
-                </Link>
-              </div>
             </>
           )}
         </section>
@@ -253,7 +243,7 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
                         rel="noreferrer"
                         aria-label={platform.accessibleLabel}
                         title={platform.label}
-                        className={`inline-flex h-8 w-8 items-center justify-center rounded-full border ${scheme.borderClass} ${scheme.heroPanelClass}`}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-transparent hover:bg-slate-100/60"
                       >
                         {platform.iconPath ? (
                           <img

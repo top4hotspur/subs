@@ -9,14 +9,11 @@ import { listLocalBusinessClosures, saveLocalBusinessClosures } from "@/lib/cale
 import { getPublicServicePriceLabel } from "@/lib/pricing/service-price-display";
 import { getLocalCustomerSiteSettings, saveLocalCustomerSiteSettings } from "@/lib/sites/local-site-settings";
 import {
-  getSiteColourSchemesForTheme,
-  SITE_COLOUR_SCHEMES,
-} from "@/lib/sites/site-colour-schemes";
+  mapAppearanceToTheme,
+  resolveAppearanceMode,
+  type SiteAppearanceMode,
+} from "@/lib/sites/site-appearance";
 import { WebsiteTemplate } from "@/lib/sites/types";
-import {
-  getSiteVisualTemplateById,
-  SITE_VISUAL_TEMPLATES,
-} from "@/lib/sites/site-visual-templates";
 import { listLocalStaff, saveLocalStaff } from "@/lib/staff/local-staff";
 import { listLocalStaffRoles, saveLocalStaffRoles, seedLocalStaffRoles, type StaffRoleDefinition } from "@/lib/staff/staff-role-settings";
 import { StaffAvailabilityMode, StaffRoleType, type StaffMember } from "@/lib/staff/staff-types";
@@ -71,17 +68,10 @@ function CollapsibleSection({ title, subtitle, defaultOpen = false, children }: 
   );
 }
 
-function optionNameById<T extends { id: string; name: string }>(
-  options: T[],
-  id: string,
-): string {
-  return options.find((option) => option.id === id)?.name ?? id;
-}
-
 export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) {
   const adminSections = [
     { id: "business-settings", label: "Business settings" },
-    { id: "site-design", label: "Site design" },
+    { id: "site-design", label: "Site appearance" },
     { id: "staff-positions", label: "Staff positions" },
     { id: "services-prices", label: "Services and prices" },
     { id: "import-export", label: "Import/export setup data" },
@@ -135,8 +125,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
   >([]);
 
   const currency = settings.paymentSettings.currencyCode ?? "GBP";
-  const selectedTheme = getSiteVisualTemplateById(settings.branding.visualTemplateId);
-  const paletteOptions = getSiteColourSchemesForTheme(selectedTheme.id);
+  const appearanceMode = resolveAppearanceMode(settings.branding.visualTemplateId);
 
   function updateSettingsAndPersist(
     updater: (current: typeof settings) => typeof settings,
@@ -483,78 +472,39 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
       ) : null}
 
       {selectedSection === "site-design" ? (
-      <CollapsibleSection title="Site design" subtitle="Select the demo theme personality and one curated colour palette." defaultOpen>
+      <CollapsibleSection title="Site appearance" subtitle="Choose a simple light or dark appearance for this demo site." defaultOpen>
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="text-xs font-semibold text-slate-700">Theme
+          <label className="text-xs font-semibold text-slate-700">Appearance
             <select
               className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
-              value={settings.branding.visualTemplateId}
+              value={appearanceMode}
               onChange={(event) =>
                 updateSettingsAndPersist(
                   (current) => ({
                     ...current,
                     branding: {
                       ...current.branding,
-                      visualTemplateId:
-                        event.target.value as typeof current.branding.visualTemplateId,
-                      colourSchemeId:
-                        getSiteVisualTemplateById(
-                          event.target.value,
-                        ).allowedPalettes[0] ??
-                        current.branding.colourSchemeId,
+                      ...mapAppearanceToTheme(
+                        event.target.value as SiteAppearanceMode,
+                      ),
                     },
                   }),
-                  "Theme updated for this demo site.",
+                  "Site appearance updated for this demo site.",
                 )
               }
             >
-              {SITE_VISUAL_TEMPLATES.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="text-xs font-semibold text-slate-700">Colour palette
-            <select
-              className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
-              value={settings.branding.colourSchemeId}
-              onChange={(event) =>
-                updateSettingsAndPersist(
-                  (current) => ({
-                    ...current,
-                    branding: {
-                      ...current.branding,
-                      colourSchemeId:
-                        event.target.value as typeof current.branding.colourSchemeId,
-                    },
-                  }),
-                  "Colour palette updated for this demo site.",
-                )
-              }
-            >
-              {paletteOptions.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.name}
-                </option>
-              ))}
+              <option value="LIGHT">Light</option>
+              <option value="DARK">Dark</option>
             </select>
           </label>
         </div>
         <p className="mt-2 text-xs text-slate-600">
-          Changes update this local demo preview immediately. Live subscriber settings will
-          be persisted later.
+          Choose a simple light or dark appearance. The site layout stays professionally
+          controlled so your pages remain clean and consistent.
         </p>
         <p className="mt-1 text-xs text-slate-500">
-          Current theme: {selectedTheme.name}. Current palette:{" "}
-          {optionNameById(SITE_COLOUR_SCHEMES, settings.branding.colourSchemeId)}.
-        </p>
-        <p className="mt-1 text-xs text-slate-500">
-          {selectedTheme.description} Best for: {selectedTheme.bestFor.join(", ")}.
-        </p>
-        <p className="mt-1 text-xs text-slate-500">
-          Business photos can be added later. These themes are designed to look
-          professional without needing image uploads.
+          Business photos can be added later. This launch appearance control keeps site
+          styling clean and consistent without requiring image uploads.
         </p>
         <a
           href={`/demo/${template.slug}`}

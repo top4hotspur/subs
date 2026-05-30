@@ -132,12 +132,6 @@ export default async function PublicSiteSlugPage({
               {heroSubheading ? <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>{heroSubheading}</p> : null}
               <div className="mt-5 flex flex-wrap gap-3">
                 <Link
-                  href={`/sites/${encodeURIComponent(preview.tenantSite.slug)}/booking`}
-                  className={`inline-flex rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${scheme.accentButtonClass}`}
-                >
-                  Book appointment
-                </Link>
-                <Link
                   href={`/sites/${encodeURIComponent(preview.tenantSite.slug)}/contact`}
                   className={`inline-flex rounded-lg border ${scheme.borderClass} bg-white px-4 py-2 text-sm font-semibold text-slate-900`}
                 >
@@ -200,7 +194,7 @@ export default async function PublicSiteSlugPage({
                             target="_blank"
                             rel="noreferrer"
                             aria-label={platform.accessibleLabel}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white hover:bg-slate-100"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-transparent hover:bg-slate-100/60"
                           >
                             <img src={platform.iconPath} alt="" className="h-5 w-5" />
                           </a>

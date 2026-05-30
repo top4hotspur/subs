@@ -198,3 +198,9 @@ No real provider credentials/API keys are stored or connected in this phase.
   - YouTube
 - Icons are served from `/public/icons/social` and rendered as accessible link buttons.
 - `Website` is not included as a social platform.
+
+## 2026-05-30 update: appearance and social presentation
+- Subscriber-facing appearance control is now `Light`/`Dark` only.
+- Existing internal `visualThemeId` and `colourPaletteId` values are still used under the hood via fixed mapping.
+- Social platform links continue to use persisted URLs/settings and now render with clean icon presentation (no forced dark circular wrapper).
+- Homepage hero booking CTA is intentionally not rendered; service cards remain the primary booking action.

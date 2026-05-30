@@ -481,3 +481,15 @@ Add these checks after backend envs are configured:
    - contact enquiry sends platform admin notification email
    - public tenant booking sends customer confirmation email (when customer email provided)
 3. Confirm no payment capture language is included in booking/setup emails.
+
+## 2026-05-30 smoke updates: email and appearance
+- Environment checks (presence only): `RESEND_API_KEY`, `EMAIL_FROM`, `PLATFORM_NOTIFICATION_EMAIL`, `DATABASE_URL`, `DIRECT_DATABASE_URL`.
+- API smoke checks:
+  - `POST /api/contact-enquiries`
+  - `POST /api/setup-requests`
+  - `POST /api/sites/[siteSlug]/bookings`
+- Expectation: record creation succeeds even if email send fails or is not configured; response includes `emailStatus`.
+- UI checks:
+  - Site-admin and demo admin show `Site appearance` (`Light`/`Dark`) instead of full theme/palette selectors.
+  - Hero booking CTA is not shown on demo/public home hero.
+  - Social icons render without dark circular wrappers.

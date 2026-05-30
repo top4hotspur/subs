@@ -242,3 +242,9 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - Missing or failed provider configuration no longer blocks core write flows.
 - Bulk marketing, Twilio/WhatsApp, unsubscribe systems, and payment emails remain out of scope.
 
+
+## P0/P1 follow-up update (2026-05-30)
+- Applied UI simplification pass: subscriber-facing appearance controls are now `Light`/`Dark` only.
+- Removed redundant hero booking CTA from demo/public homepage hero surfaces.
+- Cleaned social icon presentation to remove dark circular wrappers.
+- Transactional email smoke pass confirms fail-soft behavior: request/enquiry/booking persistence succeeds while email can return provider failure status without blocking core flow.
