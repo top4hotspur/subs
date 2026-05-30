@@ -1,13 +1,12 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { HomeFaqAccordion } from "@/components/marketing/home-faq-accordion";
 import { IndustryCategoryBrowser } from "@/components/marketing/industry-category-browser";
-import { SimpleOfferCard } from "@/components/pricing/simple-offer-card";
 import { SiteCtaPanel } from "@/components/site-ui/site-cta-panel";
 import { SiteHero } from "@/components/site-ui/site-hero";
 import { SiteSection } from "@/components/site-ui/site-section";
 import { listWebsiteTemplates } from "@/lib/sites/mock-repository";
 import { WebsiteTemplateSlug } from "@/lib/sites/types";
-import { primaryButtonClass, secondaryButtonClass } from "@/lib/ui/button-styles";
+import { primaryButtonClass } from "@/lib/ui/button-styles";
 
 const industryGroups: Array<{
   title: string;
@@ -136,7 +135,7 @@ export function MarketingHome() {
 
   return (
     <main className="bg-slate-100">
-      <div className="mx-auto max-w-6xl space-y-8 px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl space-y-7 px-4 py-8 sm:px-6 lg:px-8">
         <SiteHero
           title="Managed websites and booking tools for local service businesses"
           subtitle="Full feature rich, professional website all in one simple monthly package."
@@ -156,25 +155,84 @@ export function MarketingHome() {
           )}
         />
 
-        <SiteSection title="More than just a website. A complete toolkit for your business.">
-          <p className="text-slate-600">
-            Get a professional, fully managed online presence designed around how your business actually works. We handle setup, hosting and ongoing maintenance so you can focus on customers, bookings and day-to-day service.
-          </p>
-          <div className="mt-6 rounded-xl border border-slate-300 bg-slate-900 p-5 text-white">
-            <p className="text-lg font-semibold">{leadTrustPoint.title}</p>
-            <p className="mt-1 text-sm text-slate-200">{leadTrustPoint.detail}</p>
-          </div>
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            {trustPoints.map((point) => (
-              <div key={point.title} className="rounded-xl border border-slate-200 bg-white p-4">
-                <p className="text-sm font-semibold text-slate-900">{point.title}</p>
-                <p className="mt-1 text-sm text-slate-600">{point.detail}</p>
+        <SiteSection title="Everything you need, one simple monthly price">
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <div className="grid gap-6 xl:grid-cols-[1.35fr_1fr]">
+              <div>
+                <h3 className="text-2xl font-bold tracking-tight text-slate-900">
+                  More than just a website
+                </h3>
+                <p className="mt-2 text-slate-600">
+                  Get a professional, fully managed online presence designed around how your business
+                  actually works.
+                </p>
+                <div className="mt-4 rounded-xl border border-slate-300 bg-slate-900 p-4 text-white">
+                  <p className="text-base font-semibold">{leadTrustPoint.title}</p>
+                  <p className="mt-1 text-sm text-slate-200">{leadTrustPoint.detail}</p>
+                </div>
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  {trustPoints.map((point) => (
+                    <div key={point.title} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                      <p className="text-sm font-semibold text-slate-900">{point.title}</p>
+                      <p className="mt-1 text-sm text-slate-600">{point.detail}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  One simple website subscription
+                </p>
+                <h3 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+                  No confusing packages
+                </h3>
+                <p className="mt-2 text-sm text-slate-600">
+                  Only £149 setup + £30/month. Full managed website included. Live-site within a day when you select your domain name!
+                </p>
+
+                <div className="mt-4 grid gap-3">
+                  <div className="rounded-xl border border-slate-200 bg-white p-3">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Setup fee</p>
+                    <p className="mt-1 text-xl font-semibold text-slate-900">£149</p>
+                    <p className="text-sm text-slate-600">one-off</p>
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-white p-3">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Monthly</p>
+                    <p className="mt-1 text-xl font-semibold text-slate-900">£30</p>
+                    <p className="text-sm text-slate-600">per month</p>
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-white p-3">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Domain service</p>
+                    <p className="mt-1 text-xl font-semibold text-slate-900">£49</p>
+                    <p className="text-sm text-slate-600">
+                      optional - only if you need us to register a new domain.
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-white p-3">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Go-live target</p>
+                    <p className="mt-1 text-xl font-semibold text-slate-900">Within a day</p>
+                    <p className="text-sm text-slate-600">
+                      Once domain name has been confirmed.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Link href="#industries" className={primaryButtonClass}>
+                    Choose your business type
+                  </Link>
+                  <Link
+                    href="/demo/barbers"
+                    className="inline-flex rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-100"
+                  >
+                    View example demo
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
         </SiteSection>
-
-        <SimpleOfferCard showCta={false} />
 
         <SiteSection id="industries" title="Choose your business type">
           <p className="text-slate-600">
@@ -225,4 +283,3 @@ export function MarketingHome() {
     </main>
   );
 }
-
