@@ -529,3 +529,22 @@ Add these checks after backend envs are configured:
   - industry category tabs remain readable/accessible
   - child industry cards use subtle category tint/border/accent
   - hover/focus states remain clear with good contrast.
+
+## 2026-05-30 hosted smoke additions (order flow CTA cleanup)
+- Homepage hero CTA row:
+  - `Choose your business type` -> `#industries`
+  - `View example demo` -> `/demo/barbers`
+  - `Order now` -> `/setup/barbers`
+- `/setup/[industry]`:
+  - no `Your site can support this type of workflow` section
+  - no `Your website will include` section
+  - no `Customer communications` tile
+  - includes `Step 1: Choose your website type`
+  - selected website label uses singular wording (for example `Barber website`)
+  - submit button label is `Order now`
+- Order summary:
+  - does not show `Demo explored`
+  - does not show `Customer communications`
+  - keeps fees/domain option and concise onboarding confirmation note
+- Confirmation security:
+  - setup confirmation backend flow still uses token-hardened link access.

@@ -455,3 +455,15 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Voucher checkout remains local/demo only and does not process real payments.
 - Demo Admin View now defaults to `Bookings` and shows a 3-column dashboard: Cancellations, Today, Future.
 - Staff View now shows a clear red `Cancelled` status badge for cancelled appointments.
+
+## 2026-05-30 order flow polish update
+- Homepage hero CTA row now uses:
+  - `Choose your business type`
+  - `View example demo`
+  - `Order now`
+- `/setup/[industry]` is now presented as a simpler order-start flow.
+- Step 1 now lets users confirm/change website type before entering order details.
+- Setup page removed extra explainer blocks so the path is focused on placing an order.
+- Setup form submit wording is now `Order now` (loading: `Placing order...`).
+- Order summary copy is simplified and keeps payment/domain confirmation as the next onboarding step.
+- Internal persistence still uses `SetupRequest`, and confirmation access remains token-hardened.

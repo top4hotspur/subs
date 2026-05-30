@@ -131,7 +131,7 @@ export default function SetupConfirmationPage() {
               "We could not load that setup request. If you opened an older link or the request has expired, please submit setup details again."}
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <Link href="/setup/barbers" className={primaryButtonClass}>Submit setup request</Link>
+            <Link href="/setup/barbers" className={primaryButtonClass}>Order now</Link>
             <Link href="/contact" className={outlineButtonClass}>Contact us</Link>
             <Link href="/" className={outlineButtonClass}>Back to homepage</Link>
           </div>

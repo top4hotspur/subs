@@ -179,3 +179,8 @@ Still local/mock in current product:
 - Live checkout/payment capture is not automated in this phase.
 - Platform admin confirms payment/subscription onboarding manually after setup request submission.
 - Domain confirmation and payment confirmation happen before final go-live status is set.
+
+## Public funnel wording alignment (2026-05-30)
+- Public CTA language now emphasizes `Order now` for setup start.
+- `/setup/[industry]` is treated as the order-start route with a selectable website type in Step 1.
+- Internal persistence remains `SetupRequest`; this is naming at the data layer, not a public checkout claim.

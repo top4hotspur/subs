@@ -253,3 +253,10 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - Fixed voucher CTA route mismatch (now points to dedicated demo vouchers purchase page).
 - Improved operations-first admin flow by defaulting Demo Admin to Bookings dashboard.
 - Added explicit cancelled-status visibility in Staff View with high-contrast red badge.
+
+## P0 conversion follow-up applied (2026-05-30)
+- Homepage hero CTA row now uses Order now as the third primary action.
+- Setup route (/setup/[industry]) was simplified into an order-start flow with Step 1 website-type selection.
+- Setup page removed non-essential explainer sections that were adding friction in the funnel.
+- Order summary copy is now cleaner and keeps payment/domain confirmation as a concise next-step note.
+- Backend model naming remains SetupRequest and confirmation remains token-hardened.

@@ -1,11 +1,7 @@
 ﻿import Link from "next/link";
 import { notFound } from "next/navigation";
-import { OperationsBlueprintSummary } from "@/components/industry/operations-blueprint-summary";
 import { SetupRequestForm } from "@/components/setup/setup-request-form";
-import { SiteSettingsSummary } from "@/components/sites/site-settings-summary";
-import { getBlueprintForTemplate } from "@/lib/industry/operations-repository";
 import { getWebsiteSubscriptionOffer } from "@/lib/pricing/subscription-offer";
-import { buildDefaultCustomerSiteSettings } from "@/lib/sites/default-site-settings";
 import { getWebsiteTemplate } from "@/lib/sites/mock-repository";
 import { isWebsiteTemplateSlug, WEBSITE_TEMPLATE_SLUGS } from "@/lib/sites/types";
 
@@ -30,14 +26,11 @@ export default async function SetupIndustryPage({ params }: SetupIndustryPagePro
   }
 
   const offer = getWebsiteSubscriptionOffer();
-  const blueprint = getBlueprintForTemplate(template.slug);
-  const siteSettings = buildDefaultCustomerSiteSettings(template);
-
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
       <section className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-sm font-semibold uppercase tracking-wide text-sky-600">Setup Request</p>
-        <h1 className="mt-2 text-3xl font-bold text-slate-900">{template.name}</h1>
+        <p className="text-sm font-semibold uppercase tracking-wide text-sky-600">Order now</p>
+        <h1 className="mt-2 text-3xl font-bold text-slate-900">{template.name.replace(/\s+websites?$/i, " website")}</h1>
         <p className="mt-3 text-slate-600">
           One full website offer: £{offer.setupFeeGbp} setup, £{offer.monthlyFeeGbp}/month,
           with optional domain registration/management only where needed.
@@ -45,9 +38,7 @@ export default async function SetupIndustryPage({ params }: SetupIndustryPagePro
         <p className="mt-3 text-sm text-slate-600">
           Your subscriber site is created as a clean setup. Demo content is not copied automatically.
         </p>
-        <p className="mt-2 text-sm text-slate-600">
-          Submit your setup request today. We&apos;ll confirm your domain details and payment setup before your site goes live.
-        </p>
+        <p className="mt-2 text-sm text-slate-600">Place your order today. We&apos;ll confirm your domain details and payment setup before your site goes live.</p>
         <div className="mt-4 flex flex-wrap gap-3 text-sm font-medium">
           <Link href={`/demo/${template.slug}`} className="text-sky-700 hover:text-sky-900">
             Back to demo site
@@ -56,28 +47,6 @@ export default async function SetupIndustryPage({ params }: SetupIndustryPagePro
             Contact us
           </Link>
         </div>
-      </section>
-
-      {blueprint ? (
-        <section className="mb-8">
-          <h2 className="mb-3 text-xl font-semibold text-slate-900">Your site can support this type of workflow</h2>
-          <OperationsBlueprintSummary
-            blueprint={blueprint}
-            variant="compact"
-            showPortalHighlights
-            showAdminHighlights
-            showLifecycle={false}
-          />
-        </section>
-      ) : null}
-
-      <section className="mb-8">
-        <h2 className="mb-3 text-xl font-semibold text-slate-900">Your website will include</h2>
-        <SiteSettingsSummary settings={siteSettings} />
-        <p className="mt-3 text-sm text-slate-600">
-          Logo is optional and text-brand fallback works by default. Pages and sections can be adjusted during setup.
-          Email notifications are included, and legal pages can be enabled/hidden and edited later.
-        </p>
       </section>
 
       <SetupRequestForm template={template} />

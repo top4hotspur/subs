@@ -17,6 +17,7 @@ import {
   DomainOption,
   SetupRequestDraft,
   SubscriptionSetupStatus,
+  WebsiteTemplateSlug,
   WebsiteTemplate,
 } from "@/lib/sites/types";
 import {
@@ -24,10 +25,15 @@ import {
   formatGbp,
 } from "@/lib/ui/display-labels";
 import Link from "next/link";
+import { listWebsiteTemplates } from "@/lib/sites/mock-repository";
 
 type SetupRequestFormProps = {
   template: WebsiteTemplate;
 };
+
+function setupWebsiteTypeLabel(templateName: string): string {
+  return templateName.replace(/\s+websites?$/i, " website");
+}
 
 function readBusinessNameFromActiveDraft(template: WebsiteTemplate): string {
   if (typeof window === "undefined") {
@@ -67,6 +73,7 @@ function readDraftContext(template: WebsiteTemplate): { demoDraftId?: string; de
 export function SetupRequestForm({ template }: SetupRequestFormProps) {
   const router = useRouter();
   const offer = getWebsiteSubscriptionOffer();
+  const availableTemplates = listWebsiteTemplates();
   const draftContext = readDraftContext(template);
 
   const [draft, setDraft] = useState<SetupRequestDraft>({
@@ -79,6 +86,9 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
   });
   const [errors, setErrors] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const selectedTemplate =
+    availableTemplates.find((item) => item.slug === draft.templateSlug) ?? template;
+  const selectedWebsiteTypeLabel = setupWebsiteTypeLabel(selectedTemplate.name);
 
   const domainFee =
     draft.domainOption === DomainOption.WE_REGISTER_DOMAIN
@@ -164,7 +174,7 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
               return;
             }
 
-            setErrors([
+          setErrors([
               "We could not verify your confirmation link token. Please submit again.",
             ]);
             setSubmitting(false);
@@ -199,20 +209,40 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
           }
 
           setErrors([
-            "We could not save your setup request to the backend right now. Please try again.",
+              "We could not place your order right now. Please try again.",
           ]);
           setSubmitting(false);
         }}
       >
         <section className="space-y-3 rounded-xl border border-slate-200 p-4">
-          <h2 className="text-lg font-semibold text-slate-900">Industry setup details</h2>
-          <p className="text-sm text-slate-600">You are setting up: {template.name}</p>
+          <h2 className="text-lg font-semibold text-slate-900">Step 1: Choose your website type</h2>
+          <label className="block text-sm font-medium text-slate-700">
+            Website type
+            <select
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              value={draft.templateSlug}
+              onChange={(event) =>
+                setDraft((current) => ({
+                  ...current,
+                  templateSlug: event.target.value as WebsiteTemplateSlug,
+                }))
+              }
+            >
+              {availableTemplates.map((item) => (
+                <option key={item.slug} value={item.slug}>
+                  {setupWebsiteTypeLabel(item.name)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p className="text-sm text-slate-600">You are setting up: {selectedWebsiteTypeLabel}</p>
+        </section>
+
+        <section className="space-y-3 rounded-xl border border-slate-200 p-4">
+          <h2 className="text-lg font-semibold text-slate-900">Website setup details</h2>
           <p className="text-sm text-slate-600">
             Detailed booking, job, calendar, staff and admin tools are configured during setup based on your business type.
           </p>
-          {draft.demoDraftName ? (
-            <p className="text-sm text-slate-600">You explored: {draft.demoDraftName}. Your live site still starts clean, ready for your real business data.</p>
-          ) : null}
           <label className="block text-sm font-medium text-slate-700">
             Business name
             <input
@@ -317,13 +347,6 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
         </section>
 
         <section className="space-y-3 rounded-xl border border-slate-200 p-4">
-          <h2 className="text-lg font-semibold text-slate-900">Customer communications</h2>
-          <p className="text-sm text-slate-600">
-            Email confirmations are included as standard. We will confirm the right communication setup during onboarding.
-          </p>
-        </section>
-
-        <section className="space-y-3 rounded-xl border border-slate-200 p-4">
           <h2 className="text-lg font-semibold text-slate-900">Contact details</h2>
           <label className="block text-sm font-medium text-slate-700">
             Contact name
@@ -383,10 +406,10 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
           className={primaryButtonClass}
           disabled={submitting}
         >
-          {submitting ? "Saving..." : "Submit setup request"}
+          {submitting ? "Placing order..." : "Order now"}
         </button>
         <p className="text-xs text-slate-600">
-          Need help before submitting?{" "}
+          Need help before ordering?{" "}
           <Link href="/contact" className="font-medium text-sky-700 hover:text-sky-900">
             Contact us
           </Link>
@@ -398,20 +421,14 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
         <h2 className="text-lg font-semibold text-slate-900">Order summary</h2>
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
           <p>
-            <span className="font-semibold">Industry:</span> {template.name}
+            <span className="font-semibold">Website type:</span> {selectedWebsiteTypeLabel}
           </p>
           <p>
             <span className="font-semibold">Business name:</span> {draft.businessName || "-"}
           </p>
-          {draft.demoDraftName ? (
-            <p>
-              <span className="font-semibold">Demo explored:</span> {draft.demoDraftName}
-            </p>
-          ) : null}
           <p>
             <span className="font-semibold">Domain option:</span> {domainOptionLabel(draft.domainOption)}
           </p>
-          <p><span className="font-semibold">Customer communications:</span> Email notifications included</p>
           <hr className="my-2 border-slate-200" />
           <p>
             <span className="font-semibold">Setup fee:</span> {formatGbp(offer.setupFeeGbp)}
@@ -428,11 +445,8 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
           <p>
             <span className="font-semibold">Existing domain:</span> no domain charge if you can point DNS/nameservers.
           </p>
-          <p>
-            <span className="font-semibold">Payment/subscription setup:</span> confirmed after request submission during onboarding.
-          </p>
-          <p>
-            <span className="font-semibold">Next step:</span> Submit your setup request today. We&apos;ll confirm your domain details and payment setup before your site goes live.
+          <p className="mt-2">
+            You are ordering a managed website subscription. We will confirm your domain and payment setup before your site goes live.
           </p>
         </div>
       </aside>

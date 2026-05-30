@@ -148,8 +148,8 @@ export function MarketingHome() {
               <Link href="/demo/barbers" className={primaryButtonClass}>
                 View example demo
               </Link>
-              <Link href="#how-it-works" className={primaryButtonClass}>
-                How it works
+              <Link href="/setup/barbers" className={primaryButtonClass}>
+                Order now
               </Link>
             </>
           )}
