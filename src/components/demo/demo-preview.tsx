@@ -214,7 +214,7 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
             </p>
             <div className="mt-3">
               <Link
-                href={`/demo/${template.slug}/account`}
+                href={`/demo/${template.slug}/vouchers`}
                 className={accentButtonClass}
               >
                 Buy gift voucher

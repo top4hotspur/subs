@@ -36,6 +36,13 @@ function paymentStatusLabel(status?: CustomerRequestPaymentStatus): string {
   return status === CustomerRequestPaymentStatus.PAYMENT_COMPLETED ? "Payment Completed" : "Requires Payment";
 }
 
+function statusBadgeClass(status: CustomerRequestStatus): string {
+  if (status === CustomerRequestStatus.CANCELLED) return "bg-rose-100 text-rose-800";
+  if (status === CustomerRequestStatus.COMPLETED) return "bg-emerald-100 text-emerald-800";
+  if (status === CustomerRequestStatus.CONFIRMED) return "bg-sky-100 text-sky-800";
+  return "bg-amber-100 text-amber-800";
+}
+
 export function DemoStaffPage({ template }: DemoStaffPageProps) {
   const settings = useMemo(() => getLocalCustomerSiteSettings(template.slug, template), [template]);
   const currency = settings.paymentSettings.currencyCode ?? "GBP";
@@ -149,7 +156,12 @@ export function DemoStaffPage({ template }: DemoStaffPageProps) {
             <ul className="space-y-2 text-sm text-slate-700">
               {todayAppointments.map((request) => (
                 <li key={request.id}>
-                  <div>{request.preferredTime || "Time TBC"} - {request.customerName} - {request.serviceName || "Service"}</div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span>{request.preferredTime || "Time TBC"} - {request.customerName} - {request.serviceName || "Service"}</span>
+                    <span className={`rounded px-2 py-0.5 text-[11px] font-semibold ${statusBadgeClass(request.status)}`}>
+                      {request.status === CustomerRequestStatus.CANCELLED ? "Cancelled" : request.status.replaceAll("_", " ")}
+                    </span>
+                  </div>
                   <div className="text-xs text-slate-600">Assigned: {request.assignedStaffName || "Unassigned"}</div>
                   <div className="text-xs font-semibold text-slate-600">{paymentStatusLabel(request.paymentStatus)}</div>
                 </li>
@@ -162,7 +174,12 @@ export function DemoStaffPage({ template }: DemoStaffPageProps) {
             <ul className="space-y-2 text-sm text-slate-700">
               {upcomingAppointments.slice(0, 8).map((request) => (
                 <li key={request.id}>
-                  <div>{formatUkDate(request.preferredDate || request.createdAtIso)} {request.preferredTime || ""} - {request.customerName}</div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span>{formatUkDate(request.preferredDate || request.createdAtIso)} {request.preferredTime || ""} - {request.customerName}</span>
+                    <span className={`rounded px-2 py-0.5 text-[11px] font-semibold ${statusBadgeClass(request.status)}`}>
+                      {request.status === CustomerRequestStatus.CANCELLED ? "Cancelled" : request.status.replaceAll("_", " ")}
+                    </span>
+                  </div>
                   <div className="text-xs text-slate-600">Assigned: {request.assignedStaffName || "Unassigned"}</div>
                   <div className="text-xs font-semibold text-slate-600">{paymentStatusLabel(request.paymentStatus)}</div>
                 </li>

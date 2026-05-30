@@ -449,3 +449,9 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Booking actions remain service-specific in service cards and booking routes.
 - Subscriber-facing appearance choice is simplified to `Light`/`Dark` for launch quality control.
 - Advanced theme/palette mappings remain internal for compatibility and future controlled rollout.
+
+## 2026-05-30 operations polish update
+- Demo gift voucher CTA now links to `/demo/[industry]/vouchers` (voucher purchase flow) instead of My Account.
+- Voucher checkout remains local/demo only and does not process real payments.
+- Demo Admin View now defaults to `Bookings` and shows a 3-column dashboard: Cancellations, Today, Future.
+- Staff View now shows a clear red `Cancelled` status badge for cancelled appointments.

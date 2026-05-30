@@ -248,3 +248,8 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - Removed redundant hero booking CTA from demo/public homepage hero surfaces.
 - Cleaned social icon presentation to remove dark circular wrappers.
 - Transactional email smoke pass confirms fail-soft behavior: request/enquiry/booking persistence succeeds while email can return provider failure status without blocking core flow.
+
+## 2026-05-30 audit follow-up
+- Fixed voucher CTA route mismatch (now points to dedicated demo vouchers purchase page).
+- Improved operations-first admin flow by defaulting Demo Admin to Bookings dashboard.
+- Added explicit cancelled-status visibility in Staff View with high-contrast red badge.

@@ -56,6 +56,17 @@ function summarizeDays(days?: string[]): string {
   return days.map((d) => weekdayLabel(d as never)).join(", ");
 }
 
+function paymentStatusText(status?: string): string {
+  return status === "PAYMENT_COMPLETED" ? "Payment Completed" : "Requires Payment";
+}
+
+function bookingStatusBadge(status: CustomerRequestStatus): string {
+  if (status === CustomerRequestStatus.CANCELLED) return "bg-rose-100 text-rose-800";
+  if (status === CustomerRequestStatus.COMPLETED) return "bg-emerald-100 text-emerald-800";
+  if (status === CustomerRequestStatus.CONFIRMED) return "bg-sky-100 text-sky-800";
+  return "bg-amber-100 text-amber-800";
+}
+
 function CollapsibleSection({ title, subtitle, defaultOpen = false, children }: { title: string; subtitle: string; defaultOpen?: boolean; children: ReactNode }) {
   return (
     <details open={defaultOpen} className="rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -70,13 +81,13 @@ function CollapsibleSection({ title, subtitle, defaultOpen = false, children }: 
 
 export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) {
   const adminSections = [
+    { id: "appointments", label: "Bookings" },
     { id: "business-settings", label: "Business settings" },
     { id: "site-design", label: "Site appearance" },
     { id: "staff-positions", label: "Staff positions" },
     { id: "services-prices", label: "Services and prices" },
     { id: "import-export", label: "Import/export setup data" },
     { id: "staff", label: "Staff" },
-    { id: "appointments", label: "Appointments" },
     { id: "rota-breaks", label: "Rota and breaks" },
     { id: "closures", label: "Ad hoc closures" },
     { id: "gift-vouchers", label: "Gift vouchers" },
@@ -106,7 +117,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
   const [expandedStaffIds, setExpandedStaffIds] = useState<string[]>([]);
   const [selectedSection, setSelectedSection] = useState<
     (typeof adminSections)[number]["id"]
-  >("business-settings");
+  >("appointments");
   const [csvPreview, setCsvPreview] = useState<{
     type: "services" | "staff";
     rows: string[];
@@ -126,6 +137,30 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
 
   const currency = settings.paymentSettings.currencyCode ?? "GBP";
   const appearanceMode = resolveAppearanceMode(settings.branding.visualTemplateId);
+  const allBookings = useMemo(
+    () =>
+      listLocalCustomerRequests()
+        .filter((request) => request.templateSlug === template.slug)
+        .sort((a, b) => {
+          const left = `${a.preferredDate ?? ""} ${a.preferredTime ?? ""}`;
+          const right = `${b.preferredDate ?? ""} ${b.preferredTime ?? ""}`;
+          return left.localeCompare(right);
+        }),
+    [template.slug],
+  );
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const cancelledBookings = allBookings.filter(
+    (request) => request.status === CustomerRequestStatus.CANCELLED,
+  );
+  const todayBookings = allBookings.filter(
+    (request) => request.preferredDate === todayIso,
+  );
+  const futureBookings = allBookings.filter(
+    (request) => request.preferredDate && request.preferredDate > todayIso,
+  );
+  const [refundStatusByBookingId, setRefundStatusByBookingId] = useState<
+    Record<string, "REFUND_REQUIRED" | "REFUND_COMPLETE">
+  >({});
 
   function updateSettingsAndPersist(
     updater: (current: typeof settings) => typeof settings,
@@ -760,7 +795,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
       ) : null}
 
       {selectedSection === "appointments" ? (
-      <CollapsibleSection title="Appointments" subtitle="Control customer booking slot display and staff selection behaviour." defaultOpen>
+      <CollapsibleSection title="Bookings" subtitle="Operational booking dashboard and slot controls." defaultOpen>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-xs font-semibold text-slate-700">Appointment slot block size
             <select
@@ -798,7 +833,108 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
             Allow customer staff selection
           </label>
         </div>
-        <p className="mt-2 text-xs text-slate-600">Slot interval affects how available times are shown on the customer booking page.</p>
+        <p className="mt-2 text-xs text-slate-600">
+          Slot interval affects how available times are shown on the customer booking page.
+        </p>
+        <div className="mt-4 grid gap-3 lg:grid-cols-3">
+          <div className="rounded-md border border-rose-200 bg-rose-50 p-3">
+            <p className="text-sm font-semibold text-rose-900">Cancellations</p>
+            <p className="mt-1 text-xs text-rose-800">
+              Check whether a refund is needed. Process refunds through your payment provider, then mark as complete.
+            </p>
+            <div className="mt-2 space-y-2">
+              {cancelledBookings.length === 0 ? (
+                <p className="text-xs text-slate-600">No cancelled bookings.</p>
+              ) : (
+                cancelledBookings.slice(0, 8).map((request) => (
+                  <div key={request.id} className="rounded border border-rose-200 bg-white p-2 text-xs text-slate-700">
+                    <p className="font-semibold text-slate-900">{request.customerName}</p>
+                    <p>{request.serviceName || "Service"} • {request.preferredDate || "Date TBC"} {request.preferredTime || ""}</p>
+                    <p>{paymentStatusText(request.paymentStatus)}</p>
+                    <div className="mt-1 flex gap-1">
+                      <button
+                        type="button"
+                        className={`rounded px-2 py-0.5 font-semibold ${
+                          (refundStatusByBookingId[request.id] ?? "REFUND_REQUIRED") === "REFUND_REQUIRED"
+                            ? "bg-rose-700 text-white"
+                            : "border border-rose-300 bg-white text-rose-700"
+                        }`}
+                        onClick={() =>
+                          setRefundStatusByBookingId((current) => ({
+                            ...current,
+                            [request.id]: "REFUND_REQUIRED",
+                          }))
+                        }
+                      >
+                        Refund required
+                      </button>
+                      <button
+                        type="button"
+                        className={`rounded px-2 py-0.5 font-semibold ${
+                          refundStatusByBookingId[request.id] === "REFUND_COMPLETE"
+                            ? "bg-emerald-700 text-white"
+                            : "border border-emerald-300 bg-white text-emerald-700"
+                        }`}
+                        onClick={() =>
+                          setRefundStatusByBookingId((current) => ({
+                            ...current,
+                            [request.id]: "REFUND_COMPLETE",
+                          }))
+                        }
+                      >
+                        Refund complete
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+            <p className="text-sm font-semibold text-slate-900">Today</p>
+            <div className="mt-2 space-y-2">
+              {todayBookings.length === 0 ? (
+                <p className="text-xs text-slate-600">No bookings today.</p>
+              ) : (
+                todayBookings.map((request) => (
+                  <div key={request.id} className="rounded border border-slate-200 bg-white p-2 text-xs text-slate-700">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-semibold text-slate-900">{request.preferredTime || "Time TBC"} • {request.customerName}</p>
+                      <span className={`rounded px-2 py-0.5 text-[11px] font-semibold ${bookingStatusBadge(request.status)}`}>
+                        {request.status === CustomerRequestStatus.CANCELLED ? "Cancelled" : request.status.replaceAll("_", " ")}
+                      </span>
+                    </div>
+                    <p>{request.serviceName || "Service"} • {request.assignedStaffName || "Unassigned"}</p>
+                    <p>{paymentStatusText(request.paymentStatus)}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+            <p className="text-sm font-semibold text-slate-900">Future</p>
+            <div className="mt-2 space-y-2">
+              {futureBookings.length === 0 ? (
+                <p className="text-xs text-slate-600">No future bookings.</p>
+              ) : (
+                futureBookings.slice(0, 10).map((request) => (
+                  <div key={request.id} className="rounded border border-slate-200 bg-white p-2 text-xs text-slate-700">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-semibold text-slate-900">{request.preferredDate || "Date TBC"} {request.preferredTime || ""}</p>
+                      <span className={`rounded px-2 py-0.5 text-[11px] font-semibold ${bookingStatusBadge(request.status)}`}>
+                        {request.status === CustomerRequestStatus.CANCELLED ? "Cancelled" : request.status.replaceAll("_", " ")}
+                      </span>
+                    </div>
+                    <p>{request.customerName} • {request.serviceName || "Service"}</p>
+                    <p>{request.assignedStaffName || "Unassigned"} • {paymentStatusText(request.paymentStatus)}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
       </CollapsibleSection>
       ) : null}
 

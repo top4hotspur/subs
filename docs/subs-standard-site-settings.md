@@ -204,3 +204,8 @@ No real provider credentials/API keys are stored or connected in this phase.
 - Existing internal `visualThemeId` and `colourPaletteId` values are still used under the hood via fixed mapping.
 - Social platform links continue to use persisted URLs/settings and now render with clean icon presentation (no forced dark circular wrapper).
 - Homepage hero booking CTA is intentionally not rendered; service cards remain the primary booking action.
+
+## 2026-05-30 demo voucher route update
+- Customer-facing demo vouchers now use a dedicated purchase route: `/demo/[industry]/vouchers`.
+- Voucher confirmations include a locally generated voucher reference and delivery method.
+- Payment is not processed in demo mode; checkout/payment remains informational.

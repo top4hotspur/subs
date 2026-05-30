@@ -292,3 +292,11 @@ Important:
 - Site-admin launch UI now presents a controlled `Site appearance` choice (`Light` or `Dark`) instead of the full theme/palette matrix.
 - This keeps customer-facing sites visually consistent while preserving internal theme/palette data compatibility.
 - Branding and social controls remain available; social icons display as clean platform icons in customer-facing contact areas.
+
+## 2026-05-30 booking operations update
+- Demo admin booking operations are now the default landing section in Admin View.
+- Bookings dashboard columns:
+  - Cancellations (with local refund-required/refund-complete tracking)
+  - Today
+  - Future
+- Refund handling remains manual through the external payment provider.

@@ -493,3 +493,16 @@ Add these checks after backend envs are configured:
   - Site-admin and demo admin show `Site appearance` (`Light`/`Dark`) instead of full theme/palette selectors.
   - Hero booking CTA is not shown on demo/public home hero.
   - Social icons render without dark circular wrappers.
+
+## 2026-05-30 hosted smoke additions (voucher + booking ops)
+- `/demo/barbers`: `Buy gift voucher` should open `/demo/barbers/vouchers`.
+- `/demo/barbers/vouchers`:
+  - choose preset/custom value (within min/max when custom enabled)
+  - choose delivery method (Email/Collect/Post based on admin settings)
+  - submit and confirm voucher reference near submit button
+  - confirmation must state payment is not processed in demo
+- `/demo/barbers/admin`:
+  - default section should be `Bookings`
+  - bookings dashboard shows columns: Cancellations, Today, Future
+- `/demo/barbers/staff`:
+  - cancelled appointments show clear red `Cancelled` badge.
