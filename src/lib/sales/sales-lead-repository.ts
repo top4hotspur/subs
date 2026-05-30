@@ -41,11 +41,21 @@ export async function createSalesLead(input: CreateSalesLeadInput) {
       location: parsed.location,
       country: parsed.country,
       cityTown: parsed.cityTown,
+      postcode: parsed.postcode,
+      address: parsed.address,
+      serviceArea: parsed.serviceArea,
       industrySlug: parsed.industrySlug,
       industryLabel: parsed.industryLabel,
       contactName: parsed.contactName,
       email: parsed.email,
       phone: parsed.phone,
+      leadSource: parsed.leadSource,
+      sourceUrl: parsed.sourceUrl,
+      currentProvider: parsed.currentProvider,
+      estimatedCurrentMonthlyCost: parsed.estimatedCurrentMonthlyCost,
+      marketingStatus: parsed.marketingStatus,
+      unsubscribedAt: parsed.unsubscribedAt ? new Date(parsed.unsubscribedAt) : undefined,
+      doNotContactReason: parsed.doNotContactReason,
       status: parsed.status,
       source: parsed.source,
       notes: parsed.notes,
@@ -89,6 +99,10 @@ export async function listSalesLeads(options: Partial<ListSalesLeadsInput> = {})
       location: parsed.location,
       country: parsed.country,
       cityTown: parsed.cityTown,
+      postcode: parsed.postcode,
+      serviceArea: parsed.serviceArea,
+      leadSource: parsed.leadSource,
+      marketingStatus: parsed.marketingStatus,
       ...(query
         ? {
             OR: [
@@ -97,6 +111,8 @@ export async function listSalesLeads(options: Partial<ListSalesLeadsInput> = {})
               { email: { contains: query, mode: "insensitive" } },
               { phone: { contains: query, mode: "insensitive" } },
               { cityTown: { contains: query, mode: "insensitive" } },
+              { postcode: { contains: query, mode: "insensitive" } },
+              { serviceArea: { contains: query, mode: "insensitive" } },
             ],
           }
         : {}),
@@ -125,11 +141,28 @@ export async function updateSalesLead(input: UpdateSalesLeadInput) {
       location: parsed.location,
       country: parsed.country === null ? null : parsed.country,
       cityTown: parsed.cityTown,
+      postcode: parsed.postcode,
+      address: parsed.address,
+      serviceArea: parsed.serviceArea,
       industrySlug: parsed.industrySlug,
       industryLabel: parsed.industryLabel,
       contactName: parsed.contactName,
       email: parsed.email,
       phone: parsed.phone,
+      leadSource: parsed.leadSource,
+      sourceUrl: parsed.sourceUrl === null ? null : parsed.sourceUrl,
+      currentProvider: parsed.currentProvider,
+      estimatedCurrentMonthlyCost:
+        parsed.estimatedCurrentMonthlyCost === null ? null : parsed.estimatedCurrentMonthlyCost,
+      marketingStatus: parsed.marketingStatus,
+      unsubscribedAt:
+        parsed.unsubscribedAt === null
+          ? null
+          : parsed.unsubscribedAt
+            ? new Date(parsed.unsubscribedAt)
+            : undefined,
+      doNotContactReason:
+        parsed.doNotContactReason === null ? null : parsed.doNotContactReason,
       status: parsed.status,
       source: parsed.source,
       notes: parsed.notes,

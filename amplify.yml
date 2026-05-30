@@ -14,6 +14,7 @@ frontend:
         - echo "RESEND_API_KEY=$RESEND_API_KEY" >> .env.production
         - echo "EMAIL_FROM=$EMAIL_FROM" >> .env.production
         - echo "PLATFORM_NOTIFICATION_EMAIL=$PLATFORM_NOTIFICATION_EMAIL" >> .env.production
+        - echo "RESEND_WEBHOOK_SECRET=$RESEND_WEBHOOK_SECRET" >> .env.production
         - echo "STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY" >> .env.production
         - echo "STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET" >> .env.production
         - echo "STRIPE_PRICE_MONTHLY_SUBSCRIPTION=$STRIPE_PRICE_MONTHLY_SUBSCRIPTION" >> .env.production

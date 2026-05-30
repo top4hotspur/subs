@@ -282,3 +282,8 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - Homepage View example demo now routes visitors to industry selection instead of forcing a single demo path.
 - Industry pages now focus on stakeholder outcomes (customer, business owner/manager, staff) rather than repeating homepage pricing content.
 - Industry CTA presentation is now more consistent, with Get your site now visually aligned with View demo site.
+
+## P1 sales outreach foundation applied (2026-05-30)
+- Platform sales pipeline now includes lead-source enrichment, duplicate-aware import review, and campaign preparation states.
+- Outreach workflow has clear non-sending controls in-app (prepared/sent-manual markers) with preview-only campaign copy.
+- Compliance foundation added via marketing suppression fields and unsubscribe placeholder requirements.

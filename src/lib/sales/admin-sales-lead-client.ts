@@ -15,11 +15,21 @@ export type SalesLeadDto = {
   location?: string | null;
   country?: string | null;
   cityTown?: string | null;
+  postcode?: string | null;
+  address?: string | null;
+  serviceArea?: string | null;
   industrySlug?: string | null;
   industryLabel?: string | null;
   contactName?: string | null;
   email?: string | null;
   phone?: string | null;
+  leadSource?: string | null;
+  sourceUrl?: string | null;
+  currentProvider?: string | null;
+  estimatedCurrentMonthlyCost?: string | number | null;
+  marketingStatus?: string;
+  unsubscribedAt?: string | null;
+  doNotContactReason?: string | null;
   status: string;
   source?: string | null;
   notes?: string | null;
@@ -47,6 +57,10 @@ export async function listBackendSalesLeads(options?: {
   location?: string;
   country?: string;
   cityTown?: string;
+  postcode?: string;
+  serviceArea?: string;
+  leadSource?: string;
+  marketingStatus?: string;
 }) {
   const searchParams = new URLSearchParams();
   if (options?.search) searchParams.set("search", options.search);
@@ -55,6 +69,10 @@ export async function listBackendSalesLeads(options?: {
   if (options?.location) searchParams.set("location", options.location);
   if (options?.country) searchParams.set("country", options.country);
   if (options?.cityTown) searchParams.set("cityTown", options.cityTown);
+  if (options?.postcode) searchParams.set("postcode", options.postcode);
+  if (options?.serviceArea) searchParams.set("serviceArea", options.serviceArea);
+  if (options?.leadSource) searchParams.set("leadSource", options.leadSource);
+  if (options?.marketingStatus) searchParams.set("marketingStatus", options.marketingStatus);
 
   try {
     const response = await fetch(`/api/admin/sales-leads?${searchParams.toString()}`, {

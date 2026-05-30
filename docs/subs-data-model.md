@@ -256,3 +256,8 @@ Notes:
 - /admin report tiles aggregate persisted data from: SetupRequest, TenantSite, SubscriptionRecord, ContactEnquiry, SalesLead.
 - Payment Fails tile uses SubscriptionRecord failure status when available.
 - Revenue by Industry currently reports current-state estimates from persisted site/subscription/order data; month-on-month history depends on fuller webhook/payment event capture.
+
+## Sales pipeline data expansion (2026-05-30)
+- SalesLead fields added: postcode, address, serviceArea, leadSource, sourceUrl, currentProvider, estimatedCurrentMonthlyCost, marketingStatus, unsubscribedAt, doNotContactReason.
+- New models: SalesCampaign, SalesCampaignRecipient, SalesCampaignEvent for campaign lifecycle and future click/delivery event storage.
+- Duplicate detection in import workflow is rule-based at app level (postcode+industry primary, plus business/postcode, email, phone checks).

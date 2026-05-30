@@ -201,3 +201,8 @@ No per-customer DB or code export is required for this model.
 ## /admin platform boundary (2026-05-30)
 - Platform admin dashboard is now focused on operator-level reports (orders, subscriber sites, payment failures, sales and enquiries).
 - Business-owner/demo operational panels are removed from main /admin surface to keep platform and subscriber responsibilities separated.
+
+## Platform sales outreach architecture foundation
+- Sales leads remain persisted platform records with source/provider/service-area metadata and suppression fields (marketingStatus, unsubscribedAt, doNotContactReason).
+- Campaign foundation models (SalesCampaign, SalesCampaignRecipient, SalesCampaignEvent) now support prepared/sent tracking and future event ingestion.
+- Resend campaign webhook endpoint exists as a verification-required stub (/api/resend/webhook) and rejects unverified processing in this phase.

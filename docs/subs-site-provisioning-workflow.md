@@ -194,3 +194,8 @@ Still local/mock in current product:
 - Order queue monitoring is now surfaced from /admin as Order Requests with in-page status reporting and link-out to /admin/setup-requests.
 - Subscriber provisioning visibility is surfaced from /admin as Subscriber Sites with live-site count and recent-site reporting.
 - Payment failure monitoring is prepared at platform level and will populate as Stripe/webhook subscription failures are connected.
+
+## Sales outreach readiness note (2026-05-30)
+- Platform sales pipeline now captures richer prospect source/provider fields and supports duplicate-reviewed CSV import.
+- Campaign preparation states are now tracked before any live sending.
+- Live campaign send automation remains intentionally disabled until verified unsubscribe/suppression and webhook verification are fully wired.

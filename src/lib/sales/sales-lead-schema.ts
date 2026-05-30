@@ -16,20 +16,32 @@ const leadStatuses = [
   "DO_NOT_CONTACT",
 ] as const;
 const countries = ["England", "Scotland", "Wales", "Northern Ireland"] as const;
+const marketingStatuses = ["ACTIVE", "DO_NOT_CONTACT", "UNSUBSCRIBED", "BOUNCED"] as const;
 
 export const salesLeadStatusSchema = z.enum(leadStatuses);
 export const salesLeadCountrySchema = z.enum(countries);
+export const salesLeadMarketingStatusSchema = z.enum(marketingStatuses);
 
 export const createSalesLeadSchema = z.object({
   businessName: nonEmpty,
   location: optionalText,
   country: salesLeadCountrySchema.optional(),
   cityTown: optionalText,
+  postcode: optionalText,
+  address: optionalText,
+  serviceArea: optionalText,
   industrySlug: optionalText,
   industryLabel: optionalText,
   contactName: optionalText,
   email: z.string().email().optional(),
   phone: z.string().trim().min(3).optional(),
+  leadSource: optionalText,
+  sourceUrl: z.string().url().optional(),
+  currentProvider: optionalText,
+  estimatedCurrentMonthlyCost: z.number().nonnegative().optional(),
+  marketingStatus: salesLeadMarketingStatusSchema.default("ACTIVE"),
+  unsubscribedAt: isoDateString.optional().nullable(),
+  doNotContactReason: z.string().optional(),
   status: salesLeadStatusSchema.default("NEW"),
   source: optionalText,
   notes: z.string().optional(),
@@ -46,11 +58,21 @@ export const updateSalesLeadSchema = z
     location: optionalText,
     country: salesLeadCountrySchema.optional().nullable(),
     cityTown: optionalText,
+    postcode: optionalText,
+    address: optionalText,
+    serviceArea: optionalText,
     industrySlug: optionalText,
     industryLabel: optionalText,
     contactName: optionalText,
     email: z.string().email().optional(),
     phone: z.string().trim().min(3).optional(),
+    leadSource: optionalText,
+    sourceUrl: z.string().url().optional().nullable(),
+    currentProvider: optionalText,
+    estimatedCurrentMonthlyCost: z.number().nonnegative().optional().nullable(),
+    marketingStatus: salesLeadMarketingStatusSchema.optional(),
+    unsubscribedAt: isoDateString.optional().nullable(),
+    doNotContactReason: z.string().optional().nullable(),
     status: salesLeadStatusSchema.optional(),
     source: optionalText,
     notes: z.string().optional(),
@@ -70,6 +92,10 @@ export const listSalesLeadsSchema = z.object({
   location: z.string().trim().optional(),
   country: salesLeadCountrySchema.optional(),
   cityTown: z.string().trim().optional(),
+  postcode: z.string().trim().optional(),
+  serviceArea: z.string().trim().optional(),
+  leadSource: z.string().trim().optional(),
+  marketingStatus: salesLeadMarketingStatusSchema.optional(),
   take: z.number().int().min(1).max(500).optional().default(200),
   skip: z.number().int().min(0).optional().default(0),
 });

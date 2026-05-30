@@ -586,3 +586,11 @@ Add these checks after backend envs are configured:
   - Get your site now styling matches View demo site`n  - no repeated One simple website subscription / No confusing packages block
   - no Default services in demo block
   - Built around how your business works stakeholder section is present.
+
+## Sales pipeline smoke checks (2026-05-30)
+- /admin/sales shows Download leads CSV template with required column headers.
+- CSV upload produces preview health statuses: Clean, Possible duplicate, Missing required fields.
+- Duplicate rows require explicit Approve/Skip decisions before import.
+- Campaign builder allows industry + service area + level segmentation and Mark campaign prepared / Mark as sent manually actions.
+- Email previews are visible but no live bulk sending is executed.
+- /api/resend/webhook returns verification-required stub response (501) until signed verification is implemented.

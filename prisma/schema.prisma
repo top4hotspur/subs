@@ -194,11 +194,21 @@ model SalesLead {
   location        String?
   country         String?
   cityTown        String?
+  postcode        String?
+  address         String?
+  serviceArea     String?
   industrySlug    String?
   industryLabel   String?
   contactName     String?
   email           String?
   phone           String?
+  leadSource      String?
+  sourceUrl       String?
+  currentProvider String?
+  estimatedCurrentMonthlyCost Decimal? @db.Decimal(10, 2)
+  marketingStatus String        @default("ACTIVE")
+  unsubscribedAt  DateTime?
+  doNotContactReason String?
   status          String
   source          String?
   notes           String?
@@ -209,6 +219,8 @@ model SalesLead {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   events          SalesLeadEvent[]
+  campaignRecipients SalesCampaignRecipient[]
+  campaignEvents  SalesCampaignEvent[]
 
   @@index([status])
   @@index([industrySlug])
@@ -217,6 +229,9 @@ model SalesLead {
   @@index([country])
   @@index([cityTown])
   @@index([createdAt])
+  @@index([postcode])
+  @@index([serviceArea])
+  @@index([marketingStatus])
 }
 
 model SalesLeadEvent {
@@ -229,6 +244,62 @@ model SalesLeadEvent {
   salesLead   SalesLead @relation(fields: [salesLeadId], references: [id], onDelete: Cascade)
 
   @@index([salesLeadId])
+  @@index([createdAt])
+}
+
+model SalesCampaign {
+  id            String                  @id @default(cuid())
+  name          String
+  industrySlug  String?
+  serviceArea   String?
+  campaignLevel String
+  status        String                  @default("DRAFT")
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+  recipients    SalesCampaignRecipient[]
+  events        SalesCampaignEvent[]
+
+  @@index([industrySlug])
+  @@index([serviceArea])
+  @@index([campaignLevel])
+  @@index([status])
+}
+
+model SalesCampaignRecipient {
+  id         String        @id @default(cuid())
+  campaignId String
+  leadId     String
+  status     String        @default("QUEUED")
+  sentAt     DateTime?
+  clickedAt  DateTime?
+  lastEventAt DateTime?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  campaign   SalesCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  lead       SalesLead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, leadId])
+  @@index([campaignId])
+  @@index([leadId])
+  @@index([status])
+}
+
+model SalesCampaignEvent {
+  id            String        @id @default(cuid())
+  campaignId    String?
+  leadId        String?
+  resendEmailId String?
+  eventType     String
+  eventId       String?       @unique
+  clickedUrl    String?
+  raw           Json?
+  createdAt     DateTime      @default(now())
+  campaign      SalesCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  lead          SalesLead?     @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  @@index([campaignId])
+  @@index([leadId])
+  @@index([eventType])
   @@index([createdAt])
 }
 

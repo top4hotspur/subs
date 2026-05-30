@@ -498,3 +498,8 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Homepage View example demo now scrolls to #industries so visitors choose the most relevant demo by business type.
 - Industry pages are now a focused sales step between homepage and demo/order, with stakeholder journey messaging for customer, business owner/manager and staff.
 - Repeated homepage pricing/package block and weak default-services demo block were removed from industry pages.
+
+## 2026-05-30 sales pipeline expansion
+- /admin/sales now supports downloadable CSV templates, extended lead-source fields, duplicate-review import decisions, and campaign preparation workflows.
+- Campaign levels are now defined as Launch offer, Introduction, and Reminder with preview-only email copy in this phase.
+- Bulk live sending is intentionally disabled; this pass focuses on prospect data quality, segmentation and compliance readiness.
