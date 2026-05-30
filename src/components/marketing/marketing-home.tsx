@@ -77,7 +77,7 @@ const faqs = [
   },
   {
     q: "Do I need to buy my own domain name?",
-    a: "You have options. If you already own a domain, you can point it to us at no extra domain fee. If you need a new one, we can register and manage it for you for a flat GBP49 fee.",
+    a: "You have options. If you already own a domain, you can point it to us at no extra domain fee. If you need a new one, we can register and manage it for you for a flat £49 fee.",
   },
   {
     q: "Do I have to pay before seeing what my site looks like?",
@@ -89,7 +89,7 @@ const faqs = [
   },
   {
     q: "Who handles the hosting and technical updates?",
-    a: "We do. Your GBP30 monthly subscription covers the hosting, setup support, and ongoing platform management. We manage the tech so you can stay focused on running your business.",
+    a: "We do. Your £30 monthly subscription covers the hosting, setup support, and ongoing platform management. We manage the tech so you can stay focused on running your business.",
   },
   {
     q: "Does the website actually handle my customer bookings?",
@@ -101,7 +101,11 @@ const faqs = [
   },
   {
     q: "Can customers choose which staff member they book with?",
-    a: "Yes, the platform includes a customer-selectable staff toggle, allowing your clients to book with their preferred barber, stylist, or service provider.",
+    a: "Yes, the platform includes a customer-selectable staff toggle, allowing your clients to book with their preferred barber, stylist, or service provider. This option can be turned on/off in your settings depending on your business preference.",
+  },
+  {
+    q: "Can I add more features?",
+    a: "Yes! You can add any additional features you want. There will be a development charge for each feature, but we will waive this if we decide to implement it as part of the core website offering going forward. If you want to keep it unique to your business, we can do that too!",
   },
   {
     q: "Does the platform handle gift vouchers?",
@@ -135,17 +139,17 @@ export function MarketingHome() {
       <div className="mx-auto max-w-6xl space-y-8 px-4 py-10 sm:px-6 lg:px-8">
         <SiteHero
           title="Managed websites and booking tools for local service businesses"
-          subtitle="Choose your industry, preview a working demo, and get a professional website with booking/request tools, customer features and ongoing support - all in one simple monthly package."
-          helperText="GBP149 setup + GBP30/month. Full managed website included. Live-site target within a day once domain name has been confirmed."
+          subtitle="Full feature rich, professional website all in one simple monthly package."
+          helperText="Only £149 setup + £30/month. Full managed website included. Live-site within a day when you select your domain name!"
           actions={(
             <>
               <Link href="#industries" className={primaryButtonClass}>
                 Choose your business type
               </Link>
-              <Link href="/demo/barbers" className={`${secondaryButtonClass} !text-slate-950`}>
+              <Link href="/demo/barbers" className={primaryButtonClass}>
                 View example demo
               </Link>
-              <Link href="#how-it-works" className={`${secondaryButtonClass} !text-slate-950`}>
+              <Link href="#how-it-works" className={primaryButtonClass}>
                 How it works
               </Link>
             </>
@@ -214,7 +218,7 @@ export function MarketingHome() {
           subtitle="Choose your industry, explore the demo views, and start setup when you are ready."
           primaryHref="#industries"
           primaryLabel="Choose your business type"
-          secondaryHref="/demo/taxi"
+          secondaryHref="/demo/barbers"
           secondaryLabel="View example demo"
         />
       </div>

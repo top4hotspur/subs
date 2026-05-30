@@ -6,7 +6,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "MyExperiment.club | Managed Subscription Websites",
   description:
-    "Subscription websites for local service businesses with interactive demos and managed monthly updates.",
+    "Professional, feature rich websites for local service businesses with cheap monthly fee, managed setup, and ongoing support.",
 };
 
 export default function RootLayout({

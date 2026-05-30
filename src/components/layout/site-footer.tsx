@@ -14,7 +14,7 @@ export function SiteFooter() {
       <div className="mx-auto max-w-6xl">
         <SiteFooterBlock
           brand="MyExperiment.club"
-          description="Subscription websites for local service businesses with demo-first onboarding, managed setup, and ongoing monthly support."
+          description="Professional, feature rich websites for local service businesses with cheap monthly fee, managed setup, and ongoing support."
           groups={[
             {
               title: "Explore",
