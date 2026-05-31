@@ -660,3 +660,11 @@ Add these checks after backend envs are configured:
 4. Verify confirmation page shows post-payment next steps and payment status context.
 5. Cancel checkout and verify return to `/setup/confirmation?...&checkout=cancelled` with `Continue to payment` available.
 6. Verify `/admin/setup-requests` shows new request after form submit even if checkout is cancelled.
+
+## 2026-05-31 hosted smoke checks: post-payment confirmation copy
+1. Complete checkout and confirm summary uses `Paid today` (not `Payable today`) when payment is successful.
+2. Confirm website type shows a customer-facing label (for example `Barber website`) rather than a raw slug.
+3. Confirm confirmation page does not show:
+   - `Communication: Email notifications`
+   - optional domain-service explainer line after successful checkout.
+4. Confirm next-steps panel title is `What we do next` with MyExperiment.club action wording.

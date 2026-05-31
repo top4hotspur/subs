@@ -9,16 +9,16 @@ import {
   listLocalSetupRequests,
 } from "@/lib/setup/local-setup-requests";
 import { LocalSetupRequest } from "@/lib/sites/types";
+import { DomainOption } from "@/lib/sites/types";
 import { outlineButtonClass, primaryButtonClass } from "@/lib/ui/button-styles";
 import {
-  communicationOptionDescription,
-  communicationOptionLabel,
   domainOptionDescription,
   domainOptionLabel,
   formatGbp,
 } from "@/lib/ui/display-labels";
 import { getSetupRequestFromBackend } from "@/lib/setup/setup-request-backend-client";
 import { createSetupCheckoutSession } from "@/lib/setup/setup-request-backend-client";
+import { listWebsiteTemplates } from "@/lib/sites/mock-repository";
 import {
   mapBackendSetupRequestToDisplay,
   mapLocalSetupRequestToDisplay,
@@ -27,6 +27,14 @@ import {
 
 type RequestSourceHint = "backend" | "local" | "unknown";
 type CheckoutState = "success" | "cancelled" | null;
+
+function formatWebsiteTypeLabel(templateSlug: string): string {
+  const template = listWebsiteTemplates().find((item) => item.slug === templateSlug);
+  if (template) {
+    return template.name.replace(/\s+websites?$/i, " website");
+  }
+  return templateSlug.charAt(0).toUpperCase() + templateSlug.slice(1);
+}
 
 function readParamsFromLocation(): {
   requestId: string | null;
@@ -170,6 +178,10 @@ export default function SetupConfirmationPage() {
   }
 
   const showContinuePayment = request.source === "backend" && request.paymentStatus !== "PAID";
+  const isPaidState =
+    checkout === "success" ||
+    request.paymentStatus === "PAID" ||
+    request.paymentStatus === "SUBSCRIPTION_ACTIVE";
   const paymentStatusLabel =
     request.paymentStatus ??
     (checkout === "success"
@@ -184,7 +196,9 @@ export default function SetupConfirmationPage() {
         <h1 className="text-3xl font-bold text-emerald-900">Order received</h1>
         {checkout === "success" ? (
           <p className="mt-3 text-emerald-800">
-            Thanks - your order has been received. Payment completed. We are confirming payment status.
+            {request.paymentStatus === "PAID" || request.paymentStatus === "SUBSCRIPTION_ACTIVE"
+              ? "Thanks — your order has been received and your payment is complete. We’ll now start preparing your website setup."
+              : "Thanks — your order has been received. We’re confirming your payment status and will start preparing your website setup shortly."}
           </p>
         ) : checkout === "cancelled" ? (
           <p className="mt-3 text-amber-900">
@@ -204,13 +218,13 @@ export default function SetupConfirmationPage() {
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-xl font-semibold text-slate-900">Order summary</h2>
           <div className="mt-4 space-y-2 text-sm text-slate-700">
-            <p><span className="font-semibold">Website type:</span> {request.templateSlug}</p>
+            <p><span className="font-semibold">Website type:</span> {formatWebsiteTypeLabel(request.templateSlug)}</p>
             <p><span className="font-semibold">Website/business name:</span> {request.businessName}</p>
             <p><span className="font-semibold">Domain option:</span> {domainOptionLabel(request.domainOption)}</p>
-            <p className="text-xs text-slate-600">{domainOptionDescription(request.domainOption)}</p>
-            <p><span className="font-semibold">Communication:</span> {communicationOptionLabel(request.communicationOption)}</p>
-            <p className="text-xs text-slate-600">{communicationOptionDescription(request.communicationOption)}</p>
-            <p><span className="font-semibold">Payable today:</span> {formatGbp(request.setupTotalGbp)}</p>
+            {request.domainOption !== DomainOption.WE_REGISTER_DOMAIN ? (
+              <p className="text-xs text-slate-600">{domainOptionDescription(request.domainOption)}</p>
+            ) : null}
+            <p><span className="font-semibold">{isPaidState ? "Paid today:" : "Payable today:"}</span> {formatGbp(request.setupTotalGbp)}</p>
             <p><span className="font-semibold">Monthly subscription:</span> {formatGbp(request.monthlyTotalGbp)}/month</p>
             <div className="pt-2">
               <SetupStatusBadge status={request.status} />
@@ -220,12 +234,12 @@ export default function SetupConfirmationPage() {
         </section>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-semibold text-slate-900">What happens next</h2>
+          <h2 className="text-xl font-semibold text-slate-900">What we do next</h2>
           <ol className="mt-4 space-y-3 text-sm text-slate-700">
-            <li>1. Confirm domain details</li>
-            <li>2. Prepare your website setup</li>
-            <li>3. Send your access details</li>
-            <li>4. Go live (target within a day once domain is ready)</li>
+            <li>1. We check your order and confirm your domain details.</li>
+            <li>2. We prepare your clean website and admin area.</li>
+            <li>3. We send your business admin access details.</li>
+            <li>4. We help point your domain to the site and aim to go live within a day once the domain is ready.</li>
           </ol>
         </section>
       </div>

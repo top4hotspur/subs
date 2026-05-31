@@ -522,6 +522,11 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Full Stripe checkout config requires `STRIPE_PRICE_DOMAIN_SERVICE`.
 - Email health endpoint now warns when `EMAIL_FROM` is not from verified `myexperiment.club` sender domain.
 
+## 2026-05-31 post-payment confirmation copy polish
+- `/setup/confirmation` now uses customer-friendly website type labels (for example `Barber website`) instead of raw slug values.
+- In paid/success states, summary wording switches to `Paid today`; unpaid/cancelled states still use payable wording.
+- The next-steps panel is now phrased as MyExperiment.club actions (`What we do next`) for clearer reassurance after checkout.
+
 ## 2026-05-31 order-to-checkout flow update
 - `/setup/[industry]` now starts Stripe Checkout immediately after backend order creation when Stripe is configured.
 - Confirmation route is now treated as post-checkout and next-steps focused, with a retry-payment path when checkout is cancelled.
