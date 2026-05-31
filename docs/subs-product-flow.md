@@ -521,3 +521,9 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Stripe price env vars must be Stripe Price IDs (`price_...`), not raw amounts.
 - Full Stripe checkout config requires `STRIPE_PRICE_DOMAIN_SERVICE`.
 - Email health endpoint now warns when `EMAIL_FROM` is not from verified `myexperiment.club` sender domain.
+
+## 2026-05-31 order-to-checkout flow update
+- `/setup/[industry]` now starts Stripe Checkout immediately after backend order creation when Stripe is configured.
+- Confirmation route is now treated as post-checkout and next-steps focused, with a retry-payment path when checkout is cancelled.
+- Setup order summary now emphasizes payable-today and monthly subscription amounts.
+- Card details remain handled by Stripe Checkout only; webhook remains source of truth for paid status.

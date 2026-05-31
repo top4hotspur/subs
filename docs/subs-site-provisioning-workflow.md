@@ -199,3 +199,8 @@ Still local/mock in current product:
 - Platform sales pipeline now captures richer prospect source/provider fields and supports duplicate-reviewed CSV import.
 - Campaign preparation states are now tracked before any live sending.
 - Live campaign send automation remains intentionally disabled until verified unsubscribe/suppression and webhook verification are fully wired.
+
+## 2026-05-31 order and payment handoff update
+- Setup order submission now creates SetupRequest and, when Stripe is configured, immediately starts Stripe Checkout.
+- Setup confirmation page is positioned as post-payment / next-steps state rather than pre-payment stop.
+- SetupRequest persists before checkout handoff so admin queue visibility remains intact even if payment is cancelled.

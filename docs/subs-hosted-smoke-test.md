@@ -652,3 +652,11 @@ Add these checks after backend envs are configured:
 - `/api/stripe/health`:
   - verify warning when any Stripe price env var is `prod_...`
   - verify full config only passes when setup/monthly/domain values are `price_...`
+
+## 2026-05-31 hosted smoke checks: order flow and checkout start
+1. Open `/setup/barbers` and verify desktop layout keeps Order summary visible while completing the form.
+2. Submit order with valid details and confirm redirect goes directly to Stripe Checkout when configured.
+3. Complete test payment and verify return to `/setup/confirmation?...&checkout=success`.
+4. Verify confirmation page shows post-payment next steps and payment status context.
+5. Cancel checkout and verify return to `/setup/confirmation?...&checkout=cancelled` with `Continue to payment` available.
+6. Verify `/admin/setup-requests` shows new request after form submit even if checkout is cancelled.

@@ -42,10 +42,10 @@ export async function POST(
     const siteUrl = getSiteUrl(request.nextUrl.origin);
     const successUrl = `${siteUrl}/setup/confirmation?requestId=${encodeURIComponent(
       setupRequest.id,
-    )}&source=backend${token ? `&token=${encodeURIComponent(token)}` : ""}&payment=success`;
+    )}&source=backend${token ? `&token=${encodeURIComponent(token)}` : ""}&checkout=success`;
     const cancelUrl = `${siteUrl}/setup/confirmation?requestId=${encodeURIComponent(
       setupRequest.id,
-    )}&source=backend${token ? `&token=${encodeURIComponent(token)}` : ""}&payment=cancelled`;
+    )}&source=backend${token ? `&token=${encodeURIComponent(token)}` : ""}&checkout=cancelled`;
 
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
       { price: stripeConfig.setupPriceId, quantity: 1 },

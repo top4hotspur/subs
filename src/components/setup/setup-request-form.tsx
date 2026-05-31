@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import { getWebsiteSubscriptionOffer } from "@/lib/pricing/subscription-offer";
 import { createLocalSetupRequest } from "@/lib/setup/local-setup-requests";
 import { createSetupRequestSchema } from "@/lib/setup/setup-request-schema";
-import { submitSetupRequestToBackend } from "@/lib/setup/setup-request-backend-client";
+import {
+  createSetupCheckoutSession,
+  submitSetupRequestToBackend,
+} from "@/lib/setup/setup-request-backend-client";
 import { mapDraftToBackendPayload } from "@/lib/setup/setup-request-mappers";
 import {
   getActiveLocalDemoDraftId,
@@ -86,6 +89,8 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
   });
   const [errors, setErrors] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [checkoutStartError, setCheckoutStartError] = useState<string | null>(null);
+  const [fallbackConfirmationUrl, setFallbackConfirmationUrl] = useState<string | null>(null);
   const selectedTemplate =
     availableTemplates.find((item) => item.slug === draft.templateSlug) ?? template;
   const selectedWebsiteTypeLabel = setupWebsiteTypeLabel(selectedTemplate.name);
@@ -131,8 +136,10 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
     return issues;
   }
 
+  const payableToday = setupTotal;
+
   return (
-    <div className="grid gap-8 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+    <div className="grid gap-8 xl:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.58fr)] xl:items-start">
       <form
         className="space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
         onSubmit={async (event) => {
@@ -140,6 +147,8 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
 
           const validationIssues = validate();
           setErrors(validationIssues);
+          setCheckoutStartError(null);
+          setFallbackConfirmationUrl(null);
           if (validationIssues.length > 0) {
             return;
           }
@@ -162,21 +171,47 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
               createdAtIso: backendResult.setupRequest.createdAt,
               status: SubscriptionSetupStatus.SETUP_REVIEW_REQUESTED,
             });
-            if (backendResult.confirmationUrl) {
-              router.push(backendResult.confirmationUrl);
+
+            const confirmationUrl =
+              backendResult.confirmationUrl ??
+              (backendResult.confirmationToken
+                ? `/setup/confirmation?requestId=${encodeURIComponent(backendResult.setupRequest.id)}&source=backend&token=${encodeURIComponent(backendResult.confirmationToken)}`
+                : null);
+
+            if (!backendResult.confirmationToken) {
+              setErrors([
+                "We could not verify your confirmation link token. Please submit again.",
+              ]);
+              setSubmitting(false);
               return;
             }
 
-            if (backendResult.confirmationToken) {
-              router.push(
-                `/setup/confirmation?requestId=${encodeURIComponent(backendResult.setupRequest.id)}&source=backend&token=${encodeURIComponent(backendResult.confirmationToken)}`,
-              );
+            const checkoutResult = await createSetupCheckoutSession(
+              backendResult.setupRequest.id,
+              backendResult.confirmationToken,
+            );
+
+            if (checkoutResult.ok) {
+              window.location.assign(checkoutResult.checkoutUrl);
               return;
             }
 
-          setErrors([
-              "We could not verify your confirmation link token. Please submit again.",
-            ]);
+            if (checkoutResult.error === "STRIPE_NOT_CONFIGURED") {
+              if (confirmationUrl) {
+                router.push(confirmationUrl);
+                return;
+              }
+              setErrors([
+                "Order created but checkout is not configured in this environment. Please contact us.",
+              ]);
+              setSubmitting(false);
+              return;
+            }
+
+            setCheckoutStartError(
+              "We received your order details but could not start secure payment. Please contact us or try again.",
+            );
+            setFallbackConfirmationUrl(confirmationUrl);
             setSubmitting(false);
             return;
           }
@@ -209,7 +244,7 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
           }
 
           setErrors([
-              "We could not place your order right now. Please try again.",
+            "We could not place your order right now. Please try again.",
           ]);
           setSubmitting(false);
         }}
@@ -236,23 +271,6 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
             </select>
           </label>
           <p className="text-sm text-slate-600">You are setting up: {selectedWebsiteTypeLabel}</p>
-        </section>
-
-        <section className="space-y-3 rounded-xl border border-slate-200 p-4">
-          <h2 className="text-lg font-semibold text-slate-900">Website setup details</h2>
-          <p className="text-sm text-slate-600">
-            Detailed booking, job, calendar, staff and admin tools are configured during setup based on your business type.
-          </p>
-          <label className="block text-sm font-medium text-slate-700">
-            Business name
-            <input
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-              value={draft.businessName}
-              onChange={(event) =>
-                setDraft((c) => ({ ...c, businessName: event.target.value }))
-              }
-            />
-          </label>
         </section>
 
         <section className="space-y-3 rounded-xl border border-slate-200 p-4">
@@ -349,6 +367,16 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
         <section className="space-y-3 rounded-xl border border-slate-200 p-4">
           <h2 className="text-lg font-semibold text-slate-900">Contact details</h2>
           <label className="block text-sm font-medium text-slate-700">
+            Website/business name
+            <input
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              value={draft.businessName}
+              onChange={(event) =>
+                setDraft((c) => ({ ...c, businessName: event.target.value }))
+              }
+            />
+          </label>
+          <label className="block text-sm font-medium text-slate-700">
             Contact name
             <input
               className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
@@ -400,6 +428,18 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
             </ul>
           </div>
         ) : null}
+        {checkoutStartError ? (
+          <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+            <p>{checkoutStartError}</p>
+            {fallbackConfirmationUrl ? (
+              <p className="mt-2">
+                <Link href={fallbackConfirmationUrl} className="font-semibold underline">
+                  Open your order confirmation
+                </Link>
+              </p>
+            ) : null}
+          </div>
+        ) : null}
 
         <button
           type="submit"
@@ -417,7 +457,7 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
         </p>
       </form>
 
-      <aside className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <aside className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm xl:sticky xl:top-24">
         <h2 className="text-lg font-semibold text-slate-900">Order summary</h2>
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
           <p>
@@ -430,23 +470,24 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
             <span className="font-semibold">Domain option:</span> {domainOptionLabel(draft.domainOption)}
           </p>
           <hr className="my-2 border-slate-200" />
+          <hr className="my-2 border-slate-200" />
+          <p className="font-semibold text-slate-900">Payable today</p>
+          <p>Website setup fee: {formatGbp(offer.setupFeeGbp)}</p>
           <p>
-            <span className="font-semibold">Setup fee:</span> {formatGbp(offer.setupFeeGbp)}
+            Domain service:{" "}
+            {draft.domainOption === DomainOption.WE_REGISTER_DOMAIN
+              ? formatGbp(offer.domainRegistrationFeeGbp)
+              : formatGbp(0)}
           </p>
-          <p>
-            <span className="font-semibold">Domain service:</span> {formatGbp(offer.domainRegistrationFeeGbp)} only if we register a new domain
+          <p className="mt-1 text-base font-semibold text-slate-900">
+            Total payable today: {formatGbp(payableToday)}
           </p>
-          <p>
-            <span className="font-semibold">Setup total:</span> {formatGbp(setupTotal)}
+          <hr className="my-2 border-slate-200" />
+          <p className="font-semibold text-slate-900">
+            Monthly subscription: {formatGbp(monthlyFee)}/month
           </p>
-          <p>
-            <span className="font-semibold">Monthly fee:</span> {formatGbp(monthlyFee)}
-          </p>
-          <p>
-            <span className="font-semibold">Existing domain:</span> no domain charge if you can point DNS/nameservers.
-          </p>
-          <p className="mt-2">
-            You are ordering a managed website subscription. We will confirm your domain and payment setup before your site goes live.
+          <p className="mt-2 text-xs text-slate-600">
+            Secure payment is handled by Stripe.
           </p>
         </div>
       </aside>

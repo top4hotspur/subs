@@ -302,3 +302,8 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - Resolved legacy demo/public rendering drift where old theme-template branches could still display discarded layouts.
 - Public/demo rendering now normalizes legacy stored values to Light/Dark compatibility output.
 - Added stricter Stripe readiness behavior so invalid env shapes (non-`price_...` IDs) do not report configured checkout readiness.
+
+## 2026-05-31 P0 order funnel follow-up
+- Improved checkout handoff to remove unnecessary pre-payment confirmation stop when Stripe is configured.
+- Setup page summary now keeps commercial totals clearer (payable today vs monthly subscription).
+- Confirmation route now supports explicit checkout success/cancelled outcomes with payment-retry path.
