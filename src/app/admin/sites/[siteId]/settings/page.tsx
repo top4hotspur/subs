@@ -191,7 +191,10 @@ function toSettingsDraft(record: PersistedCustomerSiteSettings | null): Persiste
     openingHoursSummary: record?.openingHoursSummary ?? "",
     heroHeadline: record?.heroHeadline ?? "",
     heroSubheading: record?.heroSubheading ?? "",
-    appearanceMode: resolveAppearanceMode(record?.visualThemeId),
+    appearanceMode: resolveAppearanceMode(
+      record?.visualThemeId,
+      record?.colourPaletteId,
+    ),
     visualThemeId: record?.visualThemeId ?? "",
     colourPaletteId: record?.colourPaletteId ?? "",
     currency: (record?.currency as "GBP" | "EUR" | "USD" | null) ?? "GBP",

@@ -136,7 +136,10 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
   >([]);
 
   const currency = settings.paymentSettings.currencyCode ?? "GBP";
-  const appearanceMode = resolveAppearanceMode(settings.branding.visualTemplateId);
+  const appearanceMode = resolveAppearanceMode(
+    settings.branding.visualTemplateId,
+    settings.branding.colourSchemeId,
+  );
   const allBookings = useMemo(
     () =>
       listLocalCustomerRequests()

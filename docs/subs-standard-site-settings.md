@@ -226,3 +226,9 @@ No real provider credentials/API keys are stored or connected in this phase.
 - Advanced theme and palette internals remain hidden from business owners to keep output consistent.
 - Recurring and block-booking controls remain visible in business settings and service-level editors.
 - Logo and favicon uploads remain available in site-admin branding controls.
+
+## 2026-05-31 appearance normalization update
+- Launch appearance remains Light/Dark only.
+- Legacy theme/palette records are mapped to Light/Dark compatibility defaults for rendering.
+- Public and demo pages no longer switch to legacy named theme layouts.
+- Stripe checkout env note: setup/monthly/domain values must be Stripe Price IDs (`price_...`), not product IDs (`prod_...`) or numeric amounts.

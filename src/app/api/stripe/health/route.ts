@@ -30,12 +30,21 @@ export async function GET() {
 
   if (setupPricePresent && !setupPriceLooksLikeStripePriceId) {
     warnings.push("STRIPE_PRICE_SETUP_FEE must be a Stripe Price ID such as price_..., not an amount.");
+    if (setupPriceValue.startsWith("prod_")) {
+      warnings.push("STRIPE_PRICE_SETUP_FEE appears to be a Product ID (prod_...). Use a Stripe Price ID (price_...).");
+    }
   }
   if (monthlyPricePresent && !monthlyPriceLooksLikeStripePriceId) {
     warnings.push("STRIPE_PRICE_MONTHLY_SUBSCRIPTION must be a Stripe Price ID such as price_..., not an amount.");
+    if (monthlyPriceValue.startsWith("prod_")) {
+      warnings.push("STRIPE_PRICE_MONTHLY_SUBSCRIPTION appears to be a Product ID (prod_...). Use a Stripe Price ID (price_...).");
+    }
   }
   if (domainPricePresent && !domainPriceLooksLikeStripePriceId) {
     warnings.push("STRIPE_PRICE_DOMAIN_SERVICE must be a Stripe Price ID such as price_..., not an amount.");
+    if (domainPriceValue.startsWith("prod_")) {
+      warnings.push("STRIPE_PRICE_DOMAIN_SERVICE appears to be a Product ID (prod_...). Use a Stripe Price ID (price_...).");
+    }
   }
   if (!domainPricePresent) {
     warnings.push("STRIPE_PRICE_DOMAIN_SERVICE is required for full checkout configuration.");

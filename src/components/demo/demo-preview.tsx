@@ -13,11 +13,11 @@ import {
   getLocalCustomerSiteSettings,
   getLocalCustomerSiteSettingsStorageKey,
 } from "@/lib/sites/local-site-settings";
-import { getSiteVisualTemplateById } from "@/lib/sites/site-visual-templates";
 import { getSocialPlatform } from "@/lib/sites/social-platforms";
 import { DemoCustomisationDraft, WebsiteTemplate } from "@/lib/sites/types";
 import { getLocalVoucherSettings } from "@/lib/vouchers/local-vouchers";
 import { VoucherDeliveryMethod } from "@/lib/vouchers/voucher-types";
+import { mapAppearanceToTheme, normalizeSiteAppearance } from "@/lib/sites/site-appearance";
 
 type DemoPreviewProps = {
   template: WebsiteTemplate;
@@ -67,8 +67,12 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
     };
   }, [template]);
 
-  const theme = getSiteVisualTemplateById(settings.branding.visualTemplateId);
-  const scheme = getSiteColourSchemeById(settings.branding.colourSchemeId);
+  const appearanceMode = normalizeSiteAppearance(
+    settings.branding.visualTemplateId,
+    settings.branding.colourSchemeId,
+  );
+  const appearanceTheme = mapAppearanceToTheme(appearanceMode);
+  const scheme = getSiteColourSchemeById(appearanceTheme.colourPaletteId);
   const currency = settings.paymentSettings.currencyCode ?? "GBP";
   const activeServices = settings.services.filter((service) => service.active);
   const socialEntries = Object.entries(settings.businessDetails.socialLinks ?? {}).filter(
@@ -82,51 +86,22 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
     .map((method) => DELIVERY_METHOD_LABELS[method])
     .filter(Boolean);
 
-  const isDarkTheme =
-    theme.id === "urban-hipster" ||
-    (theme.id === "luxury-elegant" &&
-      ["navy-gold", "emerald-champagne", "aubergine-pearl"].includes(scheme.id));
+  const isDarkTheme = appearanceMode === "DARK";
 
   const wrapperClass = `${scheme.pageBackgroundClass} ${scheme.textClass}`;
   const accentButtonClass = `inline-flex rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${scheme.accentButtonClass}`;
-  const navShellClass = theme.id === "urban-hipster" ? "rounded-md border border-slate-700 bg-black/50 p-2" : "rounded-2xl border bg-white/80 p-2 backdrop-blur";
-
-  const themeHeroById: Record<string, string> = {
-    "modern-minimalist": `${scheme.heroBackgroundClass} rounded-3xl border ${scheme.borderClass} p-8 sm:p-10`,
-    "vintage-classic": `${scheme.heroBackgroundClass} rounded-xl border-2 ${scheme.borderClass} p-8 sm:p-10`,
-    "urban-hipster": `${scheme.heroBackgroundClass} rounded-md border ${scheme.borderClass} p-8 sm:p-10`,
-    "luxury-elegant": `${scheme.heroBackgroundClass} rounded-3xl border ${scheme.borderClass} p-8 sm:p-10 shadow-xl`,
-    "rustic-warm": `${scheme.heroBackgroundClass} rounded-2xl border ${scheme.borderClass} p-8 sm:p-10`,
-  };
-
-  const titleClassByTheme: Record<string, string> = {
-    "modern-minimalist": "text-4xl sm:text-5xl font-semibold tracking-tight",
-    "vintage-classic": "text-4xl sm:text-5xl font-serif font-bold tracking-tight",
-    "urban-hipster": "text-4xl sm:text-5xl font-extrabold uppercase tracking-wide",
-    "luxury-elegant": "text-4xl sm:text-5xl font-semibold tracking-tight",
-    "rustic-warm": "text-4xl sm:text-5xl font-bold tracking-tight",
-  };
-
-  const serviceContainerClass =
-    theme.id === "rustic-warm"
-      ? "space-y-3"
-      : "grid gap-4 sm:grid-cols-2 xl:grid-cols-3";
-
-  const defaultCardClass = `${scheme.cardClass} p-5`;
-  const serviceCardClassByTheme: Record<string, string> = {
-    "modern-minimalist": `${scheme.cardClass} p-6`,
-    "vintage-classic": `${scheme.cardClass} p-5`,
-    "urban-hipster": `rounded-md border ${scheme.borderClass} ${scheme.heroPanelClass} p-5 shadow-lg`,
-    "luxury-elegant": `rounded-2xl border ${scheme.borderClass} ${scheme.heroPanelClass} p-6 shadow-lg`,
-    "rustic-warm": `flex items-center justify-between rounded-xl border ${scheme.borderClass} ${scheme.cardClass.replace(" p-", "")} p-4`,
-  };
-
-  const serviceSummaryClass = theme.id === "urban-hipster" ? "text-slate-300" : scheme.mutedTextClass;
+  const navShellClass = isDarkTheme
+    ? "rounded-xl border border-slate-700 bg-slate-900/70 p-2"
+    : "rounded-2xl border border-slate-200 bg-white/80 p-2 backdrop-blur";
+  const heroClass = `${scheme.heroBackgroundClass} rounded-3xl border ${scheme.borderClass} p-8 sm:p-10`;
+  const serviceContainerClass = "grid gap-4 sm:grid-cols-2 xl:grid-cols-3";
+  const serviceCardClass = `${scheme.cardClass} p-6`;
+  const serviceSummaryClass = scheme.mutedTextClass;
 
   return (
     <div className={`${wrapperClass} overflow-hidden rounded-3xl border ${scheme.borderClass} shadow-sm`}>
       <div className="space-y-8 px-6 py-8 sm:px-8">
-        <section className={themeHeroById[theme.id]}>
+        <section className={heroClass}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className={navShellClass}>
               <DemoSiteNav
@@ -138,54 +113,26 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
             </div>
           </div>
 
-          {theme.id === "luxury-elegant" ? (
-            <div className="mt-8 grid gap-6 lg:grid-cols-2 lg:items-stretch">
-              <div className="flex flex-col justify-center">
-                <SiteBrandMark
-                  name={brandName}
-                  tagline={template.category}
-                  logoUrl={settings.branding.logoUrl}
-                  logoAlt={settings.branding.logoAlt}
-                  dark={isDarkTheme}
-                />
-                <h1 className={`mt-6 ${titleClassByTheme[theme.id]}`}>{heroHeadline}</h1>
-                {heroSubheading ? (
-                  <p className={`mt-3 max-w-2xl ${scheme.mutedTextClass}`}>{heroSubheading}</p>
-                ) : null}
-              </div>
-              <div className={`rounded-2xl border ${scheme.borderClass} ${scheme.heroPanelClass} p-6`}>
-                <p className={`text-xs font-semibold uppercase tracking-widest ${scheme.accentTextClass}`}>
-                  Premium layout
-                </p>
-                <p className={`mt-3 text-sm ${scheme.mutedTextClass}`}>
-                  Refined spacing and polished panels designed for premium local brands.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <>
-              <SiteBrandMark
-                name={brandName}
-                tagline={template.category}
-                logoUrl={settings.branding.logoUrl}
-                logoAlt={settings.branding.logoAlt}
-                dark={isDarkTheme}
-              />
-              <h1 className={`mt-6 ${titleClassByTheme[theme.id]}`}>{heroHeadline}</h1>
-              {heroSubheading ? (
-                <p className={`mt-3 max-w-2xl ${scheme.mutedTextClass}`}>{heroSubheading}</p>
-              ) : null}
-            </>
-          )}
+          <SiteBrandMark
+            name={brandName}
+            tagline={template.category}
+            logoUrl={settings.branding.logoUrl}
+            logoAlt={settings.branding.logoAlt}
+            dark={isDarkTheme}
+          />
+          <h1 className="mt-6 text-4xl sm:text-5xl font-semibold tracking-tight">{heroHeadline}</h1>
+          {heroSubheading ? (
+            <p className={`mt-3 max-w-2xl ${scheme.mutedTextClass}`}>{heroSubheading}</p>
+          ) : null}
         </section>
 
-        <SiteCard title="Services" subtitle="Built around your selected site theme and palette.">
+        <SiteCard title="Services" subtitle="Built for a clean, professional customer booking experience.">
           <div className={serviceContainerClass}>
             {activeServices.map((service) => (
               <Link
                 key={service.id}
                 href={`/demo/${template.slug}/booking?service=${encodeURIComponent(service.id)}`}
-                className={serviceCardClassByTheme[theme.id] ?? defaultCardClass}
+                className={serviceCardClass}
               >
                 <div>
                   <p className="text-sm font-semibold">{service.name}</p>
@@ -205,7 +152,7 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
                     {service.description || "Professional service tailored to local customers."}
                   </p>
                 </div>
-                <div className={theme.id === "rustic-warm" ? "text-right" : "mt-3"}>
+                <div className="mt-3">
                   <p className="text-sm font-medium">
                     {getPublicServicePriceLabel(service, currency) || "Quote required"}
                   </p>

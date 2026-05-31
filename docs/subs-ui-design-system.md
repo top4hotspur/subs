@@ -91,3 +91,9 @@ Default theme remains neutral so it suits all 14 launch industries. Customer-spe
 - Advanced theme/palette infrastructure remains in code/data for internal mapping and backward compatibility, but is hidden from subscriber launch UI.
 - Hero-level booking CTA was removed from homepage hero areas; booking actions remain on service tiles and booking routes.
 - Social icons render as direct platform icons without extra dark circular wrappers.
+
+## 2026-05-31 controlled appearance rendering reset
+- Public and demo rendering now use a controlled appearance model (`Light`/`Dark`) only.
+- Legacy theme-template variants are hidden from active rendering paths.
+- Discarded legacy visual labels (for example premium-layout messaging) are no longer rendered on customer-facing demo/home pages.
+- Older stored theme/palette values are normalized to Light or Dark without requiring manual localStorage reset.

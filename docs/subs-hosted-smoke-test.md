@@ -639,3 +639,16 @@ Add these checks after backend envs are configured:
   - webhook secret should start with `whsec_`
 - `STRIPE_PRICE_DOMAIN_SERVICE` is required for full checkout configuration and will show a warning if missing.
 - Email health diagnostics now flag non-platform senders and recommend `MyExperiment.club <hello@myexperiment.club>`.
+
+## 2026-05-31 smoke checks: appearance + Stripe env shape
+- `/demo/barbers`:
+  - verify page does not render legacy premium theme labels (for example `PREMIUM LAYOUT`)
+  - verify clean controlled layout renders
+- `/demo/barbers/admin`:
+  - verify `Site appearance` section exposes only Light/Dark
+  - toggle Light/Dark and verify preview changes colors only (not legacy template layouts)
+- `/sites/[siteSlug]`:
+  - verify same controlled Light/Dark appearance model
+- `/api/stripe/health`:
+  - verify warning when any Stripe price env var is `prod_...`
+  - verify full config only passes when setup/monthly/domain values are `price_...`

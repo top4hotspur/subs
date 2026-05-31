@@ -297,3 +297,8 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - Admin contact workflow usability improved: `/admin/contact-enquiries` defaults to `NEW`.
 - Added stricter safe diagnostics for Stripe and email health endpoints to expose configuration mistakes earlier (missing domain price ID, invalid Stripe price-id format, non-platform sender domain).
 - This pass adds diagnostics only; no payment processing behavior or provider integrations were expanded.
+
+## 2026-05-31 P1 appearance-rendering and Stripe-shape hardening
+- Resolved legacy demo/public rendering drift where old theme-template branches could still display discarded layouts.
+- Public/demo rendering now normalizes legacy stored values to Light/Dark compatibility output.
+- Added stricter Stripe readiness behavior so invalid env shapes (non-`price_...` IDs) do not report configured checkout readiness.

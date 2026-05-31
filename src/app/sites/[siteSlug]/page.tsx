@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getCustomerSitePreviewDataBySlug } from "@/lib/sites/customer-site-preview-repository";
 import { getSiteColourSchemeById } from "@/lib/sites/site-colour-schemes";
-import { getSiteVisualTemplateById } from "@/lib/sites/site-visual-templates";
+import { mapAppearanceToTheme, normalizeSiteAppearance } from "@/lib/sites/site-appearance";
 import {
   normalizePersistedSocialLinks,
   SOCIAL_PLATFORM_DEFINITIONS,
@@ -91,8 +91,12 @@ export default async function PublicSiteSlugPage({
   if (!preview) notFound();
 
   const settings = preview.settings;
-  const theme = getSiteVisualTemplateById(settings?.visualThemeId ?? undefined);
-  const scheme = getSiteColourSchemeById(settings?.colourPaletteId ?? undefined);
+  const appearanceMode = normalizeSiteAppearance(
+    settings?.visualThemeId ?? undefined,
+    settings?.colourPaletteId ?? undefined,
+  );
+  const appearanceTheme = mapAppearanceToTheme(appearanceMode);
+  const scheme = getSiteColourSchemeById(appearanceTheme.colourPaletteId);
   const currencyCode = settings?.currency ?? "GBP";
   const siteName = settings?.siteDisplayName || settings?.businessName || preview.tenantSite.displayName;
   const heroHeadline = settings?.heroHeadline || `Welcome to ${siteName}`;
@@ -105,7 +109,7 @@ export default async function PublicSiteSlugPage({
   const socialEntries = getEnabledSocialEntries(socialLinks);
   const mapsUrl = settings?.contactMapEnabled ? mapUrlFromAddress(settings?.address ?? null) : null;
 
-  const isDark = theme.id === "urban-hipster";
+  const isDark = appearanceMode === "DARK";
   const shellClass = `${scheme.pageBackgroundClass} ${scheme.textClass}`;
   const heroClass = isDark
     ? `${scheme.heroBackgroundClass} rounded-xl border ${scheme.borderClass} p-8`

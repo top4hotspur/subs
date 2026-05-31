@@ -9,6 +9,18 @@ export type StripeCheckoutConfig = {
   webhookSecret: string;
 };
 
+function looksLikeStripePriceId(value: string | null | undefined): boolean {
+  return Boolean(value && value.startsWith("price_"));
+}
+
+function looksLikeStripeSecret(value: string | null | undefined): boolean {
+  return Boolean(value && (value.startsWith("sk_test_") || value.startsWith("sk_live_")));
+}
+
+function looksLikeStripeWebhookSecret(value: string | null | undefined): boolean {
+  return Boolean(value && value.startsWith("whsec_"));
+}
+
 export function getStripeCheckoutConfig(): StripeCheckoutConfig | null {
   const secretKey = getOptionalServerEnv("STRIPE_SECRET_KEY");
   const monthlyPriceId = getOptionalServerEnv("STRIPE_PRICE_MONTHLY_SUBSCRIPTION");
@@ -17,6 +29,16 @@ export function getStripeCheckoutConfig(): StripeCheckoutConfig | null {
   const webhookSecret = getOptionalServerEnv("STRIPE_WEBHOOK_SECRET");
 
   if (!secretKey || !monthlyPriceId || !setupPriceId || !domainServicePriceId || !webhookSecret) {
+    return null;
+  }
+
+  if (
+    !looksLikeStripePriceId(monthlyPriceId) ||
+    !looksLikeStripePriceId(setupPriceId) ||
+    !looksLikeStripePriceId(domainServicePriceId) ||
+    !looksLikeStripeSecret(secretKey) ||
+    !looksLikeStripeWebhookSecret(webhookSecret)
+  ) {
     return null;
   }
 

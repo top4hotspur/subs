@@ -5,6 +5,7 @@ import {
 } from "@/lib/sites/site-colour-schemes";
 import { CustomerSiteSettings, SiteServiceItem } from "@/lib/sites/site-settings-types";
 import { normalizeSiteVisualTemplateId } from "@/lib/sites/site-visual-templates";
+import { mapAppearanceToTheme, normalizeSiteAppearance } from "@/lib/sites/site-appearance";
 import { WebsiteTemplate, WebsiteTemplateSlug } from "@/lib/sites/types";
 
 // Temporary browser-only localStorage persistence for customer site settings.
@@ -21,17 +22,18 @@ export function getLocalCustomerSiteSettingsStorageKey(
 
 function normalizeSettings(settings: CustomerSiteSettings): CustomerSiteSettings {
   const templateSlug = settings.templateSlug;
-  const normalizedThemeId = normalizeSiteVisualTemplateId(
+  const sourceThemeId = normalizeSiteVisualTemplateId(
     settings.branding?.visualTemplateId,
   );
-  const normalizedPaletteId = normalizeSiteColourSchemeId(
+  const sourcePaletteId = normalizeSiteColourSchemeId(
     settings.branding?.colourSchemeId,
   );
+  const normalizedAppearance = normalizeSiteAppearance(sourceThemeId, sourcePaletteId);
+  const mappedAppearance = mapAppearanceToTheme(normalizedAppearance);
+  const normalizedThemeId = mappedAppearance.visualThemeId;
+  const normalizedPaletteId = mappedAppearance.colourPaletteId;
   const allowedPalettes = getSiteColourSchemesForTheme(normalizedThemeId);
-  const paletteForTheme =
-    allowedPalettes.find((palette) => palette.id === normalizedPaletteId)?.id ??
-    allowedPalettes[0]?.id ??
-    normalizedPaletteId;
+  const paletteForTheme = allowedPalettes[0]?.id ?? normalizedPaletteId;
 
   return {
     ...settings,

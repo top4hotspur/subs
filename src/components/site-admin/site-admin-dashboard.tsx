@@ -269,7 +269,10 @@ function toSettingsDraft(settings: PersistedCustomerSiteSettings | null): Settin
     openingHoursSummary: settings?.openingHoursSummary ?? "",
     heroHeadline: settings?.heroHeadline ?? "",
     heroSubheading: settings?.heroSubheading ?? "",
-    appearanceMode: resolveAppearanceMode(settings?.visualThemeId),
+    appearanceMode: resolveAppearanceMode(
+      settings?.visualThemeId,
+      settings?.colourPaletteId,
+    ),
     visualThemeId: settings?.visualThemeId ?? "",
     colourPaletteId: settings?.colourPaletteId ?? "",
     currency: (settings?.currency as "GBP" | "EUR" | "USD" | null) ?? "GBP",

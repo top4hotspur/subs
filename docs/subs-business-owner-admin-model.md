@@ -320,3 +320,8 @@ Important:
 - Launch appearance remains Light/Dark only for subscriber users; advanced theme/palette internals remain hidden.
 - Section order now surfaces key controls first: bookings, business settings, site appearance, services/prices, staff, rota/breaks, and closures/holidays.
 - Payment setup, recurring/block-booking controls, and branding uploads remain in business-admin with tenant-scoped persistence.
+
+## 2026-05-31 business-owner appearance behavior
+- Site-admin appearance control remains Light/Dark only and maps to controlled internal defaults.
+- Legacy theme selections are not exposed to business owners and are ignored by public rendering.
+- Existing persisted fields remain intact for compatibility.

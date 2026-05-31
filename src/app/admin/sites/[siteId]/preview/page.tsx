@@ -4,7 +4,7 @@ import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
 import { AdminPillNav } from "@/components/admin/admin-pill-nav";
 import { getCustomerSitePreviewData } from "@/lib/sites/customer-site-preview-repository";
 import { getSiteColourSchemeById } from "@/lib/sites/site-colour-schemes";
-import { getSiteVisualTemplateById } from "@/lib/sites/site-visual-templates";
+import { mapAppearanceToTheme, normalizeSiteAppearance } from "@/lib/sites/site-appearance";
 import { outlineButtonClass, primaryButtonClass, smallButtonClass } from "@/lib/ui/button-styles";
 
 function formatMoney(amount: number | null, currencyCode: string): string {
@@ -36,8 +36,12 @@ export default async function AdminSitePersistedPreviewPage({
   }
 
   const settings = preview.settings;
-  const theme = getSiteVisualTemplateById(settings?.visualThemeId ?? undefined);
-  const scheme = getSiteColourSchemeById(settings?.colourPaletteId ?? undefined);
+  const appearanceMode = normalizeSiteAppearance(
+    settings?.visualThemeId ?? undefined,
+    settings?.colourPaletteId ?? undefined,
+  );
+  const appearanceTheme = mapAppearanceToTheme(appearanceMode);
+  const scheme = getSiteColourSchemeById(appearanceTheme.colourPaletteId);
   const currencyCode = settings?.currency ?? "GBP";
   const siteName = settings?.siteDisplayName || settings?.businessName || preview.tenantSite.displayName;
   const heroHeadline = settings?.heroHeadline || `Welcome to ${siteName}`;
@@ -50,7 +54,7 @@ export default async function AdminSitePersistedPreviewPage({
   const activeHolidays = preview.scheduling.staffHolidays.filter((holiday) => holiday.active);
   const workingRotaDays = preview.scheduling.rotaDays.filter((day) => day.working);
 
-  const isDark = theme.id === "urban-hipster";
+  const isDark = appearanceMode === "DARK";
   const shellClass = `${scheme.pageBackgroundClass} ${scheme.textClass}`;
   const heroClass = isDark
     ? `${scheme.heroBackgroundClass} rounded-xl border ${scheme.borderClass} p-8`
@@ -119,7 +123,7 @@ export default async function AdminSitePersistedPreviewPage({
               </Link>
             </div>
             <p className={`mt-4 text-xs ${scheme.mutedTextClass}`}>
-              Theme: {theme.name} | Palette: {scheme.name}
+              Appearance mode: {appearanceMode === "DARK" ? "Dark" : "Light"}
             </p>
           </div>
 
