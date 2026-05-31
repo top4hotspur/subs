@@ -292,3 +292,8 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - Light/Dark appearance was already persisted but buried inside the long settings form in site-admin.
 - Site-admin now exposes `Site appearance` as its own section and defaults dashboard view to `Bookings` for day-to-day operations.
 - Platform support copy in `/admin/sites/[siteId]/settings` now clearly differentiates persisted subscriber data from demo tooling.
+
+## 2026-05-31 P0/P1 operational diagnostics follow-up
+- Admin contact workflow usability improved: `/admin/contact-enquiries` defaults to `NEW`.
+- Added stricter safe diagnostics for Stripe and email health endpoints to expose configuration mistakes earlier (missing domain price ID, invalid Stripe price-id format, non-platform sender domain).
+- This pass adds diagnostics only; no payment processing behavior or provider integrations were expanded.

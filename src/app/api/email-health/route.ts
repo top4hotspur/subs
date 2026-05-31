@@ -20,6 +20,20 @@ export async function GET() {
   const emailFromPresent = Boolean(emailFrom);
   const platformNotificationEmailPresent = Boolean(notificationEmail);
   const emailConfigured = isEmailConfigured();
+  const fromDomain = parseFromDomain(emailFrom);
+  const recommendedFromDomain = "myexperiment.club";
+  const fromDomainLooksLikePlatformDomain = Boolean(
+    fromDomain &&
+      (fromDomain === recommendedFromDomain ||
+        fromDomain.endsWith(`.${recommendedFromDomain}`)),
+  );
+  const warnings: string[] = [];
+
+  if (emailFromPresent && !fromDomainLooksLikePlatformDomain) {
+    warnings.push(
+      "EMAIL_FROM should use a verified MyExperiment.club sender, e.g. MyExperiment.club <hello@myexperiment.club>.",
+    );
+  }
 
   return NextResponse.json({
     ok: true,
@@ -28,6 +42,9 @@ export async function GET() {
     platformNotificationEmailPresent,
     emailConfigured,
     nodeEnv: process.env.NODE_ENV ?? "unknown",
-    fromDomain: parseFromDomain(emailFrom),
+    fromDomain,
+    fromDomainLooksLikePlatformDomain,
+    recommendedFromDomain,
+    warnings,
   });
 }

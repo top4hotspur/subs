@@ -630,3 +630,12 @@ Add these checks after backend envs are configured:
 - Save appearance and verify `/sites/[siteSlug]` reflects the chosen mode.
 - Confirm branding upload controls (logo/favicon) remain available in site-admin.
 - Confirm recurring/block-booking and payment setup controls remain visible in business settings/services.
+
+## 2026-05-31 diagnostics and admin default polish
+- `/admin/contact-enquiries` now defaults to the `NEW` filter so actionable prospect support items appear first on load.
+- Stripe health diagnostics now validate env shape as well as presence:
+  - price env vars should start with `price_`
+  - test secret should start with `sk_test_`
+  - webhook secret should start with `whsec_`
+- `STRIPE_PRICE_DOMAIN_SERVICE` is required for full checkout configuration and will show a warning if missing.
+- Email health diagnostics now flag non-platform senders and recommend `MyExperiment.club <hello@myexperiment.club>`.

@@ -514,3 +514,10 @@ CSV import/export setup tools moved out of demo customisation and into business 
   - `customer.subscription.updated`
   - `customer.subscription.deleted`
   - `invoice.payment_failed`
+
+## Contact/support and checkout diagnostics update (2026-05-31)
+- Platform admin contact queue now opens with `NEW` enquiries by default for faster triage.
+- Stripe health endpoint (`/api/stripe/health`) now includes safe config-shape checks and warnings.
+- Stripe price env vars must be Stripe Price IDs (`price_...`), not raw amounts.
+- Full Stripe checkout config requires `STRIPE_PRICE_DOMAIN_SERVICE`.
+- Email health endpoint now warns when `EMAIL_FROM` is not from verified `myexperiment.club` sender domain.

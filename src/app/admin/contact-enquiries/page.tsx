@@ -23,7 +23,7 @@ type ContactEnquiry = {
 const STATUS_OPTIONS: ContactEnquiryStatus[] = ["NEW", "REVIEWED", "REPLIED", "CLOSED"];
 
 export default function AdminContactEnquiriesPage() {
-  const [statusFilter, setStatusFilter] = useState<"ALL" | ContactEnquiryStatus>("ALL");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | ContactEnquiryStatus>("NEW");
   const [loading, setLoading] = useState(true);
   const [errorText, setErrorText] = useState<string>("");
   const [enquiries, setEnquiries] = useState<ContactEnquiry[]>([]);
