@@ -503,3 +503,14 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - /admin/sales now supports downloadable CSV templates, extended lead-source fields, duplicate-review import decisions, and campaign preparation workflows.
 - Campaign levels are now defined as Launch offer, Introduction, and Reminder with preview-only email copy in this phase.
 - Bulk live sending is intentionally disabled; this pass focuses on prospect data quality, segmentation and compliance readiness.
+
+## Stripe Checkout hosted verification notes (2026-05-31)
+- Checkout API: `/api/setup-requests/[id]/checkout` (requires setup confirmation token or platform-admin session).
+- Payment status is trusted from Stripe webhooks, not frontend redirect state.
+- Webhook endpoint: `https://myexperiment.club/api/stripe/webhook`
+- Subscribe Stripe webhook events:
+  - `checkout.session.completed`
+  - `customer.subscription.created`
+  - `customer.subscription.updated`
+  - `customer.subscription.deleted`
+  - `invoice.payment_failed`

@@ -572,6 +572,35 @@ Add these checks after backend envs are configured:
 - With valid env + price IDs, POST /api/setup-requests/[id]/checkout returns checkoutUrl.
 - Webhook must reject invalid signatures and accept valid Stripe events for status updates.
 
+## Stripe hosted test-mode verification (2026-05-31)
+1. Open `/api/stripe/health`.
+2. Confirm booleans are true for:
+   - `stripeSecretKeyPresent`
+   - `stripeWebhookSecretPresent`
+   - `setupPricePresent`
+   - `monthlyPricePresent`
+   - `domainPricePresent`
+   - `nextPublicSiteUrlPresent`
+   - `stripeConfigured`
+3. Submit an order via `/setup/barbers`.
+4. On `/setup/confirmation`, click `Continue to payment`.
+5. Complete Stripe Checkout in test mode with a Stripe test card.
+6. Confirm redirect back to setup confirmation with payment status context.
+7. Confirm webhook delivery for `checkout.session.completed` in Stripe dashboard.
+8. Open `/admin/setup-requests` and verify:
+   - payment status updated
+   - Stripe checkout session ID present
+   - Stripe subscription ID present when applicable
+
+### Stripe webhook endpoint configuration
+- Webhook URL: `https://myexperiment.club/api/stripe/webhook`
+- Subscribe to:
+  - `checkout.session.completed`
+  - `customer.subscription.created`
+  - `customer.subscription.updated`
+  - `customer.subscription.deleted`
+  - `invoice.payment_failed`
+
 ## Platform dashboard smoke checks (2026-05-30)
 - Open /admin and verify operation tiles are clickable report selectors on-page.
 - Verify top tiles: Order Requests, Subscriber Sites, Payment Fails, Sales Pipeline, Contact Enquiries, Revenue by Industry.

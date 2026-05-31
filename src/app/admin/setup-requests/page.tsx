@@ -294,7 +294,12 @@ export default function AdminSetupRequestsPage() {
                     : "NOT_STARTED (checkout not started)"}
                 </p>
                 <p className="mt-1">
-                  Next action: contact customer, confirm domain path, then complete checkout/subscription onboarding.
+                  Next action:{" "}
+                  {selectedRequest.paymentStatus === "PAYMENT_FAILED"
+                    ? "contact customer and retry checkout, then confirm subscription payment."
+                    : selectedRequest.paymentStatus === "PAID"
+                      ? "continue provisioning and move the subscriber site toward go-live."
+                      : "contact customer, confirm domain path, then complete checkout/subscription onboarding."}
                 </p>
               </div>
 
