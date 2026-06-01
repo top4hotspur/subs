@@ -629,3 +629,9 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - `Next Steps` copy now states: "We ensure your domain is linked to your new site and aim to go live within a day once the domain is ready."
 - `/demo/[industry]` intro heading no longer includes "customer site".
 - Demo intro copy now nudges prospects to inspect the admin view for full feature/control context.
+
+## 2026-06-01 demo appearance normalization hardening
+- `/demo/[industry]` now normalizes legacy theme/palette values to clean `LIGHT` by default.
+- Legacy values (for example old premium/theme-era IDs) no longer force dark/premium rendering.
+- Only explicit current appearance values (`light`/`dark`) or the current supported dark pair are treated as a valid dark selection.
+- This prevents stale localStorage values from keeping `/demo/barbers` in old dark/premium styling.

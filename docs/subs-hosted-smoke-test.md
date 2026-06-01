@@ -844,3 +844,11 @@ Notes:
 3. Open `/demo/hairdressers` and confirm heading does not include `customer site`.
 4. Confirm intro copy encourages viewing the admin area for full features/settings/control.
 5. Confirm demo customer-site preview no longer shows the extra mini-brand row (initials + business name + website label) above the hero heading.
+
+## 2026-06-01 hosted smoke checks: demo legacy theme reset
+1. Open `/demo/barbers` in a normal browser session with existing localStorage.
+2. Confirm the page does not render old premium dark styling or black premium card frame.
+3. Open `/demo/barbers` in incognito and confirm clean/light default appearance.
+4. Open `/demo/hairdressers` and confirm clean/light default appearance.
+5. In `/demo/barbers/admin`, set appearance to `Dark`, save, then confirm dark mode still works via the supported light/dark appearance control.
+6. Switch back to `Light` and confirm clean light rendering returns.
