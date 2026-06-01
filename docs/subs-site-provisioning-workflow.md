@@ -204,3 +204,9 @@ Still local/mock in current product:
 - Setup order submission now creates SetupRequest and, when Stripe is configured, immediately starts Stripe Checkout.
 - Setup confirmation page is positioned as post-payment / next-steps state rather than pre-payment stop.
 - SetupRequest persists before checkout handoff so admin queue visibility remains intact even if payment is cancelled.
+
+## 2026-06-01 cancelled-order queue cleanup
+- Cancelled setup requests can now be removed from the active queue by platform admin.
+- Removal is implemented as soft archive on `SetupRequest.archivedAt`.
+- Active queue list excludes archived requests by default.
+- This cleanup action is restricted to cancelled requests only and does not remove tenant sites or Stripe subscription data.

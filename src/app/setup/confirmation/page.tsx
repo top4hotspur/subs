@@ -197,8 +197,8 @@ export default function SetupConfirmationPage() {
         {checkout === "success" ? (
           <p className="mt-3 text-emerald-800">
             {request.paymentStatus === "PAID" || request.paymentStatus === "SUBSCRIPTION_ACTIVE"
-              ? "Thanks — your order has been received and your payment is complete. We’ll now start preparing your website setup."
-              : "Thanks — your order has been received. We’re confirming your payment status and will start preparing your website setup shortly."}
+              ? "Thanks - your order has been received and your payment is complete. We'll now start preparing your website setup."
+              : "Thanks - your order has been received. We're confirming your payment status and will start preparing your website setup shortly."}
           </p>
         ) : checkout === "cancelled" ? (
           <p className="mt-3 text-amber-900">
@@ -234,13 +234,23 @@ export default function SetupConfirmationPage() {
         </section>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-semibold text-slate-900">What we do next</h2>
+          <h2 className="text-xl font-semibold text-slate-900">Next Steps</h2>
           <ol className="mt-4 space-y-3 text-sm text-slate-700">
-            <li>1. We check your order and confirm your domain details.</li>
-            <li>2. We prepare your clean website and admin area.</li>
-            <li>3. We send your business admin access details.</li>
-            <li>4. We help point your domain to the site and aim to go live within a day once the domain is ready.</li>
+            <li>1. We are now preparing your custom website build.</li>
+            {request.domainOption === DomainOption.EXISTING_DOMAIN ? (
+              <li>2. You will receive an email with your new DNS/nameserver details so you can point your domain to your new site.</li>
+            ) : null}
+            {request.domainOption === DomainOption.WE_REGISTER_DOMAIN ? (
+              <li>2. If one of your chosen domains is available, we will set that up. If not, we will contact you with alternative options.</li>
+            ) : null}
+            {request.domainOption === DomainOption.CUSTOMER_BUYS_DOMAIN ? (
+              <li>2. We will contact you to confirm the best domain option before your site goes live.</li>
+            ) : null}
+            <li>3. Your admin details will be sent to you, then you&apos;re ready to start setting up your business.</li>
           </ol>
+          <p className="mt-4 text-sm text-slate-700">
+            We are always on hand if you have any questions - just drop us a message and we&apos;ll get back to you quickly.
+          </p>
         </section>
       </div>
 

@@ -307,3 +307,8 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - Improved checkout handoff to remove unnecessary pre-payment confirmation stop when Stripe is configured.
 - Setup page summary now keeps commercial totals clearer (payable today vs monthly subscription).
 - Confirmation route now supports explicit checkout success/cancelled outcomes with payment-retry path.
+
+## 2026-06-01 follow-up: setup queue hygiene and webhook visibility
+- Added cancelled-only queue cleanup in `/admin/setup-requests` so archived cancellations do not clutter active operations.
+- Queue cleanup uses soft archive (`archivedAt`) and keeps paid/provisioning records protected from accidental removal.
+- Setup-request admin detail now exposes clearer webhook/payment confirmation visibility using payment status and completion timestamp.

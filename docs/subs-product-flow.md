@@ -527,6 +527,12 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - In paid/success states, summary wording switches to `Paid today`; unpaid/cancelled states still use payable wording.
 - The next-steps panel is now phrased as MyExperiment.club actions (`What we do next`) for clearer reassurance after checkout.
 
+## 2026-06-01 setup queue and confirmation polish
+- Platform admin can now remove cancelled setup orders from `/admin/setup-requests` using a cancelled-only queue cleanup action.
+- Queue cleanup is soft-archive based (`archivedAt`) so active queue views stay focused without deleting Stripe/customer history.
+- Post-checkout confirmation now uses domain-option-aware `Next Steps` messaging.
+- Webhook/payment confirmation state is surfaced in setup-request admin detail using payment status plus completion timestamp.
+
 ## 2026-05-31 order-to-checkout flow update
 - `/setup/[industry]` now starts Stripe Checkout immediately after backend order creation when Stripe is configured.
 - Confirmation route is now treated as post-checkout and next-steps focused, with a retry-payment path when checkout is cancelled.

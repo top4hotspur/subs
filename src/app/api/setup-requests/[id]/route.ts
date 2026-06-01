@@ -3,6 +3,7 @@ import { ZodError } from "zod";
 import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin";
 import {
+  archiveCancelledSetupRequest,
   getSetupRequestById,
   getSetupRequestByIdForConfirmation,
   updateSetupRequestStatus,
@@ -112,6 +113,59 @@ export async function PATCH(
       {
         ok: false,
         error: "SETUP_REQUEST_STATUS_UPDATE_FAILED",
+        message: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+) {
+  if (!isBackendPersistenceConfigured()) {
+    return backendNotConfigured();
+  }
+
+  if (!(await isPlatformAdminSession())) {
+    return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+  }
+
+  try {
+    const { id } = await context.params;
+    const setupRequest = await archiveCancelledSetupRequest(id);
+    return NextResponse.json({ ok: true, setupRequest });
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "VALIDATION_ERROR",
+          details: error.issues.map((issue) => ({
+            path: issue.path.join("."),
+            message: issue.message,
+          })),
+        },
+        { status: 400 },
+      );
+    }
+
+    if (error instanceof Error && error.message === "Setup request not found") {
+      return NextResponse.json({ ok: false, error: "SETUP_REQUEST_NOT_FOUND" }, { status: 404 });
+    }
+
+    if (error instanceof Error && error.message === "Only cancelled setup requests can be archived") {
+      return NextResponse.json(
+        { ok: false, error: "SETUP_REQUEST_NOT_CANCELLED" },
+        { status: 400 },
+      );
+    }
+
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "SETUP_REQUEST_ARCHIVE_FAILED",
         message: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },

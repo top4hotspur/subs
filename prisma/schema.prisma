@@ -84,6 +84,7 @@ model SetupRequest {
   stripeSubscriptionId String?
   paymentStartedAt    DateTime?
   paymentCompletedAt  DateTime?
+  archivedAt          DateTime?
   notes               String?
   rawPayload          Json?
   createdAt           DateTime           @default(now())
@@ -99,6 +100,7 @@ model SetupRequest {
   @@index([createdAt])
   @@index([tenantSiteId])
   @@index([paymentStatus])
+  @@index([archivedAt])
   @@index([stripeCheckoutSessionId])
   @@index([stripeSubscriptionId])
 }

@@ -667,4 +667,24 @@ Add these checks after backend envs are configured:
 3. Confirm confirmation page does not show:
    - `Communication: Email notifications`
    - optional domain-service explainer line after successful checkout.
-4. Confirm next-steps panel title is `What we do next` with MyExperiment.club action wording.
+4. Confirm next-steps panel title is `Next Steps` with MyExperiment.club action wording.
+
+## 2026-06-01 hosted smoke checks: queue cleanup and webhook visibility
+1. Open `/admin/setup-requests` and set a request to `Cancelled`.
+2. Confirm `Remove from queue` appears only for cancelled requests.
+3. Click remove and confirm prompt text:
+   - `Remove this cancelled order from the queue? This cannot be undone.`
+4. Confirm removed request no longer appears in active queue list.
+5. Stripe webhook delivery check:
+   - Stripe Dashboard -> Developers/Workbench -> Webhooks/Event destinations -> your endpoint -> Events/Attempts.
+   - Confirm `checkout.session.completed` delivery attempt returns HTTP `200`.
+6. In `/admin/setup-requests` detail, confirm:
+   - payment status shows `PAID` after successful checkout webhook processing
+   - `Webhook confirmation: received` appears when `paymentCompletedAt` exists.
+
+## Command execution reminder
+- Run project validation from `C:\dev\subs` only:
+  - `npx prisma validate`
+  - `npx prisma migrate status`
+  - `npm run lint`
+  - `npm run build`

@@ -36,6 +36,7 @@ export type BackendSetupRequestRecord = {
   stripeSubscriptionId?: string | null;
   paymentStartedAt?: string | null;
   paymentCompletedAt?: string | null;
+  archivedAt?: string | null;
   notes?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -142,6 +143,35 @@ export async function updateBackendSetupRequestStatus(
       return {
         ok: false,
         error: body?.error ?? "SETUP_REQUEST_STATUS_UPDATE_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+
+    return { ok: true, setupRequest: body.setupRequest };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function archiveBackendCancelledSetupRequest(
+  id: string,
+): Promise<AdminSetupRequestClientResult<{ setupRequest: BackendSetupRequestRecord }>> {
+  try {
+    const response = await fetch(`/api/setup-requests/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    const body = (await parseJsonSafe(response)) as
+      | { ok?: boolean; setupRequest?: BackendSetupRequestRecord; error?: string; details?: unknown }
+      | null;
+
+    if (!response.ok || !body?.ok || !body.setupRequest) {
+      return {
+        ok: false,
+        error: body?.error ?? "SETUP_REQUEST_ARCHIVE_FAILED",
         status: response.status,
         details: body?.details,
       };

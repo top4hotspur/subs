@@ -132,6 +132,7 @@ export async function listSetupRequests(options: Partial<ListSetupRequestsInput>
       industrySlug: parsed.industrySlug,
       status: parsed.status,
       contactEmail: parsed.contactEmail,
+      archivedAt: null,
     },
     include: {
       demoDraftSnapshot: true,
@@ -140,6 +141,40 @@ export async function listSetupRequests(options: Partial<ListSetupRequestsInput>
     orderBy: { createdAt: "desc" },
     take: parsed.take,
     skip: parsed.skip,
+  });
+}
+
+export async function archiveCancelledSetupRequest(setupRequestId: string) {
+  const parsedId = parseOrThrow(setupRequestIdSchema, setupRequestId, "setup request id");
+
+  const existing = await prisma.setupRequest.findUnique({
+    where: { id: parsedId },
+    select: { id: true, status: true, archivedAt: true },
+  });
+
+  if (!existing) {
+    throw new Error("Setup request not found");
+  }
+
+  if (existing.status !== "CANCELLED") {
+    throw new Error("Only cancelled setup requests can be archived");
+  }
+
+  return prisma.$transaction(async (tx) => {
+    const updated = await tx.setupRequest.update({
+      where: { id: parsedId },
+      data: { archivedAt: existing.archivedAt ?? new Date() },
+    });
+
+    await tx.setupRequestEvent.create({
+      data: {
+        setupRequestId: parsedId,
+        eventType: "ARCHIVED",
+        message: "Cancelled setup request removed from active queue.",
+      },
+    });
+
+    return updated;
   });
 }
 

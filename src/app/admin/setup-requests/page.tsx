@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
+  archiveBackendCancelledSetupRequest,
   BackendSetupRequestRecord,
   getBackendSetupRequest,
   listBackendSetupRequests,
@@ -166,6 +167,29 @@ export default function AdminSetupRequestsPage() {
     setMessage(result.created ? "Site setup started successfully." : "Site already exists for this setup request.");
   }
 
+  async function removeCancelledFromQueue(requestId: string): Promise<void> {
+    const confirmed = window.confirm(
+      "Remove this cancelled order from the queue? This cannot be undone.",
+    );
+    if (!confirmed) return;
+
+    const result = await archiveBackendCancelledSetupRequest(requestId);
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status));
+      return;
+    }
+
+    const nextRequests = requests.filter((request) => request.id !== requestId);
+    setRequests(nextRequests);
+    if (selectedId === requestId) {
+      const nextSelected = nextRequests[0] ?? null;
+      setSelectedId(nextSelected?.id ?? "");
+      setDetail(nextSelected);
+    }
+    setMessage("Cancelled order removed from active queue.");
+    setSiteSetupResult(null);
+  }
+
   return (
     <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -267,6 +291,14 @@ export default function AdminSetupRequestsPage() {
                 <p><span className="font-semibold">Monthly total:</span> {formatGbp(selectedRequest.monthlyTotalGbp)}</p>
                 <p><span className="font-semibold">Status:</span> {setupStatusLabel(selectedRequest.status as SubscriptionSetupStatus)}</p>
                 <p><span className="font-semibold">Payment status:</span> {formatOptional(selectedRequest.paymentStatus)}</p>
+                <p>
+                  <span className="font-semibold">Webhook confirmation:</span>{" "}
+                  {selectedRequest.paymentStatus === "PAID" && selectedRequest.paymentCompletedAt
+                    ? `received${selectedRequest.paymentCompletedAt ? ` (${formatUkDateTime(selectedRequest.paymentCompletedAt)})` : ""}`
+                    : selectedRequest.paymentStatus === "CHECKOUT_STARTED"
+                      ? "pending"
+                      : "-"}
+                </p>
                 <p><span className="font-semibold">Created:</span> {formatUkDateTime(selectedRequest.createdAt)}</p>
                 <p><span className="font-semibold">Contact:</span> {formatOptional(selectedRequest.contactName)}</p>
                 <p><span className="font-semibold">Contact email:</span> {formatOptional(selectedRequest.contactEmail)}</p>
@@ -292,6 +324,14 @@ export default function AdminSetupRequestsPage() {
                   {selectedRequest.paymentStatus
                     ? selectedRequest.paymentStatus
                     : "NOT_STARTED (checkout not started)"}
+                </p>
+                <p>
+                  Webhook/payment confirmation:{" "}
+                  {selectedRequest.paymentStatus === "PAID" && selectedRequest.paymentCompletedAt
+                    ? "received"
+                    : selectedRequest.paymentStatus === "CHECKOUT_STARTED"
+                      ? "pending"
+                      : "pending"}
                 </p>
                 <p className="mt-1">
                   Next action:{" "}
@@ -348,6 +388,15 @@ export default function AdminSetupRequestsPage() {
                   >
                     Create blank subscriber site
                   </button>
+                  {selectedRequest.status === SubscriptionSetupStatus.CANCELLED ? (
+                    <button
+                      type="button"
+                      className={`${dangerButtonClass} ${smallButtonClass}`}
+                      onClick={() => removeCancelledFromQueue(selectedRequest.id)}
+                    >
+                      Remove from queue
+                    </button>
+                  ) : null}
                   <Link
                     href={`/admin/sites${siteSetupResult ? `?siteId=${encodeURIComponent(siteSetupResult.siteId)}` : ""}`}
                     className={`${outlineButtonClass} ${smallButtonClass}`}
