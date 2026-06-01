@@ -3,7 +3,7 @@ import { ZodError } from "zod";
 import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin";
 import {
-  archiveCancelledSetupRequest,
+  archiveSetupRequestFromQueue,
   getSetupRequestById,
   getSetupRequestByIdForConfirmation,
   updateSetupRequestStatus,
@@ -134,7 +134,7 @@ export async function DELETE(
 
   try {
     const { id } = await context.params;
-    const setupRequest = await archiveCancelledSetupRequest(id);
+    const setupRequest = await archiveSetupRequestFromQueue(id);
     return NextResponse.json({ ok: true, setupRequest });
   } catch (error) {
     if (error instanceof ZodError) {
@@ -158,6 +158,15 @@ export async function DELETE(
     if (error instanceof Error && error.message === "Only cancelled setup requests can be archived") {
       return NextResponse.json(
         { ok: false, error: "SETUP_REQUEST_NOT_CANCELLED" },
+        { status: 400 },
+      );
+    }
+    if (
+      error instanceof Error &&
+      error.message === "Paid or provisioned setup requests cannot be archived from queue"
+    ) {
+      return NextResponse.json(
+        { ok: false, error: "SETUP_REQUEST_ARCHIVE_NOT_ALLOWED" },
         { status: 400 },
       );
     }

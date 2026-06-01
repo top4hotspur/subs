@@ -700,3 +700,6 @@ Add these checks after backend envs are configured:
 6. Confirm subscriber admin route opens at `/site-admin/[siteSlug]` (or expected admin shell/login behavior).
 7. Trigger provisioning again for the same request (or refresh and retry path) and confirm reuse/idempotent behavior (no duplicate site created).
 8. Confirm no demo services/staff/bookings/vouchers are copied into the provisioned tenant by default.
+9. Confirm route expectation:
+   - `/sites/[siteSlug]` works as platform preview/dev route.
+   - final production destination is customer domain host routing once that milestone is implemented.

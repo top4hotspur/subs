@@ -178,6 +178,44 @@ export async function archiveCancelledSetupRequest(setupRequestId: string) {
   });
 }
 
+export async function archiveSetupRequestFromQueue(setupRequestId: string) {
+  const parsedId = parseOrThrow(setupRequestIdSchema, setupRequestId, "setup request id");
+  const existing = await prisma.setupRequest.findUnique({
+    where: { id: parsedId },
+    select: { id: true, status: true, archivedAt: true, paymentStatus: true, tenantSiteId: true },
+  });
+
+  if (!existing) {
+    throw new Error("Setup request not found");
+  }
+  if (existing.archivedAt) {
+    return prisma.setupRequest.findUniqueOrThrow({ where: { id: parsedId } });
+  }
+  if (existing.status === "CANCELLED") {
+    return archiveCancelledSetupRequest(parsedId);
+  }
+
+  const paidOrActive = existing.paymentStatus === "PAID" || existing.paymentStatus === "SUBSCRIPTION_ACTIVE";
+  if (paidOrActive || existing.tenantSiteId) {
+    throw new Error("Paid or provisioned setup requests cannot be archived from queue");
+  }
+
+  return prisma.$transaction(async (tx) => {
+    const updated = await tx.setupRequest.update({
+      where: { id: parsedId },
+      data: { archivedAt: new Date() },
+    });
+    await tx.setupRequestEvent.create({
+      data: {
+        setupRequestId: parsedId,
+        eventType: "ARCHIVED",
+        message: "Setup request hidden from active queue.",
+      },
+    });
+    return updated;
+  });
+}
+
 export async function createSetupRequestEvent(input: CreateSetupRequestEventInput) {
   const parsed = parseOrThrow(createSetupRequestEventSchema, input, "setup request event input");
 

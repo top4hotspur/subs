@@ -62,6 +62,9 @@ function toMessage(error: string, status: number): string {
   if (error === "SETUP_REQUEST_ARCHIVED") {
     return "Archived requests cannot be provisioned.";
   }
+  if (error === "SETUP_REQUEST_ARCHIVE_NOT_ALLOWED") {
+    return "Only non-paid, non-provisioned requests can be hidden from the queue.";
+  }
   return `Request failed: ${error}`;
 }
 
@@ -100,10 +103,9 @@ export default function AdminSetupRequestsPage() {
     [requests, selectedId, detail],
   );
 
-  async function loadRequests(): Promise<void> {
+  async function loadRequests(preferredSelectedId?: string): Promise<void> {
     setLoading(true);
     setMessage(null);
-    setSiteSetupResult(null);
 
     const result = await listBackendSetupRequests({ take: 100 });
     if (!result.ok) {
@@ -114,14 +116,20 @@ export default function AdminSetupRequestsPage() {
       return;
     }
 
-    setRequests(result.setupRequests);
-    if (result.setupRequests.length > 0) {
-      const firstId = result.setupRequests[0].id;
-      setSelectedId(firstId);
-      setDetail(result.setupRequests[0]);
+    const nextRequests = result.setupRequests;
+    setRequests(nextRequests);
+    if (nextRequests.length > 0) {
+      const keepId =
+        preferredSelectedId && nextRequests.some((request) => request.id === preferredSelectedId)
+          ? preferredSelectedId
+          : selectedId && nextRequests.some((request) => request.id === selectedId)
+            ? selectedId
+            : nextRequests[0].id;
+      setSelectedId(keepId);
+      setDetail(nextRequests.find((request) => request.id === keepId) ?? nextRequests[0]);
       setStatusDrafts((current) => {
         const next = { ...current };
-        result.setupRequests.forEach((request) => {
+        nextRequests.forEach((request) => {
           if (!next[request.id]) next[request.id] = request.status;
         });
         return next;
@@ -179,12 +187,14 @@ export default function AdminSetupRequestsPage() {
     });
     setMessage(result.created ? "Subscriber site created." : "Subscriber site already provisioned.");
     await loadRequestDetail(requestId);
-    await loadRequests();
+    await loadRequests(requestId);
   }
 
-  async function removeCancelledFromQueue(requestId: string): Promise<void> {
+  async function hideFromQueue(requestId: string, cancelled: boolean): Promise<void> {
     const confirmed = window.confirm(
-      "Remove this cancelled order from the queue? This cannot be undone.",
+      cancelled
+        ? "Remove this cancelled order from the queue? This cannot be undone."
+        : "Hide this setup request from the active queue? This will not delete payment records and can be restored later in a future admin view.",
     );
     if (!confirmed) return;
 
@@ -201,7 +211,7 @@ export default function AdminSetupRequestsPage() {
       setSelectedId(nextSelected?.id ?? "");
       setDetail(nextSelected);
     }
-    setMessage("Cancelled order removed from active queue.");
+    setMessage(cancelled ? "Cancelled order removed from active queue." : "Setup request hidden from active queue.");
     setSiteSetupResult(null);
   }
 
@@ -232,7 +242,9 @@ export default function AdminSetupRequestsPage() {
           <button
             type="button"
             className={`${primaryButtonClass} ${smallButtonClass}`}
-            onClick={loadRequests}
+            onClick={() => {
+              void loadRequests();
+            }}
             disabled={loading}
           >
             {loading ? "Loading..." : "Load setup requests"}
@@ -439,9 +451,22 @@ export default function AdminSetupRequestsPage() {
                     <button
                       type="button"
                       className={`${dangerButtonClass} ${smallButtonClass}`}
-                      onClick={() => removeCancelledFromQueue(selectedRequest.id)}
+                      onClick={() => hideFromQueue(selectedRequest.id, true)}
                     >
                       Remove from queue
+                    </button>
+                  ) : null}
+                  {selectedRequest.status !== SubscriptionSetupStatus.CANCELLED &&
+                  selectedRequest.paymentStatus !== "PAID" &&
+                  selectedRequest.paymentStatus !== "SUBSCRIPTION_ACTIVE" &&
+                  !selectedRequest.tenantSite?.id &&
+                  !selectedRequest.archivedAt ? (
+                    <button
+                      type="button"
+                      className={`${dangerButtonClass} ${smallButtonClass}`}
+                      onClick={() => hideFromQueue(selectedRequest.id, false)}
+                    >
+                      Hide from queue
                     </button>
                   ) : null}
                   <Link

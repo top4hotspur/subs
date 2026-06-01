@@ -541,6 +541,8 @@ CSV import/export setup tools moved out of demo customisation and into business 
   - subscriber public site (`/sites/[siteSlug]`)
   - subscriber admin area (`/site-admin/[siteSlug]`).
 - Provisioning is idempotent and reuses existing site records when already created.
+- `/sites/[siteSlug]` remains a platform preview/dev route for now.
+- Production destination remains the customer's own domain once host/domain routing is enabled.
 
 ## 2026-05-31 order-to-checkout flow update
 - `/setup/[industry]` now starts Stripe Checkout immediately after backend order creation when Stripe is configured.

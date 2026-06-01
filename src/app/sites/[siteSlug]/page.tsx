@@ -115,13 +115,44 @@ export default async function PublicSiteSlugPage({
     ? `${scheme.heroBackgroundClass} rounded-xl border ${scheme.borderClass} p-8`
     : `${scheme.heroBackgroundClass} rounded-2xl border ${scheme.borderClass} p-8`;
   const cardClass = `${scheme.cardClass} p-5`;
+  const bookingHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/booking`;
+  const aboutHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/about`;
+  const contactHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/contact`;
+  const siteAdminHref = `/site-admin/${encodeURIComponent(preview.tenantSite.slug)}`;
+  const vouchersEnabled = false;
 
   return (
     <main className={`min-h-screen ${shellClass}`}>
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <section className={`overflow-hidden rounded-3xl border ${scheme.borderClass} shadow-sm`}>
+          <header className={`border-b ${scheme.borderClass} px-6 py-4 sm:px-8`}>
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <p className="text-sm font-semibold uppercase tracking-wide">{siteName}</p>
+              <nav aria-label="Tenant site navigation" className="flex flex-wrap gap-2 text-sm">
+                <a href="#home" className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Home</a>
+                <a href="#services" className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Services</a>
+                <Link href={bookingHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Book now</Link>
+                {vouchersEnabled ? (
+                  <a href="#vouchers" className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Gift vouchers</a>
+                ) : (
+                  <span className="rounded-md border border-slate-200 bg-slate-100 px-3 py-1 font-medium text-slate-500">Gift vouchers (coming soon)</span>
+                )}
+                {settings?.aboutPageEnabled ? (
+                  <Link href={aboutHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">About us</Link>
+                ) : (
+                  <span className="rounded-md border border-slate-200 bg-slate-100 px-3 py-1 font-medium text-slate-500">About us</span>
+                )}
+                <Link href={contactHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Contact</Link>
+              </nav>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs">
+              <a href="#customer-access" className="rounded-md border border-slate-300 bg-white px-2 py-1 font-semibold text-slate-900">Customer login / register</a>
+              <a href="#staff-access" className="rounded-md border border-slate-300 bg-white px-2 py-1 font-semibold text-slate-900">Staff login</a>
+              <Link href={siteAdminHref} className="rounded-md border border-slate-300 bg-white px-2 py-1 font-semibold text-slate-900">Business admin login</Link>
+            </div>
+          </header>
           <div className="space-y-6 px-6 py-8 sm:px-8">
-            <div className={heroClass}>
+            <div id="home" className={heroClass}>
               {settings?.logoUrl ? (
                 <img
                   src={settings.logoUrl}
@@ -136,7 +167,7 @@ export default async function PublicSiteSlugPage({
               {heroSubheading ? <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>{heroSubheading}</p> : null}
               <div className="mt-5 flex flex-wrap gap-3">
                 <Link
-                  href={`/sites/${encodeURIComponent(preview.tenantSite.slug)}/contact`}
+                  href={contactHref}
                   className={`inline-flex rounded-lg border ${scheme.borderClass} bg-white px-4 py-2 text-sm font-semibold text-slate-900`}
                 >
                   Contact us
@@ -161,10 +192,14 @@ export default async function PublicSiteSlugPage({
             </div>
 
             <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-              <div className={cardClass}>
+              <div id="services" className={cardClass}>
                 <h2 className="text-lg font-semibold">Services</h2>
                 {activeServices.length === 0 ? (
-                  <p className={`mt-3 text-sm ${scheme.mutedTextClass}`}>No services available yet.</p>
+                  <div className="mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
+                    <p className={`text-sm ${scheme.mutedTextClass}`}>
+                      This business has not published services yet. Services, pricing and durations will appear here once the business owner finishes setup.
+                    </p>
+                  </div>
                 ) : (
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     {activeServices.map((service) => (
@@ -266,6 +301,27 @@ export default async function PublicSiteSlugPage({
                       ))}
                     </ul>
                   )}
+                </div>
+
+                <div id="customer-access" className={cardClass}>
+                  <h3 className="text-base font-semibold">Customer account access</h3>
+                  <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>
+                    Customer login and registration will be available here in a future release.
+                  </p>
+                </div>
+
+                <div id="staff-access" className={cardClass}>
+                  <h3 className="text-base font-semibold">Staff access</h3>
+                  <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>
+                    Staff login will be available here in a future release.
+                  </p>
+                </div>
+
+                <div id="vouchers" className={cardClass}>
+                  <h3 className="text-base font-semibold">Gift vouchers</h3>
+                  <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>
+                    Gift vouchers are not enabled for this site yet.
+                  </p>
                 </div>
               </div>
             </div>

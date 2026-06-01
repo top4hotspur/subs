@@ -224,3 +224,7 @@ Still local/mock in current product:
 - Response includes links:
   - public: `/sites/[siteSlug]`
   - subscriber admin: `/site-admin/[siteSlug]`
+- Routing expectation:
+  - `/sites/[siteSlug]` is currently the platform/dev preview route for tenant rendering.
+  - Final customer-facing destination will be customer domain host routing (`host/domain -> SiteDomain -> TenantSite`) in a later milestone.
+  - No DNS/AWS/custom-domain automation is included in this pass.
