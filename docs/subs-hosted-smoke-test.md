@@ -837,3 +837,10 @@ Notes:
 6. Confirm onboarding section heading is `What happens after you subscribe?` with clear 4-step card flow.
 7. Confirm bottom CTA heading is `Ready to get your business online properly?`.
 8. Confirm CTA buttons route to `/setup/barbers` and `/demo/barbers`.
+
+## 2026-06-01 hosted smoke checks: confirmation/demo polish
+1. Open `/setup/confirmation` for a valid order and confirm `Update order details` is not shown.
+2. Confirm `Next Steps` includes: "We ensure your domain is linked to your new site and aim to go live within a day once the domain is ready."
+3. Open `/demo/hairdressers` and confirm heading does not include `customer site`.
+4. Confirm intro copy encourages viewing the admin area for full features/settings/control.
+5. Confirm demo customer-site preview no longer shows the extra mini-brand row (initials + business name + website label) above the hero heading.

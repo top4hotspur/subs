@@ -249,7 +249,7 @@ export default function SetupConfirmationPage() {
             ) : null}
             <li>4. We send your business admin login details by email.</li>
             <li>5. Please keep an eye on your inbox and check junk/spam periodically.</li>
-            <li>6. We help point your domain to the site and aim to go live once the domain is ready.</li>
+            <li>6. We ensure your domain is linked to your new site and aim to go live within a day once the domain is ready.</li>
           </ol>
           <p className="mt-4 text-sm text-slate-700">
             We are always on hand if you have any questions - just drop us a message and we&apos;ll get back to you quickly.
@@ -285,7 +285,6 @@ export default function SetupConfirmationPage() {
             {startingCheckout ? "Starting payment..." : "Continue to payment"}
           </button>
         ) : null}
-        <Link href={`/setup/${request.templateSlug}`} className={primaryButtonClass}>Update order details</Link>
         <Link href={`/demo/${request.templateSlug}`} className={outlineButtonClass}>Back to demo site</Link>
         <Link href="/contact" className={outlineButtonClass}>Contact us</Link>
         <Link href="/#industries" className={outlineButtonClass}>Choose another business type</Link>

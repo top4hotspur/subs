@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { DemoSiteNav } from "@/components/demo/demo-site-nav";
-import { SiteBrandMark } from "@/components/site-ui/site-brand-mark";
 import { SiteCard } from "@/components/site-ui/site-card";
 import { SiteFooterBlock } from "@/components/site-ui/site-footer-block";
 import { getPublicServicePriceLabel } from "@/lib/pricing/service-price-display";
@@ -113,13 +112,6 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
             </div>
           </div>
 
-          <SiteBrandMark
-            name={brandName}
-            tagline={template.category}
-            logoUrl={settings.branding.logoUrl}
-            logoAlt={settings.branding.logoAlt}
-            dark={isDarkTheme}
-          />
           <h1 className="mt-6 text-4xl sm:text-5xl font-semibold tracking-tight">{heroHeadline}</h1>
           {heroSubheading ? (
             <p className={`mt-3 max-w-2xl ${scheme.mutedTextClass}`}>{heroSubheading}</p>

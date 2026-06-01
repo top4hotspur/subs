@@ -17,11 +17,12 @@ export function DemoSiteIntroBanner({ template }: DemoSiteIntroBannerProps) {
             {template.category} demo
           </p>
           <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
-            {template.category} customer site
+            {template.category}
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-slate-200">
-            This demo shows the kind of site and tools your business can have. Explore the customer,
-            staff and admin views, then get your own site when you&apos;re ready.
+            Explore the demo site and get a feel for how your own website could work. Make sure to look
+            at the admin view too - that&apos;s where you&apos;ll see the full features, settings and control
+            you could have over your business.
           </p>
         </div>
         <Link

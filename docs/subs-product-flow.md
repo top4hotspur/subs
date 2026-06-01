@@ -623,3 +623,9 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - The stakeholder/value section is now a single consolidated section: `Built to help you run the whole business` with clear customer, staff, and owner outcomes.
 - Overlapping operations-blueprint content was removed from the industry page to avoid repetition and keep a tighter sales narrative.
 - Campaign journeys should continue sending prospects to industry sales pages first (for value/context), then to demo/order CTA paths.
+
+## 2026-06-01 hosted polish: confirmation + demo intro
+- `/setup/confirmation` no longer shows an `Update order details` CTA after order submission.
+- `Next Steps` copy now states: "We ensure your domain is linked to your new site and aim to go live within a day once the domain is ready."
+- `/demo/[industry]` intro heading no longer includes "customer site".
+- Demo intro copy now nudges prospects to inspect the admin view for full feature/control context.
