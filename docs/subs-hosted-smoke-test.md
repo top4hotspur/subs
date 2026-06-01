@@ -815,3 +815,15 @@ Notes:
 9. Confirm redirect into tenant-scoped subscriber admin.
 10. Open `/setup/confirmation` and confirm `Next Steps` includes admin-login-email + junk/spam guidance.
 11. In `/site-admin/[siteSlug]`, confirm Payments and policies copy clearly states provider API integration is not live yet.
+
+## 2026-06-01 hosted smoke checks: branded campaign email rendering
+1. Open `/admin/sales` and select `Email 1 / Introduction`.
+2. Confirm HTML preview shows branded banner image and layout.
+3. Confirm bullet points render as proper list items.
+4. Confirm primary CTA shows `See how it works`.
+5. Confirm secondary demo CTA/link is visible.
+6. Confirm unsubscribe link is present in footer.
+7. Send to one selected eligible test lead only.
+8. Verify received email format on desktop and mobile.
+9. Verify plain-text fallback contains landing/demo/unsubscribe URLs.
+10. Confirm lead tracking updates only after successful send.

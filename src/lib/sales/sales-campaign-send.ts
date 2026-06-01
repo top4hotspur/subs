@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db/prisma";
 import { getOptionalServerEnv } from "@/lib/config/server-env";
 import { isEmailConfigured, sendTransactionalEmail } from "@/lib/email/email-provider";
+import { buildSalesCampaignEmailHtml, buildSalesCampaignPlainText } from "@/lib/sales/sales-campaign-email-render";
 import { createSalesUnsubscribeToken } from "@/lib/sales/sales-unsubscribe-token";
 
 type TemplateKey = "EMAIL_INTRODUCTION" | "EMAIL_REMINDER" | "SNAIL_MAIL_LETTER";
@@ -22,6 +23,13 @@ function formatIndustryLabel(slug?: string | null): string {
     .join(" ");
 }
 
+function formatIndustryBusinessType(slug?: string | null): string {
+  const label = formatIndustryLabel(slug).toLowerCase();
+  if (label.endsWith("ers")) return label.slice(0, -1);
+  if (label.endsWith("s")) return label.slice(0, -1);
+  return label;
+}
+
 function renderTemplateForLead(
   template: { subject: string | null; body: string },
   lead: {
@@ -38,6 +46,7 @@ function renderTemplateForLead(
   const baseUrl = (getOptionalServerEnv("NEXT_PUBLIC_SITE_URL") ?? "").replace(/\/+$/, "");
   const safeIndustry = lead.industrySlug || "barbers";
   const industryLabel = formatIndustryLabel(safeIndustry);
+  const industryBusinessType = formatIndustryBusinessType(safeIndustry);
   const contactName = [lead.contactFirstName, lead.contactLastName].filter(Boolean).join(" ").trim() || lead.contactName || "";
   const contactFirstName = lead.contactFirstName || contactName || "";
   const unsubscribeToken = createSalesUnsubscribeToken(lead.id);
@@ -50,6 +59,7 @@ function renderTemplateForLead(
     businessName: lead.businessName,
     industry: industryLabel,
     industryLabel,
+    industryBusinessType,
     currentProvider: lead.currentProvider || "your current provider",
     estimatedCurrentMonthlyCost: String(lead.estimatedCurrentMonthlyCost ?? "unknown"),
     landingPageLink: `${baseUrl}/${safeIndustry}`,
@@ -68,14 +78,6 @@ function renderTemplateForLead(
     body = `${body}\n\nUnsubscribe:\n${unsubscribeLink}`;
   }
   return { subject, text: body };
-}
-
-function toHtml(text: string): string {
-  const escaped = text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-  return `<div style="font-family:Arial,sans-serif;white-space:pre-wrap;line-height:1.5">${escaped}</div>`;
 }
 
 function leadSkipReason(
@@ -148,11 +150,25 @@ export async function sendSalesCampaignEmails(input: {
     }
 
     const rendered = renderTemplateForLead(template, lead);
+    const baseUrl = (getOptionalServerEnv("NEXT_PUBLIC_SITE_URL") ?? "").replace(/\/+$/, "");
+    const safeIndustry = lead.industrySlug || "barbers";
+    const unsubscribeLink = `${baseUrl}/unsubscribe/sales?token=${encodeURIComponent(createSalesUnsubscribeToken(lead.id))}`;
+    const plainText = buildSalesCampaignPlainText(rendered.text, {
+      landingPageLink: `${baseUrl}/${safeIndustry}`,
+      demoLink: `${baseUrl}/demo/${safeIndustry}`,
+      unsubscribeLink,
+    });
+    const html = buildSalesCampaignEmailHtml(rendered.subject, plainText, {
+      landingPageLink: `${baseUrl}/${safeIndustry}`,
+      demoLink: `${baseUrl}/demo/${safeIndustry}`,
+      unsubscribeLink,
+      siteUrl: baseUrl,
+    });
     const sendResult = await sendTransactionalEmail({
       to: lead.email!,
       subject: rendered.subject,
-      text: rendered.text,
-      html: toHtml(rendered.text),
+      text: plainText,
+      html,
     });
 
     if (!sendResult.ok) {

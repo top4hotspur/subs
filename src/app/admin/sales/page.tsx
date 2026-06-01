@@ -5,6 +5,7 @@ import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import QRCode from "qrcode";
 import { AdminPillNav } from "@/components/admin/admin-pill-nav";
 import { WEBSITE_TEMPLATE_SLUGS } from "@/lib/sites/types";
+import { buildSalesCampaignEmailHtml, buildSalesCampaignPlainText } from "@/lib/sales/sales-campaign-email-render";
 import {
   createBackendSalesLead,
   deleteBackendSalesLead,
@@ -85,6 +86,13 @@ function formatIndustryLabel(slug: string): string {
     .join(" ");
 }
 
+function formatIndustryBusinessType(slug: string): string {
+  const label = formatIndustryLabel(slug).toLowerCase();
+  if (label.endsWith("ers")) return label.slice(0, -1);
+  if (label.endsWith("s")) return label.slice(0, -1);
+  return label;
+}
+
 function splitContactName(contactName?: string | null): { firstName?: string; lastName?: string } {
   const trimmed = contactName?.trim();
   if (!trimmed) return {};
@@ -128,6 +136,8 @@ function renderTemplate(template: SalesCampaignTemplateDto, lead: SalesLeadDto |
     contactLastName,
     contactName,
     industry: formatIndustryLabel(safeIndustry),
+    industryLabel: formatIndustryLabel(safeIndustry),
+    industryBusinessType: formatIndustryBusinessType(safeIndustry),
     currentProvider: lead?.currentProvider ?? "current provider",
     estimatedCurrentMonthlyCost: String(lead?.estimatedCurrentMonthlyCost ?? "unknown"),
     landingPageLink,
@@ -141,7 +151,18 @@ function renderTemplate(template: SalesCampaignTemplateDto, lead: SalesLeadDto |
     body = body.replaceAll(`{{${k}}}`, v);
   }
   body = body.replaceAll("Hi ,", "Hi,");
-  return { subject, body };
+  const plainText = buildSalesCampaignPlainText(body, {
+    landingPageLink,
+    demoLink,
+    unsubscribeLink: values.unsubscribeLink,
+  });
+  const html = buildSalesCampaignEmailHtml(subject, plainText, {
+    landingPageLink,
+    demoLink,
+    unsubscribeLink: values.unsubscribeLink,
+    siteUrl: origin,
+  });
+  return { subject, body, plainText, html };
 }
 
 function parseCsvRows(content: string): Array<Record<string, string>> {
@@ -718,12 +739,30 @@ export default function AdminSalesPage() {
               <p className="mt-1 text-xs text-slate-600">Live bulk sending remains disabled in this phase.</p>
               <div className="mt-2 rounded border border-slate-200 bg-white p-2 text-xs">
                 <p className="font-semibold">Available tokens</p>
-                <p>{"{{contactFirstName}}, {{contactLastName}}, {{contactName}}, {{businessName}}, {{industry}}, {{currentProvider}}, {{estimatedCurrentMonthlyCost}}, {{landingPageLink}}, {{demoLink}}, {{unsubscribeLink}}"}</p>
+                <p>{"{{contactFirstName}}, {{contactLastName}}, {{contactName}}, {{businessName}}, {{industry}}, {{industryLabel}}, {{industryBusinessType}}, {{currentProvider}}, {{estimatedCurrentMonthlyCost}}, {{landingPageLink}}, {{demoLink}}, {{unsubscribeLink}}"}</p>
               </div>
               {preview ? (
                 <>
-                  {selectedTemplate.channel === "EMAIL" ? <p className="mt-2"><span className="font-semibold">Subject:</span> {preview.subject}</p> : null}
-                  <pre className="mt-2 whitespace-pre-wrap">{preview.body}</pre>
+                  {selectedTemplate.channel === "EMAIL" ? (
+                    <>
+                      <p className="mt-2">
+                        <span className="font-semibold">Subject:</span> {preview.subject}
+                      </p>
+                      <div className="mt-2 rounded border border-slate-200 bg-white p-2">
+                        <p className="mb-2 text-xs font-semibold text-slate-700">HTML preview</p>
+                        <div
+                          className="overflow-hidden rounded border border-slate-200"
+                          dangerouslySetInnerHTML={{ __html: preview.html }}
+                        />
+                      </div>
+                      <div className="mt-2 rounded border border-slate-200 bg-white p-2">
+                        <p className="mb-2 text-xs font-semibold text-slate-700">Plain-text fallback</p>
+                        <pre className="whitespace-pre-wrap text-xs">{preview.plainText}</pre>
+                      </div>
+                    </>
+                  ) : (
+                    <pre className="mt-2 whitespace-pre-wrap">{preview.body}</pre>
+                  )}
                   {selectedTemplate.templateKey === "SNAIL_MAIL_LETTER" && letterQrDataUrl ? (
                     <div className="mt-3">
                       <p className="text-xs font-semibold">QR code preview (landing page)</p>

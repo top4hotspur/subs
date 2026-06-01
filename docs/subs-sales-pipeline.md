@@ -213,3 +213,18 @@ Before live sending, platform needs:
   - bulk `Delete selected test leads`
   - leads with campaign history/converted state require stronger force confirmation.
 - Unrestricted bulk blast sending remains disabled.
+
+## 2026-06-01 branded sales email HTML rendering
+- Controlled sales campaign sends now include a branded HTML wrapper with:
+  - header image asset: `/email/myexperiment-email-hero.png`
+  - responsive ~600px email container and email-safe inline styling
+  - CTA layout (`See how it works` + `View example demo`)
+  - footer unsubscribe/compliance line
+- Template bodies are rendered into structured HTML:
+  - paragraph spacing is preserved
+  - `-` / `*` lines render as bullet lists
+  - plain URL-only lines are replaced by CTA actions in the visual flow
+- Plain-text fallback is still sent for accessibility/deliverability and always includes landing/demo/unsubscribe links.
+- Suppression and selected-only controls remain enforced server-side.
+- Live unrestricted bulk blast sending remains disabled.
+- Inbox placement still depends on SPF/DKIM/DMARC and sender reputation.

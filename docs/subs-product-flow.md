@@ -611,3 +611,9 @@ CSV import/export setup tools moved out of demo customisation and into business 
   - business admin login email delivery
   - inbox + junk/spam reminder
   - go-live/domain support sequence
+
+## 2026-06-01 sales campaign email presentation polish
+- Sales campaign sends from `/admin/sales` now deliver branded HTML emails (plus plain-text fallback) instead of raw plain-text rendering.
+- HTML email includes MyExperiment.club hero image, CTA hierarchy, and footer unsubscribe compliance.
+- Controlled selected-send constraints remain: selected leads only, suppression re-check server-side, signed unsubscribe links, and sent tracking only on successful provider sends.
+- Live unrestricted bulk sending remains disabled.
