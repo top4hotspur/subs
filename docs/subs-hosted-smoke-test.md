@@ -688,3 +688,15 @@ Add these checks after backend envs are configured:
   - `npx prisma migrate status`
   - `npm run lint`
   - `npm run build`
+
+## 2026-06-01 hosted smoke checks: paid-order subscriber-site provisioning
+1. Use an existing paid setup request (or create one through checkout).
+2. Open `/admin/setup-requests` and select the paid request.
+3. Click `Create blank subscriber site`.
+4. Confirm success state with links:
+   - `View subscriber site`
+   - `Open subscriber admin`
+5. Confirm public route opens at `/sites/[siteSlug]`.
+6. Confirm subscriber admin route opens at `/site-admin/[siteSlug]` (or expected admin shell/login behavior).
+7. Trigger provisioning again for the same request (or refresh and retry path) and confirm reuse/idempotent behavior (no duplicate site created).
+8. Confirm no demo services/staff/bookings/vouchers are copied into the provisioned tenant by default.

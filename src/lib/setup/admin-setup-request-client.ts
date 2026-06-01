@@ -37,9 +37,19 @@ export type BackendSetupRequestRecord = {
   paymentStartedAt?: string | null;
   paymentCompletedAt?: string | null;
   archivedAt?: string | null;
+  tenantSite?: { id: string; slug: string } | null;
   notes?: string | null;
   createdAt: string;
   updatedAt: string;
+};
+
+export type SetupRequestProvisioningResult = {
+  setupRequestId: string;
+  tenantSiteId: string;
+  siteSlug: string;
+  publicSiteUrl: string;
+  adminSiteUrl: string;
+  created: boolean;
 };
 
 export type ListBackendSetupRequestsOptions = Partial<Pick<
@@ -178,6 +188,46 @@ export async function archiveBackendCancelledSetupRequest(
     }
 
     return { ok: true, setupRequest: body.setupRequest };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function createSubscriberSiteFromPaidSetupRequest(
+  setupRequestId: string,
+): Promise<AdminSetupRequestClientResult<SetupRequestProvisioningResult>> {
+  try {
+    const response = await fetch(
+      `/api/admin/setup-requests/${encodeURIComponent(setupRequestId)}/create-subscriber-site`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+    const body = (await parseJsonSafe(response)) as
+      | ({ ok?: boolean; error?: string; details?: unknown } & Partial<SetupRequestProvisioningResult>)
+      | null;
+
+    if (!response.ok || !body?.ok || !body.tenantSiteId || !body.siteSlug) {
+      return {
+        ok: false,
+        error: body?.error ?? "CREATE_SUBSCRIBER_SITE_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+
+    return {
+      ok: true,
+      setupRequestId: body.setupRequestId ?? setupRequestId,
+      tenantSiteId: body.tenantSiteId,
+      siteSlug: body.siteSlug,
+      publicSiteUrl: body.publicSiteUrl ?? `/sites/${body.siteSlug}`,
+      adminSiteUrl: body.adminSiteUrl ?? `/site-admin/${body.siteSlug}`,
+      created: Boolean(body.created),
+    };
   } catch {
     return { ok: false, error: "NETWORK_ERROR", status: 0 };
   }

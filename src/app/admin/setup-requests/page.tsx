@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   archiveBackendCancelledSetupRequest,
   BackendSetupRequestRecord,
+  createSubscriberSiteFromPaidSetupRequest,
   getBackendSetupRequest,
   listBackendSetupRequests,
   updateBackendSetupRequestStatus,
@@ -29,7 +30,6 @@ import {
   primaryButtonClass,
   smallButtonClass,
 } from "@/lib/ui/button-styles";
-import { createAdminTenantSiteFromSetupRequest } from "@/lib/sites/admin-sites-client";
 import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
 import { AdminPillNav } from "@/components/admin/admin-pill-nav";
 
@@ -52,6 +52,15 @@ function toMessage(error: string, status: number): string {
   }
   if (error === "NETWORK_ERROR" || status === 0) {
     return "Network error while contacting backend API.";
+  }
+  if (error === "SETUP_REQUEST_NOT_PAID") {
+    return "This setup request is not paid yet, so provisioning is blocked.";
+  }
+  if (error === "SETUP_REQUEST_CANCELLED") {
+    return "Cancelled requests cannot be provisioned.";
+  }
+  if (error === "SETUP_REQUEST_ARCHIVED") {
+    return "Archived requests cannot be provisioned.";
   }
   return `Request failed: ${error}`;
 }
@@ -79,8 +88,10 @@ export default function AdminSetupRequestsPage() {
   const [detail, setDetail] = useState<BackendSetupRequestRecord | null>(null);
   const [statusDrafts, setStatusDrafts] = useState<Record<string, string>>({});
   const [siteSetupResult, setSiteSetupResult] = useState<{
-    siteId: string;
-    siteName: string;
+    tenantSiteId: string;
+    siteSlug: string;
+    publicSiteUrl: string;
+    adminSiteUrl: string;
     created: boolean;
   } | null>(null);
 
@@ -152,7 +163,7 @@ export default function AdminSetupRequestsPage() {
   }
 
   async function startSiteSetup(requestId: string): Promise<void> {
-    const result = await createAdminTenantSiteFromSetupRequest(requestId);
+    const result = await createSubscriberSiteFromPaidSetupRequest(requestId);
     if (!result.ok) {
       setMessage(toMessage(result.error, result.status));
       setSiteSetupResult(null);
@@ -160,11 +171,15 @@ export default function AdminSetupRequestsPage() {
     }
 
     setSiteSetupResult({
-      siteId: result.tenantSite.id,
-      siteName: result.tenantSite.displayName,
+      tenantSiteId: result.tenantSiteId,
+      siteSlug: result.siteSlug,
+      publicSiteUrl: result.publicSiteUrl,
+      adminSiteUrl: result.adminSiteUrl,
       created: result.created,
     });
-    setMessage(result.created ? "Site setup started successfully." : "Site already exists for this setup request.");
+    setMessage(result.created ? "Subscriber site created." : "Subscriber site already provisioned.");
+    await loadRequestDetail(requestId);
+    await loadRequests();
   }
 
   async function removeCancelledFromQueue(requestId: string): Promise<void> {
@@ -229,15 +244,21 @@ export default function AdminSetupRequestsPage() {
         {siteSetupResult ? (
           <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
             <p className="text-sm text-emerald-900">
-              {siteSetupResult.created ? "Created site" : "Site already exists"}: {" "}
-              <span className="font-semibold">{siteSetupResult.siteName}</span>
+              {siteSetupResult.created ? "Created site slug" : "Provisioned site slug"}:{" "}
+              <span className="font-semibold">{siteSetupResult.siteSlug}</span>
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
               <Link
-                href={`/admin/sites?siteId=${encodeURIComponent(siteSetupResult.siteId)}`}
+                href={siteSetupResult.publicSiteUrl}
                 className={`${primaryButtonClass} ${smallButtonClass}`}
               >
-                Open created site
+                View subscriber site
+              </Link>
+              <Link
+                href={siteSetupResult.adminSiteUrl}
+                className={`${primaryButtonClass} ${smallButtonClass}`}
+              >
+                Open subscriber admin
               </Link>
               <Link href="/admin/sites" className={`${outlineButtonClass} ${smallButtonClass}`}>
                 Open subscriber sites
@@ -291,6 +312,7 @@ export default function AdminSetupRequestsPage() {
                 <p><span className="font-semibold">Monthly total:</span> {formatGbp(selectedRequest.monthlyTotalGbp)}</p>
                 <p><span className="font-semibold">Status:</span> {setupStatusLabel(selectedRequest.status as SubscriptionSetupStatus)}</p>
                 <p><span className="font-semibold">Payment status:</span> {formatOptional(selectedRequest.paymentStatus)}</p>
+                <p><span className="font-semibold">Provisioned site slug:</span> {formatOptional(selectedRequest.tenantSite?.slug)}</p>
                 <p>
                   <span className="font-semibold">Webhook confirmation:</span>{" "}
                   {selectedRequest.paymentStatus === "PAID" && selectedRequest.paymentCompletedAt
@@ -308,6 +330,26 @@ export default function AdminSetupRequestsPage() {
                 <p className="sm:col-span-2"><span className="font-semibold">Stripe checkout session:</span> {formatOptional(selectedRequest.stripeCheckoutSessionId)}</p>
                 <p className="sm:col-span-2"><span className="font-semibold">Stripe subscription:</span> {formatOptional(selectedRequest.stripeSubscriptionId)}</p>
               </div>
+
+              {selectedRequest.tenantSite?.slug ? (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+                  <p className="font-semibold">Subscriber site created</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <Link
+                      href={`/sites/${selectedRequest.tenantSite.slug}`}
+                      className={`${primaryButtonClass} ${smallButtonClass}`}
+                    >
+                      View subscriber site
+                    </Link>
+                    <Link
+                      href={`/site-admin/${selectedRequest.tenantSite.slug}`}
+                      className={`${primaryButtonClass} ${smallButtonClass}`}
+                    >
+                      Open subscriber admin
+                    </Link>
+                  </div>
+                </div>
+              ) : null}
 
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
                 <p className="font-semibold text-slate-900">Commercial status</p>
@@ -381,13 +423,18 @@ export default function AdminSetupRequestsPage() {
                   >
                     Mark cancelled
                   </button>
-                  <button
-                    type="button"
-                    className={`${outlineButtonClass} ${smallButtonClass}`}
-                    onClick={() => startSiteSetup(selectedRequest.id)}
-                  >
-                    Create blank subscriber site
-                  </button>
+                  {selectedRequest.paymentStatus === "PAID" &&
+                  selectedRequest.status !== SubscriptionSetupStatus.CANCELLED &&
+                  !selectedRequest.archivedAt &&
+                  !selectedRequest.tenantSite?.id ? (
+                    <button
+                      type="button"
+                      className={`${outlineButtonClass} ${smallButtonClass}`}
+                      onClick={() => startSiteSetup(selectedRequest.id)}
+                    >
+                      Create blank subscriber site
+                    </button>
+                  ) : null}
                   {selectedRequest.status === SubscriptionSetupStatus.CANCELLED ? (
                     <button
                       type="button"
@@ -398,7 +445,7 @@ export default function AdminSetupRequestsPage() {
                     </button>
                   ) : null}
                   <Link
-                    href={`/admin/sites${siteSetupResult ? `?siteId=${encodeURIComponent(siteSetupResult.siteId)}` : ""}`}
+                    href={`/admin/sites${siteSetupResult ? `?siteId=${encodeURIComponent(siteSetupResult.tenantSiteId)}` : ""}`}
                     className={`${outlineButtonClass} ${smallButtonClass}`}
                   >
                     Open subscriber sites

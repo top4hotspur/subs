@@ -210,3 +210,17 @@ Still local/mock in current product:
 - Removal is implemented as soft archive on `SetupRequest.archivedAt`.
 - Active queue list excludes archived requests by default.
 - This cleanup action is restricted to cancelled requests only and does not remove tenant sites or Stripe subscription data.
+
+## 2026-06-01 paid-order provisioning milestone
+- New admin-only endpoint: `POST /api/admin/setup-requests/[id]/create-subscriber-site`.
+- Provisioning guardrails:
+  - platform-admin session required
+  - setup request must be paid (`PAID`/`SUBSCRIPTION_ACTIVE`)
+  - cancelled or archived requests are rejected
+- Provisioning is idempotent:
+  - existing `TenantSite` linked to setup request is reused
+  - duplicate `TenantSite`/`SiteDomain`/`SubscriptionRecord` rows are not created
+- New site starts clean (no demo copy of services/staff/rota/bookings/vouchers).
+- Response includes links:
+  - public: `/sites/[siteSlug]`
+  - subscriber admin: `/site-admin/[siteSlug]`

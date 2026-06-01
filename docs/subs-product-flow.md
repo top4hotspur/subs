@@ -533,6 +533,15 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Post-checkout confirmation now uses domain-option-aware `Next Steps` messaging.
 - Webhook/payment confirmation state is surfaced in setup-request admin detail using payment status plus completion timestamp.
 
+## 2026-06-01 paid setup request fulfilment flow
+- Fulfilment path is now:
+  - paid setup request -> platform admin clicks `Create blank subscriber site` -> clean tenant site is provisioned.
+- Provisioning action is visible only for paid, non-cancelled, non-archived requests.
+- After provisioning, admin gets direct links to:
+  - subscriber public site (`/sites/[siteSlug]`)
+  - subscriber admin area (`/site-admin/[siteSlug]`).
+- Provisioning is idempotent and reuses existing site records when already created.
+
 ## 2026-05-31 order-to-checkout flow update
 - `/setup/[industry]` now starts Stripe Checkout immediately after backend order creation when Stripe is configured.
 - Confirmation route is now treated as post-checkout and next-steps focused, with a retry-payment path when checkout is cancelled.
