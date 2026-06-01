@@ -703,3 +703,12 @@ Add these checks after backend envs are configured:
 9. Confirm route expectation:
    - `/sites/[siteSlug]` works as platform preview/dev route.
    - final production destination is customer domain host routing once that milestone is implemented.
+
+## 2026-06-01 hosted smoke checks: subscriber admin onboarding shell
+1. After provisioning, open `/site-admin/[siteSlug]`.
+2. Confirm business-owner admin shell loads for the tenant and does not show platform admin controls.
+3. Confirm `Get your site ready` checklist is visible and uses real tenant empty states (`Not set yet`) when data is missing.
+4. Confirm onboarding section cards are visible:
+   - Business details, Services/prices, Staff setup, Opening hours/rota, Breaks/closures, Booking settings, Gift vouchers, Policies, Page content/visibility, Payments/sales, Customer CRM, Preview public site.
+5. Confirm `Preview public site` action links to `/sites/[siteSlug]`.
+6. Confirm no demo services/staff/bookings are auto-created in the tenant admin shell.

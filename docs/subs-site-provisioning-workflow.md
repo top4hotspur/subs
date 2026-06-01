@@ -227,4 +227,12 @@ Still local/mock in current product:
 - Routing expectation:
   - `/sites/[siteSlug]` is currently the platform/dev preview route for tenant rendering.
   - Final customer-facing destination will be customer domain host routing (`host/domain -> SiteDomain -> TenantSite`) in a later milestone.
-  - No DNS/AWS/custom-domain automation is included in this pass.
+- No DNS/AWS/custom-domain automation is included in this pass.
+
+## 2026-06-01 subscriber admin onboarding shell
+- Provisioned tenant sites now have a business-owner onboarding shell at `/site-admin/[siteSlug]`.
+- Shell is tenant-scoped and separate from platform admin controls.
+- Dashboard includes:
+  - setup section cards (business details, services, staff, rota, policies, payments, CRM placeholders)
+  - `Get your site ready` checklist using real tenant data/empty states
+  - `Preview public site` action linking to `/sites/[siteSlug]`.
