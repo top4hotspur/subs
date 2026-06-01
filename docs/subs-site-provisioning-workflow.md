@@ -253,3 +253,7 @@ Still local/mock in current product:
 - API is fail-soft: code generation succeeds even if email fails or is not configured.
 - Platform admin UI displays email delivery status and still shows one-time code for temporary dev/hosted handover.
 - One-time on-screen code display is temporary; secure email-first delivery is the target flow.
+- Deliverability checklist for hosted:
+  - configure SPF, DKIM, and DMARC for `myexperiment.club`
+  - use verified `EMAIL_FROM` domain alignment
+  - test inbox placement in Outlook/Hotmail/Gmail and monitor junk/spam during reputation warm-up.

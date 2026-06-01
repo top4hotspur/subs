@@ -1,5 +1,5 @@
 export const PROVIDER_MONTHLY_COST_ESTIMATES_GBP: Record<string, number> = {
-  booksy: 99,
+  booksy: 40,
   fresha: 79,
   treatwell: 89,
   wix: 35,

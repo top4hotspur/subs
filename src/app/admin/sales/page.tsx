@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChangeEvent, useMemo, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { AdminPillNav } from "@/components/admin/admin-pill-nav";
 import { WEBSITE_TEMPLATE_SLUGS } from "@/lib/sites/types";
 import {
@@ -20,8 +20,11 @@ import {
   SalesCampaignTemplateDto,
   saveBackendSalesCampaignTemplate,
 } from "@/lib/sales/admin-sales-campaign-client";
-import { getProviderMonthlyCostEstimate } from "@/lib/sales/provider-cost-estimates";
-import { createSalesUnsubscribeToken } from "@/lib/sales/sales-unsubscribe-token";
+import {
+  listBackendSalesProviderPricing,
+  saveBackendSalesProviderPricing,
+  SalesProviderPricingDto,
+} from "@/lib/sales/admin-sales-provider-pricing-client";
 import { outlineButtonClass, primaryButtonClass, smallButtonClass } from "@/lib/ui/button-styles";
 import { formatUkDateTime } from "@/lib/ui/display-labels";
 
@@ -35,18 +38,47 @@ const TEMPLATE_KEYS: Array<{ key: TemplateKey; label: string; channel: "EMAIL" |
 ];
 
 const MARKETING_STATUSES = ["ACTIVE", "DO_NOT_CONTACT", "UNSUBSCRIBED", "BOUNCED", "CONVERTED"];
-const CURRENT_PROVIDERS = [
+
+const LEADS_CSV_TEMPLATE_HEADERS = [
+  "businessName",
+  "country",
+  "cityTown",
+  "postcode",
+  "address",
+  "industrySlug",
+  "contactName",
+  "email",
+  "phone",
+  "leadSource",
+  "sourceUrl",
+  "currentProvider",
+  "estimatedCurrentMonthlyCost",
+  "notes",
+] as const;
+
+const LEADS_CSV_TEMPLATE_EXAMPLE = [
+  "Luna Hair Studio",
+  "England",
+  "Bristol",
+  "BS1 4DJ",
+  "1 Broad Quay, Bristol",
+  "hairdressers",
+  "Steven Glass",
+  "stevenglass@hotmail.com",
+  "07123456789",
+  "Google Maps",
+  "https://maps.google.com",
   "Booksy",
-  "Fresha",
-  "Treatwell",
-  "Wix",
-  "Squarespace",
-  "GoDaddy",
-  "Shopify",
-  "Other",
-  "Manual",
-  "Unknown",
-];
+  "",
+  "Interested in moving this month",
+] as const;
+
+function formatIndustryLabel(slug: string): string {
+  return slug
+    .split("-")
+    .map((part, index) => (index === 0 ? part.charAt(0).toUpperCase() + part.slice(1) : part))
+    .join(" ");
+}
 
 function campaignLevelLabel(level: CampaignLevel): string {
   if (level === "LAUNCH_OFFER") return "Launch offer";
@@ -66,9 +98,7 @@ function renderTemplate(template: SalesCampaignTemplateDto, lead: SalesLeadDto |
     currentProvider: lead?.currentProvider ?? "current provider",
     estimatedCurrentMonthlyCost: String(lead?.estimatedCurrentMonthlyCost ?? "unknown"),
     demoLink: `/demo/${industry || lead?.industrySlug || "barbers"}`,
-    unsubscribeLink: lead
-      ? `/unsubscribe/sales?token=${encodeURIComponent(createSalesUnsubscribeToken(lead.id))}`
-      : "/unsubscribe/sales?token=<token>",
+    unsubscribeLink: "/unsubscribe/sales?token=<token>",
   };
   let subject = template.subject ?? "";
   let body = template.body;
@@ -93,10 +123,24 @@ function parseCsvRows(content: string): Array<Record<string, string>> {
   });
 }
 
+function downloadLeadsCsvTemplate() {
+  const csv = `${LEADS_CSV_TEMPLATE_HEADERS.join(",")}\n${LEADS_CSV_TEMPLATE_EXAMPLE.join(",")}\n`;
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "sales-leads-template.csv";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
 export default function AdminSalesPage() {
   const [leads, setLeads] = useState<SalesLeadDto[]>([]);
   const [campaigns, setCampaigns] = useState<SalesCampaignDto[]>([]);
   const [templates, setTemplates] = useState<SalesCampaignTemplateDto[]>([]);
+  const [providers, setProviders] = useState<SalesProviderPricingDto[]>([]);
   const [selectedLeadId, setSelectedLeadId] = useState("");
   const [selectedCampaignId, setSelectedCampaignId] = useState("");
   const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
@@ -110,7 +154,6 @@ export default function AdminSalesPage() {
   const [form, setForm] = useState({
     businessName: "",
     industrySlug: "",
-    serviceArea: "",
     contactName: "",
     email: "",
     phone: "",
@@ -119,7 +162,15 @@ export default function AdminSalesPage() {
     address: "",
     currentProvider: "",
     estimatedCurrentMonthlyCost: "",
+    estimatedCostAutoFilled: false,
     marketingStatus: "ACTIVE",
+  });
+  const [providerForm, setProviderForm] = useState({
+    providerKey: "",
+    providerName: "",
+    estimatedMonthlyGbp: "",
+    notes: "",
+    active: true,
   });
 
   const selectedLead = useMemo(() => leads.find((x) => x.id === selectedLeadId) ?? null, [leads, selectedLeadId]);
@@ -135,10 +186,7 @@ export default function AdminSalesPage() {
   const candidates = useMemo(() => {
     return leads
       .filter((lead) => !campaignIndustry || lead.industrySlug === campaignIndustry)
-      .filter(
-        (lead) =>
-          !campaignServiceArea || lead.serviceArea?.toLowerCase() === campaignServiceArea.toLowerCase(),
-      )
+      .filter((lead) => !campaignServiceArea || lead.serviceArea?.toLowerCase() === campaignServiceArea.toLowerCase())
       .map((lead) => {
         const reasons: string[] = [];
         if (["UNSUBSCRIBED", "DO_NOT_CONTACT", "BOUNCED", "CONVERTED"].includes(lead.marketingStatus ?? "ACTIVE")) {
@@ -166,15 +214,19 @@ export default function AdminSalesPage() {
   async function loadAll() {
     setLoading(true);
     setError(null);
-    const [leadResult, campaignResult, templateResult] = await Promise.all([
+    const [leadResult, campaignResult, templateResult, providerResult] = await Promise.all([
       listBackendSalesLeads(),
       listBackendSalesCampaigns(),
       listBackendSalesCampaignTemplates(),
+      listBackendSalesProviderPricing(),
     ]);
     if (!leadResult.ok) setError(leadResult.error);
     else {
       setLeads(leadResult.leads);
       if (!selectedLeadId && leadResult.leads.length > 0) setSelectedLeadId(leadResult.leads[0].id);
+      if (selectedLeadId && !leadResult.leads.some((lead) => lead.id === selectedLeadId) && leadResult.leads.length > 0) {
+        setSelectedLeadId(leadResult.leads[0].id);
+      }
     }
     if (campaignResult.ok) {
       setCampaigns(campaignResult.campaigns);
@@ -183,14 +235,22 @@ export default function AdminSalesPage() {
       }
     }
     if (templateResult.ok) setTemplates(templateResult.templates);
+    if (providerResult.ok) setProviders(providerResult.providers);
     setLoading(false);
   }
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function addLead() {
+    setError(null);
+    setMessage(null);
     const result = await createBackendSalesLead({
       businessName: form.businessName,
       industrySlug: form.industrySlug || undefined,
-      serviceArea: form.serviceArea || undefined,
       contactName: form.contactName || undefined,
       email: form.email || undefined,
       phone: form.phone || undefined,
@@ -210,6 +270,20 @@ export default function AdminSalesPage() {
       setError(result.error);
       return;
     }
+    setForm({
+      businessName: "",
+      industrySlug: "",
+      contactName: "",
+      email: "",
+      phone: "",
+      postcode: "",
+      cityTown: "",
+      address: "",
+      currentProvider: "",
+      estimatedCurrentMonthlyCost: "",
+      estimatedCostAutoFilled: false,
+      marketingStatus: "ACTIVE",
+    });
     setMessage("Lead added.");
     await loadAll();
   }
@@ -217,15 +291,27 @@ export default function AdminSalesPage() {
   async function importCsv(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
+    setError(null);
+    setMessage(null);
     const text = await file.text();
     const rows = parseCsvRows(text);
+    let imported = 0;
+    let failed = 0;
     for (const row of rows) {
       const provider = row.currentProvider;
+      const providerRow = providers.find(
+        (item) =>
+          item.active &&
+          (item.providerKey.toLowerCase() === provider?.trim().toLowerCase() ||
+            item.providerName.toLowerCase() === provider?.trim().toLowerCase()),
+      );
       const estimate =
         row.estimatedCurrentMonthlyCost || !provider
           ? row.estimatedCurrentMonthlyCost
-          : String(getProviderMonthlyCostEstimate(provider) ?? "");
-      await createBackendSalesLead({
+          : providerRow?.estimatedMonthlyGbp
+            ? String(providerRow.estimatedMonthlyGbp)
+            : "";
+      const result = await createBackendSalesLead({
         businessName: row.businessName,
         country: row.country || undefined,
         cityTown: row.cityTown || undefined,
@@ -233,21 +319,22 @@ export default function AdminSalesPage() {
         address: row.address || undefined,
         location: row.address || undefined,
         industrySlug: row.industrySlug || undefined,
-        serviceArea: row.serviceArea || undefined,
         contactName: row.contactName || undefined,
         email: row.email || undefined,
         phone: row.phone || undefined,
         leadSource: row.leadSource || undefined,
         sourceUrl: row.sourceUrl || undefined,
-        currentProvider: provider || undefined,
+        currentProvider: provider || providerRow?.providerName || undefined,
         estimatedCurrentMonthlyCost: estimate ? Number(estimate) : undefined,
         notes: row.notes || undefined,
         marketingStatus: "ACTIVE",
         status: "NEW",
         source: "csv",
       });
+      if (result.ok) imported += 1;
+      else failed += 1;
     }
-    setMessage("CSV imported.");
+    setMessage(`CSV import complete. Imported ${imported}. Failed ${failed}.`);
     await loadAll();
     event.target.value = "";
   }
@@ -330,6 +417,39 @@ export default function AdminSalesPage() {
     await loadAll();
   }
 
+  async function saveProviderRow(row: SalesProviderPricingDto) {
+    const result = await saveBackendSalesProviderPricing({
+      id: row.id,
+      providerName: row.providerName,
+      estimatedMonthlyGbp: row.estimatedMonthlyGbp ? Number(row.estimatedMonthlyGbp) : null,
+      notes: row.notes ?? null,
+      active: row.active,
+    });
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    setMessage("Provider pricing updated.");
+    await loadAll();
+  }
+
+  async function addProviderRow() {
+    const result = await saveBackendSalesProviderPricing({
+      providerKey: providerForm.providerKey,
+      providerName: providerForm.providerName,
+      estimatedMonthlyGbp: providerForm.estimatedMonthlyGbp ? Number(providerForm.estimatedMonthlyGbp) : null,
+      notes: providerForm.notes || null,
+      active: providerForm.active,
+    });
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    setProviderForm({ providerKey: "", providerName: "", estimatedMonthlyGbp: "", notes: "", active: true });
+    setMessage("Provider pricing row added.");
+    await loadAll();
+  }
+
   const preview = selectedTemplate ? renderTemplate(selectedTemplate, selectedLead, campaignIndustry) : null;
 
   return (
@@ -351,6 +471,9 @@ export default function AdminSalesPage() {
         <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void loadAll()}>
           {loading ? "Loading..." : "Reload"}
         </button>
+        <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={downloadLeadsCsvTemplate}>
+          Download leads CSV template
+        </button>
         <label className={`${outlineButtonClass} ${smallButtonClass} cursor-pointer`}>
           Import CSV
           <input type="file" className="hidden" accept=".csv,text/csv" onChange={(e) => void importCsv(e)} />
@@ -365,9 +488,8 @@ export default function AdminSalesPage() {
           <input className="rounded border border-slate-300 px-2 py-2 text-sm" placeholder="Business name *" value={form.businessName} onChange={(e) => setForm((c) => ({ ...c, businessName: e.target.value }))} />
           <select className="rounded border border-slate-300 px-2 py-2 text-sm" value={form.industrySlug} onChange={(e) => setForm((c) => ({ ...c, industrySlug: e.target.value }))}>
             <option value="">Industry</option>
-            {WEBSITE_TEMPLATE_SLUGS.map((slug) => <option key={slug} value={slug}>{slug}</option>)}
+            {WEBSITE_TEMPLATE_SLUGS.map((slug) => <option key={slug} value={slug}>{formatIndustryLabel(slug)}</option>)}
           </select>
-          <input className="rounded border border-slate-300 px-2 py-2 text-sm" placeholder="Service area" value={form.serviceArea} onChange={(e) => setForm((c) => ({ ...c, serviceArea: e.target.value }))} />
           <input className="rounded border border-slate-300 px-2 py-2 text-sm" placeholder="Contact name" value={form.contactName} onChange={(e) => setForm((c) => ({ ...c, contactName: e.target.value }))} />
           <input className="rounded border border-slate-300 px-2 py-2 text-sm" placeholder="Email" value={form.email} onChange={(e) => setForm((c) => ({ ...c, email: e.target.value }))} />
           <input className="rounded border border-slate-300 px-2 py-2 text-sm" placeholder="Phone" value={form.phone} onChange={(e) => setForm((c) => ({ ...c, phone: e.target.value }))} />
@@ -376,25 +498,31 @@ export default function AdminSalesPage() {
           <input className="rounded border border-slate-300 px-2 py-2 text-sm" placeholder="Address" value={form.address} onChange={(e) => setForm((c) => ({ ...c, address: e.target.value }))} />
           <select className="rounded border border-slate-300 px-2 py-2 text-sm" value={form.currentProvider} onChange={(e) => {
             const provider = e.target.value;
-            const estimate = getProviderMonthlyCostEstimate(provider);
-              setForm((c) => ({
-                ...c,
-                currentProvider: provider,
-                estimatedCurrentMonthlyCost:
-                  c.estimatedCurrentMonthlyCost || estimate === null
-                    ? c.estimatedCurrentMonthlyCost
-                    : String(estimate),
-              }));
+            const providerRow = providers.find((item) => item.providerName === provider || item.providerKey === provider.toLowerCase());
+            const estimate = providerRow?.estimatedMonthlyGbp ? Number(providerRow.estimatedMonthlyGbp) : null;
+            setForm((c) => ({
+              ...c,
+              currentProvider: provider,
+              estimatedCurrentMonthlyCost:
+                !c.estimatedCurrentMonthlyCost || c.estimatedCostAutoFilled
+                  ? estimate === null
+                    ? ""
+                    : String(estimate)
+                  : c.estimatedCurrentMonthlyCost,
+              estimatedCostAutoFilled: estimate !== null,
+            }));
           }}>
             <option value="">Current provider</option>
-            {CURRENT_PROVIDERS.map((provider) => <option key={provider} value={provider}>{provider}</option>)}
+            {providers.filter((item) => item.active).map((provider) => (
+              <option key={provider.id} value={provider.providerName}>{provider.providerName}</option>
+            ))}
           </select>
-          <input className="rounded border border-slate-300 px-2 py-2 text-sm" placeholder="Estimated current monthly cost (£)" value={form.estimatedCurrentMonthlyCost} onChange={(e) => setForm((c) => ({ ...c, estimatedCurrentMonthlyCost: e.target.value }))} />
+          <input className="rounded border border-slate-300 px-2 py-2 text-sm" placeholder="Estimated current monthly cost (£)" value={form.estimatedCurrentMonthlyCost} onChange={(e) => setForm((c) => ({ ...c, estimatedCurrentMonthlyCost: e.target.value, estimatedCostAutoFilled: false }))} />
           <select className="rounded border border-slate-300 px-2 py-2 text-sm" value={form.marketingStatus} onChange={(e) => setForm((c) => ({ ...c, marketingStatus: e.target.value }))}>
             {MARKETING_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
           </select>
         </div>
-        <p className="mt-2 text-xs text-slate-600">Auto-filled from provider estimate - edit if known.</p>
+        <p className="mt-2 text-xs text-slate-600">Auto-filled from provider pricing table - edit if known.</p>
         <button className={`mt-2 ${primaryButtonClass} ${smallButtonClass}`} onClick={() => void addLead()}>
           Add lead
         </button>
@@ -435,9 +563,9 @@ export default function AdminSalesPage() {
         <h2 className="text-lg font-semibold text-slate-900">Campaign builder + candidate selection</h2>
         <div className="mt-2 grid gap-2 sm:grid-cols-4">
           <select className="rounded border border-slate-300 px-2 py-2 text-sm" value={campaignIndustry} onChange={(e) => setCampaignIndustry(e.target.value)}>
-            {WEBSITE_TEMPLATE_SLUGS.map((slug) => <option key={slug} value={slug}>{slug}</option>)}
+            {WEBSITE_TEMPLATE_SLUGS.map((slug) => <option key={slug} value={slug}>{formatIndustryLabel(slug)}</option>)}
           </select>
-          <input className="rounded border border-slate-300 px-2 py-2 text-sm" placeholder="Service area filter" value={campaignServiceArea} onChange={(e) => setCampaignServiceArea(e.target.value)} />
+          <input className="rounded border border-slate-300 px-2 py-2 text-sm" placeholder="Service area filter (optional)" value={campaignServiceArea} onChange={(e) => setCampaignServiceArea(e.target.value)} />
           <select className="rounded border border-slate-300 px-2 py-2 text-sm" value={campaignLevel} onChange={(e) => { const level = e.target.value as CampaignLevel; setCampaignLevel(level); setSelectedTemplateKey(defaultTemplateKeyForLevel(level)); }}>
             <option value="LAUNCH_OFFER">Launch offer</option>
             <option value="INTRODUCTION">Introduction</option>
@@ -496,7 +624,7 @@ export default function AdminSalesPage() {
                   <td className="px-2 py-2">{row.lead.email ?? "-"}</td>
                   <td className="px-2 py-2">{row.lead.phone ?? "-"}</td>
                   <td className="px-2 py-2">{row.lead.postcode ?? "-"} / {row.lead.cityTown ?? "-"}</td>
-                  <td className="px-2 py-2">{row.lead.industrySlug ?? "-"}</td>
+                  <td className="px-2 py-2">{row.lead.industrySlug ? formatIndustryLabel(row.lead.industrySlug) : "-"}</td>
                   <td className="px-2 py-2">{row.lead.currentProvider ?? "-"}</td>
                   <td className="px-2 py-2">{row.lead.estimatedCurrentMonthlyCost ?? "-"}</td>
                   <td className="px-2 py-2">{row.lead.marketingStatus ?? "ACTIVE"}</td>
@@ -507,6 +635,97 @@ export default function AdminSalesPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      </section>
+
+      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-900">Provider pricing table</h2>
+        <p className="text-sm text-slate-600">Used for lead estimated monthly cost auto-fill. Booksy default is £40.</p>
+        <div className="mt-3 overflow-auto">
+          <table className="min-w-full text-xs">
+            <thead>
+              <tr className="border-b border-slate-200 text-left">
+                <th className="px-2 py-2">Provider</th>
+                <th className="px-2 py-2">Key</th>
+                <th className="px-2 py-2">Estimated £/month</th>
+                <th className="px-2 py-2">Active</th>
+                <th className="px-2 py-2">Notes</th>
+                <th className="px-2 py-2">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {providers.map((row) => (
+                <tr key={row.id} className="border-b border-slate-100">
+                  <td className="px-2 py-2">
+                    <input
+                      className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                      value={row.providerName}
+                      onChange={(e) =>
+                        setProviders((current) =>
+                          current.map((item) =>
+                            item.id === row.id ? { ...item, providerName: e.target.value } : item,
+                          ),
+                        )
+                      }
+                    />
+                  </td>
+                  <td className="px-2 py-2">{row.providerKey}</td>
+                  <td className="px-2 py-2">
+                    <input
+                      className="w-24 rounded border border-slate-300 px-2 py-1 text-xs"
+                      value={row.estimatedMonthlyGbp ?? ""}
+                      onChange={(e) =>
+                        setProviders((current) =>
+                          current.map((item) =>
+                            item.id === row.id ? { ...item, estimatedMonthlyGbp: e.target.value } : item,
+                          ),
+                        )
+                      }
+                    />
+                  </td>
+                  <td className="px-2 py-2">
+                    <label className="inline-flex items-center gap-1">
+                      <input
+                        type="checkbox"
+                        checked={row.active}
+                        onChange={(e) =>
+                          setProviders((current) =>
+                            current.map((item) =>
+                              item.id === row.id ? { ...item, active: e.target.checked } : item,
+                            ),
+                          )
+                        }
+                      />
+                      <span>{row.active ? "Yes" : "No"}</span>
+                    </label>
+                  </td>
+                  <td className="px-2 py-2">
+                    <input
+                      className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                      value={row.notes ?? ""}
+                      onChange={(e) =>
+                        setProviders((current) =>
+                          current.map((item) =>
+                            item.id === row.id ? { ...item, notes: e.target.value } : item,
+                          ),
+                        )
+                      }
+                    />
+                  </td>
+                  <td className="px-2 py-2">
+                    <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void saveProviderRow(row)}>Save</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-5">
+          <input className="rounded border border-slate-300 px-2 py-2 text-sm" placeholder="provider key" value={providerForm.providerKey} onChange={(e) => setProviderForm((c) => ({ ...c, providerKey: e.target.value }))} />
+          <input className="rounded border border-slate-300 px-2 py-2 text-sm" placeholder="provider name" value={providerForm.providerName} onChange={(e) => setProviderForm((c) => ({ ...c, providerName: e.target.value }))} />
+          <input className="rounded border border-slate-300 px-2 py-2 text-sm" placeholder="estimated monthly £" value={providerForm.estimatedMonthlyGbp} onChange={(e) => setProviderForm((c) => ({ ...c, estimatedMonthlyGbp: e.target.value }))} />
+          <input className="rounded border border-slate-300 px-2 py-2 text-sm" placeholder="notes" value={providerForm.notes} onChange={(e) => setProviderForm((c) => ({ ...c, notes: e.target.value }))} />
+          <button className={`${primaryButtonClass} ${smallButtonClass}`} onClick={() => void addProviderRow()}>Add provider</button>
         </div>
       </section>
 

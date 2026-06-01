@@ -162,3 +162,19 @@ Before live sending, platform needs:
 ## Live send note
 - Live bulk sending is still disabled.
 - Resend webhook ingestion remains verification-gated before automated bounce/unsubscribe event handling is enabled.
+
+## 2026-06-01 sales pipeline hardening update
+- Added persisted provider/competitor pricing table (`SalesProviderPricing`) for platform-admin control of estimated monthly competitor costs.
+- `/admin/sales` now supports:
+  - downloading a leads CSV template
+  - provider pricing table add/edit/enable-disable
+  - lead estimated monthly cost auto-fill from provider table (`Booksy` default: `£40`)
+- Auto-fill behavior:
+  - fills estimate when provider is selected and estimate is blank
+  - preserves manual override values
+  - CSV import preserves explicit estimate values; blank estimate values can auto-fill from known provider pricing
+- Manual lead form cleanup:
+  - service area removed from lead add flow
+  - industry labels shown as human-friendly display labels while stored values remain slug-based
+- Candidate/campaign workflow remains suppression-aware and selected-only for manual sent tracking.
+- Live bulk marketing send remains disabled in this phase.

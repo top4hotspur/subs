@@ -755,6 +755,25 @@ Notes:
 - Live bulk email sending is still disabled.
 - Resend webhook remains verification-gated; unverified automated bounce/unsubscribe ingestion stays deferred.
 
+## 2026-06-01 hosted smoke checks: deliverability + anti-spam + provider pricing
+1. Generate/reset a provisioned site-admin access code in `/admin/setup-requests`.
+2. Confirm UI shows one-time handover code and email delivery status.
+3. Check inbox and junk/spam; verify access email wording is professional and includes login URL + code.
+4. Open `/api/email-health` and verify sender-domain diagnostics are present.
+5. Submit a normal setup request and confirm request succeeds.
+6. Submit a bot-like setup request in dev (honeypot filled or submitted too quickly) and confirm it is filtered (not added to active queue).
+7. Open `/admin/sales` and confirm:
+   - service area field is not shown in manual add-lead form
+   - industry labels are human-friendly
+   - provider pricing table is visible
+8. Confirm `Booksy` exists with estimate `£40`.
+9. Edit a provider row and save; confirm updated value persists after reload.
+10. Add a lead with provider `Booksy` and blank estimate; confirm estimate auto-fills.
+11. Override estimate manually; confirm manual value is retained.
+12. Add lead and confirm page does not crash; lead list refreshes safely.
+13. Import CSV with provider `Booksy` and blank estimate; confirm estimate auto-fills.
+14. Import CSV with explicit estimate; confirm explicit value is preserved.
+
 ## 2026-06-01 hosted smoke checks: business admin access email handover
 1. Open `/admin/setup-requests`.
 2. Select provisioned Luna Hair Studio request.

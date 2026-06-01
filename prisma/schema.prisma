@@ -284,6 +284,19 @@ model SalesCampaignTemplate {
   @@index([channel])
 }
 
+model SalesProviderPricing {
+  id                 String   @id @default(cuid())
+  providerKey        String   @unique
+  providerName       String
+  estimatedMonthlyGbp Decimal? @db.Decimal(10, 2)
+  notes              String?
+  active             Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([active])
+}
+
 model SalesCampaignRecipient {
   id         String        @id @default(cuid())
   campaignId String

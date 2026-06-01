@@ -20,6 +20,22 @@ import {
   setupRequestCustomerConfirmation,
 } from "@/lib/email/email-templates";
 
+const MIN_SETUP_FORM_COMPLETION_MS = 3000;
+
+function looksGibberish(value: string | undefined | null): boolean {
+  if (!value) return false;
+  const clean = value.trim();
+  if (clean.length < 3) return true;
+  const consonantRuns = clean.match(/[bcdfghjklmnpqrstvwxyz]{6,}/gi);
+  return Boolean(consonantRuns);
+}
+
+function hasPlausiblePhoneDigits(phone: string | undefined | null): boolean {
+  if (!phone) return false;
+  const digits = phone.replace(/\D/g, "");
+  return digits.length >= 7 && digits.length <= 15;
+}
+
 function backendNotConfigured() {
   return NextResponse.json(
     { ok: false, error: "BACKEND_PERSISTENCE_NOT_CONFIGURED" },
@@ -35,6 +51,23 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const input = createSetupRequestSchema.parse(body);
+    const startedAt = input.formStartedAt ?? 0;
+    const elapsed = Date.now() - startedAt;
+    if ((input.honeypot && input.honeypot.trim().length > 0) || (startedAt > 0 && elapsed < MIN_SETUP_FORM_COMPLETION_MS)) {
+      return NextResponse.json({ ok: true, accepted: false }, { status: 202 });
+    }
+
+    if (
+      input.businessName.trim().length < 2 ||
+      (input.contactName && (input.contactName.trim().length < 2 || looksGibberish(input.contactName))) ||
+      !hasPlausiblePhoneDigits(input.contactPhone) ||
+      (input.notes && input.notes.length > 1200) ||
+      (input.desiredDomain && input.desiredDomain.length > 500) ||
+      (input.existingDomain && input.existingDomain.length > 200)
+    ) {
+      return NextResponse.json({ ok: true, accepted: false }, { status: 202 });
+    }
+
     const { setupRequest, confirmationToken } = await createSetupRequest(input);
     const confirmationUrl = `/setup/confirmation?${buildSetupConfirmationParams(
       setupRequest.id,

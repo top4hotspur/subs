@@ -87,6 +87,8 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
     demoDraftId: draftContext.demoDraftId,
     demoDraftName: draftContext.demoDraftName,
   });
+  const [formStartedAt] = useState<number>(() => Date.now());
+  const [honeypot, setHoneypot] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [checkoutStartError, setCheckoutStartError] = useState<string | null>(null);
@@ -155,10 +157,14 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
           setSubmitting(true);
 
           const backendPayload = createSetupRequestSchema.parse(
-            mapDraftToBackendPayload(draft, {
+            {
+              ...mapDraftToBackendPayload(draft, {
               setupTotalGbp: setupTotal,
               monthlyTotalGbp: monthlyFee,
-            }),
+              }),
+              formStartedAt,
+              honeypot,
+            },
           );
           const backendResult = await submitSetupRequestToBackend(backendPayload);
 
@@ -414,6 +420,15 @@ export function SetupRequestForm({ template }: SetupRequestFormProps) {
               className="mt-1 min-h-24 w-full rounded-lg border border-slate-300 px-3 py-2"
               value={draft.notes ?? ""}
               onChange={(event) => setDraft((c) => ({ ...c, notes: event.target.value }))}
+            />
+          </label>
+          <label className="hidden" aria-hidden>
+            Leave blank
+            <input
+              tabIndex={-1}
+              autoComplete="off"
+              value={honeypot}
+              onChange={(event) => setHoneypot(event.target.value)}
             />
           </label>
         </section>

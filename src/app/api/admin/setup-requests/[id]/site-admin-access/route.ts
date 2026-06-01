@@ -206,6 +206,7 @@ export async function POST(
       subject: handoverEmail.subject,
       text: handoverEmail.text,
       html: handoverEmail.html,
+      replyTo: getOptionalServerEnv("PLATFORM_NOTIFICATION_EMAIL"),
     });
 
     return NextResponse.json({

@@ -21,6 +21,8 @@ export const createSetupRequestSchema = z.object({
   status: nonEmpty,
   notes: z.string().optional(),
   rawPayload: jsonValue.optional(),
+  honeypot: z.string().optional(),
+  formStartedAt: z.number().int().optional(),
 });
 
 export const updateSetupRequestStatusSchema = z.object({

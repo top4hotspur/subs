@@ -575,6 +575,19 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - If email fails or is not configured, platform admin sees delivery status and can manually share the one-time code as temporary fallback.
 - `/site-admin/login` now explicitly instructs business owners to check junk/spam if they do not see access emails.
 
+## 2026-06-01 deliverability and anti-spam hardening
+- Transactional access-code handover continues to send fail-soft and now uses platform reply-to where configured.
+- Deliverability expectations:
+  - sender domain alignment (SPF/DKIM/DMARC) is required for `myexperiment.club`
+  - inbox placement can still vary while domain reputation builds (Outlook/Hotmail/Gmail checks required)
+  - customer-facing confirmation/login guidance continues to remind users to check junk/spam
+- Public setup/order submission now includes low-friction anti-spam controls:
+  - honeypot field
+  - minimum form-completion-time check
+  - stricter basic validation for key fields
+  - generic safe acceptance response for filtered spam-style submissions
+- Sales lead estimated current cost now comes from a platform-admin-managed provider pricing source instead of fixed UI-only values.
+
 ## Confirmation page copy
 - `/setup/confirmation` `Next Steps` now states:
   - order/domain check
