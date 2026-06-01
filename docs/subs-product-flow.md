@@ -617,3 +617,9 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - HTML email includes MyExperiment.club hero image, CTA hierarchy, and footer unsubscribe compliance.
 - Controlled selected-send constraints remain: selected leads only, suppression re-check server-side, signed unsubscribe links, and sent tracking only on successful provider sends.
 - Live unrestricted bulk sending remains disabled.
+
+## 2026-06-01 industry sales-page conversion polish
+- Industry landing pages (starting with `/barbers`, via reusable `/[industry]`) now use stronger conversion copy focused on business value, control, and setup confidence.
+- The stakeholder/value section is now a single consolidated section: `Built to help you run the whole business` with clear customer, staff, and owner outcomes.
+- Overlapping operations-blueprint content was removed from the industry page to avoid repetition and keep a tighter sales narrative.
+- Campaign journeys should continue sending prospects to industry sales pages first (for value/context), then to demo/order CTA paths.

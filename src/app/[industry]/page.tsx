@@ -1,10 +1,8 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { notFound } from "next/navigation";
-import { OperationsBlueprintSummary } from "@/components/industry/operations-blueprint-summary";
 import { SiteCard } from "@/components/site-ui/site-card";
 import { SiteHero } from "@/components/site-ui/site-hero";
 import { SiteSection } from "@/components/site-ui/site-section";
-import { getBlueprintForTemplate } from "@/lib/industry/operations-repository";
 import { getWebsiteTemplate } from "@/lib/sites/mock-repository";
 import { isWebsiteTemplateSlug, WEBSITE_TEMPLATE_SLUGS } from "@/lib/sites/types";
 import { primaryButtonClass } from "@/lib/ui/button-styles";
@@ -21,22 +19,28 @@ function getStakeholderHighlights(industry: string) {
   if (["barbers", "hairdressers", "beauticians", "nail-salon", "massage"].includes(industry)) {
     return {
       customer: [
-        "View services, prices and durations",
-        "Choose a preferred staff member where enabled",
-        "Book appointments and receive confirmations",
-        "Manage upcoming bookings through My Account",
-      ],
-      owner: [
-        "Manage services, pricing and appointment timings",
-        "Control staff, roles, rotas, breaks and closures",
-        "Configure vouchers, policies and page content",
-        "Run daily operations without needing a developer",
+        "View services, prices and appointment options online",
+        "Book or send enquiries without needing to phone",
+        "Choose a preferred staff member where you allow it",
+        "Receive booking confirmations and updates",
+        "Manage upcoming bookings through their account",
+        "Come back and book again more easily",
       ],
       staff: [
-        "View today's and upcoming appointments",
-        "Create manual or telephone bookings",
-        "Check booking and payment status quickly",
-        "Redeem/check gift vouchers where enabled",
+        "See today's appointments and upcoming bookings",
+        "Add telephone or walk-in bookings where allowed",
+        "Check customer, service and payment details",
+        "Update appointment progress",
+        "Help manage repeat customers smoothly",
+        "Check and redeem gift vouchers where enabled",
+      ],
+      owner: [
+        "Control services, pricing and durations",
+        "Manage staff, roles, rotas, breaks and closures",
+        "View customer records and booking history",
+        "Set policies, page content and business details",
+        "Offer gift vouchers and customer updates",
+        "Run more of your business without waiting on a developer",
       ],
     };
   }
@@ -44,22 +48,28 @@ function getStakeholderHighlights(industry: string) {
   if (["gardeners", "cleaners", "window-cleaning", "mobile-valeting", "dog-grooming"].includes(industry)) {
     return {
       customer: [
-        "View services and request clear quotes",
-        "Book recurring-friendly services where enabled",
-        "Receive confirmations and visit updates",
-        "Track upcoming service visits in My Account",
-      ],
-      owner: [
-        "Manage quote/request and recurring service options",
-        "Control staffing, availability, closures and policies",
-        "Configure service rules, pricing and local coverage pages",
-        "Review incoming orders and customer requests in one place",
+        "View services, prices and appointment options online",
+        "Book or send enquiries without needing to phone",
+        "Choose preferred time slots that fit your schedule",
+        "Receive booking confirmations and updates",
+        "Manage upcoming bookings through their account",
+        "Come back and book again more easily",
       ],
       staff: [
-        "View daily and upcoming job schedules",
-        "Create manual/phone bookings and updates",
-        "Track job status and payment requirements",
-        "Support field operations from the staff view",
+        "See today's appointments and upcoming bookings",
+        "Add telephone or walk-in bookings where allowed",
+        "Check customer, service and payment details",
+        "Update appointment progress",
+        "Help manage repeat customers smoothly",
+        "Track recurring visits where enabled",
+      ],
+      owner: [
+        "Control services, pricing and durations",
+        "Manage staff, roles, rotas, breaks and closures",
+        "View customer records and booking history",
+        "Set policies, page content and business details",
+        "Offer recurring service options where enabled",
+        "Run more of your business without waiting on a developer",
       ],
     };
   }
@@ -67,22 +77,28 @@ function getStakeholderHighlights(industry: string) {
   if (["driving-instructors", "tutors"].includes(industry)) {
     return {
       customer: [
-        "Browse lesson options and pricing",
-        "Book lessons or submit enquiries quickly",
-        "Use block-booking options where enabled",
-        "Manage upcoming and past bookings in My Account",
-      ],
-      owner: [
-        "Manage lesson services, durations and pricing",
-        "Control staff availability, rotas and closures",
-        "Configure booking rules, policies and page content",
-        "Review bookings and operational updates centrally",
+        "View services, prices and lesson options online",
+        "Book or send enquiries without needing to phone",
+        "Choose a preferred instructor where you allow it",
+        "Receive booking confirmations and updates",
+        "Manage upcoming bookings through their account",
+        "Come back and book again more easily",
       ],
       staff: [
-        "See today's and upcoming lessons",
-        "Add manual/telephone bookings fast",
-        "Check customer, booking and payment status",
-        "Keep daily schedules organised in one view",
+        "See today's appointments and upcoming bookings",
+        "Add telephone or walk-in bookings where allowed",
+        "Check customer, service and payment details",
+        "Update appointment progress",
+        "Help manage repeat customers smoothly",
+        "Support block bookings where enabled",
+      ],
+      owner: [
+        "Control services, pricing and durations",
+        "Manage staff, roles, rotas, breaks and closures",
+        "View customer records and booking history",
+        "Set policies, page content and business details",
+        "Offer block booking options where enabled",
+        "Run more of your business without waiting on a developer",
       ],
     };
   }
@@ -90,44 +106,56 @@ function getStakeholderHighlights(industry: string) {
   if (["bus-hire", "taxi"].includes(industry)) {
     return {
       customer: [
-        "Submit transport and journey requests clearly",
-        "Request group/event transport packages",
-        "Receive confirmations and updates",
-        "Manage upcoming requests in My Account where enabled",
-      ],
-      owner: [
-        "Manage routes/services, pricing and request handling",
-        "Control staff allocation, availability and closures",
-        "Configure booking rules, policies and contact pages",
-        "Track requests and operational workflow from one dashboard",
+        "View services, prices and booking options online",
+        "Send journey or group enquiries without needing to phone",
+        "Choose available booking options that suit their trip",
+        "Receive booking confirmations and updates",
+        "Manage upcoming bookings through their account",
+        "Come back and book again more easily",
       ],
       staff: [
-        "View today's and future transport jobs",
-        "Create manual/phone bookings where needed",
-        "Check request/payment status at a glance",
-        "Support dispatch and customer operations efficiently",
+        "See today's appointments and upcoming bookings",
+        "Add telephone or walk-in bookings where allowed",
+        "Check customer, service and payment details",
+        "Update appointment progress",
+        "Help manage repeat customers smoothly",
+        "Support dispatch and booking operations clearly",
+      ],
+      owner: [
+        "Control services, pricing and durations",
+        "Manage staff, roles, rotas, breaks and closures",
+        "View customer records and booking history",
+        "Set policies, page content and business details",
+        "Handle quote, booking and journey requests from one place",
+        "Run more of your business without waiting on a developer",
       ],
     };
   }
 
   return {
     customer: [
-      "View services and prices",
-      "Book appointments or submit enquiries",
-      "Receive confirmations and updates",
-      "Manage upcoming bookings through My Account where available",
-    ],
-    owner: [
-      "Manage services, prices and durations",
-      "Control staff, roles, rotas, breaks and closures",
-      "Configure booking rules, vouchers, policies and content",
-      "Review bookings and customer requests in one place",
+      "View services, prices and appointment options online",
+      "Book or send enquiries without needing to phone",
+      "Choose a preferred staff member where you allow it",
+      "Receive booking confirmations and updates",
+      "Manage upcoming bookings through their account",
+      "Come back and book again more easily",
     ],
     staff: [
-      "View today's and upcoming appointments",
-      "Create manual or telephone bookings",
-      "Check booking/payment status quickly",
-      "Support daily operations from the staff view",
+      "See today's appointments and upcoming bookings",
+      "Add telephone or walk-in bookings where allowed",
+      "Check customer, service and payment details",
+      "Update appointment progress",
+      "Help manage repeat customers smoothly",
+      "Check and redeem gift vouchers where enabled",
+    ],
+    owner: [
+      "Control services, pricing and durations",
+      "Manage staff, roles, rotas, breaks and closures",
+      "View customer records and booking history",
+      "Set policies, page content and business details",
+      "Offer gift vouchers and customer updates",
+      "Run more of your business without waiting on a developer",
     ],
   };
 }
@@ -144,7 +172,6 @@ export default async function IndustryPage({ params }: IndustryPageProps) {
     notFound();
   }
 
-  const blueprint = getBlueprintForTemplate(template.slug);
   const highlights = getStakeholderHighlights(template.slug);
 
   return (
@@ -166,72 +193,73 @@ export default async function IndustryPage({ params }: IndustryPageProps) {
         )}
       />
 
-      <SiteSection title="Built around how your business works">
+      <SiteSection title="Built to help you run the whole business">
         <p className="text-slate-600">
-          Your website supports the full journey for customers, business owners and staff — not just a basic online brochure.
+          Your website should do more than show your opening hours. MyExperiment.club gives your customers an easier way to book, gives your staff the tools to keep appointments moving, and gives you control of the business from one simple admin area.
         </p>
         <div className="mt-5 grid gap-6 lg:grid-cols-3">
-          <SiteCard title="Customer journey">
+          <SiteCard title="For your customers">
             <ul className="list-disc space-y-2 pl-5 text-sm text-slate-600">
               {highlights.customer.map((point) => (
                 <li key={point}>{point}</li>
               ))}
             </ul>
           </SiteCard>
-          <SiteCard title="Business owner / manager journey">
-            <ul className="list-disc space-y-2 pl-5 text-sm text-slate-600">
-              {highlights.owner.map((point) => (
-                <li key={point}>{point}</li>
-              ))}
-            </ul>
-          </SiteCard>
-          <SiteCard title="Staff journey">
+          <SiteCard title="For your staff">
             <ul className="list-disc space-y-2 pl-5 text-sm text-slate-600">
               {highlights.staff.map((point) => (
                 <li key={point}>{point}</li>
               ))}
             </ul>
           </SiteCard>
+          <SiteCard title="For you as the owner">
+            <ul className="list-disc space-y-2 pl-5 text-sm text-slate-600">
+              {highlights.owner.map((point) => (
+                <li key={point}>{point}</li>
+              ))}
+            </ul>
+          </SiteCard>
         </div>
+        <p className="mt-4 text-sm font-medium text-slate-700">
+          One website. One admin area. More control over the way your business works.
+        </p>
       </SiteSection>
 
-      {blueprint ? (
-        <OperationsBlueprintSummary
-          blueprint={blueprint}
-          variant="full"
-          showPortalHighlights
-          showAdminHighlights
-          showLifecycle
-        />
-      ) : null}
-
-      <SiteSection title="Domain and setup flow" eyebrow="After subscription">
-        <div className="grid gap-6 lg:grid-cols-2">
-          <SiteCard title="Domain options" subtitle="Choose the option that suits your business.">
-            <ol className="list-decimal space-y-2 pl-5 text-sm text-slate-600">
-              <li>I already own a domain and can update nameservers/DNS</li>
-              <li>I will buy my own domain and point it to you</li>
-              <li>I want you to register/manage a domain for me</li>
-            </ol>
-            <Link href={`/${template.slug}/policy`} className="mt-3 inline-flex text-sm font-medium text-sky-700 hover:text-sky-900">
-              View standard policy page
-            </Link>
+      <SiteSection title="What happens after you subscribe?" eyebrow="Simple onboarding flow">
+        <p className="text-slate-600">
+          We keep the setup simple. Once your order is placed, we prepare your clean website, help with your domain route, and give you access to your business admin area so you can start setting up your services, staff, prices and content.
+        </p>
+        <div className="mt-5 grid gap-6 lg:grid-cols-2">
+          <SiteCard title="Choose your domain option">
+            <p className="text-sm text-slate-600">
+              Tell us whether you already own a domain, want to point an existing domain to your new site, or would like us to register/manage a new domain for you. We will guide you through the right option.
+            </p>
           </SiteCard>
-          <SiteCard title="What happens next" subtitle="Simple managed onboarding process.">
-            <ol className="list-decimal space-y-2 pl-5 text-sm text-slate-600">
-              <li>We confirm your business and domain details</li>
-              <li>We provision your new subscriber site with clean defaults</li>
-              <li>You add real services, staff, pricing and content in your site admin</li>
-              <li>We host and manage it ongoing</li>
-            </ol>
+          <SiteCard title="We prepare your website">
+            <p className="text-sm text-slate-600">
+              We create your clean subscriber site and business admin area. Your site starts ready for your real business details, not copied demo content.
+            </p>
+          </SiteCard>
+          <SiteCard title="You get your admin access">
+            <p className="text-sm text-slate-600">
+              We send your login details by email so you can access your business admin area. From there, you can add services, prices, staff, opening hours, policies, vouchers and page content.
+            </p>
+          </SiteCard>
+          <SiteCard title="You stay in control">
+            <p className="text-sm text-slate-600">
+              Your admin area is where the value really shows. Manage bookings, customers, staff, rotas, services, vouchers, payments setup and business content from one place, with support available when you need it.
+            </p>
           </SiteCard>
         </div>
+        <p className="mt-4 text-sm font-medium text-slate-700">
+          You are not left to figure it out alone. We are on hand to help with setup questions, domain steps and ongoing support.
+        </p>
       </SiteSection>
 
       <section className="rounded-3xl border border-slate-800 bg-slate-900 px-6 py-7 sm:px-8">
-        <h2 className="text-2xl font-semibold text-white">Ready to launch your site?</h2>
+        <h2 className="text-2xl font-semibold text-white">Ready to get your business online properly?</h2>
         <p className="mt-2 text-slate-300">
-          Open your industry demo, then place your order when you are ready.
+          Start with the demo if you want to explore the experience, or place your order and we will begin preparing your clean website and admin area.
         </p>
         <div className="mt-5 flex flex-wrap gap-3">
           <Link href={`/setup/${template.slug}`} className={primaryButtonClass}>

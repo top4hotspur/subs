@@ -827,3 +827,13 @@ Notes:
 8. Verify received email format on desktop and mobile.
 9. Verify plain-text fallback contains landing/demo/unsubscribe URLs.
 10. Confirm lead tracking updates only after successful send.
+
+## 2026-06-01 hosted smoke checks: industry sales page conversion copy
+1. Open `/barbers`.
+2. Confirm the value section heading is `Built to help you run the whole business`.
+3. Confirm three stakeholder cards render: `For your customers`, `For your staff`, `For you as the owner`.
+4. Confirm no duplicate overlapping operations summary section appears.
+5. Confirm `View standard policy page` link is removed from the onboarding/setup section.
+6. Confirm onboarding section heading is `What happens after you subscribe?` with clear 4-step card flow.
+7. Confirm bottom CTA heading is `Ready to get your business online properly?`.
+8. Confirm CTA buttons route to `/setup/barbers` and `/demo/barbers`.

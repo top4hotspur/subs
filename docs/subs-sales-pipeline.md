@@ -228,3 +228,8 @@ Before live sending, platform needs:
 - Suppression and selected-only controls remain enforced server-side.
 - Live unrestricted bulk blast sending remains disabled.
 - Inbox placement still depends on SPF/DKIM/DMARC and sender reputation.
+
+## 2026-06-01 campaign landing-page strategy (conversion-first)
+- Sales campaign links should direct prospects to the relevant industry sales landing page first (for value explanation and conversion framing), not directly to the demo.
+- For barbers, canonical campaign landing route remains: `https://myexperiment.club/barbers`.
+- Demo links remain a secondary CTA for prospects who want to explore the working preview.
