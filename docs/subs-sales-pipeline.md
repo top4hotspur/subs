@@ -142,3 +142,23 @@ Before live sending, platform needs:
 - activity reminders
 - campaign sequencing
 - conversion analytics (lead -> setup request -> live site)
+
+## Campaign workflow foundation (current)
+- Provider-cost auto-fill: selecting known providers can auto-fill estimated monthly cost (editable override remains allowed).
+- Marketing suppression statuses: `ACTIVE`, `DO_NOT_CONTACT`, `UNSUBSCRIBED`, `BOUNCED`, `CONVERTED`.
+- Candidate selection now uses explicit checkboxes per lead.
+- Eligibility checks include suppression status, snoozed-until date, channel data requirements (email/postal), and already-contacted step checks.
+- Manual send tracking updates selected leads only:
+  - `lastContactedAt`
+  - `lastCampaignStep`
+  - campaign recipient status
+  - lead event trail
+- Persisted editable templates:
+  - `EMAIL_INTRODUCTION`
+  - `EMAIL_REMINDER`
+  - `SNAIL_MAIL_LETTER`
+- Unsubscribe route: `/unsubscribe/sales?token=...` marks lead `UNSUBSCRIBED` and terminally suppresses future campaigns.
+
+## Live send note
+- Live bulk sending is still disabled.
+- Resend webhook ingestion remains verification-gated before automated bounce/unsubscribe event handling is enabled.

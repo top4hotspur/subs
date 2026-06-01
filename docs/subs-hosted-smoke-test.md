@@ -738,3 +738,19 @@ Add these checks after backend envs are configured:
    - opening hours summary
    - about/service-area intro text
 8. Save and return to `/sites/[siteSlug]`; confirm updates are reflected on public site.
+
+## 2026-06-01 hosted smoke checks: sales pipeline workflow
+1. Open `/admin/sales`.
+2. Add a lead with provider `Booksy`; confirm estimated monthly cost auto-fills and remains editable.
+3. Confirm lead email is visible in list/detail and used for email-campaign eligibility.
+4. Edit and save `Email 1 / Introduction` template subject/body.
+5. Select campaign candidates via checkboxes.
+6. Click `Mark selected as sent manually`.
+7. Confirm selected leads update `lastContactedAt` and `lastCampaignStep`; unselected leads are unchanged.
+8. Open unsubscribe link `/unsubscribe/sales?token=...` for a test lead and confirm marketing status becomes `UNSUBSCRIBED`.
+9. Confirm unsubscribed lead is no longer eligible.
+10. Select non-responders and apply `Do not contact 3 months`; confirm suppression.
+
+Notes:
+- Live bulk email sending is still disabled.
+- Resend webhook remains verification-gated; unverified automated bounce/unsubscribe ingestion stays deferred.

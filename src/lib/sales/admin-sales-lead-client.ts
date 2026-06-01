@@ -37,6 +37,9 @@ export type SalesLeadDto = {
   lastMarketingEmailAt?: string | null;
   emailSentCount?: number;
   nextFollowUpAt?: string | null;
+  lastCampaignStep?: "EMAIL_INTRODUCTION" | "EMAIL_REMINDER" | "SNAIL_MAIL_LETTER" | null;
+  snoozedUntil?: string | null;
+  convertedAt?: string | null;
   createdAt: string;
   updatedAt: string;
   events?: Array<{ id: string; eventType: string; message?: string | null; createdAt: string }>;

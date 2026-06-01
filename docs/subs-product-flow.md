@@ -501,6 +501,14 @@ CSV import/export setup tools moved out of demo customisation and into business 
 
 ## 2026-05-30 sales pipeline expansion
 - /admin/sales now supports downloadable CSV templates, extended lead-source fields, duplicate-review import decisions, and campaign preparation workflows.
+- Sales pipeline workflow now supports:
+  - provider cost auto-fill (editable) for known providers
+  - persisted campaign template editing (Email 1, Email 2, Snail mail)
+  - candidate checkbox selection with eligibility/suppression reasons
+  - selected-only manual sent tracking (lastContactedAt, lastCampaignStep, contact events)
+  - unsubscribe terminal suppression flow via `/unsubscribe/sales?token=...`
+- Suppression rules exclude: `UNSUBSCRIBED`, `DO_NOT_CONTACT`, `BOUNCED`, `CONVERTED`, snoozed leads, and leads missing required channel data (e.g., no email for email campaigns).
+- Live bulk email sending remains disabled in this phase.
 - Campaign levels are now defined as Launch offer, Introduction, and Reminder with preview-only email copy in this phase.
 - Bulk live sending is intentionally disabled; this pass focuses on prospect data quality, segmentation and compliance readiness.
 

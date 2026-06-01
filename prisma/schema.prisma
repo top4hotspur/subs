@@ -218,6 +218,9 @@ model SalesLead {
   lastMarketingEmailAt DateTime?
   emailSentCount  Int              @default(0)
   nextFollowUpAt  DateTime?
+  lastCampaignStep String?
+  snoozedUntil    DateTime?
+  convertedAt     DateTime?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   events          SalesLeadEvent[]
@@ -234,6 +237,8 @@ model SalesLead {
   @@index([postcode])
   @@index([serviceArea])
   @@index([marketingStatus])
+  @@index([lastCampaignStep])
+  @@index([snoozedUntil])
 }
 
 model SalesLeadEvent {
@@ -265,6 +270,18 @@ model SalesCampaign {
   @@index([serviceArea])
   @@index([campaignLevel])
   @@index([status])
+}
+
+model SalesCampaignTemplate {
+  id          String   @id @default(cuid())
+  templateKey String   @unique
+  channel     String
+  subject     String?
+  body        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([channel])
 }
 
 model SalesCampaignRecipient {

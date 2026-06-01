@@ -16,11 +16,19 @@ const leadStatuses = [
   "DO_NOT_CONTACT",
 ] as const;
 const countries = ["England", "Scotland", "Wales", "Northern Ireland"] as const;
-const marketingStatuses = ["ACTIVE", "DO_NOT_CONTACT", "UNSUBSCRIBED", "BOUNCED"] as const;
+const marketingStatuses = [
+  "ACTIVE",
+  "DO_NOT_CONTACT",
+  "UNSUBSCRIBED",
+  "BOUNCED",
+  "CONVERTED",
+] as const;
+const campaignStepStatuses = ["EMAIL_INTRODUCTION", "EMAIL_REMINDER", "SNAIL_MAIL_LETTER"] as const;
 
 export const salesLeadStatusSchema = z.enum(leadStatuses);
 export const salesLeadCountrySchema = z.enum(countries);
 export const salesLeadMarketingStatusSchema = z.enum(marketingStatuses);
+export const salesLeadCampaignStepSchema = z.enum(campaignStepStatuses);
 
 export const createSalesLeadSchema = z.object({
   businessName: nonEmpty,
@@ -49,6 +57,9 @@ export const createSalesLeadSchema = z.object({
   lastMarketingEmailAt: isoDateString.optional(),
   emailSentCount: z.number().int().min(0).optional(),
   nextFollowUpAt: dateOnly.optional(),
+  lastCampaignStep: salesLeadCampaignStepSchema.optional().nullable(),
+  snoozedUntil: isoDateString.optional().nullable(),
+  convertedAt: isoDateString.optional().nullable(),
 });
 
 export const updateSalesLeadSchema = z
@@ -80,6 +91,9 @@ export const updateSalesLeadSchema = z
     lastMarketingEmailAt: isoDateString.optional().nullable(),
     emailSentCount: z.number().int().min(0).optional(),
     nextFollowUpAt: dateOnly.optional().nullable(),
+    lastCampaignStep: salesLeadCampaignStepSchema.optional().nullable(),
+    snoozedUntil: isoDateString.optional().nullable(),
+    convertedAt: isoDateString.optional().nullable(),
   })
   .refine((value) => Object.keys(value).some((key) => key !== "id"), {
     message: "At least one field must be updated",
@@ -96,6 +110,7 @@ export const listSalesLeadsSchema = z.object({
   serviceArea: z.string().trim().optional(),
   leadSource: z.string().trim().optional(),
   marketingStatus: salesLeadMarketingStatusSchema.optional(),
+  lastCampaignStep: salesLeadCampaignStepSchema.optional(),
   take: z.number().int().min(1).max(500).optional().default(200),
   skip: z.number().int().min(0).optional().default(0),
 });

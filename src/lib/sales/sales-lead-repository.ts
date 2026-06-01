@@ -63,6 +63,9 @@ export async function createSalesLead(input: CreateSalesLeadInput) {
       lastMarketingEmailAt: parsed.lastMarketingEmailAt ? new Date(parsed.lastMarketingEmailAt) : undefined,
       emailSentCount: parsed.emailSentCount,
       nextFollowUpAt: parsed.nextFollowUpAt ? new Date(`${parsed.nextFollowUpAt}T00:00:00.000Z`) : undefined,
+      lastCampaignStep: parsed.lastCampaignStep ?? undefined,
+      snoozedUntil: parsed.snoozedUntil ? new Date(parsed.snoozedUntil) : undefined,
+      convertedAt: parsed.convertedAt ? new Date(parsed.convertedAt) : undefined,
     },
   });
 
@@ -184,6 +187,19 @@ export async function updateSalesLead(input: UpdateSalesLeadInput) {
           ? null
           : parsed.nextFollowUpAt
             ? new Date(`${parsed.nextFollowUpAt}T00:00:00.000Z`)
+            : undefined,
+      lastCampaignStep: parsed.lastCampaignStep === null ? null : parsed.lastCampaignStep,
+      snoozedUntil:
+        parsed.snoozedUntil === null
+          ? null
+          : parsed.snoozedUntil
+            ? new Date(parsed.snoozedUntil)
+            : undefined,
+      convertedAt:
+        parsed.convertedAt === null
+          ? null
+          : parsed.convertedAt
+            ? new Date(parsed.convertedAt)
             : undefined,
     },
   });

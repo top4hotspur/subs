@@ -87,6 +87,9 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       lastMarketingEmailAt: body?.lastMarketingEmailAt,
       emailSentCount: body?.emailSentCount,
       nextFollowUpAt: body?.nextFollowUpAt,
+      lastCampaignStep: body?.lastCampaignStep,
+      snoozedUntil: body?.snoozedUntil,
+      convertedAt: body?.convertedAt,
     });
 
     const lead = await updateSalesLead(parsed);

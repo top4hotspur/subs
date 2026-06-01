@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin";
 import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
-import { updateSalesCampaign } from "@/lib/sales/sales-campaign-repository";
+import {
+  markSalesCampaignPrepared,
+  markSalesCampaignSentManual,
+  updateSalesCampaign,
+} from "@/lib/sales/sales-campaign-repository";
 import { updateSalesCampaignSchema } from "@/lib/sales/sales-campaign-schema";
 
 function backendNotConfigured() {
@@ -20,6 +24,26 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   try {
     const { id } = await context.params;
     const body = await request.json();
+    if (body?.action === "MARK_PREPARED") {
+      const campaign = await markSalesCampaignPrepared({
+        campaignId: id,
+        leadIds: Array.isArray(body?.leadIds) ? body.leadIds : [],
+      });
+      return NextResponse.json({ ok: true, campaign });
+    }
+    if (body?.action === "MARK_SENT_MANUAL") {
+      const result = await markSalesCampaignSentManual({
+        campaignId: id,
+        leadIds: Array.isArray(body?.leadIds) ? body.leadIds : [],
+        templateKey: body?.templateKey,
+      });
+      return NextResponse.json({
+        ok: true,
+        campaign: result.campaign,
+        updatedLeadCount: result.updatedLeadCount,
+        recipientCount: result.recipients.length,
+      });
+    }
     const parsed = updateSalesCampaignSchema.parse({
       id,
       name: body?.name,
