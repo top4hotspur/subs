@@ -236,3 +236,12 @@ Still local/mock in current product:
   - setup section cards (business details, services, staff, rota, policies, payments, CRM placeholders)
   - `Get your site ready` checklist using real tenant data/empty states
   - `Preview public site` action linking to `/sites/[siteSlug]`.
+
+## 2026-06-01 public subscriber shell polish + cookies
+- `/sites/[siteSlug]` now uses a cleaner public nav focused on customer pages: Home, Services, Book now, About, Contact.
+- Staff login and Business admin login are footer-level links to avoid over-promoting operator actions in the hero/nav area.
+- Footer now includes policy links:
+  - Privacy Policy
+  - Cookie Policy
+  - Terms / Policies
+- Cookie acceptance is currently a simple local browser consent banner (no third-party cookie manager in this phase).

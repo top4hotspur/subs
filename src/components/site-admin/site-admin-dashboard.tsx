@@ -414,7 +414,7 @@ function toStaffHolidayDraft(holiday: CustomerSiteStaffHolidayRecord): StaffHoli
 export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
-  const [activeSection, setActiveSection] = useState<SectionKey>("bookings");
+  const [activeSection, setActiveSection] = useState<SectionKey>("settings");
 
   const [settingsDraft, setSettingsDraft] = useState<SettingsDraft>(() => toSettingsDraft(null));
   const [persistedSettings, setPersistedSettings] = useState<PersistedCustomerSiteSettings | null>(null);
@@ -1148,7 +1148,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
               <label className="text-xs font-semibold text-slate-700">Map/location note
                 <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.contactMapNote} onChange={(event) => setSettingsDraft((current) => ({ ...current, contactMapNote: event.target.value }))} />
               </label>
-              <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Contact intro text
+              <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Service area / contact intro text
                 <textarea className="mt-1 min-h-[80px] w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.contactIntro} onChange={(event) => setSettingsDraft((current) => ({ ...current, contactIntro: event.target.value }))} />
               </label>
               <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">

@@ -9,6 +9,7 @@ import {
   SOCIAL_PLATFORM_DEFINITIONS,
   type PersistedSocialLinks,
 } from "@/lib/sites/social-platforms";
+import { SiteCookieNotice } from "@/components/site-ui/site-cookie-notice";
 
 function formatMoney(amount: number | null, currencyCode: string): string {
   if (amount === null) return "Quote required";
@@ -118,8 +119,10 @@ export default async function PublicSiteSlugPage({
   const bookingHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/booking`;
   const aboutHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/about`;
   const contactHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/contact`;
+  const policyHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/policy`;
+  const cookiesHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/cookies`;
+  const privacyHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/privacy`;
   const siteAdminHref = `/site-admin/${encodeURIComponent(preview.tenantSite.slug)}`;
-  const vouchersEnabled = false;
 
   return (
     <main className={`min-h-screen ${shellClass}`}>
@@ -128,27 +131,18 @@ export default async function PublicSiteSlugPage({
           <header className={`border-b ${scheme.borderClass} px-6 py-4 sm:px-8`}>
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <p className="text-sm font-semibold uppercase tracking-wide">{siteName}</p>
-              <nav aria-label="Tenant site navigation" className="flex flex-wrap gap-2 text-sm">
+              <div className="flex flex-wrap items-center gap-2 text-sm">
                 <a href="#home" className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Home</a>
                 <a href="#services" className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Services</a>
                 <Link href={bookingHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Book now</Link>
-                {vouchersEnabled ? (
-                  <a href="#vouchers" className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Gift vouchers</a>
-                ) : (
-                  <span className="rounded-md border border-slate-200 bg-slate-100 px-3 py-1 font-medium text-slate-500">Gift vouchers (coming soon)</span>
-                )}
                 {settings?.aboutPageEnabled ? (
-                  <Link href={aboutHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">About us</Link>
+                  <Link href={aboutHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">About</Link>
                 ) : (
-                  <span className="rounded-md border border-slate-200 bg-slate-100 px-3 py-1 font-medium text-slate-500">About us</span>
+                  <a href="#about" className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">About</a>
                 )}
                 <Link href={contactHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Contact</Link>
-              </nav>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2 text-xs">
-              <a href="#customer-access" className="rounded-md border border-slate-300 bg-white px-2 py-1 font-semibold text-slate-900">Customer login / register</a>
-              <a href="#staff-access" className="rounded-md border border-slate-300 bg-white px-2 py-1 font-semibold text-slate-900">Staff login</a>
-              <Link href={siteAdminHref} className="rounded-md border border-slate-300 bg-white px-2 py-1 font-semibold text-slate-900">Business admin login</Link>
+                <a href="#customer-login" className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Customer login</a>
+              </div>
             </div>
           </header>
           <div className="space-y-6 px-6 py-8 sm:px-8">
@@ -165,71 +159,44 @@ export default async function PublicSiteSlugPage({
               </p>
               <h1 className="mt-4 text-4xl font-bold tracking-tight">{heroHeadline}</h1>
               {heroSubheading ? <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>{heroSubheading}</p> : null}
-              <div className="mt-5 flex flex-wrap gap-3">
-                <Link
-                  href={contactHref}
-                  className={`inline-flex rounded-lg border ${scheme.borderClass} bg-white px-4 py-2 text-sm font-semibold text-slate-900`}
-                >
-                  Contact us
-                </Link>
-                {settings?.aboutPageEnabled ? (
-                  <Link
-                    href={`/sites/${encodeURIComponent(preview.tenantSite.slug)}/about`}
-                    className={`inline-flex rounded-lg border ${scheme.borderClass} bg-white px-4 py-2 text-sm font-semibold text-slate-900`}
-                  >
-                    About us
-                  </Link>
-                ) : null}
-                {settings?.policyPageEnabled ? (
-                  <Link
-                    href={`/sites/${encodeURIComponent(preview.tenantSite.slug)}/policy`}
-                    className={`inline-flex rounded-lg border ${scheme.borderClass} bg-white px-4 py-2 text-sm font-semibold text-slate-900`}
-                  >
-                    Policy
-                  </Link>
-                ) : null}
-              </div>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-              <div id="services" className={cardClass}>
-                <h2 className="text-lg font-semibold">Services</h2>
-                {activeServices.length === 0 ? (
-                  <div className="mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
-                    <p className={`text-sm ${scheme.mutedTextClass}`}>
-                      This business has not published services yet. Services, pricing and durations will appear here once the business owner finishes setup.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    {activeServices.map((service) => (
-                      <article key={service.id} className={`rounded-xl border ${scheme.borderClass} bg-white p-4`}>
-                        <p className="text-sm font-semibold text-slate-900">{service.name}</p>
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          {service.recurringEnabled ? (
-                            <span className="rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
-                              Recurring available
-                            </span>
-                          ) : null}
-                          {service.blockBookingEnabled ? (
-                            <span className="rounded-full border border-sky-300 bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-800">
-                              Block bookings available
-                            </span>
-                          ) : null}
-                        </div>
-                        <p className="mt-1 text-xs text-slate-600">
-                          {service.description || "Professional service details will appear here."}
-                        </p>
-                        <p className="mt-3 text-sm font-semibold text-slate-900">
-                          {formatMoney(service.basePrice, currencyCode)}
-                        </p>
-                        <p className="text-xs text-slate-600">
-                          {formatServiceSummary(service.durationMinutes, service.bufferAfterMinutes)}
-                        </p>
-                      </article>
-                    ))}
-                  </div>
-                )}
+              <div className="space-y-4">
+                <div id="services" className={cardClass}>
+                  <h2 className="text-lg font-semibold">Services</h2>
+                  {activeServices.length === 0 ? (
+                    <div className="mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
+                      <p className={`text-sm ${scheme.mutedTextClass}`}>
+                        Services, prices and durations will appear here once the business owner finishes setup.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      {activeServices.map((service) => (
+                        <article key={service.id} className={`rounded-xl border ${scheme.borderClass} bg-white p-4`}>
+                          <p className="text-sm font-semibold text-slate-900">{service.name}</p>
+                          <p className="mt-1 text-xs text-slate-600">
+                            {service.description || "Professional service details will appear here."}
+                          </p>
+                          <p className="mt-3 text-sm font-semibold text-slate-900">
+                            {formatMoney(service.basePrice, currencyCode)}
+                          </p>
+                          <p className="text-xs text-slate-600">
+                            {formatServiceSummary(service.durationMinutes, service.bufferAfterMinutes)}
+                          </p>
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div id="about" className={cardClass}>
+                  <h3 className="text-base font-semibold">About us</h3>
+                  <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>
+                    {settings?.aboutBody?.trim() || "Not set yet"}
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-4">
@@ -253,11 +220,11 @@ export default async function PublicSiteSlugPage({
                       </div>
                     ) : null}
                   </div>
-                  <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>{settings?.phone || "Phone not set"}</p>
-                  <p className={`text-sm ${scheme.mutedTextClass}`}>{settings?.email || "Email not set"}</p>
-                  <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>{settings?.address || "Address not set"}</p>
+                  <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>{settings?.phone || "Not set yet"}</p>
+                  <p className={`text-sm ${scheme.mutedTextClass}`}>{settings?.email || "Not set yet"}</p>
+                  <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>{settings?.address || "Not set yet"}</p>
                   <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>
-                    {settings?.openingHoursSummary || "Opening hours summary not set"}
+                    {settings?.openingHoursSummary || "Not set yet"}
                   </p>
                   {mapsUrl ? (
                     <a
@@ -280,9 +247,6 @@ export default async function PublicSiteSlugPage({
                       <p className="text-xs text-slate-700">
                         No refund within {settings?.cancellationNoRefundWithinDays ?? 1} day(s) of appointment.
                       </p>
-                      {settings?.cancellationPolicyNote ? (
-                        <p className="mt-1 text-xs text-slate-700">{settings.cancellationPolicyNote}</p>
-                      ) : null}
                     </div>
                   ) : null}
                 </div>
@@ -290,7 +254,9 @@ export default async function PublicSiteSlugPage({
                 <div className={cardClass}>
                   <h3 className="text-base font-semibold">Staff options</h3>
                   {selectableStaff.length === 0 ? (
-                    <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>No preferred staff options currently available.</p>
+                    <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>
+                      Staff selection will appear here if this business enables staff choice.
+                    </p>
                   ) : (
                     <ul className="mt-2 space-y-1 text-sm">
                       {selectableStaff.map((staff) => (
@@ -303,31 +269,39 @@ export default async function PublicSiteSlugPage({
                   )}
                 </div>
 
-                <div id="customer-access" className={cardClass}>
+                <div id="customer-login" className={cardClass}>
                   <h3 className="text-base font-semibold">Customer account access</h3>
                   <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>
                     Customer login and registration will be available here in a future release.
                   </p>
                 </div>
 
-                <div id="staff-access" className={cardClass}>
-                  <h3 className="text-base font-semibold">Staff access</h3>
+                <div className={cardClass}>
+                  <h3 className="text-base font-semibold">Booking policy notice</h3>
                   <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>
-                    Staff login will be available here in a future release.
+                    Customers will be asked to confirm they have read and accepted the booking/cancellation policy before completing a booking.
                   </p>
-                </div>
-
-                <div id="vouchers" className={cardClass}>
-                  <h3 className="text-base font-semibold">Gift vouchers</h3>
-                  <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>
-                    Gift vouchers are not enabled for this site yet.
-                  </p>
+                  <Link href={policyHref} className="mt-3 inline-flex rounded-md border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-900 hover:bg-slate-100">
+                    View full policy
+                  </Link>
                 </div>
               </div>
             </div>
+
+            <footer className={`rounded-xl border ${scheme.borderClass} bg-white p-4 text-xs text-slate-600`}>
+              <div className="flex flex-wrap items-center gap-3">
+                <Link href={privacyHref} className="hover:text-slate-900">Privacy Policy</Link>
+                <Link href={cookiesHref} className="hover:text-slate-900">Cookie Policy</Link>
+                <Link href={policyHref} className="hover:text-slate-900">Terms / Policies</Link>
+                <span className="mx-1 text-slate-300">|</span>
+                <span id="staff-access" className="hover:text-slate-900">Staff login (coming soon)</span>
+                <Link href={siteAdminHref} className="hover:text-slate-900">Business admin login</Link>
+              </div>
+            </footer>
           </div>
         </section>
       </div>
+      <SiteCookieNotice siteSlug={preview.tenantSite.slug} />
     </main>
   );
 }

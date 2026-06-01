@@ -549,6 +549,12 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - The subscriber admin shell surfaces a setup checklist and onboarding cards before detailed editing.
 - Checklist/status uses tenant data and explicit `Not set yet` empty states (no demo/localStorage seed data).
 
+## 2026-06-01 public shell + business settings reflection
+- Public tenant shell (`/sites/[siteSlug]`) is now positioned as customer-facing with cleaner nav and footer policy/login links.
+- Policy/Cookie/Privacy links live in the footer.
+- Business-owner onboarding focuses first on Business details + site content/settings in `/site-admin/[siteSlug]`.
+- Updates to business details (name/email/phone/address/opening hours/about/contact intro) now reflect directly on `/sites/[siteSlug]`.
+
 ## 2026-05-31 order-to-checkout flow update
 - `/setup/[industry]` now starts Stripe Checkout immediately after backend order creation when Stripe is configured.
 - Confirmation route is now treated as post-checkout and next-steps focused, with a retry-payment path when checkout is cancelled.

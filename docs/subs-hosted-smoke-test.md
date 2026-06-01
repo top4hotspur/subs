@@ -712,3 +712,29 @@ Add these checks after backend envs are configured:
    - Business details, Services/prices, Staff setup, Opening hours/rota, Breaks/closures, Booking settings, Gift vouchers, Policies, Page content/visibility, Payments/sales, Customer CRM, Preview public site.
 5. Confirm `Preview public site` action links to `/sites/[siteSlug]`.
 6. Confirm no demo services/staff/bookings are auto-created in the tenant admin shell.
+
+## 2026-06-01 hosted smoke checks: public shell polish + cookie acceptance
+1. Open `/sites/[siteSlug]`.
+2. Confirm top nav shows customer-facing items:
+   - Home
+   - Services
+   - Book now
+   - About
+   - Contact
+3. Confirm hero does not duplicate Contact/Policy action buttons.
+4. Confirm footer contains:
+   - Privacy Policy
+   - Cookie Policy
+   - Terms / Policies
+   - Staff login (footer-level)
+   - Business admin login (footer-level)
+5. Confirm cookie notice appears on first load.
+6. Click `Accept`, refresh page, confirm notice remains dismissed.
+7. Open `/site-admin/[siteSlug]`, update:
+   - display name
+   - phone
+   - email
+   - address
+   - opening hours summary
+   - about/service-area intro text
+8. Save and return to `/sites/[siteSlug]`; confirm updates are reflected on public site.
