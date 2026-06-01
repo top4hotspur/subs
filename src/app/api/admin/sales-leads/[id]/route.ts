@@ -4,6 +4,7 @@ import { isPlatformAdminSession } from "@/lib/auth/platform-admin";
 import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
 import {
   createSalesLeadEvent,
+  deleteSalesLead,
   getSalesLeadById,
   markSalesLeadContacted,
   updateSalesLead,
@@ -71,6 +72,8 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       industrySlug: body?.industrySlug,
       industryLabel: body?.industryLabel,
       contactName: body?.contactName,
+      contactFirstName: body?.contactFirstName,
+      contactLastName: body?.contactLastName,
       email: body?.email,
       phone: body?.phone,
       leadSource: body?.leadSource,
@@ -121,5 +124,27 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       },
       { status: 500 },
     );
+  }
+}
+
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  if (!isBackendPersistenceConfigured()) return backendNotConfigured();
+  if (!(await isPlatformAdminSession())) {
+    return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+  }
+
+  try {
+    const { id } = await context.params;
+    const force = request.nextUrl.searchParams.get("force") === "true";
+    const result = await deleteSalesLead({ id, force });
+    return NextResponse.json({ ok: true, deletedLeadId: result.id });
+  } catch (error) {
+    if (error instanceof Error && error.message === "Sales lead not found") {
+      return NextResponse.json({ ok: false, error: "SALES_LEAD_NOT_FOUND" }, { status: 404 });
+    }
+    if (error instanceof Error && error.message === "Force confirmation required") {
+      return NextResponse.json({ ok: false, error: "FORCE_CONFIRMATION_REQUIRED" }, { status: 409 });
+    }
+    return NextResponse.json({ ok: false, error: "SALES_LEAD_DELETE_FAILED" }, { status: 500 });
   }
 }

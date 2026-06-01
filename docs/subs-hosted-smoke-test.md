@@ -768,6 +768,22 @@ Notes:
 8. Confirm token-help panel lists first/last/backward-compatible name tokens.
 9. Confirm live bulk sending remains disabled.
 
+## 2026-06-01 hosted smoke checks: controlled selected sending + lead delete
+1. Open `/admin/sales`.
+2. Add/use a test lead with a real test email and ACTIVE status.
+3. Select lead checkbox and choose `Email 1 / Introduction`.
+4. Click `Send selected email`.
+5. Confirm prompt shows selected count before send.
+6. Confirm send result message reports sent/skipped/failed counts.
+7. Confirm sent lead updates:
+   - `lastContactedAt`
+   - `lastCampaignStep`
+8. Open unsubscribe link for a test lead and confirm lead becomes `UNSUBSCRIBED`.
+9. Re-select unsubscribed lead and confirm send action skips with suppression reason.
+10. Select DO_NOT_CONTACT/snoozed lead and confirm send skips.
+11. Use per-row delete and/or `Delete selected test leads`.
+12. Confirm deleted leads disappear and page remains stable.
+
 ## 2026-06-01 hosted smoke checks: deliverability + anti-spam + provider pricing
 1. Generate/reset a provisioned site-admin access code in `/admin/setup-requests`.
 2. Confirm UI shows one-time handover code and email delivery status.

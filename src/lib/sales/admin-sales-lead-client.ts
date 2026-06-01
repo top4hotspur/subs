@@ -195,3 +195,29 @@ export async function markBackendSalesLeadEmailSent(
 ): Promise<ClientResult<{ lead: SalesLeadDto }>> {
   return updateBackendSalesLead(id, { action: "MARK_EMAIL_SENT" });
 }
+
+export async function deleteBackendSalesLead(
+  id: string,
+  force = false,
+): Promise<ClientResult<{ deletedLeadId: string }>> {
+  try {
+    const response = await fetch(`/api/admin/sales-leads/${encodeURIComponent(id)}?force=${force ? "true" : "false"}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+    });
+    const body = (await parseJsonSafe(response)) as
+      | { ok?: boolean; deletedLeadId?: string; error?: string; details?: unknown }
+      | null;
+    if (!response.ok || !body?.ok || !body.deletedLeadId) {
+      return {
+        ok: false,
+        error: body?.error ?? "SALES_LEAD_DELETE_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, deletedLeadId: body.deletedLeadId };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}

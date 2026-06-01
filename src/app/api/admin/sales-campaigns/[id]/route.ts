@@ -4,6 +4,7 @@ import { isPlatformAdminSession } from "@/lib/auth/platform-admin";
 import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
 import {
   markSalesCampaignPrepared,
+  sendSalesCampaignEmails,
   markSalesCampaignSentManual,
   updateSalesCampaign,
 } from "@/lib/sales/sales-campaign-repository";
@@ -43,6 +44,17 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
         updatedLeadCount: result.updatedLeadCount,
         recipientCount: result.recipients.length,
       });
+    }
+    if (body?.action === "SEND_SELECTED_EMAIL") {
+      const result = await sendSalesCampaignEmails({
+        campaignId: id,
+        leadIds: Array.isArray(body?.leadIds) ? body.leadIds : [],
+        templateKey: body?.templateKey,
+      });
+      if (!result.ok) {
+        return NextResponse.json({ ok: false, error: result.error, result }, { status: 400 });
+      }
+      return NextResponse.json({ ok: true, result });
     }
     const parsed = updateSalesCampaignSchema.parse({
       id,

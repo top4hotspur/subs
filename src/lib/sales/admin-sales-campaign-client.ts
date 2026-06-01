@@ -117,6 +117,44 @@ export async function markBackendSalesCampaignSentManual(
   return updateBackendSalesCampaign(id, { action: "MARK_SENT_MANUAL", leadIds, templateKey });
 }
 
+export async function sendBackendSalesCampaignEmail(
+  id: string,
+  leadIds: string[],
+  templateKey: "EMAIL_INTRODUCTION" | "EMAIL_REMINDER" | "SNAIL_MAIL_LETTER",
+) {
+  try {
+    const response = await fetch(`/api/admin/sales-campaigns/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "SEND_SELECTED_EMAIL", leadIds, templateKey }),
+    });
+    const body = (await parseJsonSafe(response)) as
+      | {
+          ok?: boolean;
+          result?: {
+            sentCount: number;
+            skippedCount: number;
+            failedCount: number;
+            details: Array<{ leadId: string; outcome: "SENT" | "SKIPPED" | "FAILED"; reason?: string }>;
+          };
+          error?: string;
+          details?: unknown;
+        }
+      | null;
+    if (!response.ok || !body?.ok || !body.result) {
+      return {
+        ok: false,
+        error: body?.error ?? "SALES_CAMPAIGN_SEND_FAILED",
+        status: response.status,
+        details: body?.details,
+      } as ClientFailure;
+    }
+    return { ok: true, result: body.result } as ClientSuccess<{ result: NonNullable<typeof body.result> }>;
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 } as ClientFailure;
+  }
+}
+
 export async function listBackendSalesCampaignTemplates() {
   try {
     const response = await fetch("/api/admin/sales-campaign-templates");

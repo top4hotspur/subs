@@ -199,3 +199,17 @@ Before live sending, platform needs:
 - Snail-mail letter preview now shows a QR code for `{{landingPageLink}}`.
 - Updated default templates are feature-led (full website + business tooling), not just low-cost booking language.
 - Live bulk sending remains disabled.
+
+## 2026-06-01 controlled selected sending + lead cleanup
+- `/admin/sales` now supports controlled `Send selected email` actions:
+  - sends only to selected eligible leads
+  - server-side suppression/eligibility checks are re-run before send
+  - skip reasons include: missing/invalid email, suppressed status, snoozed, already received step
+- `Mark selected as sent manually` remains separate and does not dispatch provider email.
+- Marketing emails keep unsubscribe token links per lead.
+- Send outcomes now report sent/skipped/failed counts.
+- Test lead cleanup is now available:
+  - per-row delete
+  - bulk `Delete selected test leads`
+  - leads with campaign history/converted state require stronger force confirmation.
+- Unrestricted bulk blast sending remains disabled.

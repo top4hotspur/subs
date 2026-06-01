@@ -521,6 +521,13 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Snail-mail letter preview now includes a QR code for the landing page link.
 - Live bulk sending remains disabled.
 
+## 2026-06-01 controlled campaign dispatch
+- Platform admin sales now supports controlled selected-email dispatch from `/admin/sales`.
+- Sending is limited to selected eligible leads and re-validated server-side.
+- Suppressed leads (`UNSUBSCRIBED`, `DO_NOT_CONTACT`, `BOUNCED`, `CONVERTED`), snoozed leads, invalid/no-email leads, and already-contacted step leads are skipped.
+- Manual sent tracking remains available for external/manual sends.
+- Sales lead cleanup actions are now available for test/spam leads (with stronger confirmation for history/converted records).
+
 ## Stripe Checkout hosted verification notes (2026-05-31)
 - Checkout API: `/api/setup-requests/[id]/checkout` (requires setup confirmation token or platform-admin session).
 - Payment status is trusted from Stripe webhooks, not frontend redirect state.

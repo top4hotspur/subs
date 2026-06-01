@@ -284,3 +284,28 @@ export async function markSalesLeadContacted(input: MarkSalesLeadContactedInput)
     return updated;
   });
 }
+
+export async function deleteSalesLead(input: { id: string; force?: boolean }) {
+  const id = parseOrThrow(salesLeadIdSchema, input.id, "sales lead id");
+  const force = Boolean(input.force);
+  const lead = await prisma.salesLead.findUnique({
+    where: { id },
+    include: {
+      events: { select: { id: true } },
+      campaignRecipients: { select: { id: true } },
+      campaignEvents: { select: { id: true } },
+    },
+  });
+  if (!lead) throw new Error("Sales lead not found");
+
+  const hasHistory =
+    lead.events.length > 0 || lead.campaignRecipients.length > 0 || lead.campaignEvents.length > 0;
+  const isConverted = lead.marketingStatus === "CONVERTED" || lead.status === "WON";
+
+  if ((hasHistory || isConverted) && !force) {
+    throw new Error("Force confirmation required");
+  }
+
+  await prisma.salesLead.delete({ where: { id } });
+  return { id };
+}

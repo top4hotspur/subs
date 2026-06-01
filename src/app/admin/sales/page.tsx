@@ -7,6 +7,7 @@ import { AdminPillNav } from "@/components/admin/admin-pill-nav";
 import { WEBSITE_TEMPLATE_SLUGS } from "@/lib/sites/types";
 import {
   createBackendSalesLead,
+  deleteBackendSalesLead,
   listBackendSalesLeads,
   SalesLeadDto,
   updateBackendSalesLead,
@@ -19,6 +20,7 @@ import {
   markBackendSalesCampaignSentManual,
   SalesCampaignDto,
   SalesCampaignTemplateDto,
+  sendBackendSalesCampaignEmail,
   saveBackendSalesCampaignTemplate,
 } from "@/lib/sales/admin-sales-campaign-client";
 import {
@@ -125,7 +127,7 @@ function renderTemplate(template: SalesCampaignTemplateDto, lead: SalesLeadDto |
     contactFirstName,
     contactLastName,
     contactName,
-    industry: safeIndustry,
+    industry: formatIndustryLabel(safeIndustry),
     currentProvider: lead?.currentProvider ?? "current provider",
     estimatedCurrentMonthlyCost: String(lead?.estimatedCurrentMonthlyCost ?? "unknown"),
     landingPageLink,
@@ -231,6 +233,9 @@ export default function AdminSalesPage() {
         }
         if (lead.snoozedUntil && new Date(lead.snoozedUntil) > new Date()) reasons.push("snoozed until date");
         if (selectedTemplateKey !== "SNAIL_MAIL_LETTER" && !lead.email) reasons.push("no email");
+        if (selectedTemplateKey !== "SNAIL_MAIL_LETTER" && lead.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lead.email)) {
+          reasons.push("invalid email");
+        }
         if (selectedTemplateKey === "SNAIL_MAIL_LETTER" && !lead.address && !lead.postcode) {
           reasons.push("no postal address");
         }
@@ -473,6 +478,96 @@ export default function AdminSalesPage() {
     await loadAll();
   }
 
+  async function sendSelectedEmail() {
+    const campaign = await getOrCreateCampaign();
+    if (!campaign) return;
+    const selectedCount = selectedEligibleIds.length;
+    if (selectedCount === 0) {
+      setError("Select at least one eligible lead.");
+      return;
+    }
+    const ineligibleSelectedCount = selectedLeadIds.length - selectedEligibleIds.length;
+    const templateLabel = TEMPLATE_KEYS.find((item) => item.key === selectedTemplateKey)?.label || selectedTemplateKey;
+    const confirmed = window.confirm(
+      `Send ${templateLabel} to ${selectedCount} selected lead(s)? This will email selected contacts and update campaign history.${ineligibleSelectedCount > 0 ? `\n\n${ineligibleSelectedCount} selected lead(s) are ineligible and will be skipped.` : ""}`,
+    );
+    if (!confirmed) return;
+    const result = await sendBackendSalesCampaignEmail(campaign.id, selectedEligibleIds, selectedTemplateKey);
+    if (!result.ok) {
+      if (result.error === "EMAIL_NOT_CONFIGURED") {
+        setError("Email provider is not configured. Use manual sent tracking or configure email first.");
+      } else {
+        setError(result.error);
+      }
+      return;
+    }
+    const skippedReasons = result.result.details
+      .filter((item) => item.outcome !== "SENT" && item.reason)
+      .map((item) => item.reason)
+      .slice(0, 3)
+      .join(", ");
+    setMessage(
+      `Sent ${result.result.sentCount}. Skipped ${result.result.skippedCount}. Failed ${result.result.failedCount}.${skippedReasons ? ` Reasons: ${skippedReasons}` : ""}`,
+    );
+    await loadAll();
+  }
+
+  async function deleteLead(leadId: string) {
+    const confirmed = window.confirm("Delete this lead? This is intended for test/spam leads and cannot be undone.");
+    if (!confirmed) return;
+    let result = await deleteBackendSalesLead(leadId, false);
+    if (!result.ok && result.error === "FORCE_CONFIRMATION_REQUIRED") {
+      const forceConfirmed = window.confirm(
+        "This lead has campaign history or converted status. Delete permanently anyway?",
+      );
+      if (!forceConfirmed) return;
+      result = await deleteBackendSalesLead(leadId, true);
+    }
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    setMessage("Lead deleted.");
+    await loadAll();
+  }
+
+  async function deleteSelectedLeads() {
+    if (selectedLeadIds.length === 0) {
+      setError("Select at least one lead to delete.");
+      return;
+    }
+    const confirmed = window.confirm(
+      `Delete ${selectedLeadIds.length} selected lead(s)? This is intended for test/spam leads and cannot be undone.`,
+    );
+    if (!confirmed) return;
+    let deleted = 0;
+    let failed = 0;
+    for (const id of selectedLeadIds) {
+      const result = await deleteBackendSalesLead(id, false);
+      if (result.ok) {
+        deleted += 1;
+        continue;
+      }
+      if (result.error === "FORCE_CONFIRMATION_REQUIRED") {
+        const force = window.confirm(
+          "Some selected leads have campaign history or converted status. Force delete those leads as well?",
+        );
+        if (force) {
+          const forced = await deleteBackendSalesLead(id, true);
+          if (forced.ok) deleted += 1;
+          else failed += 1;
+        } else {
+          failed += 1;
+        }
+      } else {
+        failed += 1;
+      }
+    }
+    setMessage(`Deleted ${deleted} selected lead(s). Failed ${failed}.`);
+    setSelectedLeadIds([]);
+    await loadAll();
+  }
+
   async function snoozeThreeMonths() {
     const date = new Date();
     date.setMonth(date.getMonth() + 3);
@@ -663,10 +758,15 @@ export default function AdminSalesPage() {
         <div className="mt-2 flex flex-wrap gap-2">
           <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setSelectedLeadIds(eligibleIds)}>Select all eligible</button>
           <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setSelectedLeadIds([])}>Clear</button>
+          <button className={`${primaryButtonClass} ${smallButtonClass}`} onClick={() => void sendSelectedEmail()} disabled={selectedEligibleIds.length === 0}>Send selected email</button>
           <button className={`${primaryButtonClass} ${smallButtonClass}`} onClick={() => void markPrepared()} disabled={selectedEligibleIds.length === 0}>Mark campaign prepared</button>
           <button className={`${primaryButtonClass} ${smallButtonClass}`} onClick={() => void markSent()} disabled={selectedEligibleIds.length === 0}>Mark selected as sent manually</button>
           <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void snoozeThreeMonths()} disabled={selectedEligibleIds.length === 0}>Do not contact 3 months</button>
+          <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void deleteSelectedLeads()} disabled={selectedLeadIds.length === 0}>Delete selected test leads</button>
         </div>
+        <p className="mt-2 text-xs text-slate-600">
+          Send selected email sends via configured provider to selected eligible leads only. Mark selected as sent manually logs external/manual sends without dispatching email.
+        </p>
         <p className="mt-2 text-sm text-slate-700">Eligible: {eligibleIds.length} / {candidates.length}</p>
 
         <div className="mt-3 overflow-auto">
@@ -686,6 +786,7 @@ export default function AdminSalesPage() {
                 <th className="px-2 py-2">Last contacted</th>
                 <th className="px-2 py-2">Last step</th>
                 <th className="px-2 py-2">Eligibility</th>
+                <th className="px-2 py-2">Delete</th>
               </tr>
             </thead>
             <tbody>
@@ -715,6 +816,9 @@ export default function AdminSalesPage() {
                   <td className="px-2 py-2">{row.lead.lastContactedAt ? formatUkDateTime(row.lead.lastContactedAt) : "-"}</td>
                   <td className="px-2 py-2">{row.lead.lastCampaignStep ?? "-"}</td>
                   <td className="px-2 py-2">{row.eligible ? "Eligible" : row.reasons.join(", ")}</td>
+                  <td className="px-2 py-2">
+                    <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void deleteLead(row.lead.id)}>Delete</button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -819,8 +923,7 @@ export default function AdminSalesPage() {
           Unsubscribed, converted/subscribed, bounced, and do-not-contact leads are excluded from future campaigns.
         </p>
         <p className="mt-1 text-sm text-slate-700">
-          Live bulk sending remains disabled; Resend webhook still requires verified signature handling before automated
-          bounce/event ingestion.
+          Controlled selected sending is enabled with server-side suppression checks; unrestricted bulk blast sending remains disabled.
         </p>
       </section>
     </main>

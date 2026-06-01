@@ -5,6 +5,7 @@ import {
   listSalesCampaignsSchema,
   updateSalesCampaignSchema,
 } from "@/lib/sales/sales-campaign-schema";
+import { sendSalesCampaignEmails } from "@/lib/sales/sales-campaign-send";
 
 function parseOrThrow<T>(schema: z.ZodType<T>, value: unknown, label: string): T {
   const result = schema.safeParse(value);
@@ -144,3 +145,5 @@ export async function markSalesCampaignSentManual(input: {
     return { campaign, recipients, updatedLeadCount };
   });
 }
+
+export { sendSalesCampaignEmails };
