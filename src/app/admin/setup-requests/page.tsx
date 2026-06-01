@@ -1,13 +1,16 @@
 ﻿"use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   archiveBackendCancelledSetupRequest,
   BackendSetupRequestRecord,
   createSubscriberSiteFromPaidSetupRequest,
+  getSetupRequestSiteAdminAccess,
   getBackendSetupRequest,
   listBackendSetupRequests,
+  resetSetupRequestSiteAdminAccessCode,
+  SetupRequestSiteAdminAccessInfo,
   updateBackendSetupRequestStatus,
 } from "@/lib/setup/admin-setup-request-client";
 import { setupStatusLabel } from "@/lib/setup/status";
@@ -65,6 +68,12 @@ function toMessage(error: string, status: number): string {
   if (error === "SETUP_REQUEST_ARCHIVE_NOT_ALLOWED") {
     return "Only non-paid, non-provisioned requests can be hidden from the queue.";
   }
+  if (error === "SUBSCRIBER_SITE_NOT_PROVISIONED") {
+    return "Provision the subscriber site first, then generate business admin access.";
+  }
+  if (error === "SITE_ADMIN_EMAIL_REQUIRED") {
+    return "No business admin email is available yet. Add a contact email before generating an access code.";
+  }
   return `Request failed: ${error}`;
 }
 
@@ -97,11 +106,37 @@ export default function AdminSetupRequestsPage() {
     adminSiteUrl: string;
     created: boolean;
   } | null>(null);
+  const [siteAdminAccess, setSiteAdminAccess] = useState<SetupRequestSiteAdminAccessInfo | null>(null);
+  const [siteAdminAccessCode, setSiteAdminAccessCode] = useState<string | null>(null);
 
   const selectedRequest = useMemo(
     () => requests.find((request) => request.id === selectedId) ?? detail,
     [requests, selectedId, detail],
   );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function syncSiteAdminAccess() {
+      if (!selectedRequest?.tenantSite?.id) {
+        setSiteAdminAccess(null);
+        setSiteAdminAccessCode(null);
+        return;
+      }
+      const accessResult = await getSetupRequestSiteAdminAccess(selectedRequest.id);
+      if (cancelled) return;
+      if (accessResult.ok) {
+        setSiteAdminAccess(accessResult.access);
+      } else {
+        setSiteAdminAccess(null);
+      }
+    }
+
+    void syncSiteAdminAccess();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedRequest?.id, selectedRequest?.tenantSite?.id]);
 
   async function loadRequests(preferredSelectedId?: string): Promise<void> {
     setLoading(true);
@@ -149,6 +184,17 @@ export default function AdminSetupRequestsPage() {
       return;
     }
     setDetail(result.setupRequest);
+    setSiteAdminAccessCode(null);
+    if (result.setupRequest.tenantSite?.id) {
+      const accessResult = await getSetupRequestSiteAdminAccess(id);
+      if (accessResult.ok) {
+        setSiteAdminAccess(accessResult.access);
+      } else {
+        setSiteAdminAccess(null);
+      }
+    } else {
+      setSiteAdminAccess(null);
+    }
   }
 
   async function saveStatus(requestId: string): Promise<void> {
@@ -188,6 +234,22 @@ export default function AdminSetupRequestsPage() {
     setMessage(result.created ? "Subscriber site created." : "Subscriber site already provisioned.");
     await loadRequestDetail(requestId);
     await loadRequests(requestId);
+  }
+
+  async function resetSiteAdminAccessCode(requestId: string): Promise<void> {
+    const confirmed = window.confirm(
+      "Generate or reset the business admin access code for this subscriber site? The new code should be shared securely.",
+    );
+    if (!confirmed) return;
+
+    const result = await resetSetupRequestSiteAdminAccessCode(requestId);
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status));
+      return;
+    }
+    setSiteAdminAccess(result.access);
+    setSiteAdminAccessCode(result.generatedAccessCode);
+    setMessage("Business admin access code generated. Share this one-time code securely.");
   }
 
   async function hideFromQueue(requestId: string, cancelled: boolean): Promise<void> {
@@ -360,6 +422,53 @@ export default function AdminSetupRequestsPage() {
                       Open subscriber admin
                     </Link>
                   </div>
+                </div>
+              ) : null}
+
+              {selectedRequest.tenantSite?.slug ? (
+                <div className="rounded-xl border border-sky-200 bg-sky-50 p-3 text-sm text-sky-900">
+                  <p className="font-semibold">Business admin access handover</p>
+                  <p className="mt-1">
+                    <span className="font-semibold">Site slug:</span> {siteAdminAccess?.siteSlug ?? selectedRequest.tenantSite.slug}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Admin email:</span>{" "}
+                    {formatOptional(siteAdminAccess?.adminEmail ?? selectedRequest.contactEmail)}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Access code exists:</span>{" "}
+                    {siteAdminAccess?.accessCodeExists ? "Yes" : "No"}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Status:</span>{" "}
+                    {formatOptional(siteAdminAccess?.invitationStatus)}
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className={`${outlineButtonClass} ${smallButtonClass}`}
+                      onClick={() => resetSiteAdminAccessCode(selectedRequest.id)}
+                    >
+                      {siteAdminAccess?.accessCodeExists ? "Reset access code" : "Generate access code"}
+                    </button>
+                    <Link
+                      href={`/site-admin/${selectedRequest.tenantSite.slug}`}
+                      className={`${primaryButtonClass} ${smallButtonClass}`}
+                    >
+                      Open subscriber admin
+                    </Link>
+                  </div>
+                  {siteAdminAccessCode ? (
+                    <div className="mt-3 rounded-md border border-sky-300 bg-white px-3 py-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">
+                        One-time generated access code (dev handover)
+                      </p>
+                      <p className="mt-1 font-mono text-base text-sky-950">{siteAdminAccessCode}</p>
+                      <p className="mt-1 text-xs text-sky-700">
+                        Temporary testing handover only. Future flow should deliver this securely by email.
+                      </p>
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
 

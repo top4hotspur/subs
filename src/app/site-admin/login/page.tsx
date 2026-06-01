@@ -17,7 +17,28 @@ function toFriendlyLoginError(error: string | null | undefined): string {
 
 export default function SiteAdminLoginPage() {
   const router = useRouter();
-  const [siteSlug, setSiteSlug] = useState("");
+  const [callbackUrl] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("callbackUrl") || "";
+  });
+  const [siteSlug, setSiteSlug] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const search = new URLSearchParams(window.location.search);
+    const directSlug = search.get("siteSlug")?.trim();
+    if (directSlug) return directSlug;
+
+    const callback = search.get("callbackUrl");
+    if (!callback) return "";
+
+    try {
+      const normalized = callback.startsWith("/") ? callback : `/${callback}`;
+      const path = normalized.split("?")[0];
+      const match = path.match(/^\/site-admin\/([^/]+)$/);
+      return match?.[1] ? decodeURIComponent(match[1]) : "";
+    } catch {
+      return "";
+    }
+  });
   const [email, setEmail] = useState("");
   const [accessCode, setAccessCode] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +54,7 @@ export default function SiteAdminLoginPage() {
       email: email.trim().toLowerCase(),
       accessCode: accessCode.trim(),
       redirect: false,
-      callbackUrl: `/site-admin/${encodeURIComponent(siteSlug.trim())}`,
+      callbackUrl: callbackUrl || `/site-admin/${encodeURIComponent(siteSlug.trim())}`,
     });
 
     if (!result) {
@@ -47,7 +68,7 @@ export default function SiteAdminLoginPage() {
       return;
     }
 
-    router.push(result.url || `/site-admin/${encodeURIComponent(siteSlug.trim())}`);
+    router.push(result.url || callbackUrl || `/site-admin/${encodeURIComponent(siteSlug.trim())}`);
     setLoading(false);
   }
 
@@ -98,4 +119,3 @@ export default function SiteAdminLoginPage() {
     </main>
   );
 }
-

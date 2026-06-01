@@ -52,6 +52,17 @@ export type SetupRequestProvisioningResult = {
   created: boolean;
 };
 
+export type SetupRequestSiteAdminAccessInfo = {
+  setupRequestId: string;
+  tenantSiteId: string;
+  siteSlug: string;
+  adminEmail: string | null;
+  siteAdminUserId: string | null;
+  accessCodeExists: boolean;
+  invitationStatus: "INVITED" | "ACTIVE" | "DISABLED" | null;
+  active: boolean | null;
+};
+
 export type ListBackendSetupRequestsOptions = Partial<Pick<
   ReturnType<typeof listSetupRequestsSchema.parse>,
   "industrySlug" | "status" | "contactEmail" | "take" | "skip"
@@ -227,6 +238,84 @@ export async function createSubscriberSiteFromPaidSetupRequest(
       publicSiteUrl: body.publicSiteUrl ?? `/sites/${body.siteSlug}`,
       adminSiteUrl: body.adminSiteUrl ?? `/site-admin/${body.siteSlug}`,
       created: Boolean(body.created),
+    };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function getSetupRequestSiteAdminAccess(
+  setupRequestId: string,
+): Promise<AdminSetupRequestClientResult<{ access: SetupRequestSiteAdminAccessInfo }>> {
+  try {
+    const response = await fetch(
+      `/api/admin/setup-requests/${encodeURIComponent(setupRequestId)}/site-admin-access`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+    const body = (await parseJsonSafe(response)) as
+      | { ok?: boolean; access?: SetupRequestSiteAdminAccessInfo; error?: string; details?: unknown }
+      | null;
+
+    if (!response.ok || !body?.ok || !body.access) {
+      return {
+        ok: false,
+        error: body?.error ?? "SETUP_REQUEST_SITE_ADMIN_ACCESS_GET_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+
+    return { ok: true, access: body.access };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function resetSetupRequestSiteAdminAccessCode(
+  setupRequestId: string,
+  email?: string,
+): Promise<
+  AdminSetupRequestClientResult<{ access: SetupRequestSiteAdminAccessInfo; generatedAccessCode: string }>
+> {
+  try {
+    const response = await fetch(
+      `/api/admin/setup-requests/${encodeURIComponent(setupRequestId)}/site-admin-access`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(email ? { email } : {}),
+      },
+    );
+    const body = (await parseJsonSafe(response)) as
+      | {
+          ok?: boolean;
+          access?: SetupRequestSiteAdminAccessInfo;
+          generatedAccessCode?: string;
+          error?: string;
+          details?: unknown;
+        }
+      | null;
+
+    if (!response.ok || !body?.ok || !body.access || !body.generatedAccessCode) {
+      return {
+        ok: false,
+        error: body?.error ?? "SETUP_REQUEST_SITE_ADMIN_ACCESS_RESET_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+
+    return {
+      ok: true,
+      access: body.access,
+      generatedAccessCode: body.generatedAccessCode,
     };
   } catch {
     return { ok: false, error: "NETWORK_ERROR", status: 0 };
