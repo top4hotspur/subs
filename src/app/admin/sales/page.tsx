@@ -147,7 +147,6 @@ export default function AdminSalesPage() {
   const [selectedTemplateKey, setSelectedTemplateKey] = useState<TemplateKey>("EMAIL_INTRODUCTION");
   const [campaignLevel, setCampaignLevel] = useState<CampaignLevel>("INTRODUCTION");
   const [campaignIndustry, setCampaignIndustry] = useState("barbers");
-  const [campaignServiceArea, setCampaignServiceArea] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -186,7 +185,6 @@ export default function AdminSalesPage() {
   const candidates = useMemo(() => {
     return leads
       .filter((lead) => !campaignIndustry || lead.industrySlug === campaignIndustry)
-      .filter((lead) => !campaignServiceArea || lead.serviceArea?.toLowerCase() === campaignServiceArea.toLowerCase())
       .map((lead) => {
         const reasons: string[] = [];
         if (["UNSUBSCRIBED", "DO_NOT_CONTACT", "BOUNCED", "CONVERTED"].includes(lead.marketingStatus ?? "ACTIVE")) {
@@ -200,7 +198,7 @@ export default function AdminSalesPage() {
         if (lead.lastCampaignStep === selectedTemplateKey) reasons.push("already received this step");
         return { lead, reasons, eligible: reasons.length === 0 };
       });
-  }, [leads, campaignIndustry, campaignServiceArea, selectedTemplateKey]);
+  }, [leads, campaignIndustry, selectedTemplateKey]);
 
   const eligibleIds = useMemo(
     () => candidates.filter((x) => x.eligible).map((x) => x.lead.id),
@@ -248,6 +246,10 @@ export default function AdminSalesPage() {
   async function addLead() {
     setError(null);
     setMessage(null);
+    if (!form.industrySlug) {
+      setError("Please select an industry.");
+      return;
+    }
     const result = await createBackendSalesLead({
       businessName: form.businessName,
       industrySlug: form.industrySlug || undefined,
@@ -267,7 +269,11 @@ export default function AdminSalesPage() {
       source: "manual",
     });
     if (!result.ok) {
-      setError(result.error);
+      if (result.error === "VALIDATION_ERROR") {
+        setError("Please check the lead details and try again.");
+      } else {
+        setError(result.error);
+      }
       return;
     }
     setForm({
@@ -360,7 +366,6 @@ export default function AdminSalesPage() {
     const result = await createBackendSalesCampaign({
       name: `${campaignLevelLabel(campaignLevel)} - ${campaignIndustry}`,
       industrySlug: campaignIndustry,
-      serviceArea: campaignServiceArea || undefined,
       campaignLevel,
       status: "DRAFT",
     });
@@ -459,6 +464,9 @@ export default function AdminSalesPage() {
           <h1 className="text-3xl font-bold text-slate-900">Sales Pipeline</h1>
           <p className="mt-1 text-sm text-slate-600">
             Build leads, select candidates, edit templates, and track manual sends.
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            Sales pipeline build marker: <span className="font-mono">sales-pipeline-provider-pricing-v2</span> · Service Area removed · Booksy default £40 · provider pricing table enabled
           </p>
         </div>
         <Link href="/admin" className={`${outlineButtonClass} ${smallButtonClass}`}>
@@ -561,11 +569,10 @@ export default function AdminSalesPage() {
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">Campaign builder + candidate selection</h2>
-        <div className="mt-2 grid gap-2 sm:grid-cols-4">
+        <div className="mt-2 grid gap-2 sm:grid-cols-3">
           <select className="rounded border border-slate-300 px-2 py-2 text-sm" value={campaignIndustry} onChange={(e) => setCampaignIndustry(e.target.value)}>
             {WEBSITE_TEMPLATE_SLUGS.map((slug) => <option key={slug} value={slug}>{formatIndustryLabel(slug)}</option>)}
           </select>
-          <input className="rounded border border-slate-300 px-2 py-2 text-sm" placeholder="Service area filter (optional)" value={campaignServiceArea} onChange={(e) => setCampaignServiceArea(e.target.value)} />
           <select className="rounded border border-slate-300 px-2 py-2 text-sm" value={campaignLevel} onChange={(e) => { const level = e.target.value as CampaignLevel; setCampaignLevel(level); setSelectedTemplateKey(defaultTemplateKeyForLevel(level)); }}>
             <option value="LAUNCH_OFFER">Launch offer</option>
             <option value="INTRODUCTION">Introduction</option>
@@ -639,7 +646,7 @@ export default function AdminSalesPage() {
       </section>
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Provider pricing table</h2>
+        <h2 className="text-lg font-semibold text-slate-900">Competitor/provider pricing</h2>
         <p className="text-sm text-slate-600">Used for lead estimated monthly cost auto-fill. Booksy default is £40.</p>
         <div className="mt-3 overflow-auto">
           <table className="min-w-full text-xs">
