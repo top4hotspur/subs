@@ -79,6 +79,10 @@ export default function SiteAdminLoginPage() {
         <p className="mt-2 text-sm text-slate-600">
           Subscriber site owner/admin access. Platform admin area is separate.
         </p>
+        <p className="mt-1 text-xs text-slate-600">
+          Your access code is sent by email when your site is prepared. If you cannot find it, check your
+          junk/spam folder or contact support.
+        </p>
         <form className="mt-5 space-y-3" onSubmit={handleSubmit}>
           <label className="block text-sm font-medium text-slate-800">
             Site slug

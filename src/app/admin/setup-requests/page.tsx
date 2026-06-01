@@ -108,6 +108,7 @@ export default function AdminSetupRequestsPage() {
   } | null>(null);
   const [siteAdminAccess, setSiteAdminAccess] = useState<SetupRequestSiteAdminAccessInfo | null>(null);
   const [siteAdminAccessCode, setSiteAdminAccessCode] = useState<string | null>(null);
+  const [siteAdminAccessEmailStatus, setSiteAdminAccessEmailStatus] = useState<string | null>(null);
 
   const selectedRequest = useMemo(
     () => requests.find((request) => request.id === selectedId) ?? detail,
@@ -185,6 +186,7 @@ export default function AdminSetupRequestsPage() {
     }
     setDetail(result.setupRequest);
     setSiteAdminAccessCode(null);
+    setSiteAdminAccessEmailStatus(null);
     if (result.setupRequest.tenantSite?.id) {
       const accessResult = await getSetupRequestSiteAdminAccess(id);
       if (accessResult.ok) {
@@ -249,7 +251,16 @@ export default function AdminSetupRequestsPage() {
     }
     setSiteAdminAccess(result.access);
     setSiteAdminAccessCode(result.generatedAccessCode);
-    setMessage("Business admin access code generated. Share this one-time code securely.");
+    setSiteAdminAccessEmailStatus(result.emailStatus);
+    if (result.emailSent) {
+      setMessage("Business admin access code generated and emailed.");
+      return;
+    }
+    if (result.emailStatus === "EMAIL_NOT_CONFIGURED") {
+      setMessage("Access code generated, but email is not configured. Share the one-time code manually for now.");
+      return;
+    }
+    setMessage("Access code generated, but email delivery failed. Share the one-time code manually for now.");
   }
 
   async function hideFromQueue(requestId: string, cancelled: boolean): Promise<void> {
@@ -449,7 +460,9 @@ export default function AdminSetupRequestsPage() {
                       className={`${outlineButtonClass} ${smallButtonClass}`}
                       onClick={() => resetSiteAdminAccessCode(selectedRequest.id)}
                     >
-                      {siteAdminAccess?.accessCodeExists ? "Reset access code" : "Generate access code"}
+                      {siteAdminAccess?.accessCodeExists
+                        ? "Reset and email access code"
+                        : "Generate and email access code"}
                     </button>
                     <Link
                       href={`/site-admin/${selectedRequest.tenantSite.slug}`}
@@ -465,9 +478,14 @@ export default function AdminSetupRequestsPage() {
                       </p>
                       <p className="mt-1 font-mono text-base text-sky-950">{siteAdminAccessCode}</p>
                       <p className="mt-1 text-xs text-sky-700">
-                        Temporary testing handover only. Future flow should deliver this securely by email.
+                        Temporary dev/hosted handover. Use this if email delivery fails.
                       </p>
                     </div>
+                  ) : null}
+                  {siteAdminAccessEmailStatus ? (
+                    <p className="mt-2 text-xs text-sky-800">
+                      Email delivery status: <span className="font-semibold">{siteAdminAccessEmailStatus}</span>
+                    </p>
                   ) : null}
                 </div>
               ) : null}

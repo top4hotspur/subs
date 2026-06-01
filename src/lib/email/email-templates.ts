@@ -15,6 +15,14 @@ type SiteSummaryForEmail = {
   siteName: string;
 };
 
+type BusinessAdminAccessEmailInput = {
+  businessName: string;
+  siteSlug: string;
+  loginUrl: string;
+  adminEmail: string;
+  accessCode: string;
+};
+
 export function contactEnquiryAdminNotification(enquiry: ContactEnquiryEmailInput) {
   const subject = `New contact enquiry - ${enquiry.name}`;
   const text = [
@@ -110,6 +118,38 @@ export function tenantBookingCustomerConfirmation(
 <strong>Time:</strong> ${escapeHtml(booking.preferredTime || "-")}<br/>
 <strong>Staff:</strong> ${escapeHtml(booking.staffName || "-")}</p>
 <p>We will confirm your booking details shortly.</p>`;
+  return { subject, text, html };
+}
+
+export function businessAdminAccessHandoverEmail(input: BusinessAdminAccessEmailInput) {
+  const subject = `Your ${input.businessName} website admin access`;
+  const text = [
+    `Hi,`,
+    "",
+    `Your business admin access is ready for ${input.businessName}.`,
+    "",
+    `Business name: ${input.businessName}`,
+    `Site slug: ${input.siteSlug}`,
+    `Business admin login URL: ${input.loginUrl}`,
+    `Admin email: ${input.adminEmail}`,
+    `One-time access code: ${input.accessCode}`,
+    "",
+    "Keep this access code private. If it is exposed, request a reset immediately.",
+    "Please keep an eye on your inbox and check junk/spam if future emails are not seen.",
+    "",
+    "If you need help, contact MyExperiment.club support.",
+  ].join("\n");
+
+  const html = `<p>Hi,</p>
+<p>Your business admin access is ready for <strong>${escapeHtml(input.businessName)}</strong>.</p>
+<p><strong>Business name:</strong> ${escapeHtml(input.businessName)}<br/>
+<strong>Site slug:</strong> ${escapeHtml(input.siteSlug)}<br/>
+<strong>Business admin login URL:</strong> <a href="${escapeHtml(input.loginUrl)}">${escapeHtml(input.loginUrl)}</a><br/>
+<strong>Admin email:</strong> ${escapeHtml(input.adminEmail)}<br/>
+<strong>One-time access code:</strong> ${escapeHtml(input.accessCode)}</p>
+<p>Keep this access code private. If it is exposed, request a reset immediately.</p>
+<p>Please keep an eye on your inbox and check junk/spam if future emails are not seen.</p>
+<p>If you need help, contact MyExperiment.club support.</p>`;
   return { subject, text, html };
 }
 

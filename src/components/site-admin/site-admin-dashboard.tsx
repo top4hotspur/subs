@@ -903,7 +903,11 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
           <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
             <h4 className="text-sm font-semibold text-slate-900">Payments and policies</h4>
             <p className="mt-1 text-xs text-slate-600">
-              This records how this business plans to take payments. It does not connect or process payments yet.
+              This records how your business plans to take payments. It does not yet connect to Stripe/Square/other
+              provider APIs in this phase.
+            </p>
+            <p className="mt-1 text-xs text-slate-600">
+              Do not enter API keys or passwords here.
             </p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
@@ -924,7 +928,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                 </select>
               </label>
               <label className="text-xs font-semibold text-slate-700">
-                Provider
+                Payment provider
                 <select
                   className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
                   value={settingsDraft.paymentProcessorName}
@@ -945,7 +949,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                 </select>
               </label>
               <label className="text-xs font-semibold text-slate-700">
-                Account reference / provider email
+                Provider account reference/email
                 <input
                   className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
                   value={settingsDraft.paymentProcessorAccountRef}
@@ -1048,6 +1052,9 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                 Allow customer block bookings
               </label>
             </div>
+            <p className="mt-2 text-[11px] text-slate-600">
+              Recommended: keep card prepayment enabled for online bookings. Cash payments can increase no-show risk.
+            </p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <label className="text-xs font-semibold text-slate-700">
                 Full refund notice period (days)
@@ -1089,6 +1096,10 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                 />
               </label>
             </div>
+            <p className="mt-2 text-[11px] text-slate-600">
+              Public booking will require customers to confirm they have read and accepted this cancellation/refund
+              policy before completing bookings (full enforcement in booking journey milestone).
+            </p>
             <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3">
               <p className="text-xs font-semibold text-slate-900">Recurring payment issues</p>
               <p className="mt-1 text-xs text-slate-600">No failed recurring payments to review.</p>

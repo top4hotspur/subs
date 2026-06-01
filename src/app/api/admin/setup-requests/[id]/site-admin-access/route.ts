@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin";
 import { generateTemporaryAccessCode } from "@/lib/auth/access-code";
-import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
+import { getOptionalServerEnv, isBackendPersistenceConfigured } from "@/lib/config/server-env";
 import { prisma } from "@/lib/db/prisma";
+import { sendTransactionalEmail } from "@/lib/email/email-provider";
+import { businessAdminAccessHandoverEmail } from "@/lib/email/email-templates";
 import {
   createCustomerSiteAdminUser,
   updateCustomerSiteAdminUser,
@@ -51,12 +53,18 @@ async function resolveSetupRequestAndSite(id: string) {
     return { error: "SUBSCRIBER_SITE_NOT_PROVISIONED" as const };
   }
 
+  const settings = await prisma.customerSiteSettings.findUnique({
+    where: { tenantSiteId: setupRequest.tenantSiteId },
+    select: { businessName: true, siteDisplayName: true },
+  });
+
   return {
     setupRequest: {
       id: setupRequest.id,
       contactEmail: setupRequest.contactEmail,
       tenantSiteId: setupRequest.tenantSiteId,
       tenantSite: setupRequest.tenantSite,
+      businessName: settings?.businessName || settings?.siteDisplayName || setupRequest.tenantSite.slug,
     },
   };
 }
@@ -181,13 +189,31 @@ export async function POST(
     }
 
     const refreshedUser = await loadPreferredAdminUser(resolved.setupRequest.tenantSiteId, targetEmail);
+    const siteSlug = resolved.setupRequest.tenantSite.slug;
+    const loginPath = `/site-admin/${encodeURIComponent(siteSlug)}`;
+    const siteUrlBase = getOptionalServerEnv("NEXT_PUBLIC_SITE_URL");
+    const loginUrl = siteUrlBase ? `${siteUrlBase}${loginPath}` : loginPath;
+
+    const handoverEmail = businessAdminAccessHandoverEmail({
+      businessName: resolved.setupRequest.businessName,
+      siteSlug,
+      loginUrl,
+      adminEmail: refreshedUser?.email ?? targetEmail,
+      accessCode: generatedAccessCode,
+    });
+    const emailResult = await sendTransactionalEmail({
+      to: refreshedUser?.email ?? targetEmail,
+      subject: handoverEmail.subject,
+      text: handoverEmail.text,
+      html: handoverEmail.html,
+    });
 
     return NextResponse.json({
       ok: true,
       access: toAccessResponse({
         setupRequestId: resolved.setupRequest.id,
         tenantSiteId: resolved.setupRequest.tenantSiteId,
-        siteSlug: resolved.setupRequest.tenantSite.slug,
+        siteSlug,
         adminEmail: refreshedUser?.email ?? targetEmail,
         siteAdminUserId: refreshedUser?.id ?? null,
         accessCodeExists: Boolean(refreshedUser?.accessCodeHash),
@@ -196,6 +222,9 @@ export async function POST(
         active: refreshedUser?.active ?? null,
       }),
       generatedAccessCode,
+      emailSent: emailResult.ok,
+      emailSkipped: emailResult.ok ? false : emailResult.skipped,
+      emailStatus: emailResult.ok ? "SENT" : emailResult.reason,
     });
   } catch (error) {
     return NextResponse.json(

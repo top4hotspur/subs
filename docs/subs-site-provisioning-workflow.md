@@ -245,3 +245,11 @@ Still local/mock in current product:
   - Cookie Policy
   - Terms / Policies
 - Cookie acceptance is currently a simple local browser consent banner (no third-party cookie manager in this phase).
+
+## Business admin access handover (email)
+- Platform admin can generate/reset business admin access codes from `/admin/setup-requests` for provisioned sites.
+- Access code is stored hashed (`CustomerSiteAdminUser.accessCodeHash`), never plaintext in DB.
+- On generate/reset, system now attempts transactional email handover to the site admin email.
+- API is fail-soft: code generation succeeds even if email fails or is not configured.
+- Platform admin UI displays email delivery status and still shows one-time code for temporary dev/hosted handover.
+- One-time on-screen code display is temporary; secure email-first delivery is the target flow.

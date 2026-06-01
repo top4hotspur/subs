@@ -754,3 +754,16 @@ Add these checks after backend envs are configured:
 Notes:
 - Live bulk email sending is still disabled.
 - Resend webhook remains verification-gated; unverified automated bounce/unsubscribe ingestion stays deferred.
+
+## 2026-06-01 hosted smoke checks: business admin access email handover
+1. Open `/admin/setup-requests`.
+2. Select provisioned Luna Hair Studio request.
+3. Click `Reset and email access code`.
+4. Confirm one-time code is shown in platform admin.
+5. Confirm UI shows email delivery status (`SENT`, `EMAIL_NOT_CONFIGURED`, or `EMAIL_SEND_FAILED`).
+6. Check target inbox and junk/spam for admin access email.
+7. Open `/site-admin/luna-hair-studio` and confirm site slug is prefilled on login.
+8. Login with site slug, admin email, and latest generated code.
+9. Confirm redirect into tenant-scoped subscriber admin.
+10. Open `/setup/confirmation` and confirm `Next Steps` includes admin-login-email + junk/spam guidance.
+11. In `/site-admin/[siteSlug]`, confirm Payments and policies copy clearly states provider API integration is not live yet.

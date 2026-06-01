@@ -280,7 +280,13 @@ export async function resetSetupRequestSiteAdminAccessCode(
   setupRequestId: string,
   email?: string,
 ): Promise<
-  AdminSetupRequestClientResult<{ access: SetupRequestSiteAdminAccessInfo; generatedAccessCode: string }>
+  AdminSetupRequestClientResult<{
+    access: SetupRequestSiteAdminAccessInfo;
+    generatedAccessCode: string;
+    emailSent: boolean;
+    emailSkipped: boolean;
+    emailStatus: string;
+  }>
 > {
   try {
     const response = await fetch(
@@ -298,12 +304,15 @@ export async function resetSetupRequestSiteAdminAccessCode(
           ok?: boolean;
           access?: SetupRequestSiteAdminAccessInfo;
           generatedAccessCode?: string;
+          emailSent?: boolean;
+          emailSkipped?: boolean;
+          emailStatus?: string;
           error?: string;
           details?: unknown;
         }
       | null;
 
-    if (!response.ok || !body?.ok || !body.access || !body.generatedAccessCode) {
+    if (!response.ok || !body?.ok || !body.access || !body.generatedAccessCode || !body.emailStatus) {
       return {
         ok: false,
         error: body?.error ?? "SETUP_REQUEST_SITE_ADMIN_ACCESS_RESET_FAILED",
@@ -316,6 +325,9 @@ export async function resetSetupRequestSiteAdminAccessCode(
       ok: true,
       access: body.access,
       generatedAccessCode: body.generatedAccessCode,
+      emailSent: Boolean(body.emailSent),
+      emailSkipped: Boolean(body.emailSkipped),
+      emailStatus: body.emailStatus,
     };
   } catch {
     return { ok: false, error: "NETWORK_ERROR", status: 0 };

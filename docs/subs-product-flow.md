@@ -568,3 +568,17 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Confirmation route is now treated as post-checkout and next-steps focused, with a retry-payment path when checkout is cancelled.
 - Setup order summary now emphasizes payable-today and monthly subscription amounts.
 - Card details remain handled by Stripe Checkout only; webhook remains source of truth for paid status.
+
+## Business admin login handover
+- When a site-admin access code is generated/reset from platform admin setup requests, a transactional email attempt is made to the business admin email.
+- Email includes login URL, site slug, admin email, and one-time access code with privacy guidance.
+- If email fails or is not configured, platform admin sees delivery status and can manually share the one-time code as temporary fallback.
+- `/site-admin/login` now explicitly instructs business owners to check junk/spam if they do not see access emails.
+
+## Confirmation page copy
+- `/setup/confirmation` `Next Steps` now states:
+  - order/domain check
+  - clean site + admin prep
+  - business admin login email delivery
+  - inbox + junk/spam reminder
+  - go-live/domain support sequence

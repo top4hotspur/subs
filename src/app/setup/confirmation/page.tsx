@@ -236,17 +236,20 @@ export default function SetupConfirmationPage() {
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-xl font-semibold text-slate-900">Next Steps</h2>
           <ol className="mt-4 space-y-3 text-sm text-slate-700">
-            <li>1. We are now preparing your custom website build.</li>
+            <li>1. We check your order and confirm your domain details.</li>
+            <li>2. We prepare your clean website and business admin area.</li>
             {request.domainOption === DomainOption.EXISTING_DOMAIN ? (
-              <li>2. You will receive an email with your new DNS/nameserver details so you can point your domain to your new site.</li>
+              <li>3. You will receive instructions for pointing your domain/DNS or nameservers to your new site.</li>
             ) : null}
             {request.domainOption === DomainOption.WE_REGISTER_DOMAIN ? (
-              <li>2. If one of your chosen domains is available, we will set that up. If not, we will contact you with alternative options.</li>
+              <li>3. If one of your chosen domains is available, we will set that up. If not, we will contact you with alternatives.</li>
             ) : null}
             {request.domainOption === DomainOption.CUSTOMER_BUYS_DOMAIN ? (
-              <li>2. We will contact you to confirm the best domain option before your site goes live.</li>
+              <li>3. We will contact you to confirm the best domain option before your site goes live.</li>
             ) : null}
-            <li>3. Your admin details will be sent to you, then you&apos;re ready to start setting up your business.</li>
+            <li>4. We send your business admin login details by email.</li>
+            <li>5. Please keep an eye on your inbox and check junk/spam periodically.</li>
+            <li>6. We help point your domain to the site and aim to go live once the domain is ready.</li>
           </ol>
           <p className="mt-4 text-sm text-slate-700">
             We are always on hand if you have any questions - just drop us a message and we&apos;ll get back to you quickly.
