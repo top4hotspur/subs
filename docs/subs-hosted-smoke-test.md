@@ -755,6 +755,19 @@ Notes:
 - Live bulk email sending is still disabled.
 - Resend webhook remains verification-gated; unverified automated bounce/unsubscribe ingestion stays deferred.
 
+## 2026-06-01 hosted smoke checks: template quality + lead names
+1. Open `/admin/sales`.
+2. Add a lead with first name and last name.
+3. Confirm candidate table shows contact as full name.
+4. Open `Email 1 / Introduction` template and confirm:
+   - greeting uses first name token
+   - copy is feature-led (full website + business tools), not bookings-only.
+5. Confirm `{{landingPageLink}}` resolves to industry landing page route and `{{demoLink}}` remains separate.
+6. Open `Email 2 / Reminder` and confirm same feature-led positioning.
+7. Open `Snail mail / Letter` and confirm QR code preview is shown for landing page URL.
+8. Confirm token-help panel lists first/last/backward-compatible name tokens.
+9. Confirm live bulk sending remains disabled.
+
 ## 2026-06-01 hosted smoke checks: deliverability + anti-spam + provider pricing
 1. Generate/reset a provisioned site-admin access code in `/admin/setup-requests`.
 2. Confirm UI shows one-time handover code and email delivery status.

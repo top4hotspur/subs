@@ -178,3 +178,24 @@ Before live sending, platform needs:
   - industry labels shown as human-friendly display labels while stored values remain slug-based
 - Candidate/campaign workflow remains suppression-aware and selected-only for manual sent tracking.
 - Live bulk marketing send remains disabled in this phase.
+
+## 2026-06-01 template and contact-name upgrade
+- Sales leads now support split contact fields:
+  - `contactFirstName`
+  - `contactLastName`
+  - `contactName` remains for backward compatibility.
+- Manual lead add now captures first/last name.
+- CSV template/import now supports `contactFirstName` + `contactLastName`:
+  - older `contactName` rows are still accepted and split where possible.
+- Template tokens now include:
+  - `{{contactFirstName}}`
+  - `{{contactLastName}}`
+  - `{{contactName}}`
+  - `{{landingPageLink}}` (industry landing page)
+  - `{{demoLink}}` (optional demo route)
+- Campaign strategy default:
+  - primary CTA -> industry landing page
+  - demo link is secondary.
+- Snail-mail letter preview now shows a QR code for `{{landingPageLink}}`.
+- Updated default templates are feature-led (full website + business tooling), not just low-cost booking language.
+- Live bulk sending remains disabled.

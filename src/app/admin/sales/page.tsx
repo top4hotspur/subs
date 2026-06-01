@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import QRCode from "qrcode";
 import { AdminPillNav } from "@/components/admin/admin-pill-nav";
 import { WEBSITE_TEMPLATE_SLUGS } from "@/lib/sites/types";
 import {
@@ -46,7 +47,8 @@ const LEADS_CSV_TEMPLATE_HEADERS = [
   "postcode",
   "address",
   "industrySlug",
-  "contactName",
+  "contactFirstName",
+  "contactLastName",
   "email",
   "phone",
   "leadSource",
@@ -63,7 +65,8 @@ const LEADS_CSV_TEMPLATE_EXAMPLE = [
   "BS1 4DJ",
   "1 Broad Quay, Bristol",
   "hairdressers",
-  "Steven Glass",
+  "Steven",
+  "Glass",
   "stevenglass@hotmail.com",
   "07123456789",
   "Google Maps",
@@ -80,6 +83,21 @@ function formatIndustryLabel(slug: string): string {
     .join(" ");
 }
 
+function splitContactName(contactName?: string | null): { firstName?: string; lastName?: string } {
+  const trimmed = contactName?.trim();
+  if (!trimmed) return {};
+  const parts = trimmed.split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return { firstName: parts[0] };
+  return { firstName: parts[0], lastName: parts.slice(1).join(" ") };
+}
+
+function buildContactDisplay(lead: SalesLeadDto): string {
+  const first = lead.contactFirstName?.trim();
+  const last = lead.contactLastName?.trim();
+  if (first || last) return [first, last].filter(Boolean).join(" ");
+  return lead.contactName?.trim() || "-";
+}
+
 function campaignLevelLabel(level: CampaignLevel): string {
   if (level === "LAUNCH_OFFER") return "Launch offer";
   if (level === "INTRODUCTION") return "Introduction";
@@ -91,13 +109,27 @@ function defaultTemplateKeyForLevel(level: CampaignLevel): TemplateKey {
 }
 
 function renderTemplate(template: SalesCampaignTemplateDto, lead: SalesLeadDto | null, industry: string) {
+  const fallbackNameParts = splitContactName(lead?.contactName);
+  const contactFirstNameBase = lead?.contactFirstName?.trim() || fallbackNameParts.firstName || "";
+  const contactLastName = lead?.contactLastName?.trim() || fallbackNameParts.lastName || "";
+  const contactName = [contactFirstNameBase, contactLastName].filter(Boolean).join(" ") || lead?.contactName?.trim() || "";
+  const contactFirstName = contactFirstNameBase || contactName || "";
+  const safeIndustry = industry || lead?.industrySlug || "barbers";
+  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/+$/, "");
+  const fallbackOrigin = typeof window !== "undefined" ? window.location.origin : "";
+  const origin = baseUrl || fallbackOrigin;
+  const landingPageLink = `${origin}/${safeIndustry}`;
+  const demoLink = `${origin}/demo/${safeIndustry}`;
   const values: Record<string, string> = {
     businessName: lead?.businessName ?? "your business",
-    contactName: lead?.contactName ?? "there",
-    industry: industry || lead?.industrySlug || "local services",
+    contactFirstName,
+    contactLastName,
+    contactName,
+    industry: safeIndustry,
     currentProvider: lead?.currentProvider ?? "current provider",
     estimatedCurrentMonthlyCost: String(lead?.estimatedCurrentMonthlyCost ?? "unknown"),
-    demoLink: `/demo/${industry || lead?.industrySlug || "barbers"}`,
+    landingPageLink,
+    demoLink,
     unsubscribeLink: "/unsubscribe/sales?token=<token>",
   };
   let subject = template.subject ?? "";
@@ -106,6 +138,7 @@ function renderTemplate(template: SalesCampaignTemplateDto, lead: SalesLeadDto |
     subject = subject.replaceAll(`{{${k}}}`, v);
     body = body.replaceAll(`{{${k}}}`, v);
   }
+  body = body.replaceAll("Hi ,", "Hi,");
   return { subject, body };
 }
 
@@ -153,7 +186,8 @@ export default function AdminSalesPage() {
   const [form, setForm] = useState({
     businessName: "",
     industrySlug: "",
-    contactName: "",
+    contactFirstName: "",
+    contactLastName: "",
     email: "",
     phone: "",
     postcode: "",
@@ -171,6 +205,7 @@ export default function AdminSalesPage() {
     notes: "",
     active: true,
   });
+  const [letterQrDataUrl, setLetterQrDataUrl] = useState<string | null>(null);
 
   const selectedLead = useMemo(() => leads.find((x) => x.id === selectedLeadId) ?? null, [leads, selectedLeadId]);
   const selectedCampaign = useMemo(
@@ -180,6 +215,10 @@ export default function AdminSalesPage() {
   const selectedTemplate = useMemo(
     () => templates.find((x) => x.templateKey === selectedTemplateKey) ?? null,
     [templates, selectedTemplateKey],
+  );
+  const preview = useMemo(
+    () => (selectedTemplate ? renderTemplate(selectedTemplate, selectedLead, campaignIndustry) : null),
+    [selectedTemplate, selectedLead, campaignIndustry],
   );
 
   const candidates = useMemo(() => {
@@ -243,6 +282,28 @@ export default function AdminSalesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    async function generateQr() {
+      if (!selectedTemplate || selectedTemplate.templateKey !== "SNAIL_MAIL_LETTER" || !preview?.body) {
+        setLetterQrDataUrl(null);
+        return;
+      }
+      const landingMatch = preview.body.match(/https?:\/\/[^\s]+/);
+      const targetUrl = landingMatch?.[0];
+      if (!targetUrl) {
+        setLetterQrDataUrl(null);
+        return;
+      }
+      try {
+        const dataUrl = await QRCode.toDataURL(targetUrl, { margin: 1, width: 180 });
+        setLetterQrDataUrl(dataUrl);
+      } catch {
+        setLetterQrDataUrl(null);
+      }
+    }
+    void generateQr();
+  }, [selectedTemplate, preview?.body]);
+
   async function addLead() {
     setError(null);
     setMessage(null);
@@ -253,7 +314,9 @@ export default function AdminSalesPage() {
     const result = await createBackendSalesLead({
       businessName: form.businessName,
       industrySlug: form.industrySlug || undefined,
-      contactName: form.contactName || undefined,
+      contactName: [form.contactFirstName, form.contactLastName].filter(Boolean).join(" ") || undefined,
+      contactFirstName: form.contactFirstName || undefined,
+      contactLastName: form.contactLastName || undefined,
       email: form.email || undefined,
       phone: form.phone || undefined,
       postcode: form.postcode || undefined,
@@ -279,7 +342,8 @@ export default function AdminSalesPage() {
     setForm({
       businessName: "",
       industrySlug: "",
-      contactName: "",
+      contactFirstName: "",
+      contactLastName: "",
       email: "",
       phone: "",
       postcode: "",
@@ -317,6 +381,7 @@ export default function AdminSalesPage() {
           : providerRow?.estimatedMonthlyGbp
             ? String(providerRow.estimatedMonthlyGbp)
             : "";
+      const fallbackNameParts = splitContactName(row.contactName);
       const result = await createBackendSalesLead({
         businessName: row.businessName,
         country: row.country || undefined,
@@ -326,6 +391,8 @@ export default function AdminSalesPage() {
         location: row.address || undefined,
         industrySlug: row.industrySlug || undefined,
         contactName: row.contactName || undefined,
+        contactFirstName: row.contactFirstName || fallbackNameParts.firstName || undefined,
+        contactLastName: row.contactLastName || fallbackNameParts.lastName || undefined,
         email: row.email || undefined,
         phone: row.phone || undefined,
         leadSource: row.leadSource || undefined,
@@ -455,8 +522,6 @@ export default function AdminSalesPage() {
     await loadAll();
   }
 
-  const preview = selectedTemplate ? renderTemplate(selectedTemplate, selectedLead, campaignIndustry) : null;
-
   return (
     <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -498,7 +563,8 @@ export default function AdminSalesPage() {
             <option value="">Industry</option>
             {WEBSITE_TEMPLATE_SLUGS.map((slug) => <option key={slug} value={slug}>{formatIndustryLabel(slug)}</option>)}
           </select>
-          <input className="rounded border border-slate-300 px-2 py-2 text-sm" placeholder="Contact name" value={form.contactName} onChange={(e) => setForm((c) => ({ ...c, contactName: e.target.value }))} />
+          <input className="rounded border border-slate-300 px-2 py-2 text-sm" placeholder="First name" value={form.contactFirstName} onChange={(e) => setForm((c) => ({ ...c, contactFirstName: e.target.value }))} />
+          <input className="rounded border border-slate-300 px-2 py-2 text-sm" placeholder="Last name" value={form.contactLastName} onChange={(e) => setForm((c) => ({ ...c, contactLastName: e.target.value }))} />
           <input className="rounded border border-slate-300 px-2 py-2 text-sm" placeholder="Email" value={form.email} onChange={(e) => setForm((c) => ({ ...c, email: e.target.value }))} />
           <input className="rounded border border-slate-300 px-2 py-2 text-sm" placeholder="Phone" value={form.phone} onChange={(e) => setForm((c) => ({ ...c, phone: e.target.value }))} />
           <input className="rounded border border-slate-300 px-2 py-2 text-sm" placeholder="Postcode" value={form.postcode} onChange={(e) => setForm((c) => ({ ...c, postcode: e.target.value }))} />
@@ -554,10 +620,21 @@ export default function AdminSalesPage() {
             </div>
             <div className="rounded border border-slate-200 bg-slate-50 p-3 text-sm">
               <p className="font-semibold">Rendered preview</p>
+              <p className="mt-1 text-xs text-slate-600">Live bulk sending remains disabled in this phase.</p>
+              <div className="mt-2 rounded border border-slate-200 bg-white p-2 text-xs">
+                <p className="font-semibold">Available tokens</p>
+                <p>{"{{contactFirstName}}, {{contactLastName}}, {{contactName}}, {{businessName}}, {{industry}}, {{currentProvider}}, {{estimatedCurrentMonthlyCost}}, {{landingPageLink}}, {{demoLink}}, {{unsubscribeLink}}"}</p>
+              </div>
               {preview ? (
                 <>
                   {selectedTemplate.channel === "EMAIL" ? <p className="mt-2"><span className="font-semibold">Subject:</span> {preview.subject}</p> : null}
                   <pre className="mt-2 whitespace-pre-wrap">{preview.body}</pre>
+                  {selectedTemplate.templateKey === "SNAIL_MAIL_LETTER" && letterQrDataUrl ? (
+                    <div className="mt-3">
+                      <p className="text-xs font-semibold">QR code preview (landing page)</p>
+                      <img src={letterQrDataUrl} alt="Landing page QR code" className="mt-1 h-28 w-28 rounded border border-slate-300" />
+                    </div>
+                  ) : null}
                 </>
               ) : (
                 <p className="mt-2 text-slate-600">Select a lead for personalized preview.</p>
@@ -627,7 +704,7 @@ export default function AdminSalesPage() {
                     />
                   </td>
                   <td className="px-2 py-2"><button className="underline" onClick={() => setSelectedLeadId(row.lead.id)}>{row.lead.businessName}</button></td>
-                  <td className="px-2 py-2">{row.lead.contactName ?? "-"}</td>
+                  <td className="px-2 py-2">{buildContactDisplay(row.lead)}</td>
                   <td className="px-2 py-2">{row.lead.email ?? "-"}</td>
                   <td className="px-2 py-2">{row.lead.phone ?? "-"}</td>
                   <td className="px-2 py-2">{row.lead.postcode ?? "-"} / {row.lead.cityTown ?? "-"}</td>

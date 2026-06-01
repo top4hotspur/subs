@@ -21,6 +21,8 @@ export type SalesLeadDto = {
   industrySlug?: string | null;
   industryLabel?: string | null;
   contactName?: string | null;
+  contactFirstName?: string | null;
+  contactLastName?: string | null;
   email?: string | null;
   phone?: string | null;
   leadSource?: string | null;

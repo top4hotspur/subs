@@ -33,8 +33,18 @@ function toJson(value: unknown): Prisma.InputJsonValue {
   return value as Prisma.InputJsonValue;
 }
 
+function splitContactName(contactName?: string | null): { firstName?: string; lastName?: string } {
+  const trimmed = contactName?.trim();
+  if (!trimmed) return {};
+  const parts = trimmed.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return {};
+  if (parts.length === 1) return { firstName: parts[0] };
+  return { firstName: parts[0], lastName: parts.slice(1).join(" ") };
+}
+
 export async function createSalesLead(input: CreateSalesLeadInput) {
   const parsed = parseOrThrow(createSalesLeadSchema, input, "create sales lead input");
+  const fallbackNameParts = splitContactName(parsed.contactName);
   const lead = await prisma.salesLead.create({
     data: {
       businessName: parsed.businessName,
@@ -47,6 +57,8 @@ export async function createSalesLead(input: CreateSalesLeadInput) {
       industrySlug: parsed.industrySlug,
       industryLabel: parsed.industryLabel,
       contactName: parsed.contactName,
+      contactFirstName: parsed.contactFirstName ?? fallbackNameParts.firstName,
+      contactLastName: parsed.contactLastName ?? fallbackNameParts.lastName,
       email: parsed.email,
       phone: parsed.phone,
       leadSource: parsed.leadSource,
@@ -111,6 +123,8 @@ export async function listSalesLeads(options: Partial<ListSalesLeadsInput> = {})
             OR: [
               { businessName: { contains: query, mode: "insensitive" } },
               { contactName: { contains: query, mode: "insensitive" } },
+              { contactFirstName: { contains: query, mode: "insensitive" } },
+              { contactLastName: { contains: query, mode: "insensitive" } },
               { email: { contains: query, mode: "insensitive" } },
               { phone: { contains: query, mode: "insensitive" } },
               { cityTown: { contains: query, mode: "insensitive" } },
@@ -137,6 +151,7 @@ export async function updateSalesLead(input: UpdateSalesLeadInput) {
     throw new Error("Sales lead not found");
   }
 
+  const fallbackNameParts = splitContactName(parsed.contactName);
   const updated = await prisma.salesLead.update({
     where: { id: parsed.id },
     data: {
@@ -150,6 +165,8 @@ export async function updateSalesLead(input: UpdateSalesLeadInput) {
       industrySlug: parsed.industrySlug,
       industryLabel: parsed.industryLabel,
       contactName: parsed.contactName,
+      contactFirstName: parsed.contactFirstName ?? fallbackNameParts.firstName,
+      contactLastName: parsed.contactLastName ?? fallbackNameParts.lastName,
       email: parsed.email,
       phone: parsed.phone,
       leadSource: parsed.leadSource,

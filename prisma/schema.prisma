@@ -202,6 +202,8 @@ model SalesLead {
   industrySlug    String?
   industryLabel   String?
   contactName     String?
+  contactFirstName String?
+  contactLastName String?
   email           String?
   phone           String?
   leadSource      String?
@@ -229,6 +231,8 @@ model SalesLead {
 
   @@index([status])
   @@index([industrySlug])
+  @@index([contactFirstName])
+  @@index([contactLastName])
   @@index([businessName])
   @@index([location])
   @@index([country])

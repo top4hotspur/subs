@@ -512,6 +512,15 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Campaign levels are now defined as Launch offer, Introduction, and Reminder with preview-only email copy in this phase.
 - Bulk live sending is intentionally disabled; this pass focuses on prospect data quality, segmentation and compliance readiness.
 
+## 2026-06-01 sales campaign template quality update
+- Sales templates now lead with the full MyExperiment.club offer (managed website + business operations tooling), not only booking/cost language.
+- New template token usage includes:
+  - `{{contactFirstName}}`, `{{contactLastName}}`, `{{contactName}}`
+  - `{{landingPageLink}}` as primary campaign destination
+  - `{{demoLink}}` as secondary proof path
+- Snail-mail letter preview now includes a QR code for the landing page link.
+- Live bulk sending remains disabled.
+
 ## Stripe Checkout hosted verification notes (2026-05-31)
 - Checkout API: `/api/setup-requests/[id]/checkout` (requires setup confirmation token or platform-admin session).
 - Payment status is trusted from Stripe webhooks, not frontend redirect state.
