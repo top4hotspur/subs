@@ -572,6 +572,15 @@ function formatBookingPaymentStatus(booking: CustomerSiteBookingRecord): string 
   return "Payment not required";
 }
 
+function formatBookingPaymentAmount(booking: CustomerSiteBookingRecord): string {
+  if (!booking.paymentAmountPence || booking.paymentAmountPence <= 0) return "Not set";
+  const currency = booking.paymentCurrency || "GBP";
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency,
+  }).format(booking.paymentAmountPence / 100);
+}
+
 function toBookingAmendDraft(booking: CustomerSiteBookingRecord): BookingAmendDraft {
   return {
     customerName: booking.customerName,
@@ -2943,7 +2952,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <h3 className="text-lg font-semibold text-slate-900">Bookings</h3>
           <p className="mt-1 text-sm text-slate-600">
-            Review confirmed customer bookings and update their basic status. Payment handling is not connected yet.
+              Review confirmed customer bookings, payment status, and basic booking changes.
           </p>
           <div className="mt-3 space-y-2">
             {bookings.length === 0 ? (
@@ -2968,7 +2977,14 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                       <span className="inline-flex rounded-full border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-800">
                         {booking.status}
                       </span>
-                      <p className="mt-1 text-xs text-slate-500">Payment: {formatBookingPaymentStatus(booking)}</p>
+                      <div className="mt-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+                        <p className="font-semibold text-slate-900">Payment: {formatBookingPaymentStatus(booking)}</p>
+                        <p>Method: {booking.paymentMethod ?? "NONE"}</p>
+                        <p>Amount: {formatBookingPaymentAmount(booking)}</p>
+                        {booking.paymentProvider ? <p>Provider: {booking.paymentProvider}</p> : null}
+                        {booking.paymentProviderSessionId ? <p>Provider session: {booking.paymentProviderSessionId}</p> : null}
+                        {booking.paymentProviderPaymentIntentId ? <p>Payment intent: {booking.paymentProviderPaymentIntentId}</p> : null}
+                      </div>
                       <p className="mt-1 text-[11px] text-slate-400">Payment handling is not connected yet.</p>
                     </div>
                   </div>
@@ -2993,7 +3009,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                         Mark completed
                       </button>
                     ) : null}
-                    {(booking.paymentStatus === "PENDING" || booking.paymentStatus === "PAYMENT_REQUIRED") && booking.status !== "CANCELLED" ? (
+                    {(booking.paymentStatus === "PENDING" || booking.paymentStatus === "PAYMENT_REQUIRED") && booking.paymentMethod !== "CARD_ONLINE" && booking.status !== "CANCELLED" ? (
                       <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void updateBookingStatus(booking.id, booking.status, "PAID")}>
                         Mark manual payment received
                       </button>

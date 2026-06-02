@@ -110,9 +110,14 @@ export function tenantBookingCustomerConfirmation(
     ? "Your booking is pending payment"
     : "Your booking is confirmed";
   const appointment = formatBookingDateTime(booking);
-  const paymentLine = booking.paymentStatus === "PENDING"
-    ? "Payment is pending and will be arranged directly with the business."
-    : "Payment has not been taken online yet.";
+  const paymentLine =
+    booking.paymentStatus === "PAID" || booking.paymentStatus === "PAYMENT_COMPLETED"
+      ? "Payment has been received online."
+      : booking.paymentStatus === "PENDING" && booking.paymentMethod === "CARD_ONLINE"
+        ? "Payment is pending. Please complete secure checkout if you have not already done so."
+        : booking.paymentStatus === "PENDING"
+          ? "Payment is pending and will be arranged directly with the business."
+          : "Payment has not been taken online yet.";
   const text = [
     booking.paymentStatus === "PENDING" && booking.paymentMethod === "CARD_ONLINE"
       ? `Your booking with ${site.siteName} is pending payment.`

@@ -403,3 +403,12 @@ Still local/mock in current product:
 - Public bookings remain tenant-scoped and are server-forced to `CONFIRMED` after availability is rechecked.
 - Booking payment state is tracked on `CustomerSiteBooking` with `paymentStatus` and `paymentMethod`.
 - Subscriber-site payment provider checkout is not connected yet. Pending prepayment/manual/cash cases are recorded honestly and shown to both customer and site admin without collecting card details.
+
+## Subscriber Booking Payment Checkout
+
+- Provisioned tenant sites can now take first-pass card prepayment for bookings through Stripe Checkout when prepayment is enabled in site admin settings.
+- This is tenant-scoped by booking and tenant metadata, but it currently uses the configured platform Stripe environment rather than a full per-business connected-account onboarding flow.
+- Webhook confirmation is the source of truth for `PAID`; frontend return URLs only display the current booking payment state.
+- Site admins can see booking payment method, status, amount, provider, checkout session, and payment intent references in the Bookings section.
+- Cash/manual booking payment handling remains separate and can still be marked paid manually.
+- DNS/custom domain provisioning is unaffected by this payment milestone.

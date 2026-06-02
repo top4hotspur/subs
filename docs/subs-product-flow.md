@@ -841,3 +841,15 @@ CSV import/export setup tools moved out of demo customisation and into business 
   - if cash/manual payment is expected, the booking is confirmed with payment status `PENDING`
   - if no payment is required online, the booking is confirmed with payment status `NOT_REQUIRED`
 - Site-admin Bookings show friendly payment labels and can mark pending manual/cash payment as received. Refund handling remains future work.
+
+## Subscriber Booking Card Checkout Foundation
+
+- Subscriber booking prepayment now uses Stripe Checkout when a tenant site has card payments enabled and requires prepayment.
+- The booking is created tenant-scoped with `status=CONFIRMED`, `paymentStatus=PENDING`, `paymentMethod=CARD_ONLINE`, the fixed service amount, currency, and Stripe session metadata.
+- Stripe Checkout receives metadata for `tenantSiteId`, `siteSlug`, `bookingId`, `serviceId`, optional `staffId`, and customer email so webhooks can reconcile safely.
+- Card details are handled by Stripe Checkout only; the app does not store card details.
+- The Stripe webhook marks booking payments as `PAID` on successful checkout and records Stripe session/payment intent references where available.
+- If checkout expires or payment fails, the booking payment state is marked failed while the booking remains visible for admin follow-up in this first pass.
+- If online payment is not configured, or a service has no fixed price, the public booking flow shows a clear customer message and does not fake a paid booking.
+- Cash/manual payment remains supported and can still be marked paid manually by the business admin.
+- Refunds, payout/accounting reports, provider onboarding, and manual online-card payment overrides are future work.

@@ -1158,3 +1158,20 @@ Notes:
 15. Confirm payment status is shown clearly, for example `Payment not required`, `Cash/manual payment expected`, or `Online payment pending`.
 16. If payment is pending, click `Mark manual payment received` and confirm payment becomes paid.
 17. If prepayment is required but provider checkout is not wired, confirm the UI explains payment is not connected and does not fake payment.
+
+## Hosted Smoke Test - Subscriber Booking Card Checkout
+
+1. Open `/site-admin/luna-hair-studio`.
+2. In Payments and policies, enable `Accept card payments` and `Require prepayment for online bookings`.
+3. Ensure at least one active service has a fixed price greater than zero.
+4. Open `/sites/luna-hair-studio`.
+5. Choose a paid service, check availability, enter customer details, accept the booking/cancellation policy, and confirm the booking.
+6. Confirm the customer is redirected to Stripe Checkout when Stripe is configured.
+7. Complete test payment with a Stripe test card.
+8. Confirm the return page says payment is received only after the booking record is marked paid; if webhook is still processing, it should say payment is being confirmed.
+9. Open `/site-admin/luna-hair-studio` and confirm the booking shows `PAID`, `CARD_ONLINE`, the amount, Stripe checkout session, and payment intent where available.
+10. Confirm the slot is blocked by the pending/paid booking.
+11. Start another checkout and cancel it. Confirm the return page clearly says payment was not completed and no fake paid state is recorded.
+12. Temporarily test a no-provider or no-fixed-price scenario in a safe environment and confirm the public flow shows a clear message instead of fake payment success.
+13. Confirm cash/manual payment bookings can still be created and marked paid manually by the business admin.
+14. Confirm refunds/accounting reports are not present in this pass.

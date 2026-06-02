@@ -53,6 +53,15 @@ function toErrorMessage(error: string, status: number): string {
   if (error === "BOOKING_SLOT_CONFLICT" || error === "BOOKING_SLOT_UNAVAILABLE" || status === 409) {
     return "That slot is no longer available. Please choose another time.";
   }
+  if (error === "ONLINE_PAYMENT_NOT_CONFIGURED") {
+    return "Online payment is not connected for this business yet. Please contact the business to book.";
+  }
+  if (error === "BOOKING_PAYMENT_AMOUNT_REQUIRED") {
+    return "This service requires a quote before online payment can be taken.";
+  }
+  if (error === "BOOKING_CHECKOUT_SESSION_FAILED") {
+    return "We could not start secure payment. Please contact the business to book.";
+  }
   if (error === "VALIDATION_ERROR" || status === 400) {
     return "Please confirm that you have read and accepted the booking and cancellation policy.";
   }
@@ -190,6 +199,11 @@ export function PublicSiteAvailabilityPreview({
       setMessage(toErrorMessage(result.error, result.status));
       return;
     }
+    if (result.checkoutUrl) {
+      setMessage("Booking created. Redirecting to secure payment...");
+      window.location.assign(result.checkoutUrl);
+      return;
+    }
     const appointment = formatBookingDateTime({
       preferredDate: selectedSlot.date,
       preferredTime: selectedSlot.startTime,
@@ -325,7 +339,7 @@ export function PublicSiteAvailabilityPreview({
               </p>
               <p className="mt-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
                 {requireBookingPrepayment && acceptCardPayments
-                  ? "This business requires payment before booking. Online payment setup is not yet connected, so the business will arrange payment directly."
+                  ? "This business requires card payment before booking. Secure payment is handled by Stripe."
                   : acceptCashPayments
                     ? "No payment is taken online for this booking. Payment can be arranged directly with the business."
                     : "No payment is taken online for this booking."}

@@ -38,6 +38,11 @@ export type CustomerSiteBookingRecord = {
   status: CustomerSiteBookingStatus;
   paymentStatus: CustomerSitePaymentStatus | null;
   paymentMethod: CustomerSitePaymentMethod | null;
+  paymentAmountPence: number | null;
+  paymentCurrency: string | null;
+  paymentProvider: string | null;
+  paymentProviderSessionId: string | null;
+  paymentProviderPaymentIntentId: string | null;
   notes: string | null;
   policyAcceptedAt: string | null;
   source: string | null;

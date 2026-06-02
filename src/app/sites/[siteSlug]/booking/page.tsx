@@ -32,9 +32,11 @@ export default async function PublicSiteSlugBookingPage({
           siteSlug={preview.tenantSite.slug}
           services={services}
           staff={staff}
+          acceptCashPayments={preview.settings?.acceptCashPayments ?? false}
+          acceptCardPayments={preview.settings?.acceptCardPayments ?? true}
+          requireBookingPrepayment={preview.settings?.requireBookingPrepayment ?? false}
         />
       </div>
     </main>
   );
 }
-

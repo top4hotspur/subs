@@ -19,11 +19,23 @@ type PublicSiteBookingFormProps = {
     customerSelectable: boolean;
     active: boolean;
   }>;
+  acceptCashPayments?: boolean;
+  acceptCardPayments?: boolean;
+  requireBookingPrepayment?: boolean;
 };
 
 function toErrorMessage(error: string, status: number): string {
   if (error === "BOOKING_SLOT_CONFLICT" || status === 409) {
     return "That preferred slot is no longer available. Please choose another date/time.";
+  }
+  if (error === "ONLINE_PAYMENT_NOT_CONFIGURED") {
+    return "Online payment is not connected for this business yet. Please contact the business to book.";
+  }
+  if (error === "BOOKING_PAYMENT_AMOUNT_REQUIRED") {
+    return "This service requires a quote before online payment can be taken.";
+  }
+  if (error === "BOOKING_CHECKOUT_SESSION_FAILED") {
+    return "We could not start secure payment. Please contact the business to book.";
   }
   if (error === "VALIDATION_ERROR" || status === 400) {
     return "Please confirm that you have read and accepted the booking and cancellation policy.";
@@ -34,7 +46,14 @@ function toErrorMessage(error: string, status: number): string {
   return "Could not confirm booking right now.";
 }
 
-export function PublicSiteBookingForm({ siteSlug, services, staff }: PublicSiteBookingFormProps) {
+export function PublicSiteBookingForm({
+  siteSlug,
+  services,
+  staff,
+  acceptCashPayments = false,
+  acceptCardPayments = true,
+  requireBookingPrepayment = false,
+}: PublicSiteBookingFormProps) {
   const activeServices = useMemo(() => services.filter((item) => item.active), [services]);
   const selectableStaff = useMemo(
     () => staff.filter((item) => item.active && item.customerSelectable),
@@ -79,6 +98,11 @@ export function PublicSiteBookingForm({ siteSlug, services, staff }: PublicSiteB
       setSaving(false);
       return;
     }
+    if (result.checkoutUrl) {
+      setMessage("Booking created. Redirecting to secure payment...");
+      window.location.assign(result.checkoutUrl);
+      return;
+    }
 
     setMessage("Your booking has been confirmed.");
     setCustomerName("");
@@ -96,7 +120,11 @@ export function PublicSiteBookingForm({ siteSlug, services, staff }: PublicSiteB
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="text-xl font-semibold text-slate-900">Book appointment</h2>
       <p className="mt-2 text-sm text-slate-600">
-        Choose a service and time to confirm your booking. No payment is taken online yet.
+        {requireBookingPrepayment && acceptCardPayments
+          ? "Choose a service and time to confirm your booking. Secure card payment is handled by Stripe."
+          : acceptCashPayments
+            ? "Choose a service and time to confirm your booking. Payment can be arranged directly with the business."
+            : "Choose a service and time to confirm your booking."}
       </p>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">

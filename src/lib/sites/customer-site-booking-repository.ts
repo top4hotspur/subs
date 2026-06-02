@@ -48,6 +48,11 @@ function serializeBooking(record: {
   status: string;
   paymentStatus: string | null;
   paymentMethod: string | null;
+  paymentAmountPence: number | null;
+  paymentCurrency: string | null;
+  paymentProvider: string | null;
+  paymentProviderSessionId: string | null;
+  paymentProviderPaymentIntentId: string | null;
   notes: string | null;
   policyAcceptedAt: Date | null;
   source: string | null;
@@ -139,6 +144,11 @@ export async function createCustomerSiteBooking(
       status: parsed.status,
       paymentStatus: parsed.paymentStatus ?? "NOT_REQUIRED",
       paymentMethod: parsed.paymentMethod ?? "NONE",
+      paymentAmountPence: parsed.paymentAmountPence ?? null,
+      paymentCurrency: parsed.paymentCurrency ?? null,
+      paymentProvider: parsed.paymentProvider ?? null,
+      paymentProviderSessionId: parsed.paymentProviderSessionId ?? null,
+      paymentProviderPaymentIntentId: parsed.paymentProviderPaymentIntentId ?? null,
       notes: parsed.notes ?? null,
       policyAcceptedAt: parsed.policyAcceptedAt ?? new Date(),
       source: parsed.source ?? "customer_site",
@@ -201,6 +211,11 @@ export async function updateCustomerSiteBookingStatus(
       status: parsed.status,
       paymentStatus: parsed.paymentStatus ?? undefined,
       paymentMethod: parsed.paymentMethod ?? undefined,
+      paymentAmountPence: parsed.paymentAmountPence ?? undefined,
+      paymentCurrency: parsed.paymentCurrency ?? undefined,
+      paymentProvider: parsed.paymentProvider ?? undefined,
+      paymentProviderSessionId: parsed.paymentProviderSessionId ?? undefined,
+      paymentProviderPaymentIntentId: parsed.paymentProviderPaymentIntentId ?? undefined,
       notes: parsed.notes ?? undefined,
     },
   });
@@ -213,6 +228,20 @@ export async function updateCustomerSiteBookingStatus(
   });
   if (!found) throw new Error("BOOKING_NOT_FOUND");
   return serializeBooking(found);
+}
+
+export async function getCustomerSiteBookingByProviderSession(
+  sessionId: string,
+): Promise<CustomerSiteBookingRecord | null> {
+  const parsedSessionId = parseOrThrow(
+    z.string().trim().min(1).max(255),
+    sessionId,
+    "provider session id",
+  );
+  const row = await prisma.customerSiteBooking.findFirst({
+    where: { paymentProviderSessionId: parsedSessionId },
+  });
+  return row ? serializeBooking(row) : null;
 }
 
 export async function amendCustomerSiteBooking(

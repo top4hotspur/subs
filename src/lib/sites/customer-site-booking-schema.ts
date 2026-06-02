@@ -44,6 +44,11 @@ export const createCustomerSiteBookingSchema = z
     status: bookingStatusSchema.default("REQUESTED"),
     paymentStatus: paymentStatusSchema.optional(),
     paymentMethod: paymentMethodSchema.optional(),
+    paymentAmountPence: z.number().int().min(0).max(10000000).optional(),
+    paymentCurrency: z.string().trim().length(3).optional(),
+    paymentProvider: z.string().trim().min(1).max(40).optional(),
+    paymentProviderSessionId: z.string().trim().min(1).max(255).optional(),
+    paymentProviderPaymentIntentId: z.string().trim().min(1).max(255).optional(),
     notes: z.string().trim().max(2000).optional(),
     policyAccepted: z.boolean().optional().default(false),
     policyAcceptedAt: z.coerce.date().optional(),
@@ -65,6 +70,11 @@ export const updateCustomerSiteBookingStatusSchema = z.object({
   status: bookingStatusSchema,
   paymentStatus: paymentStatusSchema.optional(),
   paymentMethod: paymentMethodSchema.optional(),
+  paymentAmountPence: z.number().int().min(0).max(10000000).optional(),
+  paymentCurrency: z.string().trim().length(3).optional(),
+  paymentProvider: z.string().trim().min(1).max(40).optional(),
+  paymentProviderSessionId: z.string().trim().min(1).max(255).optional(),
+  paymentProviderPaymentIntentId: z.string().trim().min(1).max(255).optional(),
   notes: z.string().trim().max(2000).optional(),
 });
 

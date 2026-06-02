@@ -591,6 +591,11 @@ model CustomerSiteBooking {
   status        String
   paymentStatus String?
   paymentMethod String?
+  paymentAmountPence Int?
+  paymentCurrency String?
+  paymentProvider String?
+  paymentProviderSessionId String?
+  paymentProviderPaymentIntentId String?
   notes         String?
   policyAcceptedAt DateTime?
   source        String?
@@ -604,6 +609,8 @@ model CustomerSiteBooking {
   @@index([tenantSiteId, status])
   @@index([tenantSiteId, staffMemberId])
   @@index([tenantSiteId, serviceId])
+  @@index([paymentProviderSessionId])
+  @@index([paymentProviderPaymentIntentId])
 }
 
 model CustomerSiteAdminUser {
