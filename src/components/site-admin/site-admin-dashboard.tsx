@@ -17,6 +17,7 @@ import {
   listSiteAdminStaff,
   saveSiteAdminStaff,
   getSiteAdminScheduling,
+  getSiteAdminAvailability,
   saveSiteAdminScheduling,
   listSiteAdminBookings,
   removeSiteAdminBrandingFavicon,
@@ -37,6 +38,7 @@ import type {
   CustomerSiteStaffRotaDayRecord,
 } from "@/lib/sites/customer-site-scheduling-types";
 import type { CustomerSiteBookingRecord } from "@/lib/sites/customer-site-booking-types";
+import type { CustomerSiteAvailabilityResult } from "@/lib/sites/customer-site-availability";
 import {
   mapAppearanceToTheme,
   resolveAppearanceMode,
@@ -695,6 +697,11 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   const [staffHolidaysDraft, setStaffHolidaysDraft] = useState<StaffHolidayDraft[]>([]);
   const [bookings, setBookings] = useState<CustomerSiteBookingRecord[]>([]);
   const [selectedSchedulingStaffId, setSelectedSchedulingStaffId] = useState("");
+  const [availabilityServiceId, setAvailabilityServiceId] = useState("");
+  const [availabilityStaffId, setAvailabilityStaffId] = useState("");
+  const [availabilityDate, setAvailabilityDate] = useState(todayIso());
+  const [availabilityResult, setAvailabilityResult] = useState<CustomerSiteAvailabilityResult | null>(null);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
 
   const selectedStaff = useMemo(
     () => staffDraft.find((item) => item.id === selectedSchedulingStaffId) ?? null,
@@ -773,6 +780,9 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       setBusinessClosuresDraft(schedulingResult.scheduling.businessClosures.map(toBusinessClosureDraft));
       setStaffHolidaysDraft(schedulingResult.scheduling.staffHolidays.map(toStaffHolidayDraft));
       setBookings(bookingsResult.bookings);
+      setAvailabilityServiceId(servicesResult.services.find((service) => service.active)?.id ?? "");
+      setAvailabilityStaffId("");
+      setAvailabilityResult(null);
       setSelectedSchedulingStaffId(
         staffResult.staff[0]?.id ??
           schedulingResult.scheduling.rotaDays[0]?.staffMemberId ??
@@ -1110,6 +1120,32 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
     const activeRotaCount = result.scheduling.rotaDays.filter((day) => day.working && day.startTime && day.endTime).length;
     setMessage(activeRotaCount > 0 ? "Staff rota saved." : "Scheduling saved. No working rota days are currently set.");
     router.refresh();
+  }
+
+  async function previewAvailability() {
+    if (!availabilityServiceId) {
+      setMessage("Select a service before previewing availability.");
+      return;
+    }
+    if (!availabilityDate) {
+      setMessage("Select a date before previewing availability.");
+      return;
+    }
+    setAvailabilityLoading(true);
+    setMessage("Checking booking availability...");
+    const result = await getSiteAdminAvailability(siteSlug, {
+      serviceId: availabilityServiceId,
+      staffId: availabilityStaffId || null,
+      date: availabilityDate,
+    });
+    setAvailabilityLoading(false);
+    if (!result.ok) {
+      setAvailabilityResult(null);
+      setMessage(toMessage(result.error, result.status));
+      return;
+    }
+    setAvailabilityResult(result.availability);
+    setMessage(result.availability.slots.length > 0 ? "Availability preview generated." : "No slots found for that setup/date.");
   }
 
   if (loading) {
@@ -2304,6 +2340,96 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                 {breakWindowsDraft.length === 0 ? <p className="text-sm text-slate-600">No break windows yet.</p> : null}
               </div>
             </div>
+          </div>
+
+          <div className="mt-4 rounded-xl border border-teal-200 bg-teal-50 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h4 className="text-sm font-semibold text-teal-950">Booking availability preview</h4>
+                <p className="mt-1 text-xs text-teal-900">
+                  Preview the first calculated booking slots from services, business opening hours, staff rota, breaks, closures, staff leave, and existing active bookings. Booking submission and payment are still future milestones.
+                </p>
+              </div>
+              <button
+                type="button"
+                className={`${primaryButtonClass} ${smallButtonClass}`}
+                onClick={() => void previewAvailability()}
+                disabled={availabilityLoading}
+              >
+                {availabilityLoading ? "Checking..." : "Preview slots"}
+              </button>
+            </div>
+            <div className="mt-3 grid gap-2 md:grid-cols-3">
+              <label className="text-xs font-semibold text-teal-950">
+                Service
+                <select
+                  className="mt-1 w-full rounded-md border border-teal-200 bg-white px-2 py-1 text-sm text-slate-900"
+                  value={availabilityServiceId}
+                  onChange={(event) => {
+                    setAvailabilityServiceId(event.target.value);
+                    setAvailabilityResult(null);
+                  }}
+                >
+                  <option value="">Select service</option>
+                  {servicesDraft.filter((service) => service.id && service.active).map((service) => (
+                    <option key={service.id} value={service.id}>{service.name || "Unnamed service"}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-xs font-semibold text-teal-950">
+                Staff
+                <select
+                  className="mt-1 w-full rounded-md border border-teal-200 bg-white px-2 py-1 text-sm text-slate-900"
+                  value={availabilityStaffId}
+                  onChange={(event) => {
+                    setAvailabilityStaffId(event.target.value);
+                    setAvailabilityResult(null);
+                  }}
+                >
+                  <option value="">Any available staff</option>
+                  {staffDraft.filter((staff) => staff.id && staff.active).map((staff) => (
+                    <option key={staff.id} value={staff.id}>{staff.displayName || "Unnamed staff"}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-xs font-semibold text-teal-950">
+                Date
+                <input
+                  type="date"
+                  className="mt-1 w-full rounded-md border border-teal-200 bg-white px-2 py-1 text-sm text-slate-900"
+                  value={availabilityDate}
+                  onChange={(event) => {
+                    setAvailabilityDate(event.target.value);
+                    setAvailabilityResult(null);
+                  }}
+                />
+              </label>
+            </div>
+            {availabilityResult ? (
+              <div className="mt-3 rounded-lg border border-teal-200 bg-white p-3">
+                <p className="text-xs font-semibold text-slate-900">{availabilityResult.message}</p>
+                {availabilityResult.slots.length > 0 ? (
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                    {availabilityResult.slots.slice(0, 32).map((slot) => (
+                      <div key={`${slot.staffMemberId}-${slot.startTime}`} className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                        <p className="font-semibold text-slate-900">{slot.startTime}-{slot.endTime}</p>
+                        <p>{slot.staffName}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                {availabilityResult.debugReasons.length > 0 ? (
+                  <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
+                    <p className="text-xs font-semibold text-amber-950">Setup / availability reasons</p>
+                    <ul className="mt-1 list-disc space-y-1 pl-4 text-xs text-amber-900">
+                      {availabilityResult.debugReasons.slice(0, 10).map((reason) => (
+                        <li key={reason}>{reason}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
           </div>
 
           <button type="button" className={`mt-4 ${primaryButtonClass} ${smallButtonClass}`} onClick={() => void saveScheduling()}>

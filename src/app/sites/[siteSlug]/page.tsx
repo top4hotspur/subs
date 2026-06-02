@@ -11,6 +11,7 @@ import {
 } from "@/lib/sites/social-platforms";
 import { SiteCookieNotice } from "@/components/site-ui/site-cookie-notice";
 import { formatBusinessOpeningHoursSummary, normalizeBusinessOpeningHours } from "@/lib/sites/customer-site-opening-hours";
+import { PublicSiteAvailabilityPreview } from "@/components/sites/public-site-availability-preview";
 
 function formatMoney(amount: number | null, currencyCode: string): string {
   if (amount === null) return "Quote required";
@@ -250,13 +251,16 @@ export default async function PublicSiteSlugPage({
                                   {formatServiceSummary(service.durationMinutes)}
                                 </p>
                               </div>
-                              <button
-                                type="button"
-                                disabled
-                                className="mt-3 inline-flex cursor-not-allowed rounded-md border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500"
-                              >
-                                Book this service (coming soon)
-                              </button>
+                              <PublicSiteAvailabilityPreview
+                                siteSlug={preview.tenantSite.slug}
+                                serviceId={service.id}
+                                serviceName={service.name}
+                                staff={publicStaff.map((member) => ({
+                                  id: member.id,
+                                  displayName: member.displayName,
+                                  customerSelectable: member.customerSelectable,
+                                }))}
+                              />
                             </article>
                           ))}
                         </div>

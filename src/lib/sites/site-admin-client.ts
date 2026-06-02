@@ -17,6 +17,7 @@ import type {
   CustomerSiteStaffRotaDayInput,
 } from "@/lib/sites/customer-site-scheduling-types";
 import type { CustomerSiteBookingRecord } from "@/lib/sites/customer-site-booking-types";
+import type { CustomerSiteAvailabilityResult } from "@/lib/sites/customer-site-availability";
 
 type ClientFailure = {
   ok: false;
@@ -327,6 +328,36 @@ export async function listSiteAdminBookings(
       };
     }
     return { ok: true, bookings: body.bookings };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function getSiteAdminAvailability(
+  siteSlug: string,
+  options: { serviceId: string; staffId?: string | null; date: string },
+): Promise<ClientResult<{ availability: CustomerSiteAvailabilityResult }>> {
+  try {
+    const params = new URLSearchParams({
+      serviceId: options.serviceId,
+      date: options.date,
+    });
+    if (options.staffId) params.set("staffId", options.staffId);
+    const response = await fetch(
+      `/api/site-admin/${encodeURIComponent(siteSlug)}/availability?${params.toString()}`,
+    );
+    const body = (await parseJsonSafe(response)) as
+      | { ok?: boolean; availability?: CustomerSiteAvailabilityResult; error?: string; details?: unknown }
+      | null;
+    if (!response.ok || !body?.ok || !body.availability) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_AVAILABILITY_GET_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, availability: body.availability };
   } catch {
     return { ok: false, error: "NETWORK_ERROR", status: 0 };
   }

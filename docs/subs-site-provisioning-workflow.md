@@ -319,3 +319,23 @@ Still local/mock in current product:
 - These records form future booking-availability override layers. The intended hierarchy is business opening hours -> staff rota -> business closures -> staff leave -> existing booking conflict checks.
 - Public tenant sites stay customer/service-led and do not show internal staff leave. A small active/upcoming business closure notice may appear in the footer/contact area when relevant.
 - Provisioning remains clean: no demo closures, holidays, staff leave, bookings, services, or vouchers are copied into paid subscriber sites.
+
+## Subscriber availability calculation milestone
+
+- A reusable tenant-scoped availability calculator now powers both public and site-admin availability previews.
+- API routes:
+  - public: `GET /api/sites/[siteSlug]/availability?serviceId=...&date=...&staffId=...`
+  - site-admin: `GET /api/site-admin/[siteSlug]/availability?serviceId=...&date=...&staffId=...`
+- The site-admin endpoint requires subscriber-admin access and returns debug/setup reasons.
+- The public endpoint returns only slots and customer-friendly messages.
+- The calculation is deterministic and does not use demo/localStorage data.
+- Availability hierarchy in this first pass:
+  1. service must belong to the tenant and be active
+  2. business must be open for the selected date
+  3. staff must belong to the tenant and be active
+  4. staff rota must contain a working window for the selected date
+  5. business closures block all staff/services
+  6. staff breaks and staff leave block that staff member
+  7. existing `SUBMITTED`/`CONFIRMED` subscriber bookings block overlapping slots where date/time/staff data exists
+- Slot generation uses 15-minute increments and applies the selected service duration plus buffer when checking conflicts.
+- This is still an availability preview milestone: it does not create confirmed bookings, take payments, send customer emails, or sync calendars.

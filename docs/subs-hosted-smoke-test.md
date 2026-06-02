@@ -268,7 +268,8 @@ Add these checks after backend envs are configured:
   - account link points to /demo/[industry]/account?tab=bookings`r
 - Services CSV:
   - template columns match editor fields (serviceName, basePrice, durationMinutes, bufferAfterMinutes, description)
-  - optional olePrice:<role> columns accepted
+  - optional
+olePrice:<role> columns accepted
 - Contact page:
   - always visible
   - no contact visibility toggle in admin
@@ -1004,3 +1005,29 @@ Notes:
 15. Open `/sites/luna-hair-studio` and confirm the public homepage remains service-led.
 16. If an active/upcoming business closure has a customer-facing note, confirm only a small closure notice appears near contact/footer details.
 17. Confirm internal staff leave is not exposed publicly.
+
+## 2026-06-02 Hosted Smoke Checks: First Booking Availability Calculation
+
+1. Open `/site-admin/luna-hair-studio`.
+2. Ensure one active service exists:
+   - name: `Cut & Blow Dry`
+   - duration: `45`
+   - buffer: `15`
+3. Ensure one active staff member exists.
+4. Open `Opening hours / rota`.
+5. Set business opening hours Monday-Friday `09:00`-`17:00` and save.
+6. Set the staff rota Monday-Friday `09:00`-`17:00` and save scheduling.
+7. Ensure no business closure or staff leave exists for the selected test weekday.
+8. In `Booking availability preview`, select the service, staff, and weekday date.
+9. Click `Preview slots` and confirm available slots are generated.
+10. Add a business closure for that date, save scheduling, then preview again and confirm no slots or a closed/unavailable reason is shown.
+11. Remove/deactivate the closure.
+12. Add staff leave for that staff member on that date, save scheduling, then preview again and confirm that staff has no slots.
+13. Remove/deactivate the staff leave.
+14. Open public `/sites/luna-hair-studio`.
+15. Click `Check availability` for the service.
+16. Select a valid weekday date and optional staff member, then confirm available slots display.
+17. Click a slot and confirm it shows `Next step: customer details and confirmation. Booking request flow coming soon.`
+18. Confirm no booking is created merely by selecting the slot.
+19. Confirm the public page remains service-led and does not expose internal debug reasons.
+20. If an existing active booking is present for that staff/date/time, confirm overlapping slots are blocked in the preview.

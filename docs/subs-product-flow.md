@@ -732,3 +732,22 @@ CSV import/export setup tools moved out of demo customisation and into business 
   5. the full booking engine will later combine these with service durations and existing bookings
 - Closures and staff leave are optional setup data and do not block `Ready to go live`.
 - Public subscriber pages remain service-led. They may show a small current/upcoming business-closure notice near contact/footer details, but they do not expose internal staff leave.
+
+## 2026-06-02 First Subscriber Booking Availability Calculation
+
+- Subscriber sites now have a first tenant-scoped booking availability calculator.
+- The calculator uses:
+  - active service and its duration/buffer
+  - business opening hours
+  - active staff members
+  - staff rota
+  - staff break windows
+  - business closures/holidays
+  - staff leave/unavailability
+  - existing active subscriber bookings where available
+- Public `/sites/[siteSlug]` service cards now offer `Check availability` and show available time buttons for a selected date and optional customer-selectable staff member.
+- Selecting a slot does not create a booking yet; it shows the next-step/booking-request-coming-soon message.
+- Site-admin `/site-admin/[siteSlug]` includes a `Booking availability preview` inside `Opening hours / rota` so business owners can test their setup before live booking submission is built.
+- Public availability responses stay customer-friendly and do not expose internal setup/debug reasons.
+- Admin availability preview shows setup/debug reasons such as missing service duration, no active staff, no staff rota, business closure, staff leave, breaks, or existing booking conflicts.
+- Booking submission, payment/prepayment, customer login, staff login, email confirmations, recurring bookings, and calendar sync remain future milestones.
