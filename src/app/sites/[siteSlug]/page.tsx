@@ -172,6 +172,7 @@ export default async function PublicSiteSlugPage({
   const privacyHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/privacy`;
   const siteAdminHref = `/site-admin/${encodeURIComponent(preview.tenantSite.slug)}`;
   const staffLoginHref = `/site-staff/${encodeURIComponent(preview.tenantSite.slug)}`;
+  const customerAccountHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/account`;
 
   return (
     <main className={`min-h-screen ${shellClass}`}>
@@ -188,7 +189,7 @@ export default async function PublicSiteSlugPage({
                   <Link href={aboutHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">About</Link>
                 ) : null}
                 <Link href={contactHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Contact</Link>
-                <a href="#customer-login" className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Customer login</a>
+                <Link href={customerAccountHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Customer login</Link>
               </div>
             </div>
           </header>
@@ -316,7 +317,7 @@ export default async function PublicSiteSlugPage({
                 </div>
               ) : null}
               <div className="flex flex-wrap items-center gap-3">
-                <span id="customer-login" className="text-slate-600">Customer login (coming soon)</span>
+                <Link href={customerAccountHref} className="hover:text-slate-900">Customer account</Link>
                 <Link href={privacyHref} className="hover:text-slate-900">Privacy Policy</Link>
                 <Link href={cookiesHref} className="hover:text-slate-900">Cookie Policy</Link>
                 {settings?.policyPageEnabled ? (

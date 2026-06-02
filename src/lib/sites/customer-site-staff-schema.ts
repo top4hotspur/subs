@@ -4,6 +4,17 @@ import { WEEKDAY_VALUES } from "@/lib/sites/customer-site-staff-types";
 const cuid = z.string().cuid();
 const weekdaySchema = z.enum(WEEKDAY_VALUES);
 
+const staffPermissionsSchema = z.object({
+  viewAppointments: z.boolean().optional().default(true),
+  markCompleted: z.boolean().optional().default(false),
+  addManualBooking: z.boolean().optional().default(false),
+  amendBooking: z.boolean().optional().default(false),
+  cancelBooking: z.boolean().optional().default(false),
+  viewCustomerContactDetails: z.boolean().optional().default(false),
+  viewPaymentStatus: z.boolean().optional().default(false),
+  redeemVouchers: z.boolean().optional().default(false),
+});
+
 export const staffRoleInputSchema = z.object({
   id: cuid.optional(),
   label: z.string().trim().min(1).max(120),
@@ -28,6 +39,7 @@ export const staffMemberInputSchema = z.object({
   active: z.boolean().optional().default(true),
   customerSelectable: z.boolean().optional().default(false),
   isSuperUser: z.boolean().optional().default(false),
+  staffPermissions: staffPermissionsSchema.nullable().optional(),
   availableWeekdays: z.array(weekdaySchema).max(7).nullable().optional(),
   serviceIds: z.array(z.string().trim().min(1).max(120)).max(500).nullable().optional(),
   notes: z.string().trim().max(1000).nullable().optional(),

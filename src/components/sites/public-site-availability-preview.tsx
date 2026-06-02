@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { outlineButtonClass, primaryButtonClass, smallButtonClass } from "@/lib/ui/button-styles";
 import { createPublicSiteBooking } from "@/lib/sites/public-site-bookings-client";
 import { formatBookingDateTime } from "@/lib/sites/customer-site-booking-display";
@@ -29,6 +29,16 @@ type AvailabilityResponse = {
   slots?: PublicAvailabilitySlot[];
   message?: string;
   error?: string;
+};
+
+type CustomerSessionResponse = {
+  ok?: boolean;
+  customer?: {
+    firstName: string;
+    lastName: string | null;
+    email: string;
+    phone: string | null;
+  } | null;
 };
 
 type SlotGroupName = "Morning" | "Afternoon" | "Evening";
@@ -96,6 +106,7 @@ export function PublicSiteAvailabilityPreview({
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerNotes, setCustomerNotes] = useState("");
+  const [usingAccountDetails, setUsingAccountDetails] = useState(false);
   const [policyAccepted, setPolicyAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -105,6 +116,28 @@ export function PublicSiteAvailabilityPreview({
     Evening: false,
   });
   const bookingFormRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadCustomerSession() {
+      const response = await fetch(`/api/sites/${encodeURIComponent(siteSlug)}/account/session`, {
+        cache: "no-store",
+      }).catch(() => null);
+      if (!response?.ok) return;
+      const body = (await response.json().catch(() => null)) as CustomerSessionResponse | null;
+      const customer = body?.customer;
+      if (cancelled || !customer) return;
+      const fullName = [customer.firstName, customer.lastName].filter(Boolean).join(" ").trim();
+      setCustomerName((current) => current || fullName);
+      setCustomerEmail((current) => current || customer.email);
+      setCustomerPhone((current) => current || customer.phone || "");
+      setUsingAccountDetails(true);
+    }
+    void loadCustomerSession();
+    return () => {
+      cancelled = true;
+    };
+  }, [siteSlug]);
 
   const displaySlots = useMemo(() => {
     if (staffId) return slots;
@@ -337,6 +370,11 @@ export function PublicSiteAvailabilityPreview({
               <p className="mt-1 text-xs text-slate-600">
                 Complete your details to confirm this booking.
               </p>
+              {usingAccountDetails ? (
+                <p className="mt-2 rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-xs font-semibold text-teal-950">
+                  Using your saved customer account details. You can edit them for this booking if needed.
+                </p>
+              ) : null}
               <p className="mt-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
                 {requireBookingPrepayment && acceptCardPayments
                   ? "This business requires card payment before booking. Secure payment is handled by Stripe."

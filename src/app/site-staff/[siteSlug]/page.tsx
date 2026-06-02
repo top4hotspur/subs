@@ -9,6 +9,8 @@ import { prisma } from "@/lib/db/prisma";
 import { formatBookingDateTime } from "@/lib/sites/customer-site-booking-display";
 import { listCustomerSiteBookings } from "@/lib/sites/customer-site-booking-repository";
 import type { CustomerSiteBookingRecord } from "@/lib/sites/customer-site-booking-types";
+import { normalizeStaffPermissions } from "@/lib/sites/customer-site-staff-repository";
+import type { CustomerSiteStaffPermissions } from "@/lib/sites/customer-site-staff-types";
 import { getTenantSiteBySlug } from "@/lib/sites/tenant-resolver";
 
 type SiteStaffPageProps = {
@@ -60,10 +62,14 @@ function BookingCard({
   booking,
   siteSlug,
   canComplete,
+  canViewContactDetails,
+  canViewPaymentStatus,
 }: {
   booking: CustomerSiteBookingRecord;
   siteSlug: string;
   canComplete: boolean;
+  canViewContactDetails: boolean;
+  canViewPaymentStatus: boolean;
 }) {
   return (
     <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -82,9 +88,9 @@ function BookingCard({
       </div>
       <div className="mt-3 grid gap-2 text-xs text-slate-700 sm:grid-cols-2">
         <p><span className="font-semibold">Customer:</span> {booking.customerName}</p>
-        <p><span className="font-semibold">Phone:</span> {booking.customerPhone || "Not set"}</p>
-        <p><span className="font-semibold">Email:</span> {booking.customerEmail || "Not set"}</p>
-        <p><span className="font-semibold">Payment:</span> {formatPaymentSummary(booking)}</p>
+        <p><span className="font-semibold">Phone:</span> {canViewContactDetails ? booking.customerPhone || "Not set" : "Hidden by staff permissions"}</p>
+        <p><span className="font-semibold">Email:</span> {canViewContactDetails ? booking.customerEmail || "Not set" : "Hidden by staff permissions"}</p>
+        <p><span className="font-semibold">Payment:</span> {canViewPaymentStatus ? formatPaymentSummary(booking) : "Hidden by staff permissions"}</p>
       </div>
       {booking.notes ? (
         <p className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
@@ -106,12 +112,14 @@ function BookingSection({
   bookings,
   siteSlug,
   canComplete,
+  permissions,
 }: {
   title: string;
   description: string;
   bookings: CustomerSiteBookingRecord[];
   siteSlug: string;
   canComplete: boolean;
+  permissions: CustomerSiteStaffPermissions;
 }) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
@@ -135,7 +143,9 @@ function BookingSection({
               key={booking.id}
               booking={booking}
               siteSlug={siteSlug}
-              canComplete={canComplete && ACTIVE_STATUSES.has(booking.status)}
+              canComplete={canComplete && permissions.markCompleted && ACTIVE_STATUSES.has(booking.status)}
+              canViewContactDetails={permissions.viewCustomerContactDetails}
+              canViewPaymentStatus={permissions.viewPaymentStatus}
             />
           ))
         )}
@@ -156,6 +166,22 @@ export default async function SiteStaffPage({ params, searchParams }: SiteStaffP
       `/site-staff/login?siteSlug=${encodeURIComponent(site.slug)}&callbackUrl=${encodeURIComponent(`/site-staff/${site.slug}`)}`,
     );
   }
+
+  const currentStaff = await prisma.customerSiteStaffMember.findFirst({
+    where: {
+      id: session.staffMemberId,
+      tenantSiteId: site.id,
+      active: true,
+      staffAccessEnabled: true,
+    },
+    select: { isSuperUser: true, staffPermissions: true },
+  });
+  if (!currentStaff) {
+    redirect(
+      `/site-staff/login?siteSlug=${encodeURIComponent(site.slug)}&callbackUrl=${encodeURIComponent(`/site-staff/${site.slug}`)}`,
+    );
+  }
+  const permissions = normalizeStaffPermissions(currentStaff.staffPermissions, currentStaff.isSuperUser);
 
   const staffMembers = await prisma.customerSiteStaffMember.findMany({
     where: { tenantSiteId: site.id, active: true },
@@ -190,6 +216,10 @@ export default async function SiteStaffPage({ params, searchParams }: SiteStaffP
           </h1>
           <p className="mt-2 text-sm text-slate-600">
             Signed in as {session.staffDisplayName}. This view shows the shared appointment diary for the business.
+          </p>
+          <p className="mt-2 text-xs text-slate-500">
+            Permissions: {currentStaff.isSuperUser ? "Super-user staff" : "Standard staff"}.
+            {permissions.addManualBooking ? " Manual booking permission is saved; the staff-side manual booking form is future work." : ""}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -245,14 +275,16 @@ export default async function SiteStaffPage({ params, searchParams }: SiteStaffP
           description="Current active appointments for today."
           bookings={todayBookings}
           siteSlug={site.slug}
-          canComplete
+          canComplete={permissions.markCompleted}
+          permissions={permissions}
         />
         <BookingSection
           title="Upcoming appointments"
           description="Future active appointments across the business."
           bookings={upcomingBookings}
           siteSlug={site.slug}
-          canComplete
+          canComplete={permissions.markCompleted}
+          permissions={permissions}
         />
         <BookingSection
           title="Recently completed/cancelled"
@@ -260,6 +292,7 @@ export default async function SiteStaffPage({ params, searchParams }: SiteStaffP
           bookings={recentClosedBookings}
           siteSlug={site.slug}
           canComplete={false}
+          permissions={permissions}
         />
       </div>
     </main>

@@ -34,6 +34,7 @@ function toUtcDateTime(date: string, time: string): Date {
 function serializeBooking(record: {
   id: string;
   tenantSiteId: string;
+  customerSiteCustomerId: string | null;
   serviceId: string | null;
   serviceName: string | null;
   customerName: string;
@@ -110,6 +111,15 @@ async function assertTenantStaff(tenantSiteId: string, staffMemberId?: string): 
   if (!row) throw new Error("Invalid staff member for tenant site");
 }
 
+async function assertTenantCustomer(tenantSiteId: string, customerSiteCustomerId?: string): Promise<void> {
+  if (!customerSiteCustomerId) return;
+  const row = await prisma.customerSiteCustomer.findFirst({
+    where: { id: customerSiteCustomerId, tenantSiteId, active: true },
+    select: { id: true },
+  });
+  if (!row) throw new Error("Invalid customer account for tenant site");
+}
+
 export async function createCustomerSiteBooking(
   tenantSiteId: string,
   input: z.infer<typeof createCustomerSiteBookingSchema>,
@@ -120,6 +130,7 @@ export async function createCustomerSiteBooking(
   const service = await getTenantService(parsedTenant.tenantSiteId, parsed.serviceId);
   const serviceDuration = service.durationMinutes;
   await assertTenantStaff(parsedTenant.tenantSiteId, parsed.staffMemberId);
+  await assertTenantCustomer(parsedTenant.tenantSiteId, parsed.customerSiteCustomerId);
 
   const staffName = parsed.staffMemberId
     ? (
@@ -136,6 +147,7 @@ export async function createCustomerSiteBooking(
   const row = await prisma.customerSiteBooking.create({
     data: {
       tenantSiteId: parsedTenant.tenantSiteId,
+      customerSiteCustomerId: parsed.customerSiteCustomerId ?? null,
       serviceId: parsed.serviceId,
       serviceName: service.name ?? parsed.serviceName ?? null,
       customerName: parsed.customerName,

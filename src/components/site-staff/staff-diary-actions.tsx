@@ -26,6 +26,8 @@ export function MarkBookingCompletedButton({ siteSlug, bookingId }: StaffDiaryAc
       if (!response.ok || !body?.ok) {
         setMessage(body?.error === "BOOKING_UPDATE_NOT_ALLOWED"
           ? "This booking cannot be marked completed."
+          : body?.error === "STAFF_PERMISSION_DENIED"
+            ? "Your staff permissions do not allow this action."
           : "Could not update this booking.");
         setLoading(false);
         return;

@@ -29,10 +29,44 @@ export type CustomerSiteStaffMemberInput = {
   active?: boolean;
   customerSelectable?: boolean;
   isSuperUser?: boolean;
+  staffPermissions?: CustomerSiteStaffPermissions | null;
   availableWeekdays?: WeekdayValue[] | null;
   serviceIds?: string[] | null;
   notes?: string | null;
   sortOrder?: number;
+};
+
+export type CustomerSiteStaffPermissions = {
+  viewAppointments: boolean;
+  markCompleted: boolean;
+  addManualBooking: boolean;
+  amendBooking: boolean;
+  cancelBooking: boolean;
+  viewCustomerContactDetails: boolean;
+  viewPaymentStatus: boolean;
+  redeemVouchers: boolean;
+};
+
+export const DEFAULT_STANDARD_STAFF_PERMISSIONS: CustomerSiteStaffPermissions = {
+  viewAppointments: true,
+  markCompleted: false,
+  addManualBooking: false,
+  amendBooking: false,
+  cancelBooking: false,
+  viewCustomerContactDetails: false,
+  viewPaymentStatus: false,
+  redeemVouchers: false,
+};
+
+export const DEFAULT_SUPER_USER_STAFF_PERMISSIONS: CustomerSiteStaffPermissions = {
+  viewAppointments: true,
+  markCompleted: true,
+  addManualBooking: false,
+  amendBooking: false,
+  cancelBooking: false,
+  viewCustomerContactDetails: true,
+  viewPaymentStatus: true,
+  redeemVouchers: false,
 };
 
 export type CustomerSiteStaffRoleRecord = {
@@ -60,6 +94,7 @@ export type CustomerSiteStaffMemberRecord = {
   isSuperUser: boolean;
   staffAccessEnabled: boolean;
   staffAccessCodeExists: boolean;
+  staffPermissions: CustomerSiteStaffPermissions;
   availableWeekdays: WeekdayValue[];
   serviceIds: string[];
   notes: string | null;

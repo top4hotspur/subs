@@ -17,6 +17,7 @@ import {
   createStripeBookingCheckoutSession,
   isStripeBookingCheckoutConfigured,
 } from "@/lib/billing/stripe-booking-checkout";
+import { getSiteCustomerSessionContext } from "@/lib/auth/site-customer-session";
 import { createBookingAccessUrl } from "@/lib/sites/booking-access-token";
 
 function backendNotConfigured() {
@@ -61,6 +62,12 @@ export async function POST(
 
     const body = await request.json();
     const parsed = createCustomerSiteBookingSchema.parse(body);
+    const customerSession = await getSiteCustomerSessionContext();
+    const customerSiteCustomerId =
+      customerSession?.tenantSiteId === site.tenantSite.id &&
+      customerSession.tenantSlug === site.tenantSite.slug
+        ? customerSession.customerId
+        : undefined;
     const availability = await calculateCustomerSiteAvailability({
       siteSlug,
       serviceId: parsed.serviceId,
@@ -127,6 +134,7 @@ export async function POST(
       paymentCurrency: requiresPrepayment ? paymentCurrency : undefined,
       paymentProvider: requiresPrepayment ? "STRIPE" : undefined,
       source: "customer_site",
+      customerSiteCustomerId,
     });
 
     let checkoutUrl: string | null = null;

@@ -14,6 +14,9 @@ import {
 import {
   CustomerSiteStaffMemberRecord,
   CustomerSiteStaffRoleRecord,
+  DEFAULT_STANDARD_STAFF_PERMISSIONS,
+  DEFAULT_SUPER_USER_STAFF_PERMISSIONS,
+  CustomerSiteStaffPermissions,
   WeekdayValue,
 } from "@/lib/sites/customer-site-staff-types";
 
@@ -54,6 +57,27 @@ function parseServiceIds(value: unknown): string[] {
   return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
 }
 
+export function normalizeStaffPermissions(
+  value: unknown,
+  isSuperUser = false,
+): CustomerSiteStaffPermissions {
+  const base = isSuperUser
+    ? DEFAULT_SUPER_USER_STAFF_PERMISSIONS
+    : DEFAULT_STANDARD_STAFF_PERMISSIONS;
+  if (!value || typeof value !== "object") return { ...base };
+  const source = value as Partial<Record<keyof CustomerSiteStaffPermissions, unknown>>;
+  return {
+    viewAppointments: source.viewAppointments === undefined ? base.viewAppointments : source.viewAppointments === true,
+    markCompleted: source.markCompleted === undefined ? base.markCompleted : source.markCompleted === true,
+    addManualBooking: source.addManualBooking === undefined ? base.addManualBooking : source.addManualBooking === true,
+    amendBooking: source.amendBooking === undefined ? base.amendBooking : source.amendBooking === true,
+    cancelBooking: source.cancelBooking === undefined ? base.cancelBooking : source.cancelBooking === true,
+    viewCustomerContactDetails: source.viewCustomerContactDetails === undefined ? base.viewCustomerContactDetails : source.viewCustomerContactDetails === true,
+    viewPaymentStatus: source.viewPaymentStatus === undefined ? base.viewPaymentStatus : source.viewPaymentStatus === true,
+    redeemVouchers: source.redeemVouchers === undefined ? base.redeemVouchers : source.redeemVouchers === true,
+  };
+}
+
 function serializeRole(record: {
   id: string;
   tenantSiteId: string;
@@ -85,6 +109,7 @@ function serializeStaff(record: {
   isSuperUser: boolean;
   staffAccessEnabled: boolean;
   staffAccessCodeHash: string | null;
+  staffPermissions: unknown;
   availableWeekdays: unknown;
   serviceIds: unknown;
   notes: string | null;
@@ -106,6 +131,7 @@ function serializeStaff(record: {
     isSuperUser: record.isSuperUser,
     staffAccessEnabled: record.staffAccessEnabled,
     staffAccessCodeExists: Boolean(record.staffAccessCodeHash),
+    staffPermissions: normalizeStaffPermissions(record.staffPermissions, record.isSuperUser),
     notes: record.notes,
     sortOrder: record.sortOrder,
     availableWeekdays: parseWeekdays(record.availableWeekdays),
@@ -322,8 +348,14 @@ export async function replaceCustomerSiteStaffMembers(
         bio: member.bio ?? null,
         active: member.active ?? true,
         customerSelectable: member.customerSelectable ?? false,
-        isSuperUser: member.isSuperUser ?? false,
-        availableWeekdays:
+          isSuperUser: member.isSuperUser ?? false,
+          staffPermissions:
+            member.staffPermissions === undefined
+              ? undefined
+              : member.staffPermissions === null
+                ? Prisma.DbNull
+                : toJson(normalizeStaffPermissions(member.staffPermissions, member.isSuperUser ?? false)),
+          availableWeekdays:
           member.availableWeekdays === undefined
             ? undefined
             : member.availableWeekdays === null
@@ -389,6 +421,12 @@ export async function upsertCustomerSiteStaffMember(
           active: parsedStaff.active ?? true,
           customerSelectable: parsedStaff.customerSelectable ?? false,
           isSuperUser: parsedStaff.isSuperUser ?? false,
+          staffPermissions:
+            parsedStaff.staffPermissions === undefined
+              ? undefined
+              : parsedStaff.staffPermissions === null
+                ? Prisma.DbNull
+                : toJson(normalizeStaffPermissions(parsedStaff.staffPermissions, parsedStaff.isSuperUser ?? false)),
           availableWeekdays:
             parsedStaff.availableWeekdays === undefined
               ? undefined
@@ -422,6 +460,12 @@ export async function upsertCustomerSiteStaffMember(
           active: parsedStaff.active ?? true,
           customerSelectable: parsedStaff.customerSelectable ?? false,
           isSuperUser: parsedStaff.isSuperUser ?? false,
+          staffPermissions:
+            parsedStaff.staffPermissions === undefined
+              ? undefined
+              : parsedStaff.staffPermissions === null
+                ? Prisma.DbNull
+                : toJson(normalizeStaffPermissions(parsedStaff.staffPermissions, parsedStaff.isSuperUser ?? false)),
           availableWeekdays:
             parsedStaff.availableWeekdays === undefined
               ? undefined

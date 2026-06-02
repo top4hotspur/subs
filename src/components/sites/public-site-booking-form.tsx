@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPublicSiteBooking } from "@/lib/sites/public-site-bookings-client";
 
 type PublicSiteBookingFormProps = {
@@ -22,6 +22,16 @@ type PublicSiteBookingFormProps = {
   acceptCashPayments?: boolean;
   acceptCardPayments?: boolean;
   requireBookingPrepayment?: boolean;
+};
+
+type CustomerSessionResponse = {
+  ok?: boolean;
+  customer?: {
+    firstName: string;
+    lastName: string | null;
+    email: string;
+    phone: string | null;
+  } | null;
 };
 
 function toErrorMessage(error: string, status: number): string {
@@ -71,6 +81,29 @@ export function PublicSiteBookingForm({
   const [policyAccepted, setPolicyAccepted] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [usingAccountDetails, setUsingAccountDetails] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadCustomerSession() {
+      const response = await fetch(`/api/sites/${encodeURIComponent(siteSlug)}/account/session`, {
+        cache: "no-store",
+      }).catch(() => null);
+      if (!response?.ok) return;
+      const body = (await response.json().catch(() => null)) as CustomerSessionResponse | null;
+      const customer = body?.customer;
+      if (cancelled || !customer) return;
+      const fullName = [customer.firstName, customer.lastName].filter(Boolean).join(" ").trim();
+      setCustomerName((current) => current || fullName);
+      setCustomerEmail((current) => current || customer.email);
+      setCustomerPhone((current) => current || customer.phone || "");
+      setUsingAccountDetails(true);
+    }
+    void loadCustomerSession();
+    return () => {
+      cancelled = true;
+    };
+  }, [siteSlug]);
 
   async function submit(): Promise<void> {
     setSaving(true);
@@ -126,6 +159,11 @@ export function PublicSiteBookingForm({
             ? "Choose a service and time to confirm your booking. Payment can be arranged directly with the business."
             : "Choose a service and time to confirm your booking."}
       </p>
+      {usingAccountDetails ? (
+        <p className="mt-3 rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm font-semibold text-teal-950">
+          Using your saved customer account details. You can edit them for this booking if needed.
+        </p>
+      ) : null}
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <label className="text-sm font-medium text-slate-700">

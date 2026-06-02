@@ -5,6 +5,8 @@ import {
   getCustomerSiteBookingById,
   updateCustomerSiteBookingStatus,
 } from "@/lib/sites/customer-site-booking-repository";
+import { prisma } from "@/lib/db/prisma";
+import { normalizeStaffPermissions } from "@/lib/sites/customer-site-staff-repository";
 import { getTenantSiteBySlug } from "@/lib/sites/tenant-resolver";
 
 type CompleteBookingRouteContext = {
@@ -31,6 +33,22 @@ export async function POST(_request: Request, context: CompleteBookingRouteConte
     const session = await getSiteStaffSessionContext();
     if (!session || session.tenantSiteId !== site.id || session.tenantSlug !== site.slug) {
       return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+    }
+    const staff = await prisma.customerSiteStaffMember.findFirst({
+      where: {
+        id: session.staffMemberId,
+        tenantSiteId: site.id,
+        active: true,
+        staffAccessEnabled: true,
+      },
+      select: { isSuperUser: true, staffPermissions: true },
+    });
+    if (!staff) {
+      return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
+    }
+    const permissions = normalizeStaffPermissions(staff.staffPermissions, staff.isSuperUser);
+    if (!permissions.markCompleted) {
+      return NextResponse.json({ ok: false, error: "STAFF_PERMISSION_DENIED" }, { status: 403 });
     }
 
     const booking = await getCustomerSiteBookingById(site.id, bookingId);

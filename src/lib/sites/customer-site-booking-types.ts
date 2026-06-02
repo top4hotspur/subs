@@ -35,6 +35,7 @@ export type CustomerSiteRefundStatus =
 export type CustomerSiteBookingRecord = {
   id: string;
   tenantSiteId: string;
+  customerSiteCustomerId: string | null;
   serviceId: string | null;
   serviceName: string | null;
   customerName: string;

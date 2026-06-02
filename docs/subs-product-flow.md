@@ -885,3 +885,19 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Staff can mark active bookings completed. Staff cannot edit settings, pricing, rota, policies, payments, refunds, platform admin state, or subscriber admin controls in this pass.
 - `/sites/[siteSlug]` footer staff login now points to the new staff route while remaining low prominence.
 - Full staff permissions, staff-specific auth roles, staff email delivery, notes/audit history, cancellation/reschedule actions, and customer/staff account systems remain future milestones.
+
+## Customer Accounts and Staff Permissions v1
+
+- Provisioned subscriber sites now have tenant-scoped customer account routes under `/sites/[siteSlug]/account`.
+- Customers can register with first name, last name, email, phone, and a private access code. The access code is hashed before storage.
+- Customer login is site-specific and uses a signed HTTP-only session cookie scoped to `/sites`.
+- Guest booking remains available. A logged-in customer's booking form is prefilled from their account, and successful bookings are linked to that tenant customer account.
+- Customer account dashboards show only bookings linked to that tenant/customer account, grouped into upcoming, past, and cancelled bookings.
+- Secure single-booking lookup links remain available from booking emails and continue to work independently of customer accounts.
+- Registration and login errors are intentionally generic enough to avoid exposing whether an email already has an account on a tenant site.
+- Public customer account links now point to `/sites/[siteSlug]/account` instead of a coming-soon placeholder.
+- Staff setup now stores per-staff permissions on `CustomerSiteStaffMember.staffPermissions`.
+- Standard staff can view the shared appointment diary but cannot see customer phone/email, payment status, or appointment actions.
+- Super-user staff can be granted permissions for marking appointments completed, viewing customer contact details, viewing payment status, and future operational actions such as manual bookings, amendments, cancellations, and voucher redemption.
+- The staff diary and mark-completed API both enforce permissions server-side. UI hiding is not the only control.
+- Manual staff booking, staff-side amendments/cancellations, voucher redemption workflows, customer account password reset/email verification, and full customer self-service rescheduling remain future milestones.

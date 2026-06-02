@@ -45,6 +45,7 @@ const refundStatusSchema = z.enum([
 export const createCustomerSiteBookingSchema = z
   .object({
     serviceId: cuidSchema,
+    customerSiteCustomerId: cuidSchema.optional(),
     serviceName: z.string().trim().min(1).max(120).optional(),
     customerName: z.string().trim().min(1).max(120),
     customerEmail: z.string().trim().email().max(320),

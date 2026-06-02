@@ -439,3 +439,14 @@ Still local/mock in current product:
 - Staff access codes are hashed in `CustomerSiteStaffMember.staffAccessCodeHash`; `staffAccessEnabled` controls whether the staff member can log in.
 - `/site-staff/[siteSlug]` is a shared appointment diary for the tenant site. It reads tenant bookings from the central database and does not expose platform provisioning controls.
 - This milestone does not send staff access emails automatically, create demo data, add full staff permissions, or implement staff-specific booking ownership.
+
+## Customer Accounts and Staff Permissions v1
+
+- Clean provisioned tenant sites can now support first-pass customer accounts without copying demo customers or bookings.
+- Customer records are stored in `CustomerSiteCustomer` and scoped by `tenantSiteId` plus email uniqueness within that tenant.
+- New bookings created while a customer is logged in store `customerSiteCustomerId`; existing guest bookings remain guest bookings unless a later account-linking pass is implemented.
+- `/sites/[siteSlug]/account` is the customer dashboard for tenant-linked bookings. It is separate from platform admin, business admin, and staff access.
+- Business owners manage staff access and permissions from `/site-admin/[siteSlug]` in Staff setup.
+- Staff permissions are stored on the staff member record and are enforced by `/site-staff/[siteSlug]` plus staff booking action APIs.
+- Standard staff access is deliberately limited. Super-user staff permission flags prepare the route for controlled operational actions without granting platform or subscriber-admin access.
+- Provisioning remains clean: no demo services, staff, bookings, vouchers, customers, or localStorage data are copied into paid subscriber sites.

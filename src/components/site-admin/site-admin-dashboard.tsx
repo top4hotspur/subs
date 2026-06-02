@@ -30,9 +30,14 @@ import {
 } from "@/lib/sites/site-admin-client";
 import { outlineButtonClass, primaryButtonClass, smallButtonClass } from "@/lib/ui/button-styles";
 import type {
+  CustomerSiteStaffPermissions,
   CustomerSiteStaffMemberRecord,
   CustomerSiteStaffRoleRecord,
   WeekdayValue,
+} from "@/lib/sites/customer-site-staff-types";
+import {
+  DEFAULT_STANDARD_STAFF_PERMISSIONS,
+  DEFAULT_SUPER_USER_STAFF_PERMISSIONS,
 } from "@/lib/sites/customer-site-staff-types";
 import type {
   CustomerSiteBusinessClosureRecord,
@@ -90,6 +95,20 @@ const weekdayValues: WeekdayValue[] = [
   "friday",
   "saturday",
   "sunday",
+];
+
+const STAFF_PERMISSION_OPTIONS: Array<{
+  key: keyof CustomerSiteStaffPermissions;
+  label: string;
+  note?: string;
+}> = [
+  { key: "markCompleted", label: "Mark appointments completed" },
+  { key: "addManualBooking", label: "Add manual bookings", note: "Saved now; manual staff booking form is future work." },
+  { key: "amendBooking", label: "Amend bookings", note: "Saved now; staff-side amendment action is future work." },
+  { key: "cancelBooking", label: "Cancel bookings", note: "Saved now; staff-side cancellation action is future work." },
+  { key: "viewCustomerContactDetails", label: "View customer phone and email" },
+  { key: "viewPaymentStatus", label: "View payment status" },
+  { key: "redeemVouchers", label: "Redeem/check gift vouchers", note: "Saved now; voucher redemption action is future work." },
 ];
 
 function weekdayLabel(weekday: WeekdayValue): string {
@@ -196,6 +215,7 @@ type StaffMemberDraft = {
   active: boolean;
   customerSelectable: boolean;
   isSuperUser: boolean;
+  staffPermissions: CustomerSiteStaffPermissions;
   staffAccessEnabled: boolean;
   staffAccessCodeExists: boolean;
   availableWeekdays: WeekdayValue[];
@@ -776,6 +796,24 @@ function buildStaffDisplayName(staff: StaffMemberDraft): string {
   );
 }
 
+function defaultStaffPermissions(isSuperUser: boolean): CustomerSiteStaffPermissions {
+  return {
+    ...(isSuperUser ? DEFAULT_SUPER_USER_STAFF_PERMISSIONS : DEFAULT_STANDARD_STAFF_PERMISSIONS),
+  };
+}
+
+function updateStaffPermission(
+  permissions: CustomerSiteStaffPermissions,
+  key: keyof CustomerSiteStaffPermissions,
+  value: boolean,
+): CustomerSiteStaffPermissions {
+  return {
+    ...permissions,
+    viewAppointments: true,
+    [key]: value,
+  };
+}
+
 function toStaffDraft(staff: CustomerSiteStaffMemberRecord): StaffMemberDraft {
   const nameParts = splitStaffName(staff.displayName);
   return {
@@ -791,6 +829,7 @@ function toStaffDraft(staff: CustomerSiteStaffMemberRecord): StaffMemberDraft {
     active: staff.active,
     customerSelectable: staff.customerSelectable,
     isSuperUser: staff.isSuperUser,
+    staffPermissions: staff.staffPermissions ?? defaultStaffPermissions(staff.isSuperUser),
     staffAccessEnabled: staff.staffAccessEnabled,
     staffAccessCodeExists: staff.staffAccessCodeExists,
     availableWeekdays: staff.availableWeekdays ?? [],
@@ -1220,6 +1259,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
         active: staff.active,
         customerSelectable: staff.customerSelectable,
         isSuperUser: staff.isSuperUser,
+        staffPermissions: staff.isSuperUser ? staff.staffPermissions : defaultStaffPermissions(false),
         availableWeekdays: staff.availableWeekdays,
         notes: staff.notes.trim() || null,
         sortOrder: staff.sortOrder.trim() ? Number(staff.sortOrder) : index,
@@ -2318,7 +2358,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
             <div>
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold text-slate-900">Staff members</p>
-                <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setStaffDraft((current) => [...current, { firstName: "", lastName: "", roleId: "", displayName: "", roleLabel: "", email: "", phone: "", bio: "", active: true, customerSelectable: false, isSuperUser: false, staffAccessEnabled: false, staffAccessCodeExists: false, availableWeekdays: [], notes: "", sortOrder: String(current.length) }])}>Add staff</button>
+                <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setStaffDraft((current) => [...current, { firstName: "", lastName: "", roleId: "", displayName: "", roleLabel: "", email: "", phone: "", bio: "", active: true, customerSelectable: false, isSuperUser: false, staffPermissions: defaultStaffPermissions(false), staffAccessEnabled: false, staffAccessCodeExists: false, availableWeekdays: [], notes: "", sortOrder: String(current.length) }])}>Add staff</button>
               </div>
               <div className="mt-2 space-y-2">
                 {staffDraft.length === 0 ? (
@@ -2360,6 +2400,74 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                         <input type="checkbox" checked={staff.customerSelectable} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, customerSelectable: event.target.checked } : item))} />
                         Bookable online / customer selectable
                       </label>
+                      <div className="rounded-lg border border-slate-200 bg-white p-3 sm:col-span-2">
+                        <label className="flex items-start gap-2 text-xs font-semibold text-slate-800">
+                          <input
+                            type="checkbox"
+                            className="mt-0.5"
+                            checked={staff.isSuperUser}
+                            onChange={(event) =>
+                              setStaffDraft((current) =>
+                                current.map((item, i) =>
+                                  i === index
+                                    ? {
+                                        ...item,
+                                        isSuperUser: event.target.checked,
+                                        staffPermissions: defaultStaffPermissions(event.target.checked),
+                                      }
+                                    : item,
+                                ),
+                              )
+                            }
+                          />
+                          <span>
+                            Super-user staff access
+                            <span className="mt-1 block font-normal text-slate-600">
+                              Standard staff can view the shared diary only. Super-user staff can be granted extra appointment, contact, payment and voucher permissions.
+                            </span>
+                          </span>
+                        </label>
+                        {staff.isSuperUser ? (
+                          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                            <label className="flex items-start gap-2 rounded-md border border-emerald-100 bg-emerald-50 px-2 py-2 text-xs text-emerald-950">
+                              <input type="checkbox" checked readOnly className="mt-0.5" />
+                              <span>
+                                <span className="font-semibold">View appointments</span>
+                                <span className="block text-[11px] text-emerald-800">Required for staff appointment access.</span>
+                              </span>
+                            </label>
+                            {STAFF_PERMISSION_OPTIONS.map((option) => (
+                              <label key={option.key} className="flex items-start gap-2 rounded-md border border-slate-200 bg-slate-50 px-2 py-2 text-xs text-slate-700">
+                                <input
+                                  type="checkbox"
+                                  className="mt-0.5"
+                                  checked={staff.staffPermissions[option.key]}
+                                  onChange={(event) =>
+                                    setStaffDraft((current) =>
+                                      current.map((item, i) =>
+                                        i === index
+                                          ? {
+                                              ...item,
+                                              staffPermissions: updateStaffPermission(item.staffPermissions, option.key, event.target.checked),
+                                            }
+                                          : item,
+                                      ),
+                                    )
+                                  }
+                                />
+                                <span>
+                                  <span className="font-semibold text-slate-900">{option.label}</span>
+                                  {option.note ? <span className="block text-[11px] text-slate-500">{option.note}</span> : null}
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="mt-2 text-[11px] text-slate-600">
+                            Standard staff access hides customer contact details, payment status and appointment actions.
+                          </p>
+                        )}
+                      </div>
                       <textarea className="rounded-md border border-slate-300 px-2 py-1 text-xs sm:col-span-2" placeholder="Bio/notes (optional)" value={staff.bio || staff.notes} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, bio: event.target.value, notes: event.target.value } : item))} />
                       {staff.id ? (
                         <div className="rounded-lg border border-slate-200 bg-white p-3 sm:col-span-2">

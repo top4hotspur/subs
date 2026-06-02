@@ -39,6 +39,7 @@ model TenantSite {
   customerSiteStaffHolidays CustomerSiteStaffHoliday[]
   customerSiteBookings      CustomerSiteBooking[]
   customerSiteAdminUsers    CustomerSiteAdminUser[]
+  customerSiteCustomers     CustomerSiteCustomer[]
   setupRequest              SetupRequest?          @relation("SetupRequestToTenantSite", fields: [setupRequestId], references: [id])
 }
 
@@ -473,6 +474,7 @@ model CustomerSiteStaffMember {
   isSuperUser       Boolean                @default(false)
   staffAccessEnabled Boolean               @default(false)
   staffAccessCodeHash String?
+  staffPermissions  Json?
   availableWeekdays Json?
   serviceIds        Json?
   notes             String?
@@ -580,6 +582,7 @@ model CustomerSiteStaffHoliday {
 model CustomerSiteBooking {
   id            String    @id @default(cuid())
   tenantSiteId  String
+  customerSiteCustomerId String?
   serviceId     String?
   serviceName   String?
   customerName  String
@@ -610,8 +613,10 @@ model CustomerSiteBooking {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   tenantSite    TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  customer      CustomerSiteCustomer? @relation(fields: [customerSiteCustomerId], references: [id], onDelete: SetNull)
 
   @@index([tenantSiteId])
+  @@index([customerSiteCustomerId])
   @@index([tenantSiteId, preferredDate])
   @@index([tenantSiteId, status])
   @@index([tenantSiteId, staffMemberId])
@@ -619,6 +624,26 @@ model CustomerSiteBooking {
   @@index([paymentProviderSessionId])
   @@index([paymentProviderPaymentIntentId])
   @@index([tenantSiteId, refundStatus])
+}
+
+model CustomerSiteCustomer {
+  id             String     @id @default(cuid())
+  tenantSiteId   String
+  email          String
+  firstName      String
+  lastName       String?
+  phone          String?
+  accessCodeHash String?
+  active         Boolean    @default(true)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  tenantSite     TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  bookings       CustomerSiteBooking[]
+
+  @@index([tenantSiteId])
+  @@index([email])
+  @@index([tenantSiteId, active])
+  @@unique([tenantSiteId, email])
 }
 
 model CustomerSiteAdminUser {

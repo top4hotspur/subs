@@ -1221,3 +1221,22 @@ Notes:
 13. Create a test active booking if needed and confirm staff can mark it completed.
 14. Confirm staff cannot access `/site-admin/[siteSlug]` controls, platform admin, settings, pricing, rota, payment/refund controls, or provisioning actions through the staff diary.
 15. Disable staff access in site-admin and confirm the old code no longer opens the staff diary after logout/session expiry or fresh login attempt.
+
+## Hosted Smoke Test - Customer Accounts and Staff Permissions v1
+
+1. Open `/sites/luna-hair-studio` and confirm the top `Customer login` link opens `/sites/luna-hair-studio/account` or redirects to customer login.
+2. Create a customer account at `/sites/luna-hair-studio/account/register` with first name, last name, email, phone, and a private access code.
+3. Log out, then log back in at `/sites/luna-hair-studio/account/login` using the same email and access code.
+4. Start a booking from `/sites/luna-hair-studio` while logged in and confirm the booking form pre-fills the saved customer name, email, and phone.
+5. Complete a booking and return to `/sites/luna-hair-studio/account`.
+6. Confirm the booking appears in the account dashboard under the correct upcoming/past/cancelled section.
+7. Confirm the customer account dashboard shows only bookings linked to that customer account for the current tenant site.
+8. Confirm guest booking still works in a fresh/private browser session with no customer login.
+9. In `/site-admin/luna-hair-studio`, go to Staff setup and confirm each saved staff member can be standard or super-user.
+10. For a standard staff member, generate/enable staff access and log in at `/site-staff/luna-hair-studio`.
+11. Confirm the standard staff view can see appointments but hides customer phone/email and payment status, and does not show `Mark completed`.
+12. In site-admin, make the same staff member a super-user and enable `Mark appointments completed`, `View customer phone and email`, and `View payment status`.
+13. Save staff, log in again or refresh the staff diary, and confirm contact details, payment status, and mark-completed actions appear.
+14. Use `Mark completed` on an active test booking and confirm the API updates the booking only when the permission is enabled.
+15. Turn off `Mark appointments completed`, refresh the staff diary, and confirm the button is hidden. A direct API call should return `STAFF_PERMISSION_DENIED`.
+16. Confirm staff access still cannot open `/site-admin/[siteSlug]`, platform admin, provisioning controls, payment provider settings, or business settings.
