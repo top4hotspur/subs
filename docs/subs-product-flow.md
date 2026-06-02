@@ -936,3 +936,17 @@ Business admins can view voucher code, purchaser, recipient, amount, delivery me
 Staff can look up voucher codes from `/site-staff/[siteSlug]`. Redeeming an active voucher requires the staff permission `redeemVouchers`; server-side checks enforce the permission regardless of UI state.
 
 Emails are fail-soft: the business is notified on voucher request where a business email exists, and purchaser/recipient emails are attempted when a voucher is activated. Email failure does not block voucher record creation or activation.
+
+## Platform domain/go-live workflow expansion
+
+Platform admin domain/go-live now separates manual domain purchase and DNS tracking into clearer operational states. The lifecycle vocabulary includes `PROVISIONED`, `SETUP_IN_PROGRESS`, `DOMAIN_PENDING`, `DOMAIN_READY`, `LIVE`, `SUSPENDED`, and `CANCELLED`. Domain work can also be tracked as `DOMAIN_TO_BUY`, `DOMAIN_SEARCH_STARTED`, `DOMAIN_AVAILABLE`, `DOMAIN_PURCHASED`, `DNS_INSTRUCTIONS_SENT`, `WAITING_FOR_CUSTOMER_DNS`, `DNS_CONFIGURED`, `DOMAIN_READY`, `LIVE`, or `NEEDS_ATTENTION`.
+
+`/admin/sites` includes a compact SiteDomain editor for the intended live domain. Domain input is normalised by stripping protocols, ports, paths and trailing dots, then lower-casing the host. Active duplicate domains across tenants are rejected. Saving a primary SiteDomain updates the tenant's `domainPrimary` and domain status.
+
+Manual domain purchase remains a platform-admin workflow. Admins can mark domain search started, mark a domain purchased manually, record registrar/renewal/internal notes, copy DNS instruction text, mark waiting for customer DNS, mark DNS configured, mark domain ready, mark site live, suspend, and reactivate.
+
+Custom-domain runtime rendering is still not switched on in middleware/routing. The prepared resolver remains `resolveTenantSiteByHost()`: incoming host -> normalised host/root-www candidates -> `SiteDomain` -> `TenantSite`. `/sites/[siteSlug]` remains the platform preview/admin testing route until final hosting/custom-domain routing is enabled.
+
+When a site is marked live, the platform attempts a fail-soft go-live email. Email failure does not block the status update. Suspended/cancelled sites are excluded from live domain resolution.
+
+Future payment-provider note: subscriber business payment settings must eventually adapt by provider and integration method. Common provider families include Stripe, Square, PayPal, SumUp/Zettle and others on request. Future work must include secure credential handling, no public secret exposure, provider webhook validation, test/live mode distinction, and provider-specific refund/payment-status behaviour.

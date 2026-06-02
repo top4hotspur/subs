@@ -40,7 +40,11 @@ export type AdminTenantSiteSummary = {
 };
 
 export type AdminSiteLifecycleAction =
+  | "MARK_DOMAIN_SEARCH_STARTED"
+  | "MARK_DOMAIN_PURCHASED_MANUALLY"
   | "MARK_DNS_INSTRUCTIONS_SENT"
+  | "MARK_WAITING_FOR_CUSTOMER_DNS"
+  | "MARK_DNS_CONFIGURED"
   | "MARK_DOMAIN_READY"
   | "MARK_SITE_LIVE"
   | "SUSPEND_SITE"
@@ -244,6 +248,47 @@ export async function applyAdminSiteLifecycleAction(
       };
     }
     return { ok: true, site: body.site, action: body.action, emailSent: Boolean(body.emailSent), emailStatus: body.emailStatus ?? null };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function saveAdminSiteDomain(
+  siteId: string,
+  input: {
+    domain: string;
+    domainType: "PRIMARY" | "APEX" | "WWW" | "ALIAS";
+    status: string;
+    registrarNotes?: string | null;
+  },
+): Promise<ClientResult<{
+  domain: { id: string; domain: string; domainType: string; status: string; registrarNotes?: string | null; createdAt: string };
+  domains: Array<{ id: string; domain: string; domainType: string; status: string; registrarNotes?: string | null; createdAt: string }>;
+}>> {
+  try {
+    const response = await fetch(`/api/admin/sites/${encodeURIComponent(siteId)}/domains`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    const body = (await parseJsonSafe(response)) as
+      | {
+          ok?: boolean;
+          domain?: { id: string; domain: string; domainType: string; status: string; registrarNotes?: string | null; createdAt: string };
+          domains?: Array<{ id: string; domain: string; domainType: string; status: string; registrarNotes?: string | null; createdAt: string }>;
+          error?: string;
+          details?: unknown;
+        }
+      | null;
+    if (!response.ok || !body?.ok || !body.domain || !Array.isArray(body.domains)) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_DOMAIN_SAVE_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, domain: body.domain, domains: body.domains };
   } catch {
     return { ok: false, error: "NETWORK_ERROR", status: 0 };
   }

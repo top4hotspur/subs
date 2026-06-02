@@ -1281,3 +1281,22 @@ Notes:
 17. Confirm no demo/localStorage voucher records are present in the paid tenant site.
 
 Known v1 limitation: subscriber voucher payments are manual. The page does not capture card details, does not mark vouchers paid from frontend redirects, and does not integrate Stripe/Square/PayPal for subscriber businesses yet.
+
+## Domain/go-live workflow smoke test update
+
+1. Open `/admin/sites`.
+2. Select a provisioned subscriber site.
+3. Confirm preview link `/sites/[siteSlug]` and subscriber admin link `/site-admin/[siteSlug]` work.
+4. Confirm domain option, requested domain, lifecycle status, domain status and SiteDomain records are visible.
+5. Save a SiteDomain using a messy value such as `https://WWW.Example-Test.co.uk/path` and confirm it normalises to a lower-case host without protocol/path.
+6. Try saving the same active domain against another tenant and confirm it is rejected.
+7. For platform-managed domains, mark domain search started, mark domain purchased manually, and record registrar/domain notes.
+8. For customer-owned domains, copy DNS instructions and mark DNS instructions sent or waiting for customer DNS.
+9. Mark DNS configured, then mark domain ready.
+10. Use the domain resolution tester to confirm the saved SiteDomain resolves to the expected tenant.
+11. Mark site live and confirm the go-live email is attempted with status shown.
+12. Confirm `/sites/[siteSlug]` still works as the preview route.
+13. Suspend the site and confirm resolver/live behaviour is safe.
+14. Reactivate if appropriate.
+
+Current limitation: final custom-domain host rendering is resolver-prepared but not wired into request routing. DNS purchase and DNS provider changes remain manual.

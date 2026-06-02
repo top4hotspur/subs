@@ -9,6 +9,7 @@ import {
   createAdminTenantSiteFromSetupRequest,
   getAdminTenantSiteDetail,
   listAdminTenantSites,
+  saveAdminSiteDomain,
   updateAdminSiteTaskStatus,
 } from "@/lib/sites/admin-sites-client";
 import {
@@ -80,7 +81,11 @@ function getDomainOptionSummary(value?: string | null): string {
 }
 
 function lifecycleActionLabel(action: AdminSiteLifecycleAction): string {
+  if (action === "MARK_DOMAIN_SEARCH_STARTED") return "Mark domain search started";
+  if (action === "MARK_DOMAIN_PURCHASED_MANUALLY") return "Mark domain purchased manually";
   if (action === "MARK_DNS_INSTRUCTIONS_SENT") return "Mark DNS instructions sent";
+  if (action === "MARK_WAITING_FOR_CUSTOMER_DNS") return "Mark waiting for customer DNS";
+  if (action === "MARK_DNS_CONFIGURED") return "Mark DNS configured";
   if (action === "MARK_DOMAIN_READY") return "Mark domain configured/ready";
   if (action === "MARK_SITE_LIVE") return "Mark site live";
   if (action === "REACTIVATE_SITE") return "Reactivate site";
@@ -128,6 +133,12 @@ export default function AdminSitesPage() {
   const [domainTestHost, setDomainTestHost] = useState("");
   const [domainTestResult, setDomainTestResult] = useState<string | null>(null);
   const [dnsCopyStatus, setDnsCopyStatus] = useState<string | null>(null);
+  const [domainDraft, setDomainDraft] = useState({
+    domain: "",
+    domainType: "PRIMARY" as "PRIMARY" | "APEX" | "WWW" | "ALIAS",
+    status: "DOMAIN_PENDING",
+    registrarNotes: "",
+  });
 
   const selectedSite = useMemo(
     () => sites.find((site) => site.id === selectedSiteId) ?? detail?.site ?? null,
@@ -192,6 +203,13 @@ export default function AdminSitesPage() {
 
     setSelectedSiteId(siteId);
     setDetail(result);
+    const primaryDomain = result.domains.find((domain) => domain.domainType === "PRIMARY") ?? result.domains[0] ?? null;
+    setDomainDraft({
+      domain: primaryDomain?.domain ?? result.site.domainPrimary ?? result.site.setupRequest?.existingDomain ?? result.site.setupRequest?.desiredDomain ?? "",
+      domainType: (primaryDomain?.domainType as "PRIMARY" | "APEX" | "WWW" | "ALIAS" | undefined) ?? "PRIMARY",
+      status: primaryDomain?.status ?? result.site.domainStatus ?? "DOMAIN_PENDING",
+      registrarNotes: primaryDomain?.registrarNotes ?? "",
+    });
     setTaskDrafts((current) => {
       const next = { ...current };
       result.tasks.forEach((task) => {
@@ -259,6 +277,35 @@ export default function AdminSitesPage() {
           : " Go-live email was not attempted."
         : "";
     setMessage(`${lifecycleActionLabel(action)} completed.${emailNote}`);
+    await loadSites();
+    await loadSiteDetail(selectedSiteId);
+  }
+
+  async function saveDomainDraft(): Promise<void> {
+    if (!selectedSiteId) return;
+    if (!domainDraft.domain.trim()) {
+      setMessage("Enter the intended live domain before saving.");
+      return;
+    }
+    const result = await saveAdminSiteDomain(selectedSiteId, {
+      domain: domainDraft.domain,
+      domainType: domainDraft.domainType,
+      status: domainDraft.status,
+      registrarNotes: domainDraft.registrarNotes.trim() || null,
+    });
+    if (!result.ok) {
+      if (result.error === "SITE_DOMAIN_INVALID") {
+        setMessage("Enter a valid domain/host, for example www.customerbusiness.co.uk.");
+        return;
+      }
+      if (result.error === "SITE_DOMAIN_ALREADY_ASSIGNED") {
+        setMessage("This domain is already assigned to another active subscriber site.");
+        return;
+      }
+      setMessage(toMessage(result.error, result.status));
+      return;
+    }
+    setMessage(`Domain saved: ${result.domain.domain}.`);
     await loadSites();
     await loadSiteDetail(selectedSiteId);
   }
@@ -468,7 +515,11 @@ export default function AdminSitesPage() {
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {([
+                    "MARK_DOMAIN_SEARCH_STARTED",
+                    "MARK_DOMAIN_PURCHASED_MANUALLY",
                     "MARK_DNS_INSTRUCTIONS_SENT",
+                    "MARK_WAITING_FOR_CUSTOMER_DNS",
+                    "MARK_DNS_CONFIGURED",
                     "MARK_DOMAIN_READY",
                     "MARK_SITE_LIVE",
                     "SUSPEND_SITE",
@@ -514,6 +565,85 @@ export default function AdminSitesPage() {
                   <p><span className="font-semibold">Domain status:</span> {lifecycleStatusLabel(selectedSite.domainStatus)}</p>
                   <p><span className="font-semibold">Existing domain:</span> {formatOptional(detail.site.setupRequest?.existingDomain)}</p>
                   <p><span className="font-semibold">Desired domain:</span> {formatOptional(detail.site.setupRequest?.desiredDomain)}</p>
+                </div>
+                <div className="mt-3 rounded-md border border-slate-200 bg-white p-3">
+                  <p className="text-xs font-semibold text-slate-900">Intended live domain / SiteDomain record</p>
+                  <p className="mt-1 text-xs text-slate-600">
+                    Save the final customer-facing domain here. Protocols, paths and uppercase text are normalised before saving.
+                  </p>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
+                      Domain / host
+                      <input
+                        className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
+                        value={domainDraft.domain}
+                        onChange={(event) => setDomainDraft((current) => ({ ...current, domain: event.target.value }))}
+                        placeholder="www.customerbusiness.co.uk"
+                      />
+                    </label>
+                    <label className="text-xs font-semibold text-slate-700">
+                      Domain type
+                      <select
+                        className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
+                        value={domainDraft.domainType}
+                        onChange={(event) =>
+                          setDomainDraft((current) => ({
+                            ...current,
+                            domainType: event.target.value as typeof domainDraft.domainType,
+                          }))
+                        }
+                      >
+                        <option value="PRIMARY">Primary</option>
+                        <option value="WWW">www alias</option>
+                        <option value="APEX">Apex/root</option>
+                        <option value="ALIAS">Other alias</option>
+                      </select>
+                    </label>
+                    <label className="text-xs font-semibold text-slate-700">
+                      Domain status
+                      <select
+                        className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
+                        value={domainDraft.status}
+                        onChange={(event) => setDomainDraft((current) => ({ ...current, status: event.target.value }))}
+                      >
+                        {[
+                          "NOT_STARTED",
+                          "DOMAIN_TO_BUY",
+                          "DOMAIN_SEARCH_STARTED",
+                          "DOMAIN_AVAILABLE",
+                          "DOMAIN_PURCHASED",
+                          "DNS_INSTRUCTIONS_SENT",
+                          "WAITING_FOR_CUSTOMER_DNS",
+                          "DNS_CONFIGURED",
+                          "DOMAIN_READY",
+                          "LIVE",
+                          "NEEDS_ATTENTION",
+                          "SUSPENDED",
+                          "CANCELLED",
+                        ].map((status) => (
+                          <option key={status} value={status}>
+                            {lifecycleStatusLabel(status)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
+                      Registrar/domain notes
+                      <textarea
+                        className="mt-1 min-h-[70px] w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
+                        value={domainDraft.registrarNotes}
+                        onChange={(event) => setDomainDraft((current) => ({ ...current, registrarNotes: event.target.value }))}
+                        placeholder="Registrar, renewal/ownership notes, DNS notes, customer instructions..."
+                      />
+                    </label>
+                  </div>
+                  <button
+                    type="button"
+                    className={`mt-3 ${primaryButtonClass} ${smallButtonClass}`}
+                    onClick={() => void saveDomainDraft()}
+                  >
+                    Save SiteDomain
+                  </button>
                 </div>
                 {detail.domains.length === 0 ? (
                   <p className="mt-2 text-xs text-slate-600">No SiteDomain records yet.</p>

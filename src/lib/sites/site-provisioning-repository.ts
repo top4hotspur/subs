@@ -45,6 +45,19 @@ function slugify(base: string): string {
     .slice(0, 60);
 }
 
+export function normalizeSiteDomainInput(value: string): string {
+  const trimmed = value.trim().toLowerCase();
+  if (!trimmed) return "";
+  const withoutProtocol = trimmed.replace(/^[a-z]+:\/\//i, "");
+  const withoutPath = withoutProtocol.split(/[/?#]/)[0] ?? "";
+  const withoutPort = withoutPath.split(":")[0] ?? "";
+  return withoutPort.replace(/\.$/, "").trim();
+}
+
+function isDomainLike(value: string): boolean {
+  return /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/.test(value);
+}
+
 async function buildUniqueSlug(base: string): Promise<string> {
   const slugBase = slugify(base) || "site";
   let candidate = slugBase;
@@ -243,17 +256,34 @@ export async function updateTenantSiteProvisioningStatus(input: UpdateTenantSite
 
 export async function createSiteDomain(input: CreateOrUpdateSiteDomainInput) {
   const parsed = parseOrThrow(createOrUpdateSiteDomainSchema, input, "create/update site domain input");
-  return prisma.siteDomain.upsert({
+  const normalizedDomain = normalizeSiteDomainInput(parsed.domain);
+  if (!isDomainLike(normalizedDomain)) {
+    throw new Error("SITE_DOMAIN_INVALID");
+  }
+
+  const duplicate = await prisma.siteDomain.findFirst({
+    where: {
+      domain: normalizedDomain,
+      tenantSiteId: { not: parsed.tenantSiteId },
+      status: { notIn: ["CANCELLED", "SUSPENDED", "FAILED"] },
+    },
+    select: { id: true, tenantSiteId: true },
+  });
+  if (duplicate) {
+    throw new Error("SITE_DOMAIN_ALREADY_ASSIGNED");
+  }
+
+  const record = await prisma.siteDomain.upsert({
     where: {
       tenantSiteId_domain_domainType: {
         tenantSiteId: parsed.tenantSiteId,
-        domain: parsed.domain,
+        domain: normalizedDomain,
         domainType: parsed.domainType,
       },
     },
     create: {
       tenantSiteId: parsed.tenantSiteId,
-      domain: parsed.domain,
+      domain: normalizedDomain,
       domainType: parsed.domainType,
       status: parsed.status,
       registrarNotes: parsed.registrarNotes,
@@ -265,6 +295,29 @@ export async function createSiteDomain(input: CreateOrUpdateSiteDomainInput) {
       dnsInstructions: parsed.dnsInstructions === undefined ? undefined : toJson(parsed.dnsInstructions),
     },
   });
+
+  if (parsed.domainType === "PRIMARY") {
+    await prisma.tenantSite.update({
+      where: { id: parsed.tenantSiteId },
+      data: {
+        domainPrimary: normalizedDomain,
+        domainStatus: parsed.status,
+      },
+    });
+  }
+
+  await createSiteStatusEvent({
+    tenantSiteId: parsed.tenantSiteId,
+    eventType: "SITE_DOMAIN_UPDATED",
+    message: `SiteDomain ${normalizedDomain} saved as ${parsed.domainType}.`,
+    metadata: {
+      domain: normalizedDomain,
+      domainType: parsed.domainType,
+      status: parsed.status,
+    },
+  });
+
+  return record;
 }
 
 export async function listSiteDomains(tenantSiteId: string) {

@@ -3,8 +3,16 @@ import type { SiteLifecycleAction } from "@/lib/sites/site-lifecycle";
 
 function actionMessage(action: SiteLifecycleAction): string {
   switch (action) {
+    case "MARK_DOMAIN_SEARCH_STARTED":
+      return "Domain search/manual registration workflow started.";
+    case "MARK_DOMAIN_PURCHASED_MANUALLY":
+      return "Domain marked purchased manually by platform admin.";
     case "MARK_DNS_INSTRUCTIONS_SENT":
       return "DNS instructions sent to customer or prepared for managed-domain setup.";
+    case "MARK_WAITING_FOR_CUSTOMER_DNS":
+      return "Waiting for customer DNS changes.";
+    case "MARK_DNS_CONFIGURED":
+      return "DNS marked configured by platform admin.";
     case "MARK_DOMAIN_READY":
       return "Domain marked configured and ready for go-live.";
     case "MARK_SITE_LIVE":
@@ -18,8 +26,16 @@ function actionMessage(action: SiteLifecycleAction): string {
 
 function actionEventType(action: SiteLifecycleAction): string {
   switch (action) {
+    case "MARK_DOMAIN_SEARCH_STARTED":
+      return "DOMAIN_SEARCH_STARTED";
+    case "MARK_DOMAIN_PURCHASED_MANUALLY":
+      return "DOMAIN_PURCHASED";
     case "MARK_DNS_INSTRUCTIONS_SENT":
       return "DNS_INSTRUCTIONS_SENT";
+    case "MARK_WAITING_FOR_CUSTOMER_DNS":
+      return "WAITING_FOR_CUSTOMER_DNS";
+    case "MARK_DNS_CONFIGURED":
+      return "DNS_CONFIGURED";
     case "MARK_DOMAIN_READY":
       return "DOMAIN_READY";
     case "MARK_SITE_LIVE":
@@ -48,12 +64,44 @@ export async function applyTenantSiteLifecycleAction(tenantSiteId: string, actio
     const domainData: { status?: string; registrarNotes?: string } = {};
     const setupRequestStatus = action === "MARK_SITE_LIVE" ? "SITE_LIVE" : undefined;
 
+    if (action === "MARK_DOMAIN_SEARCH_STARTED") {
+      siteData.status = "PROVISIONED";
+      siteData.provisioningStatus = "DOMAIN_PENDING";
+      siteData.domainStatus = "DOMAIN_SEARCH_STARTED";
+      domainData.status = "DOMAIN_SEARCH_STARTED";
+      domainData.registrarNotes = "Domain search/availability check started. Purchase is still manual.";
+    }
+
+    if (action === "MARK_DOMAIN_PURCHASED_MANUALLY") {
+      siteData.status = "PROVISIONED";
+      siteData.provisioningStatus = "DOMAIN_PENDING";
+      siteData.domainStatus = "DOMAIN_PURCHASED";
+      domainData.status = "DOMAIN_PURCHASED";
+      domainData.registrarNotes = "Domain purchased/registered manually by platform admin. DNS configuration still required.";
+    }
+
     if (action === "MARK_DNS_INSTRUCTIONS_SENT") {
       siteData.status = "PROVISIONED";
       siteData.provisioningStatus = "DOMAIN_PENDING";
       siteData.domainStatus = "DNS_INSTRUCTIONS_SENT";
       domainData.status = "DNS_INSTRUCTIONS_SENT";
       domainData.registrarNotes = "DNS instructions sent/prepared. Manual domain configuration still required.";
+    }
+
+    if (action === "MARK_WAITING_FOR_CUSTOMER_DNS") {
+      siteData.status = "PROVISIONED";
+      siteData.provisioningStatus = "DOMAIN_PENDING";
+      siteData.domainStatus = "WAITING_FOR_CUSTOMER_DNS";
+      domainData.status = "WAITING_FOR_CUSTOMER_DNS";
+      domainData.registrarNotes = "Waiting for customer to update DNS/nameserver records.";
+    }
+
+    if (action === "MARK_DNS_CONFIGURED") {
+      siteData.status = "PROVISIONED";
+      siteData.provisioningStatus = "DOMAIN_PENDING";
+      siteData.domainStatus = "DNS_CONFIGURED";
+      domainData.status = "DNS_CONFIGURED";
+      domainData.registrarNotes = "DNS marked configured by platform admin. Final readiness check still required.";
     }
 
     if (action === "MARK_DOMAIN_READY") {
@@ -120,10 +168,34 @@ export async function applyTenantSiteLifecycleAction(tenantSiteId: string, actio
       });
     }
 
+    if (action === "MARK_DOMAIN_SEARCH_STARTED") {
+      await tx.siteProvisioningTask.updateMany({
+        where: { tenantSiteId, taskType: "CONFIRM_DOMAIN_OPTION" },
+        data: { status: "IN_PROGRESS", notes: "Domain search/manual purchase workflow started." },
+      });
+    }
+    if (action === "MARK_DOMAIN_PURCHASED_MANUALLY") {
+      await tx.siteProvisioningTask.updateMany({
+        where: { tenantSiteId, taskType: "CONFIRM_DOMAIN_OPTION" },
+        data: { status: "DONE", notes: "Domain purchased/registered manually." },
+      });
+    }
     if (action === "MARK_DNS_INSTRUCTIONS_SENT") {
       await tx.siteProvisioningTask.updateMany({
         where: { tenantSiteId, taskType: "PREPARE_DNS" },
         data: { status: "DONE", notes: "DNS instructions sent/prepared." },
+      });
+    }
+    if (action === "MARK_WAITING_FOR_CUSTOMER_DNS") {
+      await tx.siteProvisioningTask.updateMany({
+        where: { tenantSiteId, taskType: "PREPARE_DNS" },
+        data: { status: "IN_PROGRESS", notes: "Waiting for customer DNS changes." },
+      });
+    }
+    if (action === "MARK_DNS_CONFIGURED") {
+      await tx.siteProvisioningTask.updateMany({
+        where: { tenantSiteId, taskType: "PREPARE_DNS" },
+        data: { status: "DONE", notes: "DNS configured; final readiness check pending." },
       });
     }
     if (action === "MARK_DOMAIN_READY") {

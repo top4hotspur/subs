@@ -471,3 +471,25 @@ After provisioning, the business owner can open `/site-admin/[siteSlug]`, choose
 Voucher purchases are conservative in this milestone. Without a subscriber payment-provider integration, public voucher requests are stored as `PENDING_PAYMENT`. The business/admin confirms payment manually, which activates the voucher and can trigger purchaser/recipient email delivery. Subscriber payment-provider checkout for vouchers remains future work.
 
 Staff redemption is tenant-scoped through `/site-staff/[siteSlug]` and requires the saved `redeemVouchers` staff permission.
+
+## Domain/go-live workflow expansion
+
+`/admin/sites` now supports a clearer manual domain workflow around existing `TenantSite`, `SiteDomain`, `SubscriptionRecord`, provisioning task and status-event records. No new app/database is created per customer.
+
+Operational steps supported in platform admin:
+
+1. Create/reuse the clean subscriber site.
+2. Record or edit the intended live SiteDomain.
+3. Track whether the customer owns the domain, the platform will manually buy/manage it, or advice is still needed.
+4. Mark domain search started for platform-managed domains.
+5. Mark domain purchased manually and record registrar/renewal/ownership notes.
+6. Copy DNS instruction text without inventing unknown hosting targets.
+7. Mark DNS instructions sent or waiting for customer DNS.
+8. Mark DNS configured.
+9. Mark domain ready.
+10. Mark the site live and attempt the go-live email.
+11. Suspend/reactivate where needed.
+
+SiteDomain input is normalised and checked against active domains on other tenants before saving. Primary SiteDomain rows update `TenantSite.domainPrimary`.
+
+Final custom-domain rendering remains the next hosting/routing milestone: customer domain -> shared app -> host header -> `SiteDomain` -> `TenantSite` -> tenant-scoped public site. `/sites/[siteSlug]` stays as the platform preview route for now.

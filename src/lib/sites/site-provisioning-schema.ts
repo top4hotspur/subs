@@ -21,7 +21,7 @@ export const updateTenantSiteStatusSchema = z.object({
 export const createOrUpdateSiteDomainSchema = z.object({
   tenantSiteId: cuid,
   domain: nonEmpty,
-  domainType: nonEmpty,
+  domainType: z.enum(["PRIMARY", "APEX", "WWW", "ALIAS"]).optional().default("PRIMARY"),
   status: nonEmpty,
   registrarNotes: z.string().optional(),
   dnsInstructions: jsonValue.optional(),

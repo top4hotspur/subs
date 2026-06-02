@@ -95,6 +95,10 @@ const faqs = [
     a: "Yes, this is not just a brochure website. Your site includes industry-specific booking or quote flows, and standard email notifications to keep your customers updated.",
   },
   {
+    q: "Can I use my existing payment provider?",
+    a: "In many cases, yes. We can support common providers such as Stripe, Square, PayPal, SumUp/Zettle and other payment platforms depending on your setup. If you already use a provider, let us know during setup and we'll confirm the best way to connect payments to your site. More providers may be available on request.",
+  },
+  {
     q: "Can I manage my staff and their schedules on the platform?",
     a: "Yes. As the site owner, you have access to business admin features where you can set up staff profiles, assign roles, and manage rotas, breaks, and closures.",
   },
