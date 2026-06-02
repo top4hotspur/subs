@@ -412,3 +412,11 @@ Still local/mock in current product:
 - Site admins can see booking payment method, status, amount, provider, checkout session, and payment intent references in the Bookings section.
 - Cash/manual booking payment handling remains separate and can still be marked paid manually.
 - DNS/custom domain provisioning is unaffected by this payment milestone.
+
+## Booking Cancellation and Refund Operations
+
+- Provisioned tenant sites now have a first-pass admin cancellation workflow for live bookings.
+- Cancellation stores tenant-scoped `cancelledAt`, optional cancellation reason, refund status, and refund guidance on the booking record.
+- Refund eligibility guidance uses the tenant site's configured full-refund and no-refund windows.
+- Online card provider refunds are intentionally not automated yet; admins receive manual-required guidance for paid card bookings.
+- Cancellation email delivery is fail-soft and does not block saving the cancellation.

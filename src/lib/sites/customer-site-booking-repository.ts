@@ -53,6 +53,10 @@ function serializeBooking(record: {
   paymentProvider: string | null;
   paymentProviderSessionId: string | null;
   paymentProviderPaymentIntentId: string | null;
+  refundStatus: string | null;
+  refundGuidance: string | null;
+  cancellationReason: string | null;
+  cancelledAt: Date | null;
   notes: string | null;
   policyAcceptedAt: Date | null;
   source: string | null;
@@ -65,8 +69,10 @@ function serializeBooking(record: {
     status: record.status as CustomerSiteBookingRecord["status"],
     paymentStatus: record.paymentStatus as CustomerSiteBookingRecord["paymentStatus"],
     paymentMethod: record.paymentMethod as CustomerSiteBookingRecord["paymentMethod"],
+    refundStatus: record.refundStatus as CustomerSiteBookingRecord["refundStatus"],
     startDateTime: record.startDateTime?.toISOString() ?? null,
     endDateTime: record.endDateTime?.toISOString() ?? null,
+    cancelledAt: record.cancelledAt?.toISOString() ?? null,
     policyAcceptedAt: record.policyAcceptedAt?.toISOString() ?? null,
     createdAt: record.createdAt.toISOString(),
     updatedAt: record.updatedAt.toISOString(),
@@ -149,6 +155,10 @@ export async function createCustomerSiteBooking(
       paymentProvider: parsed.paymentProvider ?? null,
       paymentProviderSessionId: parsed.paymentProviderSessionId ?? null,
       paymentProviderPaymentIntentId: parsed.paymentProviderPaymentIntentId ?? null,
+      refundStatus: parsed.refundStatus ?? null,
+      refundGuidance: parsed.refundGuidance ?? null,
+      cancellationReason: parsed.cancellationReason ?? null,
+      cancelledAt: parsed.cancelledAt ?? null,
       notes: parsed.notes ?? null,
       policyAcceptedAt: parsed.policyAcceptedAt ?? new Date(),
       source: parsed.source ?? "customer_site",
@@ -216,6 +226,10 @@ export async function updateCustomerSiteBookingStatus(
       paymentProvider: parsed.paymentProvider ?? undefined,
       paymentProviderSessionId: parsed.paymentProviderSessionId ?? undefined,
       paymentProviderPaymentIntentId: parsed.paymentProviderPaymentIntentId ?? undefined,
+      refundStatus: parsed.refundStatus ?? undefined,
+      refundGuidance: parsed.refundGuidance ?? undefined,
+      cancellationReason: parsed.cancellationReason ?? undefined,
+      cancelledAt: parsed.cancelledAt ?? undefined,
       notes: parsed.notes ?? undefined,
     },
   });

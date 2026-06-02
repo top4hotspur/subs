@@ -21,6 +21,17 @@ export type CustomerSitePaymentMethod =
   | "CARD_ONLINE"
   | "MANUAL";
 
+export type CustomerSiteRefundStatus =
+  | "NOT_REQUIRED"
+  | "REVIEW_REQUIRED"
+  | "FULL_REFUND_ELIGIBLE"
+  | "NO_REFUND_RECOMMENDED"
+  | "PENDING"
+  | "REFUNDED"
+  | "PARTIAL_REFUND"
+  | "DECLINED"
+  | "MANUAL_REQUIRED";
+
 export type CustomerSiteBookingRecord = {
   id: string;
   tenantSiteId: string;
@@ -43,6 +54,10 @@ export type CustomerSiteBookingRecord = {
   paymentProvider: string | null;
   paymentProviderSessionId: string | null;
   paymentProviderPaymentIntentId: string | null;
+  refundStatus: CustomerSiteRefundStatus | null;
+  refundGuidance: string | null;
+  cancellationReason: string | null;
+  cancelledAt: string | null;
   notes: string | null;
   policyAcceptedAt: string | null;
   source: string | null;

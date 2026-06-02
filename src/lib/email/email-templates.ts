@@ -1,5 +1,6 @@
 import type { CustomerSiteBookingRecord } from "@/lib/sites/customer-site-booking-types";
 import { formatBookingDateTime } from "@/lib/sites/customer-site-booking-display";
+import { cancellationRefundEmailLine } from "@/lib/sites/booking-cancellation-refund";
 
 type ContactEnquiryEmailInput = {
   name: string;
@@ -192,12 +193,16 @@ export function tenantBookingCustomerCancellation(
 ) {
   const subject = "Your booking has been cancelled";
   const appointment = formatBookingDateTime(booking);
+  const refundLine = cancellationRefundEmailLine(booking);
   const text = [
     `Your booking with ${site.siteName} has been cancelled.`,
     "",
     `Service: ${booking.serviceName || "-"}`,
     `Date/time: ${appointment}`,
     `Staff: ${booking.staffName || "-"}`,
+    booking.cancellationReason ? `Cancellation note: ${booking.cancellationReason}` : "",
+    "",
+    refundLine,
     "",
     site.contactEmail ? `Business email: ${site.contactEmail}` : "",
     site.contactPhone ? `Business phone: ${site.contactPhone}` : "",
@@ -207,6 +212,8 @@ export function tenantBookingCustomerCancellation(
 <p><strong>Service:</strong> ${escapeHtml(booking.serviceName || "-")}<br/>
 <strong>Date/time:</strong> ${escapeHtml(appointment)}<br/>
 <strong>Staff:</strong> ${escapeHtml(booking.staffName || "-")}</p>
+${booking.cancellationReason ? `<p><strong>Cancellation note:</strong><br/>${escapeHtml(booking.cancellationReason).replace(/\n/g, "<br/>")}</p>` : ""}
+<p>${escapeHtml(refundLine)}</p>
 ${site.contactEmail || site.contactPhone ? `<p>${site.contactEmail ? `Email: ${escapeHtml(site.contactEmail)}<br/>` : ""}${site.contactPhone ? `Phone: ${escapeHtml(site.contactPhone)}` : ""}</p>` : ""}
 <p>Please contact the business if you have any questions.</p>`;
   return { subject, text, html };

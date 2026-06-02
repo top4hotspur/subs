@@ -1175,3 +1175,17 @@ Notes:
 12. Temporarily test a no-provider or no-fixed-price scenario in a safe environment and confirm the public flow shows a clear message instead of fake payment success.
 13. Confirm cash/manual payment bookings can still be created and marked paid manually by the business admin.
 14. Confirm refunds/accounting reports are not present in this pass.
+
+## Hosted Smoke Test - Booking Cancellation and Refund Guidance
+
+1. Create a confirmed booking with no online payment required.
+2. Open `/site-admin/luna-hair-studio` and go to Bookings.
+3. Click `Cancel booking` and confirm the cancellation panel appears with booking details, payment state, policy guidance, and refund recommendation.
+4. Enter an optional cancellation reason and choose `Cancel booking only`.
+5. Confirm the booking status becomes `CANCELLED`, cancelled timestamp/reason are visible, and the customer cancellation email is attempted fail-soft.
+6. Check availability for the same service/staff/date and confirm the cancelled booking no longer blocks that slot where rota/opening hours still allow it.
+7. Create a cash/manual booking, mark manual payment received, then cancel it.
+8. Confirm the manual refund/payment handled option is available and records refund status as handled when selected.
+9. Create a paid card booking if Stripe Checkout is configured, then cancel it.
+10. Confirm the UI says online provider refund is not connected yet and records manual-required refund handling rather than fake refund success.
+11. Confirm no provider refund is issued automatically in this pass.

@@ -14,6 +14,7 @@ import {
 } from "@/lib/sites/customer-site-booking-schema";
 import { calculateCustomerSiteAvailability } from "@/lib/sites/customer-site-availability";
 import { getCustomerSitePreviewDataBySlug } from "@/lib/sites/customer-site-preview-repository";
+import { getBookingRefundGuidance } from "@/lib/sites/booking-cancellation-refund";
 import {
   tenantBookingCustomerCancellation,
   tenantBookingCustomerConfirmation,
@@ -131,17 +132,49 @@ export async function PATCH(
       }
       emailKind = "updated";
     } else {
+      const siteForPolicy = await getCustomerSitePreviewDataBySlug(siteSlug);
+      const refundAction = typeof body?.refundAction === "string" ? body.refundAction : "CANCEL_ONLY";
       const parsed = updateCustomerSiteBookingStatusSchema.parse({
         bookingId: body?.bookingId,
         status: body?.status,
         paymentStatus: body?.paymentStatus,
+        refundStatus: body?.refundStatus,
+        refundGuidance: body?.refundGuidance,
+        cancellationReason: body?.cancellationReason,
         notes: body?.notes,
       });
       existing = await getCustomerSiteBookingById(resolved.tenantSiteId, parsed.bookingId);
       if (!existing) {
         return NextResponse.json({ ok: false, error: "BOOKING_NOT_FOUND" }, { status: 404 });
       }
-      booking = await updateCustomerSiteBookingStatus(resolved.tenantSiteId, parsed);
+      if (parsed.status === "CANCELLED" && existing.status !== "CANCELLED") {
+        const guidance = getBookingRefundGuidance({
+          booking: existing,
+          fullRefundNoticeDays: siteForPolicy?.settings?.cancellationFullRefundNoticeDays,
+          noRefundWithinDays: siteForPolicy?.settings?.cancellationNoRefundWithinDays,
+        });
+        let refundStatus = guidance.refundStatus;
+        let refundGuidance = guidance.refundGuidance;
+        if (refundAction === "MANUAL_REFUND_HANDLED" && existing.paymentMethod !== "CARD_ONLINE") {
+          refundStatus = "REFUNDED";
+          refundGuidance = "Manual refund/payment handling has been marked as handled by the business.";
+        } else if (refundAction === "NO_REFUND") {
+          refundStatus = "DECLINED";
+          refundGuidance = "The booking has been cancelled with no refund recorded.";
+        } else if (existing.paymentMethod === "CARD_ONLINE" && (existing.paymentStatus === "PAID" || existing.paymentStatus === "PAYMENT_COMPLETED")) {
+          refundStatus = "MANUAL_REQUIRED";
+          refundGuidance = "Online refund is not connected yet. Cancel the booking and process any refund manually in your payment provider.";
+        }
+        booking = await updateCustomerSiteBookingStatus(resolved.tenantSiteId, {
+          ...parsed,
+          refundStatus,
+          refundGuidance,
+          cancellationReason: parsed.cancellationReason,
+          cancelledAt: new Date(),
+        });
+      } else {
+        booking = await updateCustomerSiteBookingStatus(resolved.tenantSiteId, parsed);
+      }
       if (parsed.status === "CANCELLED" && existing.status !== "CANCELLED") emailKind = "cancelled";
       if (parsed.status === "CONFIRMED" && existing.status !== "CONFIRMED") emailKind = "confirmed";
     }

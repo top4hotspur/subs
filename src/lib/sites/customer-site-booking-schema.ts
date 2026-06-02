@@ -30,6 +30,18 @@ const paymentMethodSchema = z.enum([
   "MANUAL",
 ]);
 
+const refundStatusSchema = z.enum([
+  "NOT_REQUIRED",
+  "REVIEW_REQUIRED",
+  "FULL_REFUND_ELIGIBLE",
+  "NO_REFUND_RECOMMENDED",
+  "PENDING",
+  "REFUNDED",
+  "PARTIAL_REFUND",
+  "DECLINED",
+  "MANUAL_REQUIRED",
+]);
+
 export const createCustomerSiteBookingSchema = z
   .object({
     serviceId: cuidSchema,
@@ -49,6 +61,10 @@ export const createCustomerSiteBookingSchema = z
     paymentProvider: z.string().trim().min(1).max(40).optional(),
     paymentProviderSessionId: z.string().trim().min(1).max(255).optional(),
     paymentProviderPaymentIntentId: z.string().trim().min(1).max(255).optional(),
+    refundStatus: refundStatusSchema.optional(),
+    refundGuidance: z.string().trim().min(1).max(1200).nullable().optional(),
+    cancellationReason: z.string().trim().min(1).max(1200).nullable().optional(),
+    cancelledAt: z.coerce.date().optional(),
     notes: z.string().trim().max(2000).optional(),
     policyAccepted: z.boolean().optional().default(false),
     policyAcceptedAt: z.coerce.date().optional(),
@@ -75,6 +91,10 @@ export const updateCustomerSiteBookingStatusSchema = z.object({
   paymentProvider: z.string().trim().min(1).max(40).optional(),
   paymentProviderSessionId: z.string().trim().min(1).max(255).optional(),
   paymentProviderPaymentIntentId: z.string().trim().min(1).max(255).optional(),
+  refundStatus: refundStatusSchema.optional(),
+  refundGuidance: z.string().trim().min(1).max(1200).nullable().optional(),
+  cancellationReason: z.string().trim().min(1).max(1200).nullable().optional(),
+  cancelledAt: z.coerce.date().optional(),
   notes: z.string().trim().max(2000).optional(),
 });
 

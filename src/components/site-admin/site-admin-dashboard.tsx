@@ -42,6 +42,7 @@ import type {
 import type { CustomerSiteBookingRecord } from "@/lib/sites/customer-site-booking-types";
 import { formatBookingDateTime, formatUkDateTime } from "@/lib/sites/customer-site-booking-display";
 import { DEFAULT_BOOKING_POLICY_BODY, isCustomPolicyContent } from "@/lib/sites/default-booking-policy";
+import { getBookingRefundGuidance } from "@/lib/sites/booking-cancellation-refund";
 import type { CustomerSiteAvailabilityResult } from "@/lib/sites/customer-site-availability";
 import {
   mapAppearanceToTheme,
@@ -260,6 +261,12 @@ type BookingAmendDraft = {
     staffMemberId: string;
     staffName: string;
   } | null;
+};
+
+type BookingCancellationDraft = {
+  bookingId: string;
+  reason: string;
+  refundAction: "CANCEL_ONLY" | "MANUAL_REFUND_HANDLED" | "NO_REFUND";
 };
 
 function findRotaDay(
@@ -581,6 +588,15 @@ function formatBookingPaymentAmount(booking: CustomerSiteBookingRecord): string 
   }).format(booking.paymentAmountPence / 100);
 }
 
+function formatRefundStatus(status: CustomerSiteBookingRecord["refundStatus"]): string {
+  if (!status) return "Not assessed";
+  return status.replaceAll("_", " ").toLowerCase().replace(/(^|\s)\S/g, (letter) => letter.toUpperCase());
+}
+
+function canMarkManualRefundHandled(booking: CustomerSiteBookingRecord): boolean {
+  return booking.paymentMethod !== "CARD_ONLINE" && (booking.paymentStatus === "PAID" || booking.paymentStatus === "PAYMENT_COMPLETED");
+}
+
 function toBookingAmendDraft(booking: CustomerSiteBookingRecord): BookingAmendDraft {
   return {
     customerName: booking.customerName,
@@ -859,6 +875,8 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   const [bookingAmendDraft, setBookingAmendDraft] = useState<BookingAmendDraft | null>(null);
   const [bookingAmendAvailability, setBookingAmendAvailability] = useState<CustomerSiteAvailabilityResult | null>(null);
   const [bookingAmendLoading, setBookingAmendLoading] = useState(false);
+  const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(null);
+  const [bookingCancellationDraft, setBookingCancellationDraft] = useState<BookingCancellationDraft | null>(null);
 
   const selectedStaff = useMemo(
     () => staffDraft.find((item) => item.id === selectedSchedulingStaffId) ?? null,
@@ -1317,6 +1335,46 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
     setMessage(`Booking status updated to ${status}.`);
     setAvailabilityResult(null);
     router.refresh();
+  }
+
+  function startBookingCancellation(booking: CustomerSiteBookingRecord) {
+    setCancellingBookingId(booking.id);
+    setBookingCancellationDraft({
+      bookingId: booking.id,
+      reason: "",
+      refundAction: "CANCEL_ONLY",
+    });
+    setEditingBookingId(null);
+    setBookingAmendDraft(null);
+    setBookingAmendAvailability(null);
+    setMessage(null);
+  }
+
+  async function cancelBookingWithGuidance(booking: CustomerSiteBookingRecord) {
+    if (!bookingCancellationDraft || bookingCancellationDraft.bookingId !== booking.id) return;
+    const guidance = getBookingRefundGuidance({
+      booking,
+      fullRefundNoticeDays: Number(settingsDraft.cancellationFullRefundNoticeDays),
+      noRefundWithinDays: Number(settingsDraft.cancellationNoRefundWithinDays),
+    });
+    setMessage("Cancelling booking...");
+    const result = await updateSiteAdminBookingStatus(siteSlug, {
+      bookingId: booking.id,
+      status: "CANCELLED",
+      cancellationReason: bookingCancellationDraft.reason.trim() || null,
+      refundAction: bookingCancellationDraft.refundAction,
+      refundStatus: guidance.refundStatus,
+      refundGuidance: guidance.refundGuidance,
+    });
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status, result.details));
+      return;
+    }
+    setBookings((current) => current.map((item) => (item.id === booking.id ? result.booking : item)));
+    setCancellingBookingId(null);
+    setBookingCancellationDraft(null);
+    setAvailabilityResult(null);
+    setMessage("Booking cancelled. The slot will be available again where rota and opening hours allow.");
   }
 
   function startBookingAmend(booking: CustomerSiteBookingRecord) {
@@ -2972,6 +3030,8 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                       {booking.notes ? <p>Notes: {booking.notes}</p> : null}
                       <p>Created: {formatUkDateTime(booking.createdAt)}</p>
                       <p>Policy accepted: {formatUkDateTime(booking.policyAcceptedAt)}</p>
+                      {booking.cancelledAt ? <p>Cancelled: {formatUkDateTime(booking.cancelledAt)}</p> : null}
+                      {booking.cancellationReason ? <p>Cancellation reason: {booking.cancellationReason}</p> : null}
                     </div>
                     <div className="min-w-40 text-right">
                       <span className="inline-flex rounded-full border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-800">
@@ -2985,7 +3045,10 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                         {booking.paymentProviderSessionId ? <p>Provider session: {booking.paymentProviderSessionId}</p> : null}
                         {booking.paymentProviderPaymentIntentId ? <p>Payment intent: {booking.paymentProviderPaymentIntentId}</p> : null}
                       </div>
-                      <p className="mt-1 text-[11px] text-slate-400">Payment handling is not connected yet.</p>
+                      <div className="mt-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
+                        <p className="font-semibold text-slate-900">Refund: {formatRefundStatus(booking.refundStatus)}</p>
+                        {booking.refundGuidance ? <p className="mt-1">{booking.refundGuidance}</p> : null}
+                      </div>
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -3000,7 +3063,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                       </button>
                     ) : null}
                     {booking.status !== "CANCELLED" && booking.status !== "COMPLETED" ? (
-                      <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void updateBookingStatus(booking.id, "CANCELLED")}>
+                      <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => startBookingCancellation(booking)}>
                         Cancel booking
                       </button>
                     ) : null}
@@ -3015,6 +3078,109 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                       </button>
                     ) : null}
                   </div>
+                  {cancellingBookingId === booking.id && bookingCancellationDraft ? (
+                    <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="font-semibold">Cancel booking</p>
+                          <p className="mt-1 text-xs">
+                            Review the booking, payment state, and refund guidance before cancelling.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          className={`${outlineButtonClass} ${smallButtonClass}`}
+                          onClick={() => {
+                            setCancellingBookingId(null);
+                            setBookingCancellationDraft(null);
+                          }}
+                        >
+                          Close
+                        </button>
+                      </div>
+                      <div className="mt-3 grid gap-2 rounded-md border border-amber-200 bg-white p-3 text-xs text-slate-700 sm:grid-cols-2">
+                        <p><span className="font-semibold">Customer:</span> {booking.customerName}</p>
+                        <p><span className="font-semibold">Service:</span> {booking.serviceName ?? "Service not set"}</p>
+                        <p><span className="font-semibold">Date/time:</span> {formatBookingDateTime(booking)}</p>
+                        <p><span className="font-semibold">Staff:</span> {booking.staffName ?? "Unassigned"}</p>
+                        <p><span className="font-semibold">Payment:</span> {formatBookingPaymentStatus(booking)}</p>
+                        <p><span className="font-semibold">Method:</span> {booking.paymentMethod ?? "NONE"}</p>
+                      </div>
+                      {(() => {
+                        const guidance = getBookingRefundGuidance({
+                          booking,
+                          fullRefundNoticeDays: Number(settingsDraft.cancellationFullRefundNoticeDays),
+                          noRefundWithinDays: Number(settingsDraft.cancellationNoRefundWithinDays),
+                        });
+                        return (
+                          <div className="mt-3 rounded-md border border-amber-200 bg-white p-3 text-xs text-slate-700">
+                            <p className="font-semibold text-slate-900">Refund recommendation: {formatRefundStatus(guidance.refundStatus)}</p>
+                            <p className="mt-1">{guidance.refundGuidance}</p>
+                            {booking.paymentMethod === "CARD_ONLINE" && (booking.paymentStatus === "PAID" || booking.paymentStatus === "PAYMENT_COMPLETED") ? (
+                              <p className="mt-2 font-semibold text-amber-800">
+                                Online refund is not connected yet. Cancel the booking and process any refund manually in your payment provider.
+                              </p>
+                            ) : null}
+                          </div>
+                        );
+                      })()}
+                      <label className="mt-3 block text-xs font-semibold text-slate-700">
+                        Cancellation reason / note
+                        <textarea
+                          className="mt-1 min-h-20 w-full rounded-md border border-amber-200 bg-white px-3 py-2 text-sm"
+                          value={bookingCancellationDraft.reason}
+                          onChange={(event) => setBookingCancellationDraft((current) => current ? { ...current, reason: event.target.value } : current)}
+                          placeholder="Optional reason shown in the customer cancellation email"
+                        />
+                      </label>
+                      <div className="mt-3 grid gap-2 text-xs text-slate-700">
+                        <label className="flex items-start gap-2">
+                          <input
+                            type="radio"
+                            className="mt-0.5"
+                            checked={bookingCancellationDraft.refundAction === "CANCEL_ONLY"}
+                            onChange={() => setBookingCancellationDraft((current) => current ? { ...current, refundAction: "CANCEL_ONLY" } : current)}
+                          />
+                          <span>Cancel booking only. Refund/payment handling remains for review.</span>
+                        </label>
+                        {canMarkManualRefundHandled(booking) ? (
+                          <label className="flex items-start gap-2">
+                            <input
+                              type="radio"
+                              className="mt-0.5"
+                              checked={bookingCancellationDraft.refundAction === "MANUAL_REFUND_HANDLED"}
+                              onChange={() => setBookingCancellationDraft((current) => current ? { ...current, refundAction: "MANUAL_REFUND_HANDLED" } : current)}
+                            />
+                            <span>Cancel and mark manual refund/payment handling as handled.</span>
+                          </label>
+                        ) : null}
+                        <label className="flex items-start gap-2">
+                          <input
+                            type="radio"
+                            className="mt-0.5"
+                            checked={bookingCancellationDraft.refundAction === "NO_REFUND"}
+                            onChange={() => setBookingCancellationDraft((current) => current ? { ...current, refundAction: "NO_REFUND" } : current)}
+                          />
+                          <span>Cancel with no refund recorded.</span>
+                        </label>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button type="button" className={`${primaryButtonClass} ${smallButtonClass}`} onClick={() => void cancelBookingWithGuidance(booking)}>
+                          Confirm cancellation
+                        </button>
+                        <button
+                          type="button"
+                          className={`${outlineButtonClass} ${smallButtonClass}`}
+                          onClick={() => {
+                            setCancellingBookingId(null);
+                            setBookingCancellationDraft(null);
+                          }}
+                        >
+                          Keep booking
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
                   {editingBookingId === booking.id && bookingAmendDraft ? (
                     <div className="mt-3 rounded-lg border border-teal-200 bg-white p-3">
                       <div className="flex flex-wrap items-start justify-between gap-3">

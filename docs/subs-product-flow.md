@@ -853,3 +853,14 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - If online payment is not configured, or a service has no fixed price, the public booking flow shows a clear customer message and does not fake a paid booking.
 - Cash/manual payment remains supported and can still be marked paid manually by the business admin.
 - Refunds, payout/accounting reports, provider onboarding, and manual online-card payment overrides are future work.
+
+## Booking Cancellation and Refund Handling
+
+- Site admins now cancel bookings through a confirmation panel instead of an instant cancel action.
+- The cancellation panel shows booking details, payment method/status, configured policy guidance, and a refund recommendation based on the site's full-refund and no-refund windows.
+- Refund guidance is recorded on `CustomerSiteBooking` as operational guidance only, using wording such as `Based on the configured policy...` rather than hard legal claims.
+- Cancelled bookings no longer block availability because the availability engine only treats active booking statuses (`REQUESTED`, `SUBMITTED`, `CONFIRMED`) as slot blockers.
+- Cash/manual paid bookings can be cancelled and marked as manually handled. Card refunds are not processed automatically in this pass.
+- Paid online-card bookings are marked `MANUAL_REQUIRED` for refund handling, with instructions to process any refund manually in the payment provider.
+- Customer cancellation emails are attempted fail-soft and include service, date/time, staff, optional cancellation reason, and payment/refund wording.
+- Full refund API calls, refund ledgers, accounting reports, customer self-service cancellation, and recurring booking refunds remain future work.
