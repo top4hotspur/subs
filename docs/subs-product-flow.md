@@ -643,6 +643,15 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - The onboarding checklist marks `Add at least one service` complete when the tenant has at least one active service.
 - `Book now` currently routes visitors to the Services section and service cards show a `coming soon` booking action until the booking engine milestone.
 
+## 2026-06-02 Subscriber Services Onboarding UX Polish
+
+- `/site-admin/[siteSlug]` now opens the public preview in a separate tab so business owners can keep admin open while checking progress.
+- The top `Get your site ready` area is the main progress checklist; the lower `Setup section guide` is a setup map with separate status badges.
+- Progress/status labels use subtle green badges for done/ready/configured states and amber badges for not-set/in-progress states.
+- The `Services/prices` editor now uses compact fields for base price, duration, and buffer minutes.
+- Per-service recurring and block-booking options are clickable and saved as future booking configuration, even though the full booking engine is not active yet.
+- Saving services refreshes the server-rendered onboarding checklist so active-service progress updates without requiring a manual browser refresh.
+
 ## 2026-06-02 Subscriber Staff Management
 
 - `/site-admin/[siteSlug]` now provides a tenant-scoped `Staff setup` section.

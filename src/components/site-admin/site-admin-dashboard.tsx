@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import type {
   PersistedCustomerSiteService,
   PersistedCustomerSiteSettings,
@@ -451,6 +452,7 @@ function toStaffHolidayDraft(holiday: CustomerSiteStaffHolidayRecord): StaffHoli
 }
 
 export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<SectionKey>("settings");
@@ -699,7 +701,13 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       return;
     }
     setServicesDraft(result.services.map(toServiceDraft));
-    setMessage("Services saved.");
+    const activeCount = result.services.filter((service) => service.active).length;
+    setMessage(
+      activeCount > 0
+        ? `Services saved. ${activeCount} active service${activeCount === 1 ? "" : "s"} will show on your public site.`
+        : "Services saved. No active services are currently visible on your public site.",
+    );
+    router.refresh();
   }
 
   async function saveStaffAndRoles() {
@@ -1352,30 +1360,36 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     Active / public visible
                   </label>
                 </div>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <label className="text-xs font-semibold text-slate-700">Service name
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(220px,1fr)_140px_140px_170px]">
+                  <label className="text-xs font-semibold text-slate-700 lg:col-span-1">Service name
                     <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={service.name} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, name: event.target.value } : row))} />
                   </label>
-                  <label className="text-xs font-semibold text-slate-700">Price
-                    <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" inputMode="decimal" placeholder="35" value={service.basePrice} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, basePrice: event.target.value } : row))} />
-                    <span className="mt-1 block text-[11px] font-normal text-slate-600">Displayed as UK currency, e.g. £35.</span>
+                  <label className="text-xs font-semibold text-slate-700">Base price (£)
+                    <input className="mt-1 w-full max-w-[140px] rounded-md border border-slate-300 px-2 py-1 text-sm" inputMode="decimal" placeholder="35" value={service.basePrice} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, basePrice: event.target.value } : row))} />
+                    <span className="mt-1 block text-[11px] font-normal text-slate-600">Example: £35.</span>
                   </label>
                   <label className="text-xs font-semibold text-slate-700">Duration (minutes)
-                    <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" inputMode="numeric" placeholder="45" value={service.durationMinutes} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, durationMinutes: event.target.value } : row))} />
+                    <input className="mt-1 w-full max-w-[140px] rounded-md border border-slate-300 px-2 py-1 text-sm" inputMode="numeric" placeholder="45" value={service.durationMinutes} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, durationMinutes: event.target.value } : row))} />
                     <span className="mt-1 block text-[11px] font-normal text-slate-600">Shown as 45 mins or 1 hr.</span>
                   </label>
                   <label className="text-xs font-semibold text-slate-700">Buffer after service (minutes)
-                    <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs" value={service.bufferAfterMinutes} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, bufferAfterMinutes: event.target.value } : row))} />
+                    <input className="mt-1 w-full max-w-[160px] rounded-md border border-slate-300 px-2 py-1 text-sm" inputMode="numeric" placeholder="10" value={service.bufferAfterMinutes} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, bufferAfterMinutes: event.target.value } : row))} />
+                    <span className="mt-1 block text-[11px] font-normal text-slate-600">Optional gap after bookings.</span>
                   </label>
-                  <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Description
+                  <label className="text-xs font-semibold text-slate-700 sm:col-span-2 lg:col-span-4">Description
                     <textarea className="mt-1 min-h-[70px] w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={service.description} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, description: event.target.value } : row))} />
                   </label>
-                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">
-                    <input type="checkbox" checked={service.recurringEnabled} disabled={!settingsDraft.recurringPaymentsEnabled} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, recurringEnabled: event.target.checked } : row))} />
-                    Allow this service to be sold as recurring
-                  </label>
-                  {service.recurringEnabled && settingsDraft.recurringPaymentsEnabled ? (
-                    <div className="sm:col-span-2">
+                  <div className="rounded-lg border border-slate-200 bg-white p-3 sm:col-span-2 lg:col-span-4">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                      <input type="checkbox" checked={service.recurringEnabled} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, recurringEnabled: event.target.checked } : row))} />
+                      Allow this service to be sold as recurring
+                    </label>
+                    <p className="mt-1 text-[11px] text-slate-600">
+                      Future booking option - saved here for later booking setup. The site-level recurring setting can still be controlled in Payments and policies.
+                    </p>
+                  </div>
+                  {service.recurringEnabled ? (
+                    <div className="sm:col-span-2 lg:col-span-4">
                       <p className="text-xs font-semibold text-slate-700">Recurring intervals</p>
                       <div className="mt-1 flex flex-wrap gap-3">
                         {(["WEEKLY", "MONTHLY", "ANNUALLY"] as const).map((interval) => (
@@ -1401,12 +1415,17 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                       </div>
                     </div>
                   ) : null}
-                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">
-                    <input type="checkbox" checked={service.blockBookingEnabled} disabled={!settingsDraft.customerBlockBookingsEnabled} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, blockBookingEnabled: event.target.checked } : row))} />
-                    Allow block bookings for this service
-                  </label>
-                  {service.blockBookingEnabled && settingsDraft.customerBlockBookingsEnabled ? (
-                    <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
+                  <div className="rounded-lg border border-slate-200 bg-white p-3 sm:col-span-2 lg:col-span-4">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                      <input type="checkbox" checked={service.blockBookingEnabled} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, blockBookingEnabled: event.target.checked } : row))} />
+                      Allow block bookings for this service
+                    </label>
+                    <p className="mt-1 text-[11px] text-slate-600">
+                      Future booking option - saved here for later booking setup. The site-level block-booking setting can still be controlled in Payments and policies.
+                    </p>
+                  </div>
+                  {service.blockBookingEnabled ? (
+                    <label className="text-xs font-semibold text-slate-700 sm:col-span-2 lg:col-span-4">
                       Suggested block counts (comma separated)
                       <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="5, 10, 12" value={service.blockBookingSuggestedCounts} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, blockBookingSuggestedCounts: event.target.value } : row))} />
                     </label>
@@ -1830,3 +1849,4 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
     </div>
   );
 }
+

@@ -10,6 +10,18 @@ type SiteAdminPageProps = {
   params: Promise<{ siteSlug: string }>;
 };
 
+type ProgressStatus = "Done" | "Ready" | "Configured" | "In progress" | "Needs attention" | "Not set yet";
+
+function getStatusBadgeClass(status: ProgressStatus): string {
+  if (status === "Done" || status === "Ready" || status === "Configured") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-800";
+  }
+  if (status === "In progress" || status === "Needs attention" || status === "Not set yet") {
+    return "border-amber-200 bg-amber-50 text-amber-800";
+  }
+  return "border-slate-200 bg-slate-50 text-slate-700";
+}
+
 export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
   const { siteSlug } = await params;
   const site = await getTenantSiteBySlug(siteSlug);
@@ -95,18 +107,38 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
   ];
 
   const setupSections = [
-    { title: "Business details", summary: settings?.businessName ? "Configured" : "Not set yet" },
-    { title: "Services/prices", summary: servicesCount > 0 ? `${servicesCount} active service(s)` : "Not set yet" },
-    { title: "Staff setup", summary: staffCount > 0 ? `${staffCount} active staff member(s)` : "Not set yet" },
-    { title: "Opening hours / rota", summary: rotaCount > 0 ? `${rotaCount} rota row(s)` : "Not set yet" },
-    { title: "Breaks and closures", summary: closureCount > 0 ? `${closureCount} active closure(s)` : "Not set yet" },
-    { title: "Booking settings", summary: "Available in detailed settings below" },
-    { title: "Gift vouchers", summary: "Placeholder for voucher setup" },
-    { title: "Policies", summary: "Available in detailed settings below" },
-    { title: "Page content / visibility", summary: "Available in detailed settings below" },
-    { title: "Payments/sales", summary: "Available in detailed settings below" },
-    { title: "Customer CRM", summary: "Placeholder for future tenant CRM tooling" },
-    { title: "Preview public site", summary: "Open live tenant preview route" },
+    {
+      title: "Business details",
+      summary: settings?.businessName ? "Business identity started" : "Add contact basics below",
+      status: settings?.businessName ? "Configured" : "Not set yet",
+    },
+    {
+      title: "Services/prices",
+      summary: servicesCount > 0 ? `${servicesCount} active service(s)` : "Add your first public service below",
+      status: servicesCount > 0 ? "Configured" : "Not set yet",
+    },
+    {
+      title: "Staff setup",
+      summary: staffCount > 0 ? `${staffCount} active staff member(s)` : "Add staff or decide staff choice is not needed",
+      status: staffCount > 0 ? "Configured" : "Not set yet",
+    },
+    {
+      title: "Opening hours / rota",
+      summary: rotaCount > 0 ? `${rotaCount} rota row(s)` : "Set opening hours and rota details below",
+      status: rotaCount > 0 ? "Configured" : "Not set yet",
+    },
+    {
+      title: "Breaks and closures",
+      summary: closureCount > 0 ? `${closureCount} active closure(s)` : "Add exceptions when needed",
+      status: closureCount > 0 ? "Configured" : "Ready",
+    },
+    { title: "Booking settings", summary: "Configure booking preferences below", status: "Ready" },
+    { title: "Gift vouchers", summary: "Future voucher setup area", status: "Ready" },
+    { title: "Policies", summary: "Edit cancellation and customer policy wording below", status: "Ready" },
+    { title: "Page content / visibility", summary: "Edit public page content below", status: "Ready" },
+    { title: "Payments/sales", summary: "Record payment preferences below", status: "Ready" },
+    { title: "Customer CRM", summary: "Future tenant CRM tooling", status: "Ready" },
+    { title: "Preview public site", summary: "Open the tenant preview route in a new tab", status: "Ready" },
   ];
 
   return (
@@ -130,15 +162,17 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
           <Link
             href={`/sites/${encodeURIComponent(site.slug)}`}
             className="inline-flex rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-100"
+            target="_blank"
+            rel="noopener noreferrer"
           >
             Preview public site
           </Link>
         </div>
         <div className="mt-4 grid gap-2">
           {checklist.map((item) => (
-            <div key={item.title} className="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+            <div key={item.title} className="flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
               <span className="font-medium text-slate-900">{item.title}</span>
-              <span className={item.status === "Done" ? "font-semibold text-emerald-700" : "font-semibold text-slate-600"}>
+              <span className={`rounded-full border px-2 py-1 text-xs font-semibold ${getStatusBadgeClass(item.status as ProgressStatus)}`}>
                 {item.status}
               </span>
             </div>
@@ -147,14 +181,19 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
       </section>
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-xl font-semibold text-slate-900">Subscriber setup dashboard</h2>
+        <h2 className="text-xl font-semibold text-slate-900">Setup section guide</h2>
         <p className="mt-2 text-sm text-slate-600">
-          Complete these sections to finish onboarding your clean subscriber site.
+          Use this as a quick map of the setup areas below. The checklist above is the main progress tracker.
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {setupSections.map((section) => (
             <article key={section.title} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <h3 className="text-sm font-semibold text-slate-900">{section.title}</h3>
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="text-sm font-semibold text-slate-900">{section.title}</h3>
+                <span className={`rounded-full border px-2 py-1 text-[11px] font-semibold ${getStatusBadgeClass(section.status as ProgressStatus)}`}>
+                  {section.status}
+                </span>
+              </div>
               <p className="mt-1 text-xs text-slate-600">{section.summary}</p>
             </article>
           ))}

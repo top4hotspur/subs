@@ -265,6 +265,10 @@ Still local/mock in current product:
 - Hiding/removing an existing service marks it inactive for public display rather than copying or exposing demo data.
 - `/sites/[siteSlug]` reads active tenant services only. If there are no active services, the public Services section shows the clean empty state.
 - Public booking remains future work; service cards currently show a disabled `Book this service (coming soon)` action.
+- The subscriber-admin preview action opens `/sites/[siteSlug]` in a new tab so site owners can compare admin changes with the public preview.
+- The onboarding page separates progress from navigation: `Get your site ready` shows completion status and `Setup section guide` maps the setup areas.
+- Service-level recurring and block-booking checkboxes are saved as tenant service configuration for later booking setup; no full recurring billing or multi-session booking engine is connected in this pass.
+- After service save, the admin refreshes its server-derived checklist counts so `Add at least one service` reflects active services immediately.
 
 ## Subscriber Staff Management
 

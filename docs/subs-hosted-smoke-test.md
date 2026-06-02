@@ -894,3 +894,23 @@ Notes:
 11. Hide/archive staff.
 12. Confirm public site returns to empty staff state if no active staff remain.
 13. Confirm no demo staff appear.
+
+## 2026-06-02 Hosted Smoke Checks: Subscriber Services Onboarding UX
+
+1. Open `/site-admin/luna-hair-studio`.
+2. Confirm `Preview public site` opens `/sites/luna-hair-studio` in a new browser tab/window.
+3. Confirm `Get your site ready` is the main progress checklist and `Setup section guide` is a navigation/section map, not a duplicate checklist.
+4. Confirm checklist and setup guide statuses use subtle green/amber badges.
+5. Open `Services/prices`.
+6. Add a service with:
+   - Name: `Cut & Blow Dry`
+   - Base price: `35`
+   - Duration: `45`
+   - Buffer: `10`
+7. Toggle `Allow this service to be sold as recurring`, select at least one interval, and toggle `Allow block bookings for this service`.
+8. Save and confirm a clear success message appears.
+9. Confirm `Add at least one service` changes to `Done` without manually refreshing the page.
+10. Confirm the `Services/prices` setup guide card changes to configured/done state.
+11. Open the public site and confirm the active service appears.
+12. Reload `/site-admin/luna-hair-studio` and confirm recurring/block-booking values persisted.
+13. Hide/archive the service, save, and confirm the checklist returns to `Not set yet` if no active services remain.
