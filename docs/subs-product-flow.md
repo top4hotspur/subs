@@ -683,3 +683,13 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Public subscriber pages now respect the About visibility setting in the top nav and homepage section rendering.
 - Contact remains standard and always visible in this phase; making Contact optional would require a dedicated setting/schema decision in a later pass.
 - Policy remains optional: when disabled, the public footer no longer shows the `Terms / Policies` link.
+
+## 2026-06-02 Subscriber Opening Hours
+
+- `/site-admin/[siteSlug]` now provides a real tenant-scoped `Opening hours / rota` setup area for normal business opening hours.
+- Business owners can set Monday-Sunday open/closed state plus 24-hour opening and closing times.
+- Opening hours are persisted as structured settings data (`CustomerSiteSettings.openingHoursJson`) and summarised into `openingHoursSummary` for display/search/support compatibility.
+- Validation requires open days to have both times and requires closing time to be after opening time.
+- The onboarding checklist marks `Set opening hours` as `Done` when at least one open day has a valid time window.
+- `/sites/[siteSlug]` and the contact page show opening hours subtly in the contact/footer area; the public homepage remains service-led.
+- Booking engine availability remains future work. Business opening hours define the business-wide availability window; staff rota/availability and closures/holidays will later refine or override it.

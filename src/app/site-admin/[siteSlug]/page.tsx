@@ -5,6 +5,7 @@ import { SiteAdminDashboard } from "@/components/site-admin/site-admin-dashboard
 import { getSiteAdminSessionContext } from "@/lib/auth/site-admin";
 import { getTenantSiteBySlug } from "@/lib/sites/tenant-resolver";
 import { prisma } from "@/lib/db/prisma";
+import { hasValidOpenBusinessDay, normalizeBusinessOpeningHours } from "@/lib/sites/customer-site-opening-hours";
 
 type SiteAdminPageProps = {
   params: Promise<{ siteSlug: string }>;
@@ -62,6 +63,8 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
     prisma.customerSiteStaffRotaDay.count({ where: { tenantSiteId: site.id } }),
     prisma.customerSiteBusinessClosure.count({ where: { tenantSiteId: site.id, active: true } }),
   ]);
+  const businessOpeningHours = normalizeBusinessOpeningHours(settings?.openingHoursJson ?? null);
+  const openingHoursDone = hasValidOpenBusinessDay(businessOpeningHours);
 
   const checklist = [
     {
@@ -78,7 +81,7 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
     },
     {
       title: "Set opening hours",
-      status: settings?.openingHoursSummary?.trim() ? "Done" : "Needs setup",
+      status: openingHoursDone ? "Done" : "Needs setup",
     },
     {
       title: "Set booking/cancellation policy",
@@ -100,7 +103,7 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
         settings?.businessName &&
         settings?.phone &&
         settings?.email &&
-        settings?.openingHoursSummary?.trim()
+        openingHoursDone
           ? "Done"
           : "Needs setup",
     },
@@ -121,7 +124,11 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
     },
     {
       title: "Opening hours / rota",
-      summary: rotaCount > 0 ? `${rotaCount} rota row(s)` : "Set opening hours and rota details below",
+      summary: openingHoursDone
+        ? "Business opening hours set"
+        : rotaCount > 0
+          ? `${rotaCount} rota row(s)`
+          : "Set business hours first; staff rota comes later",
     },
     {
       title: "Breaks and closures",

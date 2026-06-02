@@ -936,3 +936,20 @@ Notes:
 9. Confirm the public nav no longer shows `About` and the homepage does not render an About section when About is disabled.
 10. Confirm Contact remains visible because Contact is currently a standard/mandatory subscriber page, not an optional page toggle.
 11. Disable Policy, save, and confirm the footer `Terms / Policies` link is hidden while Privacy/Cookie links remain.
+
+## 2026-06-02 Hosted Smoke Checks: Subscriber Opening Hours
+
+1. Sign in at `/site-admin/login` and open `/site-admin/luna-hair-studio`.
+2. Open `Opening hours / rota`.
+3. Confirm the section explains this pass is business opening hours only; staff rota, holidays, and appointment availability build on it later.
+4. Set Monday-Friday to open `09:00`-`17:00`.
+5. Set Saturday to open `09:00`-`13:00`.
+6. Leave Sunday closed.
+7. Save and confirm a clear success message appears.
+8. Confirm the `Set opening hours` checklist item changes to `Done` without a manual admin reload.
+9. Reload `/site-admin/luna-hair-studio` and confirm the day/time values persist.
+10. Open `/sites/luna-hair-studio` and confirm opening hours appear subtly in the footer/contact area.
+11. Confirm services remain the main public homepage content.
+12. Open `/sites/luna-hair-studio/contact` and confirm it shows the same opening-hours summary.
+13. Try invalid hours, for example Monday open `17:00`-`09:00`.
+14. Confirm a helpful validation error appears and the page does not crash.

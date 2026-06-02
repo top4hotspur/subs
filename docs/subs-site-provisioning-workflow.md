@@ -287,3 +287,11 @@ Still local/mock in current product:
 - New service drafts open expanded immediately, then collapse after a successful save once they become persisted rows.
 - Service category assignment remains tenant-scoped and is visible in the collapsed admin summary plus the public grouped services view.
 - `/sites/[siteSlug]` respects optional About and Policy visibility in public navigation/sections; Contact remains a standard visible page for subscriber sites in this phase.
+
+## Subscriber opening hours milestone
+
+- Provisioned tenant sites now store structured business-wide opening hours on `CustomerSiteSettings.openingHoursJson`.
+- `/site-admin/[siteSlug]` lets business owners configure Monday-Sunday open/closed state with opening and closing times.
+- The existing `openingHoursSummary` remains as a generated readable summary for public display and support views.
+- Opening hours are separate from staff rota: business hours define the normal operating window, while staff availability, breaks, holidays, and closures remain later booking-availability layers.
+- `/sites/[siteSlug]` keeps services as the main public content and shows opening hours only in the small contact/footer area.

@@ -10,6 +10,7 @@ import {
   type PersistedSocialLinks,
 } from "@/lib/sites/social-platforms";
 import { SiteCookieNotice } from "@/components/site-ui/site-cookie-notice";
+import { formatBusinessOpeningHoursSummary, normalizeBusinessOpeningHours } from "@/lib/sites/customer-site-opening-hours";
 
 function formatMoney(amount: number | null, currencyCode: string): string {
   if (amount === null) return "Quote required";
@@ -134,6 +135,10 @@ export default async function PublicSiteSlugPage({
   const socialLinks = normalizePersistedSocialLinks(settings?.socialLinks);
   const socialEntries = getEnabledSocialEntries(socialLinks);
   const mapsUrl = settings?.contactMapEnabled ? mapUrlFromAddress(settings?.address ?? null) : null;
+  const openingHoursSummary =
+    formatBusinessOpeningHoursSummary(normalizeBusinessOpeningHours(settings?.openingHoursJson)) ||
+    settings?.openingHoursSummary ||
+    "";
 
   const isDark = appearanceMode === "DARK";
   const shellClass = `${scheme.pageBackgroundClass} ${scheme.textClass}`;
@@ -256,7 +261,7 @@ export default async function PublicSiteSlugPage({
               <div id="contact" className="mb-3 flex flex-wrap gap-x-4 gap-y-1">
                 {settings?.phone ? <span>Phone: {settings.phone}</span> : null}
                 {settings?.email ? <span>Email: {settings.email}</span> : null}
-                {settings?.openingHoursSummary ? <span>Opening: {settings.openingHoursSummary}</span> : null}
+                {openingHoursSummary ? <span>Opening: {openingHoursSummary}</span> : null}
                 {mapsUrl ? (
                   <a href={mapsUrl} target="_blank" rel="noreferrer" className="hover:text-slate-900">
                     Map

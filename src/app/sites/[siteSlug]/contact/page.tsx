@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCustomerSitePreviewDataBySlug } from "@/lib/sites/customer-site-preview-repository";
 import { normalizePersistedSocialLinks, SOCIAL_PLATFORM_DEFINITIONS } from "@/lib/sites/social-platforms";
+import { formatBusinessOpeningHoursSummary, normalizeBusinessOpeningHours } from "@/lib/sites/customer-site-opening-hours";
 
 function mapUrlFromAddress(address: string | null): string | null {
   if (!address || !address.trim()) return null;
@@ -21,6 +22,10 @@ export default async function PublicSiteContactPage({
   const siteName = settings?.siteDisplayName || settings?.businessName || preview.tenantSite.displayName;
   const title = settings?.contactTitle || `Contact ${siteName}`;
   const mapsUrl = settings?.contactMapEnabled ? mapUrlFromAddress(settings?.address ?? null) : null;
+  const openingHoursSummary =
+    formatBusinessOpeningHoursSummary(normalizeBusinessOpeningHours(settings?.openingHoursJson)) ||
+    settings?.openingHoursSummary ||
+    "";
 
   const social = normalizePersistedSocialLinks(settings?.socialLinks);
   const socialEntries = [
@@ -53,7 +58,7 @@ export default async function PublicSiteContactPage({
             <p className="mt-3 text-sm font-semibold text-slate-900">Address</p>
             <p className="text-sm text-slate-700">{settings?.address || "Address not set"}</p>
             <p className="mt-3 text-sm font-semibold text-slate-900">Opening hours</p>
-            <p className="text-sm text-slate-700">{settings?.openingHoursSummary || "Opening hours not set"}</p>
+            <p className="text-sm text-slate-700">{openingHoursSummary || "Opening hours not set"}</p>
 
             {mapsUrl ? (
               <a

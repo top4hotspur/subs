@@ -17,6 +17,7 @@ export type CustomerSitePreviewData = {
     email: string | null;
     address: string | null;
     openingHoursSummary: string | null;
+    openingHoursJson: unknown;
     heroHeadline: string | null;
     heroSubheading: string | null;
     visualThemeId: string | null;
@@ -213,6 +214,7 @@ export async function getCustomerSitePreviewData(
           email: site.customerSiteSettings.email ?? null,
           address: site.customerSiteSettings.address ?? null,
           openingHoursSummary: site.customerSiteSettings.openingHoursSummary ?? null,
+          openingHoursJson: site.customerSiteSettings.openingHoursJson ?? null,
           heroHeadline: site.customerSiteSettings.heroHeadline ?? null,
           heroSubheading: site.customerSiteSettings.heroSubheading ?? null,
           visualThemeId: site.customerSiteSettings.visualThemeId ?? null,

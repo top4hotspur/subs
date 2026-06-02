@@ -42,6 +42,17 @@ import {
   resolveAppearanceMode,
   type SiteAppearanceMode,
 } from "@/lib/sites/site-appearance";
+import {
+  BUSINESS_WEEKDAYS,
+  defaultBusinessOpeningHours,
+  formatBusinessOpeningHoursSummary,
+  hasValidOpenBusinessDay,
+  normalizeBusinessOpeningHours,
+  validateBusinessOpeningHours,
+  weekdayLabel as businessWeekdayLabel,
+  type BusinessOpeningHours,
+  type BusinessWeekday,
+} from "@/lib/sites/customer-site-opening-hours";
 
 type SectionKey =
   | "bookings"
@@ -85,6 +96,7 @@ type SettingsDraft = {
   email: string;
   address: string;
   openingHoursSummary: string;
+  openingHours: BusinessOpeningHours;
   heroHeadline: string;
   heroSubheading: string;
   appearanceMode: SiteAppearanceMode;
@@ -293,13 +305,15 @@ function parseSocialDraft(input: unknown): SettingsDraft["socialLinks"] {
   return base;
 }
 function toSettingsDraft(settings: PersistedCustomerSiteSettings | null): SettingsDraft {
+  const openingHours = normalizeBusinessOpeningHours(settings?.openingHoursJson ?? null);
   return {
     siteDisplayName: settings?.siteDisplayName ?? "",
     businessName: settings?.businessName ?? "",
     phone: settings?.phone ?? "",
     email: settings?.email ?? "",
     address: settings?.address ?? "",
-    openingHoursSummary: settings?.openingHoursSummary ?? "",
+    openingHoursSummary: settings?.openingHoursSummary ?? formatBusinessOpeningHoursSummary(openingHours),
+    openingHours,
     heroHeadline: settings?.heroHeadline ?? "",
     heroSubheading: settings?.heroSubheading ?? "",
     appearanceMode: resolveAppearanceMode(
@@ -595,13 +609,15 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
     }
 
     const appearance = mapAppearanceToTheme(settingsDraft.appearanceMode);
+    const openingHoursSummary = formatBusinessOpeningHoursSummary(settingsDraft.openingHours);
     const result = await patchSiteAdminSettings(siteSlug, {
       siteDisplayName: settingsDraft.siteDisplayName || null,
       businessName: settingsDraft.businessName || null,
       phone: settingsDraft.phone || null,
       email: settingsDraft.email || null,
       address: settingsDraft.address || null,
-      openingHoursSummary: settingsDraft.openingHoursSummary || null,
+      openingHoursSummary: openingHoursSummary || settingsDraft.openingHoursSummary || null,
+      openingHoursJson: settingsDraft.openingHours,
       heroHeadline: settingsDraft.heroHeadline || null,
       heroSubheading: settingsDraft.heroSubheading || null,
       visualThemeId: appearance.visualThemeId,
@@ -649,6 +665,32 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
     setSettingsDraft(toSettingsDraft(result.settings));
     setPersistedSettings(result.settings);
     setMessage("Site settings saved.");
+  }
+
+  async function saveOpeningHours() {
+    const validationErrors = validateBusinessOpeningHours(settingsDraft.openingHours);
+    if (validationErrors.length > 0) {
+      setMessage(validationErrors.join(" "));
+      return;
+    }
+    const openingHoursSummary = formatBusinessOpeningHoursSummary(settingsDraft.openingHours);
+    setMessage("Saving opening hours...");
+    const result = await patchSiteAdminSettings(siteSlug, {
+      openingHoursSummary: openingHoursSummary || null,
+      openingHoursJson: settingsDraft.openingHours,
+    });
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status));
+      return;
+    }
+    setSettingsDraft(toSettingsDraft(result.settings));
+    setPersistedSettings(result.settings);
+    setMessage(
+      hasValidOpenBusinessDay(settingsDraft.openingHours)
+        ? "Opening hours saved. Your public site now shows your normal business hours."
+        : "Opening hours saved. No open days are currently set.",
+    );
+    router.refresh();
   }
 
   async function uploadLogo(file: File) {
@@ -917,9 +959,6 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
             </label>
             <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Address
               <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.address} onChange={(event) => setSettingsDraft((current) => ({ ...current, address: event.target.value }))} />
-            </label>
-            <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Opening hours summary
-              <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.openingHoursSummary} onChange={(event) => setSettingsDraft((current) => ({ ...current, openingHoursSummary: event.target.value }))} />
             </label>
             <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Hero headline
               <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.heroHeadline} onChange={(event) => setSettingsDraft((current) => ({ ...current, heroHeadline: event.target.value }))} />
@@ -1757,8 +1796,13 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
 
       {activeSection === "rotaBreaks" ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-slate-900">Rota & breaks</h3>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900">Opening hours / rota</h3>
+              <p className="mt-1 text-sm text-slate-600">
+                Set the normal days and times your business is open. Staff rota, holidays and appointment availability will build on this later.
+              </p>
+            </div>
             <select className="rounded-md border border-slate-300 px-2 py-1 text-sm" value={selectedSchedulingStaffId} onChange={(event) => setSelectedSchedulingStaffId(event.target.value)}>
               <option value="">Select staff member</option>
               {staffDraft.map((staff, index) => (
@@ -1769,9 +1813,81 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
             </select>
           </div>
 
+          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h4 className="text-sm font-semibold text-slate-900">Business opening hours</h4>
+                <p className="mt-1 text-xs text-slate-600">
+                  These are your normal public opening hours and the first availability window for future booking rules.
+                </p>
+              </div>
+              <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700">
+                <span className="font-semibold">Summary: </span>
+                {formatBusinessOpeningHoursSummary(settingsDraft.openingHours) || "Opening hours not set yet"}
+              </div>
+            </div>
+            <div className="mt-3 grid gap-2">
+              {BUSINESS_WEEKDAYS.map((weekday) => {
+                const day = settingsDraft.openingHours.days.find((item) => item.weekday === weekday) ??
+                  defaultBusinessOpeningHours().days.find((item) => item.weekday === weekday)!;
+                function updateDay(patch: Partial<{ open: boolean; startTime: string; endTime: string }>) {
+                  setSettingsDraft((current) => ({
+                    ...current,
+                    openingHours: {
+                      days: BUSINESS_WEEKDAYS.map((dayKey) => {
+                        const currentDay = current.openingHours.days.find((item) => item.weekday === dayKey) ??
+                          defaultBusinessOpeningHours().days.find((item) => item.weekday === dayKey)!;
+                        return dayKey === weekday ? { ...currentDay, ...patch } : currentDay;
+                      }),
+                    },
+                  }));
+                }
+                return (
+                  <div key={weekday} className="grid gap-2 rounded-lg border border-slate-200 bg-white p-3 sm:grid-cols-[120px_90px_1fr_1fr] sm:items-center">
+                    <p className="text-sm font-semibold text-slate-900">{businessWeekdayLabel(weekday as BusinessWeekday)}</p>
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={day.open}
+                        onChange={(event) => updateDay({ open: event.target.checked })}
+                      />
+                      Open
+                    </label>
+                    <label className="text-xs font-semibold text-slate-700">
+                      Opens
+                      <input
+                        type="time"
+                        className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                        value={day.startTime}
+                        disabled={!day.open}
+                        onChange={(event) => updateDay({ startTime: event.target.value })}
+                      />
+                    </label>
+                    <label className="text-xs font-semibold text-slate-700">
+                      Closes
+                      <input
+                        type="time"
+                        className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                        value={day.endTime}
+                        disabled={!day.open}
+                        onChange={(event) => updateDay({ endTime: event.target.value })}
+                      />
+                    </label>
+                  </div>
+                );
+              })}
+            </div>
+            <button type="button" className={`mt-4 ${primaryButtonClass} ${smallButtonClass}`} onClick={() => void saveOpeningHours()}>
+              Save opening hours
+            </button>
+          </div>
+
           <div className="mt-3 grid gap-6 lg:grid-cols-2">
             <div>
-              <p className="text-sm font-semibold text-slate-900">Weekly rota</p>
+              <p className="text-sm font-semibold text-slate-900">Staff weekly rota (future booking layer)</p>
+              <p className="mt-1 text-xs text-slate-600">
+                Staff rota sits inside business opening hours and will be connected to booking availability in a later milestone.
+              </p>
               <div className="mt-2 space-y-2">
                 {weekdayValues.map((weekday) => {
                   const allowed = selectedStaff ? selectedStaff.availableWeekdays.includes(weekday) : true;

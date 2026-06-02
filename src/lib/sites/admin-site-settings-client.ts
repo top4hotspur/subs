@@ -7,6 +7,7 @@ export type PersistedCustomerSiteSettings = {
   email: string | null;
   address: string | null;
   openingHoursSummary: string | null;
+  openingHoursJson: unknown;
   heroHeadline: string | null;
   heroSubheading: string | null;
   visualThemeId: string | null;
