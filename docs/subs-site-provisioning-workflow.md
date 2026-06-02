@@ -265,3 +265,11 @@ Still local/mock in current product:
 - Hiding/removing an existing service marks it inactive for public display rather than copying or exposing demo data.
 - `/sites/[siteSlug]` reads active tenant services only. If there are no active services, the public Services section shows the clean empty state.
 - Public booking remains future work; service cards currently show a disabled `Book this service (coming soon)` action.
+
+## Subscriber Staff Management
+
+- Business owners manage tenant staff from `/site-admin/[siteSlug]` under `Staff setup`.
+- Staff records belong to the tenant site and include first/last name entry, display name, role/position, email, phone, active visibility, customer-selectable/bookable flag, and notes/bio.
+- Hiding/removing an existing staff member marks it inactive so future bookings/rota references can remain safe.
+- `/sites/[siteSlug]` reads active tenant staff only. If no active staff exist, the public Staff options section shows the clean empty state.
+- Staff rota/availability and staff login/auth remain future milestones.

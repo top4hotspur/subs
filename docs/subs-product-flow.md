@@ -642,3 +642,11 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - `/sites/[siteSlug]` displays only active tenant services with price and duration; inactive services and demo services are not shown.
 - The onboarding checklist marks `Add at least one service` complete when the tenant has at least one active service.
 - `Book now` currently routes visitors to the Services section and service cards show a `coming soon` booking action until the booking engine milestone.
+
+## 2026-06-02 Subscriber Staff Management
+
+- `/site-admin/[siteSlug]` now provides a tenant-scoped `Staff setup` section.
+- Business owners can add, edit, publish/hide, and archive staff members.
+- `/sites/[siteSlug]` displays only active tenant staff in Staff options; inactive staff and demo staff are not shown.
+- The onboarding checklist uses active tenant staff for the `Add staff or mark staff selection as not required` step.
+- Staff login/auth and full rota/availability remain future milestones.

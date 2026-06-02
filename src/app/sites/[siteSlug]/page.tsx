@@ -109,9 +109,7 @@ export default async function PublicSiteSlugPage({
   const heroHeadline = settings?.heroHeadline || `Welcome to ${siteName}`;
   const heroSubheading = settings?.heroSubheading || "";
   const activeServices = preview.services.filter((service) => service.active);
-  const selectableStaff = preview.staffMembers.filter(
-    (member) => member.active && member.customerSelectable,
-  );
+  const publicStaff = preview.staffMembers.filter((member) => member.active);
   const socialLinks = normalizePersistedSocialLinks(settings?.socialLinks);
   const socialEntries = getEnabledSocialEntries(socialLinks);
   const mapsUrl = settings?.contactMapEnabled ? mapUrlFromAddress(settings?.address ?? null) : null;
@@ -266,16 +264,19 @@ export default async function PublicSiteSlugPage({
 
                 <div className={cardClass}>
                   <h3 className="text-base font-semibold">Staff options</h3>
-                  {selectableStaff.length === 0 ? (
+                  {publicStaff.length === 0 ? (
                     <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>
                       Staff selection will appear here if this business enables staff choice.
                     </p>
                   ) : (
-                    <ul className="mt-2 space-y-1 text-sm">
-                      {selectableStaff.map((staff) => (
-                        <li key={staff.id} className={scheme.mutedTextClass}>
-                          {staff.displayName}
-                          {staff.roleLabel ? ` - ${staff.roleLabel}` : ""}
+                    <ul className="mt-2 space-y-2 text-sm">
+                      {publicStaff.map((staff) => (
+                        <li key={staff.id} className={`rounded-md border ${scheme.borderClass} bg-white p-3`}>
+                          <p className="font-semibold text-slate-900">{staff.displayName}</p>
+                          {staff.roleLabel ? <p className="text-xs text-slate-600">{staff.roleLabel}</p> : null}
+                          {staff.customerSelectable ? (
+                            <p className="mt-1 text-xs font-semibold text-emerald-700">Bookable online once booking is live</p>
+                          ) : null}
                         </li>
                       ))}
                     </ul>

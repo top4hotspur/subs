@@ -283,36 +283,58 @@ export async function replaceCustomerSiteStaffMembers(
   }
 
   await prisma.$transaction(async (tx) => {
-    await tx.customerSiteStaffMember.deleteMany({ where: { tenantSiteId: parsed.tenantSiteId } });
+    const incomingIds = parsed.staff
+      .map((member) => member.id)
+      .filter((id): id is string => Boolean(id));
 
-    if (parsed.staff.length > 0) {
-      await tx.customerSiteStaffMember.createMany({
-        data: parsed.staff.map((member, index) => ({
+    await tx.customerSiteStaffMember.updateMany({
+      where: {
+        tenantSiteId: parsed.tenantSiteId,
+        ...(incomingIds.length > 0 ? { id: { notIn: incomingIds } } : {}),
+      },
+      data: { active: false },
+    });
+
+    for (const [index, member] of parsed.staff.entries()) {
+      const data = {
+        roleId: member.roleId ?? null,
+        displayName: member.displayName,
+        roleLabel: member.roleLabel ?? null,
+        email: member.email ?? null,
+        phone: member.phone ?? null,
+        bio: member.bio ?? null,
+        active: member.active ?? true,
+        customerSelectable: member.customerSelectable ?? false,
+        isSuperUser: member.isSuperUser ?? false,
+        availableWeekdays:
+          member.availableWeekdays === undefined
+            ? undefined
+            : member.availableWeekdays === null
+              ? Prisma.DbNull
+              : toJson(member.availableWeekdays),
+        serviceIds:
+          member.serviceIds === undefined
+            ? undefined
+            : member.serviceIds === null
+              ? Prisma.DbNull
+              : toJson(member.serviceIds),
+        notes: member.notes ?? null,
+        sortOrder: member.sortOrder ?? index,
+      };
+
+      if (member.id) {
+        const updated = await tx.customerSiteStaffMember.updateMany({
+          where: { id: member.id, tenantSiteId: parsed.tenantSiteId },
+          data,
+        });
+        if (updated.count > 0) continue;
+      }
+
+      await tx.customerSiteStaffMember.create({
+        data: {
           tenantSiteId: parsed.tenantSiteId,
-          roleId: member.roleId ?? null,
-          displayName: member.displayName,
-          roleLabel: member.roleLabel ?? null,
-          email: member.email ?? null,
-          phone: member.phone ?? null,
-          bio: member.bio ?? null,
-          active: member.active ?? true,
-          customerSelectable: member.customerSelectable ?? false,
-          isSuperUser: member.isSuperUser ?? false,
-          availableWeekdays:
-            member.availableWeekdays === undefined
-              ? undefined
-              : member.availableWeekdays === null
-                ? Prisma.DbNull
-                : toJson(member.availableWeekdays),
-          serviceIds:
-            member.serviceIds === undefined
-              ? undefined
-              : member.serviceIds === null
-                ? Prisma.DbNull
-                : toJson(member.serviceIds),
-          notes: member.notes ?? null,
-          sortOrder: member.sortOrder ?? index,
-        })),
+          ...data,
+        },
       });
     }
   });

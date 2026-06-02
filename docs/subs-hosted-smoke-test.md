@@ -872,3 +872,25 @@ Notes:
 11. Hide/archive the first service.
 12. Confirm public site returns to the empty state if no active services remain.
 13. Confirm no demo services appear.
+
+## 2026-06-02 Hosted Smoke Checks: Subscriber Staff Management
+
+1. Open `/site-admin/luna-hair-studio`.
+2. Open `Staff setup`.
+3. Add:
+   - First name: `Emma`
+   - Last name: `Jones`
+   - Role: `Senior Stylist`
+   - Email: test staff email
+   - Phone: test number
+   - Active/public visible: yes
+4. Save.
+5. Open `/sites/luna-hair-studio`.
+6. Confirm `Emma Jones` appears in Staff options.
+7. Add inactive staff member.
+8. Confirm inactive staff does not appear publicly.
+9. Edit role/display name.
+10. Confirm public site updates.
+11. Hide/archive staff.
+12. Confirm public site returns to empty staff state if no active staff remain.
+13. Confirm no demo staff appear.

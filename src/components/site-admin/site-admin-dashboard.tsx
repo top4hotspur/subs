@@ -55,7 +55,7 @@ const SECTION_LIST: Array<{ key: SectionKey; label: string; description: string 
   { key: "settings", label: "Business settings", description: "Business contact and hero basics" },
   { key: "appearance", label: "Site appearance", description: "Light or dark appearance and branding assets" },
   { key: "services", label: "Services and prices", description: "Service list, prices and durations" },
-  { key: "staffRoles", label: "Staff positions and staff", description: "Team roles and member setup" },
+  { key: "staffRoles", label: "Staff setup", description: "Team members, roles and public visibility" },
   { key: "rotaBreaks", label: "Rota & breaks", description: "Weekly rota and break windows" },
   { key: "closuresHolidays", label: "Closures & holidays", description: "Business closures and staff leave" },
 ];
@@ -152,6 +152,8 @@ type StaffRoleDraft = {
 
 type StaffMemberDraft = {
   id?: string;
+  firstName: string;
+  lastName: string;
   roleId: string;
   displayName: string;
   roleLabel: string;
@@ -364,9 +366,26 @@ function toRoleDraft(role: CustomerSiteStaffRoleRecord): StaffRoleDraft {
   };
 }
 
+function splitStaffName(displayName: string): { firstName: string; lastName: string } {
+  const parts = displayName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return { firstName: "", lastName: "" };
+  if (parts.length === 1) return { firstName: parts[0], lastName: "" };
+  return { firstName: parts[0], lastName: parts.slice(1).join(" ") };
+}
+
+function buildStaffDisplayName(staff: StaffMemberDraft): string {
+  return (
+    staff.displayName.trim() ||
+    [staff.firstName.trim(), staff.lastName.trim()].filter(Boolean).join(" ").trim()
+  );
+}
+
 function toStaffDraft(staff: CustomerSiteStaffMemberRecord): StaffMemberDraft {
+  const nameParts = splitStaffName(staff.displayName);
   return {
     id: staff.id,
+    firstName: nameParts.firstName,
+    lastName: nameParts.lastName,
     roleId: staff.roleId ?? "",
     displayName: staff.displayName,
     roleLabel: staff.roleLabel ?? "",
@@ -701,12 +720,17 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
     }
 
     setMessage("Saving staff...");
+    const invalidStaff = staffDraft.find((staff) => !buildStaffDisplayName(staff));
+    if (invalidStaff) {
+      setMessage("Please add at least a first name, last name, or display name for each staff member before saving.");
+      return;
+    }
     const staffResult = await saveSiteAdminStaff(
       siteSlug,
       staffDraft.map((staff, index) => ({
         id: staff.id,
         roleId: staff.roleId.trim() || null,
-        displayName: staff.displayName.trim(),
+        displayName: buildStaffDisplayName(staff),
         roleLabel: staff.roleLabel.trim() || null,
         email: staff.email.trim() || null,
         phone: staff.phone.trim() || null,
@@ -1412,7 +1436,11 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
 
       {activeSection === "staffRoles" ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="text-lg font-semibold text-slate-900">Staff & roles</h3>
+          <h3 className="text-lg font-semibold text-slate-900">Staff setup</h3>
+          <p className="mt-2 text-sm text-slate-600">
+            Add team members if customers can choose who they book with, or if you want appointments assigned to your team.
+            Staff login/auth comes later.
+          </p>
           <div className="mt-3 grid gap-6 lg:grid-cols-2">
             <div>
               <div className="flex items-center justify-between">
@@ -1438,33 +1466,49 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
             <div>
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold text-slate-900">Staff members</p>
-                <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setStaffDraft((current) => [...current, { roleId: "", displayName: "", roleLabel: "", email: "", phone: "", bio: "", active: true, customerSelectable: false, isSuperUser: false, availableWeekdays: [], notes: "", sortOrder: String(current.length) }])}>Add staff</button>
+                <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setStaffDraft((current) => [...current, { firstName: "", lastName: "", roleId: "", displayName: "", roleLabel: "", email: "", phone: "", bio: "", active: true, customerSelectable: false, isSuperUser: false, availableWeekdays: [], notes: "", sortOrder: String(current.length) }])}>Add staff</button>
               </div>
               <div className="mt-2 space-y-2">
+                {staffDraft.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
+                    <p className="text-sm font-semibold text-slate-900">Add staff members if customers can choose who they book with, or if you want appointments assigned to your team.</p>
+                    <p className="mt-1 text-xs text-slate-600">You can add rota and availability later. This section only creates the tenant-scoped staff list.</p>
+                  </div>
+                ) : null}
                 {staffDraft.map((staff, index) => (
-                  <div key={`${staff.id ?? "new"}-${index}`} className="rounded-md border border-slate-200 bg-slate-50 p-2">
+                  <div key={`${staff.id ?? "new"}-${index}`} className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">{buildStaffDisplayName(staff) || `Staff member ${index + 1}`}</p>
+                        <p className="text-xs text-slate-600">{staff.roleLabel || rolesDraft.find((role) => role.id === staff.roleId)?.label || "Role not set"}</p>
+                      </div>
+                      <label className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700">
+                        <input type="checkbox" checked={staff.active} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, active: event.target.checked } : item))} />
+                        Active / public visible
+                      </label>
+                    </div>
                     <div className="grid gap-2 sm:grid-cols-2">
-                      <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Display name" value={staff.displayName} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, displayName: event.target.value } : item))} />
-                      <select className="rounded-md border border-slate-300 px-2 py-1 text-xs" value={staff.roleId} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, roleId: event.target.value } : item))}>
+                      <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="First name" value={staff.firstName} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, firstName: event.target.value } : item))} />
+                      <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Last name" value={staff.lastName} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, lastName: event.target.value } : item))} />
+                      <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Display name (optional)" value={staff.displayName} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, displayName: event.target.value } : item))} />
+                      <select className="rounded-md border border-slate-300 px-2 py-1 text-xs" value={staff.roleId} onChange={(event) => {
+                        const nextRoleId = event.target.value;
+                        const nextRole = rolesDraft.find((role) => role.id === nextRoleId);
+                        setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, roleId: nextRoleId, roleLabel: nextRole?.label ?? item.roleLabel } : item));
+                      }}>
                         <option value="">Select role</option>
                         {rolesDraft.map((role, roleIndex) => (
                           <option key={`${role.id ?? "new"}-${roleIndex}`} value={role.id ?? ""}>{role.label || "Unnamed role"}</option>
                         ))}
                       </select>
+                      <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Role/position if no role selected" value={staff.roleLabel} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, roleLabel: event.target.value } : item))} />
                       <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Email" value={staff.email} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, email: event.target.value } : item))} />
                       <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Phone" value={staff.phone} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, phone: event.target.value } : item))} />
                       <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                        <input type="checkbox" checked={staff.active} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, active: event.target.checked } : item))} />
-                        Active
-                      </label>
-                      <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
                         <input type="checkbox" checked={staff.customerSelectable} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, customerSelectable: event.target.checked } : item))} />
-                        Customer selectable
+                        Bookable online / customer selectable
                       </label>
-                      <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">
-                        <input type="checkbox" checked={staff.isSuperUser} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, isSuperUser: event.target.checked } : item))} />
-                        Super user
-                      </label>
+                      <textarea className="rounded-md border border-slate-300 px-2 py-1 text-xs sm:col-span-2" placeholder="Bio/notes (optional)" value={staff.bio || staff.notes} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, bio: event.target.value, notes: event.target.value } : item))} />
                       <div className="sm:col-span-2">
                         <p className="text-xs font-semibold text-slate-700">Available weekdays</p>
                         <div className="mt-1 flex flex-wrap gap-2">
@@ -1494,7 +1538,19 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                         </div>
                       </div>
                     </div>
-                    <button type="button" className="mt-2 rounded-md border border-rose-300 bg-white px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50" onClick={() => setStaffDraft((current) => current.filter((_, i) => i !== index))}>Remove</button>
+                    <button
+                      type="button"
+                      className="mt-2 rounded-md border border-rose-300 bg-white px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50"
+                      onClick={() =>
+                        setStaffDraft((current) => {
+                          const row = current[index];
+                          if (!row?.id) return current.filter((_, i) => i !== index);
+                          return current.map((item, i) => i === index ? { ...item, active: false } : item);
+                        })
+                      }
+                    >
+                      {staff.id ? "Hide/archive staff" : "Remove draft"}
+                    </button>
                   </div>
                 ))}
               </div>
