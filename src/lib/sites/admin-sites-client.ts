@@ -43,7 +43,8 @@ export type AdminSiteLifecycleAction =
   | "MARK_DNS_INSTRUCTIONS_SENT"
   | "MARK_DOMAIN_READY"
   | "MARK_SITE_LIVE"
-  | "SUSPEND_SITE";
+  | "SUSPEND_SITE"
+  | "REACTIVATE_SITE";
 
 async function parseJsonSafe(response: Response): Promise<unknown> {
   try {
@@ -224,7 +225,7 @@ export async function updateAdminSiteTaskStatus(
 export async function applyAdminSiteLifecycleAction(
   siteId: string,
   action: AdminSiteLifecycleAction,
-): Promise<ClientResult<{ site: AdminTenantSiteSummary; action: AdminSiteLifecycleAction }>> {
+): Promise<ClientResult<{ site: AdminTenantSiteSummary; action: AdminSiteLifecycleAction; emailSent?: boolean; emailStatus?: string | null }>> {
   try {
     const response = await fetch(`/api/admin/sites/${encodeURIComponent(siteId)}/lifecycle`, {
       method: "POST",
@@ -232,7 +233,7 @@ export async function applyAdminSiteLifecycleAction(
       body: JSON.stringify({ action }),
     });
     const body = (await parseJsonSafe(response)) as
-      | { ok?: boolean; site?: AdminTenantSiteSummary; action?: AdminSiteLifecycleAction; error?: string; details?: unknown }
+      | { ok?: boolean; site?: AdminTenantSiteSummary; action?: AdminSiteLifecycleAction; emailSent?: boolean; emailStatus?: string | null; error?: string; details?: unknown }
       | null;
     if (!response.ok || !body?.ok || !body.site || !body.action) {
       return {
@@ -242,7 +243,7 @@ export async function applyAdminSiteLifecycleAction(
         details: body?.details,
       };
     }
-    return { ok: true, site: body.site, action: body.action };
+    return { ok: true, site: body.site, action: body.action, emailSent: Boolean(body.emailSent), emailStatus: body.emailStatus ?? null };
   } catch {
     return { ok: false, error: "NETWORK_ERROR", status: 0 };
   }

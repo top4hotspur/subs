@@ -901,3 +901,14 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Super-user staff can be granted permissions for marking appointments completed, viewing customer contact details, viewing payment status, and future operational actions such as manual bookings, amendments, cancellations, and voucher redemption.
 - The staff diary and mark-completed API both enforce permissions server-side. UI hiding is not the only control.
 - Manual staff booking, staff-side amendments/cancellations, voucher redemption workflows, customer account password reset/email verification, and full customer self-service rescheduling remain future milestones.
+
+## Site Domain Go-Live Workflow Update
+
+- Platform admin domain/go-live tracking uses existing `TenantSite`, `SiteDomain`, `SubscriptionRecord`, provisioning task, and status-event records. No per-customer app or database is introduced.
+- `/admin/sites` now includes copyable DNS instruction text for the selected subscriber site. The copy distinguishes customer-owned domains from platform-managed domains.
+- DNS instruction copy deliberately uses `PENDING_HOSTING_TARGET` unless `NEXT_PUBLIC_CUSTOM_DOMAIN_DNS_TARGET` is configured. The app does not invent final Amplify/custom-domain targets.
+- Lifecycle actions now include `REACTIVATE_SITE` alongside DNS instructions sent, domain ready, site live, and suspend.
+- Marking a site live attempts a fail-soft customer email with subject `Your website is live`, including the public URL and business-admin URL. Email failure does not block the lifecycle update.
+- `resolveTenantSiteByHost()` is the prepared host/domain resolver. It normalises hosts, strips protocol/path/port, handles root/www candidates, resolves `SiteDomain` to `TenantSite`, and excludes suspended/cancelled sites.
+- Full runtime custom-domain rendering is not switched on in this pass. `/sites/[siteSlug]` remains the preview route until hosting/DNS target and safe host rewrite routing are finalised.
+- Suspended/cancelled sites are excluded from live domain resolution. Preview routes also avoid rendering suspended/cancelled tenant sites through the public preview repository.

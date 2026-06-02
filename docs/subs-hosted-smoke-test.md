@@ -1240,3 +1240,22 @@ Notes:
 14. Use `Mark completed` on an active test booking and confirm the API updates the booking only when the permission is enabled.
 15. Turn off `Mark appointments completed`, refresh the staff diary, and confirm the button is hidden. A direct API call should return `STAFF_PERMISSION_DENIED`.
 16. Confirm staff access still cannot open `/site-admin/[siteSlug]`, platform admin, provisioning controls, payment provider settings, or business settings.
+
+## Hosted Smoke Test - Site Domain Go-Live Workflow Update
+
+1. Open `/admin/setup-requests`.
+2. Select a paid/provisioned setup request and confirm the preview link `/sites/[siteSlug]` and subscriber admin link `/site-admin/[siteSlug]` work.
+3. Open `/admin/sites` and select the same subscriber site.
+4. Confirm business name, site slug, lifecycle status, provisioning status, domain status, requested domain/domain option, SiteDomain records, preview link, subscriber admin link, subscription/payment references, and status events are visible where available.
+5. In the domain panel, review the DNS instruction copy.
+6. Click `Copy DNS instructions` and confirm the text copies, or manually select/copy it if browser clipboard access is blocked.
+7. Confirm the DNS copy uses a placeholder target unless `NEXT_PUBLIC_CUSTOM_DOMAIN_DNS_TARGET` is configured.
+8. Click `Mark DNS instructions sent` and confirm the lifecycle/domain status updates without claiming DNS was automated.
+9. Click `Mark domain configured/ready` and confirm domain/SiteDomain status updates.
+10. Click `Mark site live` and confirm the go-live email is attempted. Admin messaging should show `Go-live email: SENT`, `EMAIL_NOT_CONFIGURED`, `EMAIL_SEND_FAILED`, or `NO_CONTACT_EMAIL`.
+11. Confirm `/sites/[siteSlug]` still works as the preview route.
+12. Use the domain resolution tester with the stored domain and confirm it resolves to the expected tenant where a SiteDomain record exists.
+13. Click `Suspend site` on a test tenant and confirm suspended/cancelled sites are not returned by live domain resolution.
+14. Confirm the public preview route does not show a normal active booking site for a suspended/cancelled tenant.
+15. If safe, click `Reactivate site` and confirm the site returns to active lifecycle tracking.
+16. Confirm no DNS purchase, DNS provider update, separate Amplify app, custom database, or demo-data copy is performed in this pass.

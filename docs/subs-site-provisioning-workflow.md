@@ -450,3 +450,14 @@ Still local/mock in current product:
 - Staff permissions are stored on the staff member record and are enforced by `/site-staff/[siteSlug]` plus staff booking action APIs.
 - Standard staff access is deliberately limited. Super-user staff permission flags prepare the route for controlled operational actions without granting platform or subscriber-admin access.
 - Provisioning remains clean: no demo services, staff, bookings, vouchers, customers, or localStorage data are copied into paid subscriber sites.
+
+## Site Domain Go-Live Workflow Update
+
+- The fulfilment path is now: paid setup request -> create clean tenant site -> preview at `/sites/[siteSlug]` -> prepare/copy DNS instructions -> mark DNS instructions sent -> mark domain ready -> mark site live.
+- Platform admin can manage domain/go-live state in `/admin/sites` without automating registrar, DNS provider, SSL/certificate, or hosting resource changes.
+- DNS copy is available from the selected site domain panel and can be sent to customers using their own domain or used internally when MyExperiment.club manages the domain.
+- `SiteDomain` remains the central mapping for the future production route: incoming host -> normalised host candidates -> `SiteDomain.domain` -> `TenantSite` -> tenant-scoped public site rendering.
+- `resolveTenantSiteByHost()` is available for the future runtime host-routing milestone and the existing domain resolution debug tooling.
+- Marking live attempts a fail-soft go-live email to the setup request contact email. The lifecycle state still updates when email is not configured or delivery fails.
+- Reactivation restores a suspended test/customer site to active platform tracking where safe; it does not restart Stripe or automate external services.
+- `/sites/[siteSlug]` remains the safe preview route until custom-domain host routing is switched on.

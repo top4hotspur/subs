@@ -56,6 +56,20 @@ function isLocalDevHost(host: string): boolean {
   return host === "localhost" || host === "127.0.0.1" || host === "::1";
 }
 
+const ACTIVE_DOMAIN_STATUSES = [
+  "REQUESTED",
+  "DETAILS_NEEDED",
+  "DOMAIN_PENDING",
+  "DNS_INSTRUCTIONS_SENT",
+  "WAITING_FOR_CUSTOMER_DNS",
+  "DNS_CONFIGURED",
+  "DOMAIN_READY",
+  "READY",
+  "LIVE",
+];
+
+const LIVE_DOMAIN_STATUSES = ["DNS_CONFIGURED", "DOMAIN_READY", "READY", "LIVE"];
+
 export async function getTenantSiteByDomainHost(
   host: string,
   options: { requireLive?: boolean } = {},
@@ -68,8 +82,8 @@ export async function getTenantSiteByDomainHost(
     where: {
       domain: { in: candidates },
       status: options.requireLive
-        ? { in: ["LIVE", "DOMAIN_READY"] }
-        : { notIn: ["ARCHIVED", "REMOVED", "DELETED", "CANCELLED"] },
+        ? { in: LIVE_DOMAIN_STATUSES }
+        : { in: ACTIVE_DOMAIN_STATUSES },
     },
     orderBy: [{ domainType: "asc" }, { createdAt: "asc" }],
     select: {
@@ -89,6 +103,8 @@ export async function getTenantSiteByDomainHost(
   });
 
   if (!domainMatch) return null;
+  if (domainMatch.tenantSite.status === "SUSPENDED" || domainMatch.tenantSite.status === "CANCELLED") return null;
+  if (domainMatch.tenantSite.provisioningStatus === "SUSPENDED" || domainMatch.tenantSite.provisioningStatus === "CANCELLED") return null;
 
   return {
     tenantSiteId: domainMatch.tenantSite.id,
@@ -100,6 +116,13 @@ export async function getTenantSiteByDomainHost(
     siteStatus: domainMatch.tenantSite.status,
     provisioningStatus: domainMatch.tenantSite.provisioningStatus,
   };
+}
+
+export async function resolveTenantSiteByHost(
+  host: string,
+  options: { requireLive?: boolean } = {},
+): Promise<ResolvedTenantSite | null> {
+  return getTenantSiteByDomainHost(host, options);
 }
 
 export async function getLiveTenantSiteByDomainHost(host: string): Promise<ResolvedTenantSite | null> {

@@ -30,6 +30,12 @@ type BusinessAdminAccessEmailInput = {
   accessCode: string;
 };
 
+type SiteGoLiveEmailInput = {
+  businessName: string;
+  publicUrl: string;
+  adminUrl: string;
+};
+
 export function contactEnquiryAdminNotification(enquiry: ContactEnquiryEmailInput) {
   const subject = `New contact enquiry - ${enquiry.name}`;
   const text = [
@@ -315,6 +321,32 @@ export function businessAdminAccessHandoverEmail(input: BusinessAdminAccessEmail
 <p>Keep this access code private. If it is exposed, request a reset immediately.</p>
 <p>Please keep an eye on your inbox and check junk/spam if future emails are not seen.</p>
 <p>If you need help, contact MyExperiment.club support.</p>`;
+  return { subject, text, html };
+}
+
+export function siteGoLiveCustomerEmail(input: SiteGoLiveEmailInput) {
+  const subject = "Your website is live";
+  const text = [
+    "Hi,",
+    "",
+    `Your website for ${input.businessName} is live.`,
+    "",
+    `Public website: ${input.publicUrl}`,
+    `Business admin: ${input.adminUrl}`,
+    "",
+    "You can continue updating your services, prices, staff, opening hours, policies and page content from your business admin area.",
+    "If you need help with domain steps, setup questions, or going live checks, MyExperiment.club support is available.",
+    "",
+    "MyExperiment.club",
+  ].join("\n");
+
+  const html = `<p>Hi,</p>
+<p>Your website for <strong>${escapeHtml(input.businessName)}</strong> is live.</p>
+<p><strong>Public website:</strong> <a href="${escapeHtml(input.publicUrl)}">${escapeHtml(input.publicUrl)}</a><br/>
+<strong>Business admin:</strong> <a href="${escapeHtml(input.adminUrl)}">${escapeHtml(input.adminUrl)}</a></p>
+<p>You can continue updating your services, prices, staff, opening hours, policies and page content from your business admin area.</p>
+<p>If you need help with domain steps, setup questions, or going live checks, MyExperiment.club support is available.</p>
+<p>MyExperiment.club</p>`;
   return { subject, text, html };
 }
 

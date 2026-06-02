@@ -11,6 +11,8 @@ function actionMessage(action: SiteLifecycleAction): string {
       return "Subscriber site marked live.";
     case "SUSPEND_SITE":
       return "Subscriber site suspended by platform admin.";
+    case "REACTIVATE_SITE":
+      return "Subscriber site reactivated by platform admin.";
   }
 }
 
@@ -24,6 +26,8 @@ function actionEventType(action: SiteLifecycleAction): string {
       return "SITE_LIVE";
     case "SUSPEND_SITE":
       return "SITE_SUSPENDED";
+    case "REACTIVATE_SITE":
+      return "SITE_REACTIVATED";
   }
 }
 
@@ -76,6 +80,18 @@ export async function applyTenantSiteLifecycleAction(tenantSiteId: string, actio
       siteData.domainStatus = "SUSPENDED";
       domainData.status = "SUSPENDED";
       domainData.registrarNotes = "Site suspended by platform admin.";
+    }
+
+    if (action === "REACTIVATE_SITE") {
+      const hasDomain = Boolean(site.domainPrimary || site.siteDomains.length > 0);
+      siteData.status = hasDomain ? "LIVE" : "PROVISIONED";
+      siteData.provisioningStatus = hasDomain ? "LIVE" : "PROVISIONED";
+      siteData.subscriptionStatus = "ACTIVE";
+      siteData.domainStatus = hasDomain ? "DOMAIN_READY" : "NOT_STARTED";
+      if (hasDomain) {
+        domainData.status = "LIVE";
+        domainData.registrarNotes = "Site reactivated by platform admin.";
+      }
     }
 
     const updatedSite = await tx.tenantSite.update({

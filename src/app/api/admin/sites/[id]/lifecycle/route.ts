@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin";
-import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
+import { getOptionalServerEnv, isBackendPersistenceConfigured } from "@/lib/config/server-env";
+import { sendTransactionalEmail } from "@/lib/email/email-provider";
+import { siteGoLiveCustomerEmail } from "@/lib/email/email-templates";
 import { applyTenantSiteLifecycleAction } from "@/lib/sites/site-lifecycle-repository";
 import { SITE_LIFECYCLE_ACTIONS } from "@/lib/sites/site-lifecycle";
 
@@ -15,6 +17,23 @@ function backendNotConfigured() {
     { ok: false, error: "BACKEND_PERSISTENCE_NOT_CONFIGURED" },
     { status: 503 },
   );
+}
+
+function absoluteAppUrl(path: string): string {
+  const baseUrl = getOptionalServerEnv("NEXT_PUBLIC_SITE_URL")?.replace(/\/+$/, "");
+  return baseUrl ? `${baseUrl}${path}` : path;
+}
+
+function publicSiteUrl(site: {
+  domainPrimary?: string | null;
+  slug: string;
+}): string {
+  const domain = site.domainPrimary?.trim();
+  if (domain) {
+    if (/^https?:\/\//i.test(domain)) return domain;
+    return `https://${domain}`;
+  }
+  return absoluteAppUrl(`/sites/${encodeURIComponent(site.slug)}`);
 }
 
 export async function POST(
@@ -32,7 +51,30 @@ export async function POST(
     const body = await request.json();
     const parsed = actionSchema.parse(body);
     const site = await applyTenantSiteLifecycleAction(tenantSiteId, parsed.action);
-    return NextResponse.json({ ok: true, site, action: parsed.action });
+    let emailStatus: string | null = null;
+    let emailSent = false;
+    if (parsed.action === "MARK_SITE_LIVE") {
+      const targetEmail = site.setupRequest?.contactEmail?.trim();
+      if (targetEmail) {
+        const email = siteGoLiveCustomerEmail({
+          businessName: site.displayName,
+          publicUrl: publicSiteUrl(site),
+          adminUrl: absoluteAppUrl(`/site-admin/${encodeURIComponent(site.slug)}`),
+        });
+        const emailResult = await sendTransactionalEmail({
+          to: targetEmail,
+          subject: email.subject,
+          text: email.text,
+          html: email.html,
+          replyTo: getOptionalServerEnv("PLATFORM_NOTIFICATION_EMAIL"),
+        });
+        emailSent = emailResult.ok;
+        emailStatus = emailResult.ok ? "SENT" : emailResult.reason;
+      } else {
+        emailStatus = "NO_CONTACT_EMAIL";
+      }
+    }
+    return NextResponse.json({ ok: true, site, action: parsed.action, emailSent, emailStatus });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ ok: false, error: "VALIDATION_ERROR", details: error.issues }, { status: 400 });

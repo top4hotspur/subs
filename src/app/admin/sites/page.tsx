@@ -20,6 +20,7 @@ import { formatGbp, formatOptional, formatUkDateTime } from "@/lib/ui/display-la
 import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
 import { AdminPillNav } from "@/components/admin/admin-pill-nav";
 import { lifecycleStatusLabel } from "@/lib/sites/site-lifecycle";
+import { buildDnsInstructionsText } from "@/lib/sites/domain-go-live";
 
 const TASK_STATUS_OPTIONS = ["TODO", "IN_PROGRESS", "DONE", "BLOCKED", "SKIPPED"];
 
@@ -82,6 +83,7 @@ function lifecycleActionLabel(action: AdminSiteLifecycleAction): string {
   if (action === "MARK_DNS_INSTRUCTIONS_SENT") return "Mark DNS instructions sent";
   if (action === "MARK_DOMAIN_READY") return "Mark domain configured/ready";
   if (action === "MARK_SITE_LIVE") return "Mark site live";
+  if (action === "REACTIVATE_SITE") return "Reactivate site";
   return "Suspend site";
 }
 
@@ -125,6 +127,7 @@ export default function AdminSitesPage() {
   const [taskDrafts, setTaskDrafts] = useState<Record<string, string>>({});
   const [domainTestHost, setDomainTestHost] = useState("");
   const [domainTestResult, setDomainTestResult] = useState<string | null>(null);
+  const [dnsCopyStatus, setDnsCopyStatus] = useState<string | null>(null);
 
   const selectedSite = useMemo(
     () => sites.find((site) => site.id === selectedSiteId) ?? detail?.site ?? null,
@@ -249,9 +252,39 @@ export default function AdminSitesPage() {
       return;
     }
 
-    setMessage(`${lifecycleActionLabel(action)} completed.`);
+    const emailNote =
+      action === "MARK_SITE_LIVE"
+        ? result.emailStatus
+          ? ` Go-live email: ${result.emailStatus}.`
+          : " Go-live email was not attempted."
+        : "";
+    setMessage(`${lifecycleActionLabel(action)} completed.${emailNote}`);
     await loadSites();
     await loadSiteDetail(selectedSiteId);
+  }
+
+  async function copyDnsInstructions(): Promise<void> {
+    if (!selectedSite || !detail) return;
+    const requestedDomain =
+      selectedSite.domainPrimary ||
+      detail.domains[0]?.domain ||
+      detail.site.setupRequest?.existingDomain ||
+      detail.site.setupRequest?.desiredDomain ||
+      null;
+    const text = buildDnsInstructionsText({
+      businessName: selectedSite.displayName,
+      domainOption: detail.site.setupRequest?.domainOption,
+      requestedDomain,
+      previewUrl: `/sites/${selectedSite.slug}`,
+      adminUrl: `/site-admin/${selectedSite.slug}`,
+      dnsTarget: process.env.NEXT_PUBLIC_CUSTOM_DOMAIN_DNS_TARGET ?? null,
+    });
+    try {
+      await navigator.clipboard.writeText(text);
+      setDnsCopyStatus("DNS instructions copied.");
+    } catch {
+      setDnsCopyStatus("Could not copy automatically. Select the text and copy it manually.");
+    }
   }
 
   async function runDomainResolutionTest(): Promise<void> {
@@ -439,11 +472,14 @@ export default function AdminSitesPage() {
                     "MARK_DOMAIN_READY",
                     "MARK_SITE_LIVE",
                     "SUSPEND_SITE",
+                    ...(selectedSite.status === "SUSPENDED" || selectedSite.provisioningStatus === "SUSPENDED"
+                      ? ["REACTIVATE_SITE" as const]
+                      : []),
                   ] as AdminSiteLifecycleAction[]).map((action) => (
                     <button
                       key={action}
                       type="button"
-                      className={`${action === "SUSPEND_SITE" ? "rounded-md border border-rose-300 bg-white px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50" : `${outlineButtonClass} ${smallButtonClass}`}`}
+                      className={`${action === "SUSPEND_SITE" ? "rounded-md border border-rose-300 bg-white px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50" : action === "REACTIVATE_SITE" ? "rounded-md border border-emerald-300 bg-white px-3 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50" : `${outlineButtonClass} ${smallButtonClass}`}`}
                       onClick={() => {
                         void runLifecycleAction(action);
                       }}
@@ -492,8 +528,41 @@ export default function AdminSitesPage() {
                   </div>
                 )}
                 <p className="mt-2 text-xs text-slate-600">
-                  DNS/domain automation is not live yet. Custom-domain runtime will resolve SiteDomain to TenantSite in a later pass.
+                  DNS/domain automation is not live yet. Custom-domain runtime will resolve SiteDomain to TenantSite once host routing is enabled.
                 </p>
+                <div className="mt-3 rounded-md border border-slate-200 bg-white p-2">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-900">DNS instruction copy</p>
+                      <p className="mt-1 text-xs text-slate-600">
+                        Copy this text to send to the customer or use internally for managed domains. The hosting target remains a placeholder until final Amplify/custom-domain configuration is confirmed.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className={`${outlineButtonClass} ${smallButtonClass}`}
+                      onClick={() => void copyDnsInstructions()}
+                    >
+                      Copy DNS instructions
+                    </button>
+                  </div>
+                  <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap rounded-md bg-slate-50 p-2 text-[11px] text-slate-700">
+                    {buildDnsInstructionsText({
+                      businessName: selectedSite.displayName,
+                      domainOption: detail.site.setupRequest?.domainOption,
+                      requestedDomain:
+                        selectedSite.domainPrimary ||
+                        detail.domains[0]?.domain ||
+                        detail.site.setupRequest?.existingDomain ||
+                        detail.site.setupRequest?.desiredDomain ||
+                        null,
+                      previewUrl: `/sites/${selectedSite.slug}`,
+                      adminUrl: `/site-admin/${selectedSite.slug}`,
+                      dnsTarget: process.env.NEXT_PUBLIC_CUSTOM_DOMAIN_DNS_TARGET ?? null,
+                    })}
+                  </pre>
+                  {dnsCopyStatus ? <p className="mt-2 text-xs text-slate-600">{dnsCopyStatus}</p> : null}
+                </div>
                 <div className="mt-3 rounded-md border border-slate-200 bg-white p-2">
                   <p className="text-xs font-semibold text-slate-900">Test domain resolution</p>
                   <div className="mt-2 flex flex-wrap gap-2">
