@@ -280,3 +280,10 @@ Still local/mock in current product:
 - Hiding/removing an existing staff member marks it inactive so future bookings/rota references can remain safe.
 - `/sites/[siteSlug]` no longer shows staff as a large homepage tile; active tenant staff remains available for future booking/staff-choice flows.
 - Staff rota/availability and staff login/auth remain future milestones.
+
+## Service editor and public visibility polish
+
+- Subscriber services in `/site-admin/[siteSlug]` now behave like a compact management list: persisted services are collapsed by default and expand only for the selected edit row.
+- New service drafts open expanded immediately, then collapse after a successful save once they become persisted rows.
+- Service category assignment remains tenant-scoped and is visible in the collapsed admin summary plus the public grouped services view.
+- `/sites/[siteSlug]` respects optional About and Policy visibility in public navigation/sections; Contact remains a standard visible page for subscriber sites in this phase.

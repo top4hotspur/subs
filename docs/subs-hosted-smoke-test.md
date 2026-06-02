@@ -922,3 +922,17 @@ Notes:
 19. Confirm contact/opening summary, staff options, customer account access, and booking policy notice are no longer large homepage tiles.
 20. Confirm contact, policy, account, staff, and business admin links/details remain available in header/footer/support areas where appropriate.
 21. Hide/archive the service, save, and confirm the checklist returns to `Needs setup` if no active services remain.
+
+## 2026-06-02 Hosted Smoke Checks: Service Editor Collapse and Page Visibility
+
+1. Sign in at `/site-admin/login` and open `/site-admin/[siteSlug]`.
+2. Open `Services/prices` and confirm saved services load as compact collapsed summary rows by default.
+3. Confirm each collapsed service row shows name, category, price, duration, public/hidden status, and an `Edit` action.
+4. Click `Edit` on one saved service and confirm only that service expands for editing.
+5. Click `Add service` and confirm the new draft service opens expanded immediately.
+6. Save services and confirm persisted services collapse again after the successful save.
+7. Confirm service categories remain editable and assigning a category is reflected in the collapsed summary row and public service grouping.
+8. In `Page visibility/content`, disable About, save, then open `/sites/[siteSlug]`.
+9. Confirm the public nav no longer shows `About` and the homepage does not render an About section when About is disabled.
+10. Confirm Contact remains visible because Contact is currently a standard/mandatory subscriber page, not an optional page toggle.
+11. Disable Policy, save, and confirm the footer `Terms / Policies` link is hidden while Privacy/Cookie links remain.

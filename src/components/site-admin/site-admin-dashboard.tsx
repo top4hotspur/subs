@@ -131,6 +131,7 @@ type SettingsDraft = {
 };
 type ServiceDraft = {
   id?: string;
+  tempKey?: string;
   categoryId: string;
   name: string;
   description: string;
@@ -376,6 +377,10 @@ function toServiceCategoryDraft(category: PersistedCustomerSiteServiceCategory):
   };
 }
 
+function serviceDraftKey(service: ServiceDraft, index: number): string {
+  return service.id ?? service.tempKey ?? `service-${index}`;
+}
+
 function toRoleDraft(role: CustomerSiteStaffRoleRecord): StaffRoleDraft {
   return {
     id: role.id,
@@ -475,6 +480,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<SectionKey>("settings");
+  const [expandedServiceKey, setExpandedServiceKey] = useState<string | null>(null);
 
   const [settingsDraft, setSettingsDraft] = useState<SettingsDraft>(() => toSettingsDraft(null));
   const [persistedSettings, setPersistedSettings] = useState<PersistedCustomerSiteSettings | null>(null);
@@ -492,6 +498,10 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   const selectedStaff = useMemo(
     () => staffDraft.find((item) => item.id === selectedSchedulingStaffId) ?? null,
     [selectedSchedulingStaffId, staffDraft],
+  );
+  const serviceCategoryById = useMemo(
+    () => new Map(serviceCategoriesDraft.filter((category) => category.id).map((category) => [category.id!, category])),
+    [serviceCategoriesDraft],
   );
 
   useEffect(() => {
@@ -735,6 +745,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
     }
     setServiceCategoriesDraft(result.categories.map(toServiceCategoryDraft));
     setServicesDraft(result.services.map(toServiceDraft));
+    setExpandedServiceKey(null);
     const activeCount = result.services.filter((service) => service.active).length;
     setMessage(
       activeCount > 0
@@ -1343,10 +1354,12 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
             <button
               type="button"
               className={`${outlineButtonClass} ${smallButtonClass}`}
-              onClick={() =>
+              onClick={() => {
+                const tempKey = `draft-${Date.now()}`;
                 setServicesDraft((current) => [
                   ...current,
                   {
+                    tempKey,
                     name: "",
                     categoryId: "",
                     description: "",
@@ -1360,8 +1373,9 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     blockBookingEnabled: false,
                     blockBookingSuggestedCounts: "",
                   },
-                ])
-              }
+                ]);
+                setExpandedServiceKey(tempKey);
+              }}
             >
               Add service
             </button>
@@ -1457,26 +1471,42 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                 </p>
               </div>
             ) : null}
-            {servicesDraft.map((service, index) => (
-              <div key={`${service.id ?? "new"}-${index}`} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            {servicesDraft.map((service, index) => {
+              const serviceKey = serviceDraftKey(service, index);
+              const expanded = !service.id || expandedServiceKey === serviceKey;
+              const categoryName = service.categoryId
+                ? serviceCategoryById.get(service.categoryId)?.name ?? "Uncategorised"
+                : "Uncategorised";
+              return (
+              <div key={serviceKey} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="text-sm font-semibold text-slate-900">
                       {service.name.trim() || `Service ${index + 1}`}
                     </p>
                     <p className="mt-0.5 text-xs text-slate-600">
-                      {formatAdminServicePrice(service.basePrice)} | {formatAdminDuration(service.durationMinutes)}
+                      {categoryName} | {formatAdminServicePrice(service.basePrice)} | {formatAdminDuration(service.durationMinutes)}
                     </p>
+                    {!expanded && service.description.trim() ? (
+                      <p className="mt-1 line-clamp-2 text-xs text-slate-600">{service.description.trim()}</p>
+                    ) : null}
                   </div>
-                  <label className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700">
-                    <input
-                      type="checkbox"
-                      checked={service.active}
-                      onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, active: event.target.checked } : row))}
-                    />
-                    Active / public visible
-                  </label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`rounded-full border px-2 py-1 text-xs font-semibold ${service.active ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-slate-200 bg-slate-100 text-slate-600"}`}>
+                      {service.active ? "Public visible" : "Hidden"}
+                    </span>
+                    {service.id ? (
+                      <button
+                        type="button"
+                        className={`${outlineButtonClass} ${smallButtonClass}`}
+                        onClick={() => setExpandedServiceKey(expanded ? null : serviceKey)}
+                      >
+                        {expanded ? "Collapse" : "Edit"}
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
+                {expanded ? (
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(220px,1fr)_140px_140px_170px]">
                   <label className="text-xs font-semibold text-slate-700 lg:col-span-1">Service name
                     <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={service.name} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, name: event.target.value } : row))} />
@@ -1564,6 +1594,17 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     </label>
                   ) : null}
                 </div>
+                ) : null}
+                {expanded ? (
+                  <label className="mt-2 inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={service.active}
+                      onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, active: event.target.checked } : row))}
+                    />
+                    Active / public visible
+                  </label>
+                ) : null}
                 <button
                   type="button"
                   className="mt-2 rounded-md border border-rose-300 bg-white px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50"
@@ -1571,14 +1612,15 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     setServicesDraft((current) => {
                       const row = current[index];
                       if (!row?.id) return current.filter((_, i) => i !== index);
-                      return current.map((item, i) => i === index ? { ...item, active: false } : item);
+                      return current.map((item, i) => i === index ? { ...item, active: !item.active } : item);
                     })
                   }
                 >
-                  {service.id ? "Hide/archive service" : "Remove draft"}
+                  {service.id ? (service.active ? "Hide/archive service" : "Restore/show service") : "Remove draft"}
                 </button>
               </div>
-            ))}
+              );
+            })}
           </div>
           <button type="button" className={`mt-4 ${primaryButtonClass} ${smallButtonClass}`} onClick={() => void saveServices()}>
             Save services

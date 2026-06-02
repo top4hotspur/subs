@@ -673,3 +673,13 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Staff options, customer account access, and booking policy notices are no longer large homepage tiles.
 - Public service cards show customer-facing fields only: service name, description, price, duration, and a disabled `Book this service (coming soon)` placeholder.
 - Internal service configuration such as buffer, recurring options, and block-booking settings is not shown publicly in this pass.
+
+## 2026-06-02 Service Editor Collapse and Public Page Visibility
+
+- `/site-admin/[siteSlug]` keeps saved services collapsed by default so the Services/prices editor is easier to scan as a real service list grows.
+- A saved service expands only when the business owner clicks `Edit`; a newly added draft service opens expanded immediately until it is saved.
+- Collapsed service rows show the useful summary fields: service name, category, price, duration, visibility status, and a short description preview.
+- Service categories remain tenant-scoped and continue to drive public grouping on `/sites/[siteSlug]`.
+- Public subscriber pages now respect the About visibility setting in the top nav and homepage section rendering.
+- Contact remains standard and always visible in this phase; making Contact optional would require a dedicated setting/schema decision in a later pass.
+- Policy remains optional: when disabled, the public footer no longer shows the `Terms / Policies` link.

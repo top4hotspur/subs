@@ -162,9 +162,7 @@ export default async function PublicSiteSlugPage({
                 <a href={bookingHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Book now</a>
                 {settings?.aboutPageEnabled ? (
                   <Link href={aboutHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">About</Link>
-                ) : (
-                  <a href="#about" className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">About</a>
-                )}
+                ) : null}
                 <Link href={contactHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Contact</Link>
                 <a href="#customer-login" className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Customer login</a>
               </div>
@@ -246,7 +244,7 @@ export default async function PublicSiteSlugPage({
                 )}
               </div>
 
-              {settings?.aboutBody?.trim() ? (
+              {settings?.aboutPageEnabled && settings?.aboutBody?.trim() ? (
                 <div id="about" className={cardClass}>
                   <h3 className="text-base font-semibold">About us</h3>
                   <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>{settings.aboutBody}</p>
@@ -285,7 +283,9 @@ export default async function PublicSiteSlugPage({
                 <span id="customer-login" className="text-slate-600">Customer login (coming soon)</span>
                 <Link href={privacyHref} className="hover:text-slate-900">Privacy Policy</Link>
                 <Link href={cookiesHref} className="hover:text-slate-900">Cookie Policy</Link>
-                <Link href={policyHref} className="hover:text-slate-900">Terms / Policies</Link>
+                {settings?.policyPageEnabled ? (
+                  <Link href={policyHref} className="hover:text-slate-900">Terms / Policies</Link>
+                ) : null}
                 <span className="mx-1 text-slate-300">|</span>
                 <span id="staff-access" className="hover:text-slate-900">Staff login (coming soon)</span>
                 <Link href={siteAdminHref} className="hover:text-slate-900">Business admin login</Link>
