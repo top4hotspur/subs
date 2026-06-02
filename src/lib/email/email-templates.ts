@@ -1,6 +1,8 @@
 import type { CustomerSiteBookingRecord } from "@/lib/sites/customer-site-booking-types";
 import { formatBookingDateTime } from "@/lib/sites/customer-site-booking-display";
 import { cancellationRefundEmailLine } from "@/lib/sites/booking-cancellation-refund";
+import type { CustomerSiteGiftVoucherRecord } from "@/lib/sites/customer-site-voucher-types";
+import { formatVoucherMoney } from "@/lib/sites/customer-site-voucher-types";
 
 type ContactEnquiryEmailInput = {
   name: string;
@@ -34,6 +36,10 @@ type SiteGoLiveEmailInput = {
   businessName: string;
   publicUrl: string;
   adminUrl: string;
+};
+
+type VoucherSiteSummaryForEmail = SiteSummaryForEmail & {
+  voucherUrl?: string | null;
 };
 
 export function contactEnquiryAdminNotification(enquiry: ContactEnquiryEmailInput) {
@@ -347,6 +353,87 @@ export function siteGoLiveCustomerEmail(input: SiteGoLiveEmailInput) {
 <p>You can continue updating your services, prices, staff, opening hours, policies and page content from your business admin area.</p>
 <p>If you need help with domain steps, setup questions, or going live checks, MyExperiment.club support is available.</p>
 <p>MyExperiment.club</p>`;
+  return { subject, text, html };
+}
+
+export function tenantVoucherBusinessNotification(
+  voucher: CustomerSiteGiftVoucherRecord,
+  site: VoucherSiteSummaryForEmail,
+) {
+  const totalDue = voucher.amountPence + voucher.postageAmountPence;
+  const subject = `New gift voucher request - ${site.siteName}`;
+  const text = [
+    `New gift voucher request for ${site.siteName}.`,
+    "",
+    `Voucher code: ${voucher.voucherCode}`,
+    `Value: ${formatVoucherMoney(voucher.amountPence, voucher.currency)}`,
+    voucher.postageAmountPence > 0 ? `Postage: ${formatVoucherMoney(voucher.postageAmountPence, voucher.currency)}` : "",
+    `Total due: ${formatVoucherMoney(totalDue, voucher.currency)}`,
+    `Delivery: ${voucher.deliveryMethod.replaceAll("_", " ").toLowerCase()}`,
+    `Purchaser: ${voucher.purchaserName} <${voucher.purchaserEmail}>`,
+    voucher.purchaserPhone ? `Purchaser phone: ${voucher.purchaserPhone}` : "",
+    voucher.recipientName ? `Recipient: ${voucher.recipientName}` : "",
+    voucher.recipientEmail ? `Recipient email: ${voucher.recipientEmail}` : "",
+    voucher.recipientAddress ? `Recipient address: ${voucher.recipientAddress}` : "",
+    voucher.recipientPostcode ? `Recipient postcode: ${voucher.recipientPostcode}` : "",
+    voucher.message ? `Message: ${voucher.message}` : "",
+    "",
+    "Payment has not been taken online yet. Mark payment received in business admin before treating the voucher as active.",
+    site.adminUrl ? `Open business admin: ${site.adminUrl}` : "",
+  ].filter(Boolean).join("\n");
+  const html = `<p><strong>New gift voucher request for ${escapeHtml(site.siteName)}.</strong></p>
+<p><strong>Voucher code:</strong> ${escapeHtml(voucher.voucherCode)}<br/>
+<strong>Value:</strong> ${escapeHtml(formatVoucherMoney(voucher.amountPence, voucher.currency))}<br/>
+${voucher.postageAmountPence > 0 ? `<strong>Postage:</strong> ${escapeHtml(formatVoucherMoney(voucher.postageAmountPence, voucher.currency))}<br/>` : ""}
+<strong>Total due:</strong> ${escapeHtml(formatVoucherMoney(totalDue, voucher.currency))}<br/>
+<strong>Delivery:</strong> ${escapeHtml(voucher.deliveryMethod.replaceAll("_", " ").toLowerCase())}</p>
+<p><strong>Purchaser:</strong> ${escapeHtml(voucher.purchaserName)} &lt;${escapeHtml(voucher.purchaserEmail)}&gt;<br/>
+${voucher.purchaserPhone ? `<strong>Purchaser phone:</strong> ${escapeHtml(voucher.purchaserPhone)}<br/>` : ""}
+${voucher.recipientName ? `<strong>Recipient:</strong> ${escapeHtml(voucher.recipientName)}<br/>` : ""}
+${voucher.recipientEmail ? `<strong>Recipient email:</strong> ${escapeHtml(voucher.recipientEmail)}<br/>` : ""}
+${voucher.recipientAddress ? `<strong>Recipient address:</strong> ${escapeHtml(voucher.recipientAddress)}<br/>` : ""}
+${voucher.recipientPostcode ? `<strong>Recipient postcode:</strong> ${escapeHtml(voucher.recipientPostcode)}<br/>` : ""}</p>
+${voucher.message ? `<p><strong>Message:</strong><br/>${escapeHtml(voucher.message).replace(/\n/g, "<br/>")}</p>` : ""}
+<p>Payment has not been taken online yet. Mark payment received in business admin before treating the voucher as active.</p>
+${site.adminUrl ? `<p><a href="${escapeHtml(site.adminUrl)}">Open business admin</a></p>` : ""}`;
+  return { subject, text, html };
+}
+
+export function tenantVoucherIssuedEmail(
+  voucher: CustomerSiteGiftVoucherRecord,
+  site: VoucherSiteSummaryForEmail,
+  recipientType: "purchaser" | "recipient",
+) {
+  const subject = `Your ${site.siteName} gift voucher`;
+  const greeting =
+    recipientType === "recipient"
+      ? voucher.recipientName || "there"
+      : voucher.purchaserName || "there";
+  const expiry = voucher.expiresAt ? new Date(voucher.expiresAt).toLocaleDateString("en-GB") : "No fixed expiry date";
+  const text = [
+    `Hi ${greeting},`,
+    "",
+    `Your gift voucher for ${site.siteName} is now active.`,
+    "",
+    `Voucher code: ${voucher.voucherCode}`,
+    `Value: ${formatVoucherMoney(voucher.amountPence, voucher.currency)}`,
+    `Expiry: ${expiry}`,
+    voucher.message ? `Message: ${voucher.message}` : "",
+    "",
+    "Keep this code safe. The business may ask for it when booking or redeeming the voucher.",
+    site.voucherUrl ? `Gift voucher page: ${site.voucherUrl}` : "",
+    site.contactEmail ? `Business email: ${site.contactEmail}` : "",
+    site.contactPhone ? `Business phone: ${site.contactPhone}` : "",
+  ].filter(Boolean).join("\n");
+  const html = `<p>Hi ${escapeHtml(greeting)},</p>
+<p>Your gift voucher for <strong>${escapeHtml(site.siteName)}</strong> is now active.</p>
+<p><strong>Voucher code:</strong> ${escapeHtml(voucher.voucherCode)}<br/>
+<strong>Value:</strong> ${escapeHtml(formatVoucherMoney(voucher.amountPence, voucher.currency))}<br/>
+<strong>Expiry:</strong> ${escapeHtml(expiry)}</p>
+${voucher.message ? `<p><strong>Message:</strong><br/>${escapeHtml(voucher.message).replace(/\n/g, "<br/>")}</p>` : ""}
+<p>Keep this code safe. The business may ask for it when booking or redeeming the voucher.</p>
+${site.voucherUrl ? `<p><a href="${escapeHtml(site.voucherUrl)}">Open gift voucher page</a></p>` : ""}
+${site.contactEmail || site.contactPhone ? `<p>${site.contactEmail ? `Email: ${escapeHtml(site.contactEmail)}<br/>` : ""}${site.contactPhone ? `Phone: ${escapeHtml(site.contactPhone)}` : ""}</p>` : ""}`;
   return { subject, text, html };
 }
 

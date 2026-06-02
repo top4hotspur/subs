@@ -52,6 +52,7 @@ export type PersistedCustomerSiteSettings = {
   socialLinks: unknown;
   recurringPaymentsEnabled: boolean;
   customerBlockBookingsEnabled: boolean;
+  giftVoucherSettingsJson: unknown;
   createdAt: string;
   updatedAt: string;
 };

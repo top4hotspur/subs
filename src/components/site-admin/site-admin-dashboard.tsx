@@ -27,6 +27,9 @@ import {
   removeSiteAdminBrandingLogo,
   uploadSiteAdminBrandingFavicon,
   uploadSiteAdminBrandingLogo,
+  getSiteAdminVouchers,
+  saveSiteAdminVoucherSettings,
+  runSiteAdminVoucherAction,
 } from "@/lib/sites/site-admin-client";
 import { outlineButtonClass, primaryButtonClass, smallButtonClass } from "@/lib/ui/button-styles";
 import type {
@@ -46,6 +49,15 @@ import type {
   CustomerSiteStaffRotaDayRecord,
 } from "@/lib/sites/customer-site-scheduling-types";
 import type { CustomerSiteBookingRecord } from "@/lib/sites/customer-site-booking-types";
+import type {
+  CustomerSiteGiftVoucherRecord,
+  CustomerSiteGiftVoucherSettings,
+  VoucherDeliveryMethod,
+} from "@/lib/sites/customer-site-voucher-types";
+import {
+  DEFAULT_GIFT_VOUCHER_SETTINGS,
+  formatVoucherMoney,
+} from "@/lib/sites/customer-site-voucher-types";
 import { formatBookingDateTime, formatUkDateTime } from "@/lib/sites/customer-site-booking-display";
 import { DEFAULT_BOOKING_POLICY_BODY, isCustomPolicyContent } from "@/lib/sites/default-booking-policy";
 import { getBookingRefundGuidance } from "@/lib/sites/booking-cancellation-refund";
@@ -75,7 +87,8 @@ type SectionKey =
   | "services"
   | "staffRoles"
   | "rotaBreaks"
-  | "closuresHolidays";
+  | "closuresHolidays"
+  | "giftVouchers";
 
 const SECTION_LIST: Array<{ key: SectionKey; label: string; description: string }> = [
   { key: "bookings", label: "Bookings", description: "Recent live site booking records" },
@@ -85,6 +98,7 @@ const SECTION_LIST: Array<{ key: SectionKey; label: string; description: string 
   { key: "staffRoles", label: "Staff setup", description: "Team members, roles and public visibility" },
   { key: "rotaBreaks", label: "Rota & breaks", description: "Weekly rota and break windows" },
   { key: "closuresHolidays", label: "Closures & holidays", description: "Business closures and staff leave" },
+  { key: "giftVouchers", label: "Gift vouchers", description: "Voucher settings, payment checks and redemption status" },
 ];
 
 const weekdayValues: WeekdayValue[] = [
@@ -922,6 +936,10 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   const [bookingAmendLoading, setBookingAmendLoading] = useState(false);
   const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(null);
   const [bookingCancellationDraft, setBookingCancellationDraft] = useState<BookingCancellationDraft | null>(null);
+  const [voucherSettings, setVoucherSettings] = useState<CustomerSiteGiftVoucherSettings>(DEFAULT_GIFT_VOUCHER_SETTINGS);
+  const [voucherPresetValues, setVoucherPresetValues] = useState(DEFAULT_GIFT_VOUCHER_SETTINGS.presetValuesGbp.join(", "));
+  const [vouchers, setVouchers] = useState<CustomerSiteGiftVoucherRecord[]>([]);
+  const [vouchersLoaded, setVouchersLoaded] = useState(false);
 
   const selectedStaff = useMemo(
     () => staffDraft.find((item) => item.id === selectedSchedulingStaffId) ?? null,
@@ -1016,6 +1034,88 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       active = false;
     };
   }, [siteSlug]);
+
+  useEffect(() => {
+    if (activeSection !== "giftVouchers" || vouchersLoaded) return;
+    let active = true;
+    async function loadVouchers() {
+      setMessage("Loading gift vouchers...");
+      const result = await getSiteAdminVouchers(siteSlug);
+      if (!active) return;
+      if (!result.ok) {
+        setMessage(toMessage(result.error, result.status, result.details));
+        return;
+      }
+      setVoucherSettings(result.settings);
+      setVoucherPresetValues(result.settings.presetValuesGbp.join(", "));
+      setVouchers(result.vouchers);
+      setVouchersLoaded(true);
+      setMessage(null);
+    }
+    void loadVouchers();
+    return () => {
+      active = false;
+    };
+  }, [activeSection, siteSlug, vouchersLoaded]);
+
+  function updateVoucherSetting<K extends keyof CustomerSiteGiftVoucherSettings>(
+    key: K,
+    value: CustomerSiteGiftVoucherSettings[K],
+  ) {
+    setVoucherSettings((current) => ({ ...current, [key]: value }));
+  }
+
+  async function saveGiftVoucherSettings() {
+    const presetValues = voucherPresetValues
+      .split(",")
+      .map((value) => Number(value.trim()))
+      .filter((value) => Number.isInteger(value) && value > 0);
+    if (presetValues.length === 0) {
+      setMessage("Add at least one voucher value, for example 25, 50, 100.");
+      return;
+    }
+    const nextSettings = {
+      ...voucherSettings,
+      presetValuesGbp: Array.from(new Set(presetValues)).sort((a, b) => a - b),
+    };
+    setMessage("Saving gift voucher settings...");
+    const result = await saveSiteAdminVoucherSettings(siteSlug, nextSettings);
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status, result.details));
+      return;
+    }
+    setVoucherSettings(result.settings);
+    setVoucherPresetValues(result.settings.presetValuesGbp.join(", "));
+    setMessage("Gift voucher settings saved.");
+    router.refresh();
+  }
+
+  async function runVoucherAction(
+    voucherId: string,
+    action: "MARK_PAYMENT_RECEIVED" | "MARK_REDEEMED" | "CANCEL" | "MARK_EXPIRED" | "RESEND_EMAIL",
+  ) {
+    setMessage("Updating gift voucher...");
+    const result = await runSiteAdminVoucherAction(siteSlug, voucherId, action);
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status, result.details));
+      return;
+    }
+    setVouchers((current) => current.map((voucher) => (voucher.id === result.voucher.id ? result.voucher : voucher)));
+    const emailSummary = result.emailStatus
+      ? ` Email: ${Object.entries(result.emailStatus).map(([key, value]) => `${key} ${value}`).join(", ")}.`
+      : "";
+    setMessage(`Gift voucher updated.${emailSummary}`);
+    router.refresh();
+  }
+
+  async function copyVoucherCode(code: string) {
+    try {
+      await navigator.clipboard.writeText(code);
+      setMessage(`Voucher code ${code} copied.`);
+    } catch {
+      setMessage(`Copy failed. Voucher code: ${code}`);
+    }
+  }
 
   async function saveSettings() {
     setMessage("Saving site settings...");
@@ -2002,6 +2102,235 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
           <button type="button" className={`mt-4 ${primaryButtonClass} ${smallButtonClass}`} onClick={() => void saveSettings()}>
             Save site settings
           </button>
+        </section>
+      ) : null}
+
+      {activeSection === "giftVouchers" ? (
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900">Gift vouchers</h3>
+              <p className="mt-1 text-sm text-slate-600">
+                Configure voucher values, review new voucher requests, activate vouchers after payment, and track redemption.
+              </p>
+            </div>
+            <a
+              href={`/sites/${encodeURIComponent(siteSlug)}/vouchers`}
+              className={`${outlineButtonClass} ${smallButtonClass}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Public voucher page
+            </a>
+          </div>
+
+          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <h4 className="text-sm font-semibold text-slate-900">Voucher setup</h4>
+            <p className="mt-1 text-xs text-slate-600">
+              This first version records voucher requests and manual payment confirmation. It does not take card payments online yet.
+            </p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={voucherSettings.enabled}
+                  onChange={(event) => updateVoucherSetting("enabled", event.target.checked)}
+                />
+                Enable gift vouchers
+              </label>
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={voucherSettings.publicVisible}
+                  onChange={(event) => updateVoucherSetting("publicVisible", event.target.checked)}
+                />
+                Show Gift vouchers on public site
+              </label>
+              <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
+                Preset values (£)
+                <input
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  value={voucherPresetValues}
+                  onChange={(event) => setVoucherPresetValues(event.target.value)}
+                  placeholder="25, 50, 100"
+                />
+                <span className="mt-1 block text-[11px] font-normal text-slate-600">
+                  Comma-separated values shown to customers.
+                </span>
+              </label>
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={voucherSettings.allowCustomAmount}
+                  onChange={(event) => updateVoucherSetting("allowCustomAmount", event.target.checked)}
+                />
+                Allow custom voucher amount
+              </label>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <label className="text-xs font-semibold text-slate-700">
+                  Min custom (£)
+                  <input
+                    className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                    inputMode="numeric"
+                    value={voucherSettings.minCustomAmountGbp}
+                    onChange={(event) => updateVoucherSetting("minCustomAmountGbp", Number(event.target.value) || 1)}
+                  />
+                </label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Max custom (£)
+                  <input
+                    className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                    inputMode="numeric"
+                    value={voucherSettings.maxCustomAmountGbp}
+                    onChange={(event) => updateVoucherSetting("maxCustomAmountGbp", Number(event.target.value) || 1)}
+                  />
+                </label>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-white p-3 sm:col-span-2">
+                <p className="text-xs font-semibold text-slate-700">Delivery methods</p>
+                <div className="mt-2 flex flex-wrap gap-3">
+                  {([
+                    ["DIGITAL_EMAIL", "Digital email"],
+                    ["COLLECT_IN_STORE", "Collect in store"],
+                    ["POST", "Post"],
+                  ] as Array<[VoucherDeliveryMethod, string]>).map(([method, label]) => (
+                    <label key={method} className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={voucherSettings.deliveryMethods.includes(method)}
+                        onChange={(event) =>
+                          updateVoucherSetting(
+                            "deliveryMethods",
+                            event.target.checked
+                              ? [...voucherSettings.deliveryMethods, method]
+                              : voucherSettings.deliveryMethods.filter((item) => item !== method),
+                          )
+                        }
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <label className="text-xs font-semibold text-slate-700">
+                Postage charge (£)
+                <input
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  inputMode="numeric"
+                  value={voucherSettings.postageChargeGbp}
+                  onChange={(event) => updateVoucherSetting("postageChargeGbp", Number(event.target.value) || 0)}
+                />
+              </label>
+              <label className="text-xs font-semibold text-slate-700">
+                Validity months
+                <input
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  inputMode="numeric"
+                  value={voucherSettings.validityMonths ?? ""}
+                  onChange={(event) => updateVoucherSetting("validityMonths", event.target.value ? Number(event.target.value) : null)}
+                />
+              </label>
+              <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
+                Voucher terms
+                <textarea
+                  className="mt-1 min-h-[90px] w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  value={voucherSettings.termsText}
+                  onChange={(event) => updateVoucherSetting("termsText", event.target.value)}
+                />
+              </label>
+            </div>
+            <button type="button" className={`mt-4 ${primaryButtonClass} ${smallButtonClass}`} onClick={() => void saveGiftVoucherSettings()}>
+              Save gift voucher settings
+            </button>
+          </div>
+
+          <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h4 className="text-sm font-semibold text-slate-900">Voucher records</h4>
+                <p className="mt-1 text-xs text-slate-600">
+                  Mark payment received before treating a voucher as active. Staff can redeem active vouchers from the staff view when permission is enabled.
+                </p>
+              </div>
+              <span className="rounded-full border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700">
+                {vouchers.length}
+              </span>
+            </div>
+            {vouchers.length === 0 ? (
+              <p className="mt-4 rounded-xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-600">
+                No gift voucher records yet.
+              </p>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {vouchers.map((voucher) => (
+                  <article key={voucher.id} className="rounded-xl border border-slate-200 bg-white p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">{voucher.voucherCode}</p>
+                        <p className="mt-1 text-xs text-slate-600">
+                          {formatVoucherMoney(voucher.amountPence, voucher.currency)}
+                          {voucher.postageAmountPence > 0 ? ` + ${formatVoucherMoney(voucher.postageAmountPence, voucher.currency)} postage` : ""}
+                          {" | "}{voucher.deliveryMethod.replaceAll("_", " ").toLowerCase()}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-semibold text-slate-700">
+                          {voucher.status.replaceAll("_", " ")}
+                        </span>
+                        <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-semibold text-slate-700">
+                          Payment {voucher.paymentStatus.replaceAll("_", " ").toLowerCase()}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-3 grid gap-2 text-xs text-slate-700 sm:grid-cols-2">
+                      <p><span className="font-semibold">Purchaser:</span> {voucher.purchaserName} ({voucher.purchaserEmail})</p>
+                      <p><span className="font-semibold">Phone:</span> {voucher.purchaserPhone || "Not set"}</p>
+                      <p><span className="font-semibold">Recipient:</span> {voucher.recipientName || "Not set"}</p>
+                      <p><span className="font-semibold">Recipient email:</span> {voucher.recipientEmail || "Not set"}</p>
+                      <p><span className="font-semibold">Issued:</span> {voucher.issuedAt ? new Date(voucher.issuedAt).toLocaleString("en-GB") : "Not active yet"}</p>
+                      <p><span className="font-semibold">Expires:</span> {voucher.expiresAt ? new Date(voucher.expiresAt).toLocaleDateString("en-GB") : "Not set"}</p>
+                      <p><span className="font-semibold">Redeemed:</span> {voucher.redeemedAt ? new Date(voucher.redeemedAt).toLocaleString("en-GB") : "Not redeemed"}</p>
+                      <p><span className="font-semibold">Created:</span> {new Date(voucher.createdAt).toLocaleString("en-GB")}</p>
+                    </div>
+                    {voucher.recipientAddress || voucher.message ? (
+                      <div className="mt-3 grid gap-2 text-xs text-slate-700 sm:grid-cols-2">
+                        {voucher.recipientAddress ? <p><span className="font-semibold">Address:</span> {voucher.recipientAddress} {voucher.recipientPostcode || ""}</p> : null}
+                        {voucher.message ? <p><span className="font-semibold">Message:</span> {voucher.message}</p> : null}
+                      </div>
+                    ) : null}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void copyVoucherCode(voucher.voucherCode)}>
+                        Copy code
+                      </button>
+                      {voucher.paymentStatus !== "PAID" && voucher.status !== "CANCELLED" ? (
+                        <button type="button" className={`${primaryButtonClass} ${smallButtonClass}`} onClick={() => void runVoucherAction(voucher.id, "MARK_PAYMENT_RECEIVED")}>
+                          Mark payment received / activate
+                        </button>
+                      ) : null}
+                      {voucher.status === "ACTIVE" ? (
+                        <>
+                          <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void runVoucherAction(voucher.id, "RESEND_EMAIL")}>
+                            Resend digital email
+                          </button>
+                          <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void runVoucherAction(voucher.id, "MARK_REDEEMED")}>
+                            Mark redeemed
+                          </button>
+                          <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void runVoucherAction(voucher.id, "MARK_EXPIRED")}>
+                            Mark expired
+                          </button>
+                        </>
+                      ) : null}
+                      {voucher.status !== "REDEEMED" && voucher.status !== "CANCELLED" ? (
+                        <button type="button" className="rounded-md border border-rose-300 bg-white px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50" onClick={() => void runVoucherAction(voucher.id, "CANCEL")}>
+                          Cancel
+                        </button>
+                      ) : null}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
         </section>
       ) : null}
 

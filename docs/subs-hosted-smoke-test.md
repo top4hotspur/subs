@@ -1259,3 +1259,25 @@ Notes:
 14. Confirm the public preview route does not show a normal active booking site for a suspended/cancelled tenant.
 15. If safe, click `Reactivate site` and confirm the site returns to active lifecycle tracking.
 16. Confirm no DNS purchase, DNS provider update, separate Amplify app, custom database, or demo-data copy is performed in this pass.
+
+## Subscriber gift vouchers v1 smoke test
+
+1. Open `/site-admin/[siteSlug]` for a provisioned subscriber site.
+2. Open **Gift vouchers**.
+3. Enable gift vouchers and public visibility.
+4. Configure preset values such as `25, 50, 100`, delivery methods, validity and terms.
+5. Save settings.
+6. Open `/sites/[siteSlug]` and confirm the public navigation shows **Gift vouchers** only after the feature is enabled.
+7. Open `/sites/[siteSlug]/vouchers`.
+8. Submit a digital voucher request with purchaser and recipient email details.
+9. Confirm the success message says payment has not been taken online and the voucher is pending business confirmation.
+10. Return to `/site-admin/[siteSlug]` > **Gift vouchers** and confirm the voucher appears as `PENDING_PAYMENT` / payment `PENDING`.
+11. Click **Mark payment received / activate**.
+12. Confirm the voucher becomes active and email status is shown where configured.
+13. Open `/site-staff/[siteSlug]` as a staff user.
+14. Look up the voucher code and confirm details are shown without purchaser private detail overload.
+15. Confirm staff without `redeemVouchers` cannot redeem.
+16. Enable `redeemVouchers` for a staff user, sign in again if needed, redeem the active voucher, and confirm the voucher becomes `REDEEMED`.
+17. Confirm no demo/localStorage voucher records are present in the paid tenant site.
+
+Known v1 limitation: subscriber voucher payments are manual. The page does not capture card details, does not mark vouchers paid from frontend redirects, and does not integrate Stripe/Square/PayPal for subscriber businesses yet.

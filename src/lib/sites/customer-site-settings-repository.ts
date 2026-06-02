@@ -63,6 +63,7 @@ export type CustomerSiteSettingsRecord = {
   socialLinks: unknown;
   recurringPaymentsEnabled: boolean;
   customerBlockBookingsEnabled: boolean;
+  giftVoucherSettingsJson: unknown;
   createdAt: string;
   updatedAt: string;
 };
@@ -166,6 +167,7 @@ function serializeSettings(record: {
   socialLinks: unknown;
   recurringPaymentsEnabled: boolean;
   customerBlockBookingsEnabled: boolean;
+  giftVoucherSettingsJson: unknown;
   createdAt: Date;
   updatedAt: Date;
 }): CustomerSiteSettingsRecord {

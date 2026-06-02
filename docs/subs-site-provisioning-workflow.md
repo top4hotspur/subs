@@ -461,3 +461,13 @@ Still local/mock in current product:
 - Marking live attempts a fail-soft go-live email to the setup request contact email. The lifecycle state still updates when email is not configured or delivery fails.
 - Reactivation restores a suspended test/customer site to active platform tracking where safe; it does not restart Stripe or automate external services.
 - `/sites/[siteSlug]` remains the safe preview route until custom-domain host routing is switched on.
+
+## Subscriber gift vouchers v1
+
+Provisioned subscriber sites start with gift vouchers disabled. No demo voucher records, demo staff, demo services or localStorage voucher data are copied into a paid tenant site.
+
+After provisioning, the business owner can open `/site-admin/[siteSlug]`, choose **Gift vouchers**, configure voucher settings and publish the public voucher page. The public preview route `/sites/[siteSlug]/vouchers` is available only when voucher settings are enabled and public-visible.
+
+Voucher purchases are conservative in this milestone. Without a subscriber payment-provider integration, public voucher requests are stored as `PENDING_PAYMENT`. The business/admin confirms payment manually, which activates the voucher and can trigger purchaser/recipient email delivery. Subscriber payment-provider checkout for vouchers remains future work.
+
+Staff redemption is tenant-scoped through `/site-staff/[siteSlug]` and requires the saved `redeemVouchers` staff permission.

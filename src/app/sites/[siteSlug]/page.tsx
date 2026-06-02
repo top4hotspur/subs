@@ -12,6 +12,7 @@ import {
 import { SiteCookieNotice } from "@/components/site-ui/site-cookie-notice";
 import { formatBusinessOpeningHoursSummary, normalizeBusinessOpeningHours } from "@/lib/sites/customer-site-opening-hours";
 import { PublicSiteAvailabilityPreview } from "@/components/sites/public-site-availability-preview";
+import { vouchersArePublic } from "@/lib/sites/customer-site-voucher-types";
 
 function formatMoney(amount: number | null, currencyCode: string): string {
   if (amount === null) return "Quote required";
@@ -173,6 +174,8 @@ export default async function PublicSiteSlugPage({
   const siteAdminHref = `/site-admin/${encodeURIComponent(preview.tenantSite.slug)}`;
   const staffLoginHref = `/site-staff/${encodeURIComponent(preview.tenantSite.slug)}`;
   const customerAccountHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/account`;
+  const vouchersHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/vouchers`;
+  const giftVouchersVisible = vouchersArePublic(settings?.giftVoucherSettingsJson);
 
   return (
     <main className={`min-h-screen ${shellClass}`}>
@@ -185,6 +188,9 @@ export default async function PublicSiteSlugPage({
                 <a href="#home" className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Home</a>
                 <a href="#services" className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Services</a>
                 <a href={bookingHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Book now</a>
+                {giftVouchersVisible ? (
+                  <Link href={vouchersHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Gift vouchers</Link>
+                ) : null}
                 {settings?.aboutPageEnabled ? (
                   <Link href={aboutHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">About</Link>
                 ) : null}
@@ -318,6 +324,7 @@ export default async function PublicSiteSlugPage({
               ) : null}
               <div className="flex flex-wrap items-center gap-3">
                 <Link href={customerAccountHref} className="hover:text-slate-900">Customer account</Link>
+                {giftVouchersVisible ? <Link href={vouchersHref} className="hover:text-slate-900">Gift vouchers</Link> : null}
                 <Link href={privacyHref} className="hover:text-slate-900">Privacy Policy</Link>
                 <Link href={cookiesHref} className="hover:text-slate-900">Cookie Policy</Link>
                 {settings?.policyPageEnabled ? (

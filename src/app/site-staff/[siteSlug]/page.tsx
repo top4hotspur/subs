@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import {
   MarkBookingCompletedButton,
+  StaffVoucherLookup,
   SiteStaffLogoutButton,
 } from "@/components/site-staff/staff-diary-actions";
 import { getSiteStaffSessionContext } from "@/lib/auth/site-staff-session";
@@ -270,6 +271,7 @@ export default async function SiteStaffPage({ params, searchParams }: SiteStaffP
       </section>
 
       <div className="mt-6 grid gap-6">
+        <StaffVoucherLookup siteSlug={site.slug} canRedeem={permissions.redeemVouchers} />
         <BookingSection
           title="Today's appointments"
           description="Current active appointments for today."

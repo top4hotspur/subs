@@ -18,6 +18,11 @@ import type {
 } from "@/lib/sites/customer-site-scheduling-types";
 import type { CustomerSiteBookingRecord } from "@/lib/sites/customer-site-booking-types";
 import type { CustomerSiteAvailabilityResult } from "@/lib/sites/customer-site-availability";
+import type {
+  CustomerSiteGiftVoucherRecord,
+  CustomerSiteGiftVoucherSettings,
+  VoucherEmailDeliveryStatus,
+} from "@/lib/sites/customer-site-voucher-types";
 
 type ClientFailure = {
   ok: false;
@@ -296,6 +301,98 @@ export async function updateSiteAdminStaffAccess(
       accessCode: body.accessCode ?? null,
       staffLoginUrl: body.staffLoginUrl ?? `/site-staff/${encodeURIComponent(siteSlug)}`,
     };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function getSiteAdminVouchers(
+  siteSlug: string,
+): Promise<ClientResult<{ settings: CustomerSiteGiftVoucherSettings; vouchers: CustomerSiteGiftVoucherRecord[] }>> {
+  try {
+    const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/vouchers`);
+    const body = (await parseJsonSafe(response)) as
+      | {
+          ok?: boolean;
+          settings?: CustomerSiteGiftVoucherSettings;
+          vouchers?: CustomerSiteGiftVoucherRecord[];
+          error?: string;
+          details?: unknown;
+        }
+      | null;
+    if (!response.ok || !body?.ok || !body.settings || !Array.isArray(body.vouchers)) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_VOUCHERS_GET_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, settings: body.settings, vouchers: body.vouchers };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function saveSiteAdminVoucherSettings(
+  siteSlug: string,
+  settings: CustomerSiteGiftVoucherSettings,
+): Promise<ClientResult<{ settings: CustomerSiteGiftVoucherSettings }>> {
+  try {
+    const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/vouchers/settings`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(settings),
+    });
+    const body = (await parseJsonSafe(response)) as
+      | { ok?: boolean; settings?: CustomerSiteGiftVoucherSettings; error?: string; details?: unknown }
+      | null;
+    if (!response.ok || !body?.ok || !body.settings) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_VOUCHER_SETTINGS_SAVE_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, settings: body.settings };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function runSiteAdminVoucherAction(
+  siteSlug: string,
+  voucherId: string,
+  action: "MARK_PAYMENT_RECEIVED" | "MARK_REDEEMED" | "CANCEL" | "MARK_EXPIRED" | "RESEND_EMAIL",
+): Promise<ClientResult<{ voucher: CustomerSiteGiftVoucherRecord; emailStatus?: VoucherEmailDeliveryStatus }>> {
+  try {
+    const response = await fetch(
+      `/api/site-admin/${encodeURIComponent(siteSlug)}/vouchers/${encodeURIComponent(voucherId)}/action`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      },
+    );
+    const body = (await parseJsonSafe(response)) as
+      | {
+          ok?: boolean;
+          voucher?: CustomerSiteGiftVoucherRecord;
+          emailStatus?: VoucherEmailDeliveryStatus;
+          error?: string;
+          details?: unknown;
+        }
+      | null;
+    if (!response.ok || !body?.ok || !body.voucher) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_VOUCHER_ACTION_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, voucher: body.voucher, emailStatus: body.emailStatus };
   } catch {
     return { ok: false, error: "NETWORK_ERROR", status: 0 };
   }

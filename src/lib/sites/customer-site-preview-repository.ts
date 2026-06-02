@@ -51,6 +51,7 @@ export type CustomerSitePreviewData = {
     socialLinks: unknown;
     recurringPaymentsEnabled: boolean;
     customerBlockBookingsEnabled: boolean;
+    giftVoucherSettingsJson: unknown;
   } | null;
   services: Array<{
     id: string;
@@ -262,6 +263,7 @@ export async function getCustomerSitePreviewData(
           socialLinks: site.customerSiteSettings.socialLinks ?? null,
           recurringPaymentsEnabled: site.customerSiteSettings.recurringPaymentsEnabled,
           customerBlockBookingsEnabled: site.customerSiteSettings.customerBlockBookingsEnabled,
+          giftVoucherSettingsJson: site.customerSiteSettings.giftVoucherSettingsJson ?? null,
         }
       : null,
     services: site.customerSiteServices.map((service) => ({

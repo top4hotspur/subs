@@ -9,93 +9,94 @@ datasource db {
 }
 
 model TenantSite {
-  id                        String                 @id @default(cuid())
-  slug                      String                 @unique
-  displayName               String
-  industrySlug              String?
-  status                    String
-  domainPrimary             String?
-  setupRequestId            String?                @unique
-  provisioningStatus        String?
-  subscriptionStatus        String?
-  domainStatus              String?
-  whatsappAddonEnabled      Boolean                @default(false)
-  createdAt                 DateTime               @default(now())
-  updatedAt                 DateTime               @updatedAt
-  setupRequests             SetupRequest[]         @relation("TenantSiteSetupRequests")
-  demoDraftSnapshots        DemoDraftSnapshot[]
-  siteDomains               SiteDomain[]
-  provisioningTasks         SiteProvisioningTask[]
-  statusEvents              SiteStatusEvent[]
-  subscriptions             SubscriptionRecord[]
-  customerSiteSettings      CustomerSiteSettings?
+  id                            String                         @id @default(cuid())
+  slug                          String                         @unique
+  displayName                   String
+  industrySlug                  String?
+  status                        String
+  domainPrimary                 String?
+  setupRequestId                String?                        @unique
+  provisioningStatus            String?
+  subscriptionStatus            String?
+  domainStatus                  String?
+  whatsappAddonEnabled          Boolean                        @default(false)
+  createdAt                     DateTime                       @default(now())
+  updatedAt                     DateTime                       @updatedAt
+  setupRequests                 SetupRequest[]                 @relation("TenantSiteSetupRequests")
+  demoDraftSnapshots            DemoDraftSnapshot[]
+  siteDomains                   SiteDomain[]
+  provisioningTasks             SiteProvisioningTask[]
+  statusEvents                  SiteStatusEvent[]
+  subscriptions                 SubscriptionRecord[]
+  customerSiteSettings          CustomerSiteSettings?
   customerSiteServiceCategories CustomerSiteServiceCategory[]
-  customerSiteServices      CustomerSiteService[]
-  customerSiteStaffRoles    CustomerSiteStaffRole[]
-  customerSiteStaffMembers  CustomerSiteStaffMember[]
-  customerSiteStaffRotaDays CustomerSiteStaffRotaDay[]
+  customerSiteServices          CustomerSiteService[]
+  customerSiteStaffRoles        CustomerSiteStaffRole[]
+  customerSiteStaffMembers      CustomerSiteStaffMember[]
+  customerSiteStaffRotaDays     CustomerSiteStaffRotaDay[]
   customerSiteStaffBreakWindows CustomerSiteStaffBreakWindow[]
-  customerSiteBusinessClosures CustomerSiteBusinessClosure[]
-  customerSiteStaffHolidays CustomerSiteStaffHoliday[]
-  customerSiteBookings      CustomerSiteBooking[]
-  customerSiteAdminUsers    CustomerSiteAdminUser[]
-  customerSiteCustomers     CustomerSiteCustomer[]
-  setupRequest              SetupRequest?          @relation("SetupRequestToTenantSite", fields: [setupRequestId], references: [id])
+  customerSiteBusinessClosures  CustomerSiteBusinessClosure[]
+  customerSiteStaffHolidays     CustomerSiteStaffHoliday[]
+  customerSiteBookings          CustomerSiteBooking[]
+  customerSiteGiftVouchers      CustomerSiteGiftVoucher[]
+  customerSiteAdminUsers        CustomerSiteAdminUser[]
+  customerSiteCustomers         CustomerSiteCustomer[]
+  setupRequest                  SetupRequest?                  @relation("SetupRequestToTenantSite", fields: [setupRequestId], references: [id])
 }
 
 model DemoDraftSnapshot {
-  id                 String       @id @default(cuid())
-  tenantSiteId       String?
-  setupRequestId     String?      @unique
-  templateSlug       String
-  draftName          String?
-  draftJson          Json
-  source             String?
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
-  tenantSite         TenantSite?  @relation(fields: [tenantSiteId], references: [id])
-  setupRequest       SetupRequest?
+  id             String        @id @default(cuid())
+  tenantSiteId   String?
+  setupRequestId String?       @unique
+  templateSlug   String
+  draftName      String?
+  draftJson      Json
+  source         String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  tenantSite     TenantSite?   @relation(fields: [tenantSiteId], references: [id])
+  setupRequest   SetupRequest?
 
   @@index([tenantSiteId])
 }
 
 model SetupRequest {
-  id                  String             @id @default(cuid())
-  tenantSiteId        String?
-  demoDraftSnapshotId String?            @unique
-  confirmationTokenHash String?
-  confirmationTokenCreatedAt DateTime?
+  id                          String                 @id @default(cuid())
+  tenantSiteId                String?
+  demoDraftSnapshotId         String?                @unique
+  confirmationTokenHash       String?
+  confirmationTokenCreatedAt  DateTime?
   confirmationTokenLastUsedAt DateTime?
-  confirmationAccessCount Int            @default(0)
-  industrySlug        String
-  businessName        String
-  contactName         String?
-  contactEmail        String?
-  contactPhone        String?
-  domainOption        String
-  existingDomain      String?
-  desiredDomain       String?
-  communicationOption String
-  setupTotalGbp       Int
-  monthlyTotalGbp     Int
-  status              String
-  paymentStatus       String?
-  paymentProvider     String?
-  stripeCheckoutSessionId String?
-  stripeCustomerId    String?
-  stripeSubscriptionId String?
-  paymentStartedAt    DateTime?
-  paymentCompletedAt  DateTime?
-  archivedAt          DateTime?
-  notes               String?
-  rawPayload          Json?
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
-  tenantSite          TenantSite?        @relation("TenantSiteSetupRequests", fields: [tenantSiteId], references: [id])
-  demoDraftSnapshot   DemoDraftSnapshot? @relation(fields: [demoDraftSnapshotId], references: [id])
-  events              SetupRequestEvent[]
-  siteTenant          TenantSite?        @relation("SetupRequestToTenantSite")
-  provisioningTasks   SiteProvisioningTask[]
+  confirmationAccessCount     Int                    @default(0)
+  industrySlug                String
+  businessName                String
+  contactName                 String?
+  contactEmail                String?
+  contactPhone                String?
+  domainOption                String
+  existingDomain              String?
+  desiredDomain               String?
+  communicationOption         String
+  setupTotalGbp               Int
+  monthlyTotalGbp             Int
+  status                      String
+  paymentStatus               String?
+  paymentProvider             String?
+  stripeCheckoutSessionId     String?
+  stripeCustomerId            String?
+  stripeSubscriptionId        String?
+  paymentStartedAt            DateTime?
+  paymentCompletedAt          DateTime?
+  archivedAt                  DateTime?
+  notes                       String?
+  rawPayload                  Json?
+  createdAt                   DateTime               @default(now())
+  updatedAt                   DateTime               @updatedAt
+  tenantSite                  TenantSite?            @relation("TenantSiteSetupRequests", fields: [tenantSiteId], references: [id])
+  demoDraftSnapshot           DemoDraftSnapshot?     @relation(fields: [demoDraftSnapshotId], references: [id])
+  events                      SetupRequestEvent[]
+  siteTenant                  TenantSite?            @relation("SetupRequestToTenantSite")
+  provisioningTasks           SiteProvisioningTask[]
 
   @@index([industrySlug])
   @@index([status])
@@ -129,24 +130,24 @@ model PlatformAdminUser {
 }
 
 model SiteDomain {
-  id             String     @id @default(cuid())
-  tenantSiteId   String
-  domain         String
-  domainType     String
-  status         String
-  registrarNotes String?
+  id              String     @id @default(cuid())
+  tenantSiteId    String
+  domain          String
+  domainType      String
+  status          String
+  registrarNotes  String?
   dnsInstructions Json?
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-  tenantSite     TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  tenantSite      TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
 
+  @@unique([tenantSiteId, domain, domainType])
   @@index([tenantSiteId])
   @@index([domain])
-  @@unique([tenantSiteId, domain, domainType])
 }
 
 model SiteProvisioningTask {
-  id             String       @id @default(cuid())
+  id             String        @id @default(cuid())
   tenantSiteId   String
   setupRequestId String?
   taskType       String
@@ -154,9 +155,9 @@ model SiteProvisioningTask {
   title          String
   notes          String?
   metadata       Json?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  tenantSite     TenantSite   @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  tenantSite     TenantSite    @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
   setupRequest   SetupRequest? @relation(fields: [setupRequestId], references: [id], onDelete: SetNull)
 
   @@index([tenantSiteId])
@@ -178,58 +179,58 @@ model SiteStatusEvent {
 }
 
 model SubscriptionRecord {
-  id                  String     @id @default(cuid())
-  tenantSiteId        String
-  status              String
-  setupFeeGbp         Int
-  monthlyFeeGbp       Int
-  domainFeeGbp        Int
-  whatsappAddonEnabled Boolean   @default(false)
-  createdAt           DateTime   @default(now())
-  updatedAt           DateTime   @updatedAt
-  tenantSite          TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  id                   String     @id @default(cuid())
+  tenantSiteId         String
+  status               String
+  setupFeeGbp          Int
+  monthlyFeeGbp        Int
+  domainFeeGbp         Int
+  whatsappAddonEnabled Boolean    @default(false)
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+  tenantSite           TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
 
   @@index([tenantSiteId])
 }
 
 model SalesLead {
-  id              String           @id @default(cuid())
-  businessName    String
-  location        String?
-  country         String?
-  cityTown        String?
-  postcode        String?
-  address         String?
-  serviceArea     String?
-  industrySlug    String?
-  industryLabel   String?
-  contactName     String?
-  contactFirstName String?
-  contactLastName String?
-  email           String?
-  phone           String?
-  leadSource      String?
-  sourceUrl       String?
-  currentProvider String?
-  estimatedCurrentMonthlyCost Decimal? @db.Decimal(10, 2)
-  marketingStatus String        @default("ACTIVE")
-  unsubscribedAt  DateTime?
-  doNotContactReason String?
-  status          String
-  source          String?
-  notes           String?
-  lastContactedAt DateTime?
-  lastMarketingEmailAt DateTime?
-  emailSentCount  Int              @default(0)
-  nextFollowUpAt  DateTime?
-  lastCampaignStep String?
-  snoozedUntil    DateTime?
-  convertedAt     DateTime?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  events          SalesLeadEvent[]
-  campaignRecipients SalesCampaignRecipient[]
-  campaignEvents  SalesCampaignEvent[]
+  id                          String                   @id @default(cuid())
+  businessName                String
+  location                    String?
+  country                     String?
+  cityTown                    String?
+  postcode                    String?
+  address                     String?
+  serviceArea                 String?
+  industrySlug                String?
+  industryLabel               String?
+  contactName                 String?
+  contactFirstName            String?
+  contactLastName             String?
+  email                       String?
+  phone                       String?
+  leadSource                  String?
+  sourceUrl                   String?
+  currentProvider             String?
+  estimatedCurrentMonthlyCost Decimal?                 @db.Decimal(10, 2)
+  marketingStatus             String                   @default("ACTIVE")
+  unsubscribedAt              DateTime?
+  doNotContactReason          String?
+  status                      String
+  source                      String?
+  notes                       String?
+  lastContactedAt             DateTime?
+  lastMarketingEmailAt        DateTime?
+  emailSentCount              Int                      @default(0)
+  nextFollowUpAt              DateTime?
+  lastCampaignStep            String?
+  snoozedUntil                DateTime?
+  convertedAt                 DateTime?
+  createdAt                   DateTime                 @default(now())
+  updatedAt                   DateTime                 @updatedAt
+  events                      SalesLeadEvent[]
+  campaignRecipients          SalesCampaignRecipient[]
+  campaignEvents              SalesCampaignEvent[]
 
   @@index([status])
   @@index([industrySlug])
@@ -261,14 +262,14 @@ model SalesLeadEvent {
 }
 
 model SalesCampaign {
-  id            String                  @id @default(cuid())
+  id            String                   @id @default(cuid())
   name          String
   industrySlug  String?
   serviceArea   String?
   campaignLevel String
-  status        String                  @default("DRAFT")
-  createdAt     DateTime                @default(now())
-  updatedAt     DateTime                @updatedAt
+  status        String                   @default("DRAFT")
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
   recipients    SalesCampaignRecipient[]
   events        SalesCampaignEvent[]
 
@@ -291,30 +292,30 @@ model SalesCampaignTemplate {
 }
 
 model SalesProviderPricing {
-  id                 String   @id @default(cuid())
-  providerKey        String   @unique
-  providerName       String
+  id                  String   @id @default(cuid())
+  providerKey         String   @unique
+  providerName        String
   estimatedMonthlyGbp Decimal? @db.Decimal(10, 2)
-  notes              String?
-  active             Boolean  @default(true)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  notes               String?
+  active              Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   @@index([active])
 }
 
 model SalesCampaignRecipient {
-  id         String        @id @default(cuid())
-  campaignId String
-  leadId     String
-  status     String        @default("QUEUED")
-  sentAt     DateTime?
-  clickedAt  DateTime?
+  id          String        @id @default(cuid())
+  campaignId  String
+  leadId      String
+  status      String        @default("QUEUED")
+  sentAt      DateTime?
+  clickedAt   DateTime?
   lastEventAt DateTime?
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-  campaign   SalesCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  lead       SalesLead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  campaign    SalesCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  lead        SalesLead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
   @@unique([campaignId, leadId])
   @@index([campaignId])
@@ -323,15 +324,15 @@ model SalesCampaignRecipient {
 }
 
 model SalesCampaignEvent {
-  id            String        @id @default(cuid())
+  id            String         @id @default(cuid())
   campaignId    String?
   leadId        String?
   resendEmailId String?
   eventType     String
-  eventId       String?       @unique
+  eventId       String?        @unique
   clickedUrl    String?
   raw           Json?
-  createdAt     DateTime      @default(now())
+  createdAt     DateTime       @default(now())
   campaign      SalesCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
   lead          SalesLead?     @relation(fields: [leadId], references: [id], onDelete: SetNull)
 
@@ -342,84 +343,85 @@ model SalesCampaignEvent {
 }
 
 model CustomerSiteSettings {
-  id                  String     @id @default(cuid())
-  tenantSiteId        String     @unique
-  siteDisplayName     String?
-  businessName        String?
-  phone               String?
-  email               String?
-  address             String?
-  openingHoursSummary String?
-  openingHoursJson    Json?
-  heroHeadline        String?
-  heroSubheading      String?
-  visualThemeId       String?
-  colourPaletteId     String?
-  currency            String?    @default("GBP")
-  logoUrl             String?
-  logoStorageKey      String?
-  logoContentType     String?
-  logoFileName        String?
-  faviconUrl          String?
-  faviconStorageKey   String?
-  faviconContentType  String?
-  faviconFileName     String?
-  paymentProcessorSetupMode String?
-  paymentProcessorName String?
-  paymentProcessorAccountRef String?
-  paymentProcessorNotes String?
-  acceptCashPayments   Boolean   @default(false)
-  acceptCardPayments   Boolean   @default(true)
-  requireBookingPrepayment Boolean @default(false)
-  allowInStorePaymentRecording Boolean @default(false)
-  cancellationFullRefundNoticeDays Int? @default(1)
-  cancellationNoRefundWithinDays Int? @default(1)
-  cancellationPolicyNote String?
-  aboutPageEnabled      Boolean   @default(false)
-  policyPageEnabled     Boolean   @default(true)
-  aboutPageMode         String?
-  aboutTitle            String?
-  aboutBody             String?
-  aboutImageOneUrl      String?
-  aboutImageTwoUrl      String?
-  aboutImagePlacement   String?
-  aboutStaffProfilesJson Json?
-  contactTitle          String?
-  contactIntro          String?
-  contactMapEnabled     Boolean   @default(true)
-  contactMapNote        String?
-  policyTitle           String?
-  policyIntro           String?
-  policyBody            String?
-  policyDefaultAccepted Boolean   @default(false)
-  socialLinks           Json?
-  recurringPaymentsEnabled Boolean @default(false)
-  customerBlockBookingsEnabled Boolean @default(false)
-  createdAt           DateTime   @default(now())
-  updatedAt           DateTime   @updatedAt
-  tenantSite          TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  id                               String     @id @default(cuid())
+  tenantSiteId                     String     @unique
+  siteDisplayName                  String?
+  businessName                     String?
+  phone                            String?
+  email                            String?
+  address                          String?
+  openingHoursSummary              String?
+  openingHoursJson                 Json?
+  heroHeadline                     String?
+  heroSubheading                   String?
+  visualThemeId                    String?
+  colourPaletteId                  String?
+  currency                         String?    @default("GBP")
+  logoUrl                          String?
+  logoStorageKey                   String?
+  logoContentType                  String?
+  logoFileName                     String?
+  faviconUrl                       String?
+  faviconStorageKey                String?
+  faviconContentType               String?
+  faviconFileName                  String?
+  paymentProcessorSetupMode        String?
+  paymentProcessorName             String?
+  paymentProcessorAccountRef       String?
+  paymentProcessorNotes            String?
+  acceptCashPayments               Boolean    @default(false)
+  acceptCardPayments               Boolean    @default(true)
+  requireBookingPrepayment         Boolean    @default(false)
+  allowInStorePaymentRecording     Boolean    @default(false)
+  cancellationFullRefundNoticeDays Int?       @default(1)
+  cancellationNoRefundWithinDays   Int?       @default(1)
+  cancellationPolicyNote           String?
+  aboutPageEnabled                 Boolean    @default(false)
+  policyPageEnabled                Boolean    @default(true)
+  aboutPageMode                    String?
+  aboutTitle                       String?
+  aboutBody                        String?
+  aboutImageOneUrl                 String?
+  aboutImageTwoUrl                 String?
+  aboutImagePlacement              String?
+  aboutStaffProfilesJson           Json?
+  contactTitle                     String?
+  contactIntro                     String?
+  contactMapEnabled                Boolean    @default(true)
+  contactMapNote                   String?
+  policyTitle                      String?
+  policyIntro                      String?
+  policyBody                       String?
+  policyDefaultAccepted            Boolean    @default(false)
+  socialLinks                      Json?
+  recurringPaymentsEnabled         Boolean    @default(false)
+  customerBlockBookingsEnabled     Boolean    @default(false)
+  giftVoucherSettingsJson          Json?
+  createdAt                        DateTime   @default(now())
+  updatedAt                        DateTime   @updatedAt
+  tenantSite                       TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
 }
 
 model CustomerSiteService {
-  id                 String     @id @default(cuid())
-  tenantSiteId       String
-  categoryId         String?
-  name               String
-  description        String?
-  basePrice          Decimal?   @db.Decimal(10, 2)
-  durationMinutes    Int?
-  bufferAfterMinutes Int?
-  active             Boolean    @default(true)
-  sortOrder          Int        @default(0)
-  rolePriceOverrides Json?
-  recurringEnabled   Boolean    @default(false)
-  recurringIntervals Json?
-  blockBookingEnabled Boolean   @default(false)
+  id                          String                       @id @default(cuid())
+  tenantSiteId                String
+  categoryId                  String?
+  name                        String
+  description                 String?
+  basePrice                   Decimal?                     @db.Decimal(10, 2)
+  durationMinutes             Int?
+  bufferAfterMinutes          Int?
+  active                      Boolean                      @default(true)
+  sortOrder                   Int                          @default(0)
+  rolePriceOverrides          Json?
+  recurringEnabled            Boolean                      @default(false)
+  recurringIntervals          Json?
+  blockBookingEnabled         Boolean                      @default(false)
   blockBookingSuggestedCounts Json?
-  createdAt          DateTime   @default(now())
-  updatedAt          DateTime   @updatedAt
-  tenantSite         TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
-  category           CustomerSiteServiceCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt                   DateTime                     @default(now())
+  updatedAt                   DateTime                     @updatedAt
+  tenantSite                  TenantSite                   @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  category                    CustomerSiteServiceCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
   @@index([tenantSiteId])
   @@index([categoryId])
@@ -444,15 +446,15 @@ model CustomerSiteServiceCategory {
 }
 
 model CustomerSiteStaffRole {
-  id           String     @id @default(cuid())
+  id           String                    @id @default(cuid())
   tenantSiteId String
   label        String
   platformRole String?
-  active       Boolean    @default(true)
-  sortOrder    Int        @default(0)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  tenantSite   TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  active       Boolean                   @default(true)
+  sortOrder    Int                       @default(0)
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+  tenantSite   TenantSite                @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
   staffMembers CustomerSiteStaffMember[]
 
   @@index([tenantSiteId])
@@ -461,31 +463,31 @@ model CustomerSiteStaffRole {
 }
 
 model CustomerSiteStaffMember {
-  id                String                 @id @default(cuid())
-  tenantSiteId      String
-  roleId            String?
-  displayName       String
-  roleLabel         String?
-  email             String?
-  phone             String?
-  bio               String?
-  active            Boolean                @default(true)
-  customerSelectable Boolean               @default(false)
-  isSuperUser       Boolean                @default(false)
-  staffAccessEnabled Boolean               @default(false)
+  id                  String                         @id @default(cuid())
+  tenantSiteId        String
+  roleId              String?
+  displayName         String
+  roleLabel           String?
+  email               String?
+  phone               String?
+  bio                 String?
+  active              Boolean                        @default(true)
+  customerSelectable  Boolean                        @default(false)
+  isSuperUser         Boolean                        @default(false)
+  staffAccessEnabled  Boolean                        @default(false)
   staffAccessCodeHash String?
-  staffPermissions  Json?
-  availableWeekdays Json?
-  serviceIds        Json?
-  notes             String?
-  sortOrder         Int                    @default(0)
-  createdAt         DateTime               @default(now())
-  updatedAt         DateTime               @updatedAt
-  tenantSite        TenantSite             @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
-  role              CustomerSiteStaffRole? @relation(fields: [roleId], references: [id], onDelete: SetNull)
-  rotaDays          CustomerSiteStaffRotaDay[]
-  breakWindows      CustomerSiteStaffBreakWindow[]
-  holidays          CustomerSiteStaffHoliday[]
+  staffPermissions    Json?
+  availableWeekdays   Json?
+  serviceIds          Json?
+  notes               String?
+  sortOrder           Int                            @default(0)
+  createdAt           DateTime                       @default(now())
+  updatedAt           DateTime                       @updatedAt
+  tenantSite          TenantSite                     @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  role                CustomerSiteStaffRole?         @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  rotaDays            CustomerSiteStaffRotaDay[]
+  breakWindows        CustomerSiteStaffBreakWindow[]
+  holidays            CustomerSiteStaffHoliday[]
 
   @@index([tenantSiteId])
   @@index([tenantSiteId, active])
@@ -495,17 +497,17 @@ model CustomerSiteStaffMember {
 }
 
 model CustomerSiteStaffRotaDay {
-  id            String                  @id @default(cuid())
+  id            String                         @id @default(cuid())
   tenantSiteId  String
   staffMemberId String
   weekday       String
-  working       Boolean                 @default(false)
+  working       Boolean                        @default(false)
   startTime     String?
   endTime       String?
-  createdAt     DateTime                @default(now())
-  updatedAt     DateTime                @updatedAt
-  tenantSite    TenantSite              @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
-  staffMember   CustomerSiteStaffMember @relation(fields: [staffMemberId], references: [id], onDelete: Cascade)
+  createdAt     DateTime                       @default(now())
+  updatedAt     DateTime                       @updatedAt
+  tenantSite    TenantSite                     @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  staffMember   CustomerSiteStaffMember        @relation(fields: [staffMemberId], references: [id], onDelete: Cascade)
   breakWindows  CustomerSiteStaffBreakWindow[]
 
   @@index([tenantSiteId])
@@ -514,7 +516,7 @@ model CustomerSiteStaffRotaDay {
 }
 
 model CustomerSiteStaffBreakWindow {
-  id            String                  @id @default(cuid())
+  id            String                    @id @default(cuid())
   tenantSiteId  String
   staffMemberId String
   rotaDayId     String?
@@ -522,11 +524,11 @@ model CustomerSiteStaffBreakWindow {
   label         String?
   startTime     String
   endTime       String
-  active        Boolean                 @default(true)
-  createdAt     DateTime                @default(now())
-  updatedAt     DateTime                @updatedAt
-  tenantSite    TenantSite              @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
-  staffMember   CustomerSiteStaffMember @relation(fields: [staffMemberId], references: [id], onDelete: Cascade)
+  active        Boolean                   @default(true)
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+  tenantSite    TenantSite                @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  staffMember   CustomerSiteStaffMember   @relation(fields: [staffMemberId], references: [id], onDelete: Cascade)
   rotaDay       CustomerSiteStaffRotaDay? @relation(fields: [rotaDayId], references: [id], onDelete: SetNull)
 
   @@index([tenantSiteId])
@@ -536,18 +538,18 @@ model CustomerSiteStaffBreakWindow {
 }
 
 model CustomerSiteBusinessClosure {
-  id           String    @id @default(cuid())
+  id           String     @id @default(cuid())
   tenantSiteId String
   date         String
   endDate      String?
   label        String
-  allDay       Boolean   @default(true)
+  allDay       Boolean    @default(true)
   startTime    String?
   endTime      String?
-  active       Boolean   @default(true)
+  active       Boolean    @default(true)
   customerNote String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
   tenantSite   TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
 
   @@index([tenantSiteId])
@@ -580,40 +582,40 @@ model CustomerSiteStaffHoliday {
 }
 
 model CustomerSiteBooking {
-  id            String    @id @default(cuid())
-  tenantSiteId  String
-  customerSiteCustomerId String?
-  serviceId     String?
-  serviceName   String?
-  customerName  String
-  customerEmail String?
-  customerPhone String?
-  preferredDate String?
-  preferredTime String?
-  startDateTime DateTime?
-  endDateTime   DateTime?
-  staffMemberId String?
-  staffName     String?
-  status        String
-  paymentStatus String?
-  paymentMethod String?
-  paymentAmountPence Int?
-  paymentCurrency String?
-  paymentProvider String?
-  paymentProviderSessionId String?
+  id                             String                @id @default(cuid())
+  tenantSiteId                   String
+  customerSiteCustomerId         String?
+  serviceId                      String?
+  serviceName                    String?
+  customerName                   String
+  customerEmail                  String?
+  customerPhone                  String?
+  preferredDate                  String?
+  preferredTime                  String?
+  startDateTime                  DateTime?
+  endDateTime                    DateTime?
+  staffMemberId                  String?
+  staffName                      String?
+  status                         String
+  paymentStatus                  String?
+  paymentMethod                  String?
+  paymentAmountPence             Int?
+  paymentCurrency                String?
+  paymentProvider                String?
+  paymentProviderSessionId       String?
   paymentProviderPaymentIntentId String?
-  refundStatus String?
-  refundGuidance String?
-  cancellationReason String?
-  cancelledAt DateTime?
-  notes         String?
-  policyAcceptedAt DateTime?
-  source        String?
-  rawPayload    Json?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  tenantSite    TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
-  customer      CustomerSiteCustomer? @relation(fields: [customerSiteCustomerId], references: [id], onDelete: SetNull)
+  refundStatus                   String?
+  refundGuidance                 String?
+  cancellationReason             String?
+  cancelledAt                    DateTime?
+  notes                          String?
+  policyAcceptedAt               DateTime?
+  source                         String?
+  rawPayload                     Json?
+  createdAt                      DateTime              @default(now())
+  updatedAt                      DateTime              @updatedAt
+  tenantSite                     TenantSite            @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  customer                       CustomerSiteCustomer? @relation(fields: [customerSiteCustomerId], references: [id], onDelete: SetNull)
 
   @@index([tenantSiteId])
   @@index([customerSiteCustomerId])
@@ -626,43 +628,79 @@ model CustomerSiteBooking {
   @@index([tenantSiteId, refundStatus])
 }
 
+model CustomerSiteGiftVoucher {
+  id                   String     @id @default(cuid())
+  tenantSiteId         String
+  voucherCode          String
+  amountPence          Int
+  remainingAmountPence Int?
+  postageAmountPence   Int        @default(0)
+  currency             String     @default("GBP")
+  status               String     @default("PENDING_PAYMENT")
+  paymentStatus        String     @default("PENDING")
+  paymentMethod        String?
+  deliveryMethod       String
+  purchaserName        String
+  purchaserEmail       String
+  purchaserPhone       String?
+  recipientName        String?
+  recipientEmail       String?
+  recipientAddress     String?
+  recipientPostcode    String?
+  message              String?
+  issuedAt             DateTime?
+  expiresAt            DateTime?
+  redeemedAt           DateTime?
+  redeemedByStaffId    String?
+  cancelledAt          DateTime?
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+  tenantSite           TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantSiteId, voucherCode])
+  @@index([tenantSiteId])
+  @@index([tenantSiteId, status])
+  @@index([tenantSiteId, paymentStatus])
+  @@index([tenantSiteId, createdAt])
+}
+
 model CustomerSiteCustomer {
-  id             String     @id @default(cuid())
+  id             String                @id @default(cuid())
   tenantSiteId   String
   email          String
   firstName      String
   lastName       String?
   phone          String?
   accessCodeHash String?
-  active         Boolean    @default(true)
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-  tenantSite     TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  active         Boolean               @default(true)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  tenantSite     TenantSite            @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
   bookings       CustomerSiteBooking[]
 
+  @@unique([tenantSiteId, email])
   @@index([tenantSiteId])
   @@index([email])
   @@index([tenantSiteId, active])
-  @@unique([tenantSiteId, email])
 }
 
 model CustomerSiteAdminUser {
-  id               String    @id @default(cuid())
+  id               String     @id @default(cuid())
   tenantSiteId     String
   email            String
   displayName      String?
   role             String
-  active           Boolean   @default(true)
+  active           Boolean    @default(true)
   invitationStatus String
   accessCodeHash   String?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
   tenantSite       TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
 
+  @@unique([tenantSiteId, email])
   @@index([tenantSiteId])
   @@index([email])
   @@index([tenantSiteId, active])
-  @@unique([tenantSiteId, email])
 }
 
 model ContactEnquiry {

@@ -922,3 +922,17 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Each provider integration will need separate webhook signature validation, test/live mode distinction, payment-status reconciliation, cancellation/refund behaviour, and operational error reporting.
 - Marketing and FAQ copy should say MyExperiment.club can accommodate common payment providers, with more available on request, without implying every provider is already automated.
 - Current handling remains conservative: payment setup records business intent and preferences, Stripe booking checkout is only the current controlled foundation, and unsupported provider integrations must not be faked.
+
+## Subscriber gift vouchers v1
+
+Paid subscriber sites now have a tenant-scoped gift voucher foundation. Business owners enable vouchers from `/site-admin/[siteSlug]` under **Gift vouchers**, configure preset values, optional custom amounts, delivery methods, postage, validity and terms, then choose whether the public site should show the Gift vouchers link.
+
+Public customers use `/sites/[siteSlug]/vouchers` when vouchers are enabled and public-visible. This first version does not take card payment or connect to a subscriber payment provider. Voucher requests are created as `PENDING_PAYMENT`; the business/admin must confirm payment before the voucher becomes `ACTIVE`.
+
+Voucher records are stored centrally and scoped to the `TenantSite`. Demo/localStorage voucher data is not copied into paid subscriber sites and is not used for paid voucher records.
+
+Business admins can view voucher code, purchaser, recipient, amount, delivery method, payment status, voucher status, created/issued/expiry/redeemed dates and message. Admin actions include copying the code, marking payment received/activating, resending active digital voucher email where email is configured, marking redeemed, cancelling and expiring.
+
+Staff can look up voucher codes from `/site-staff/[siteSlug]`. Redeeming an active voucher requires the staff permission `redeemVouchers`; server-side checks enforce the permission regardless of UI state.
+
+Emails are fail-soft: the business is notified on voucher request where a business email exists, and purchaser/recipient emails are attempted when a voucher is activated. Email failure does not block voucher record creation or activation.
