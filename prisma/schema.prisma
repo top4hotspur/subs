@@ -583,11 +583,14 @@ model CustomerSiteBooking {
   customerPhone String?
   preferredDate String?
   preferredTime String?
+  startDateTime DateTime?
+  endDateTime   DateTime?
   staffMemberId String?
   staffName     String?
   status        String
   paymentStatus String?
   notes         String?
+  policyAcceptedAt DateTime?
   source        String?
   rawPayload    Json?
   createdAt     DateTime  @default(now())

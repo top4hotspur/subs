@@ -29,6 +29,7 @@ export async function createPublicSiteBooking(
     staffMemberId?: string;
     staffName?: string;
     notes?: string;
+    policyAccepted?: boolean;
   },
 ): Promise<ClientResult<{ bookingId: string }>> {
   try {
@@ -54,4 +55,3 @@ export async function createPublicSiteBooking(
     return { ok: false, error: "NETWORK_ERROR", status: 0 };
   }
 }
-

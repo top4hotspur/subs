@@ -26,6 +26,10 @@ function parseOrThrow<T>(schema: z.ZodType<T>, value: unknown, label: string): T
   return result.data;
 }
 
+function toUtcDateTime(date: string, time: string): Date {
+  return new Date(`${date}T${time}:00.000Z`);
+}
+
 function serializeBooking(record: {
   id: string;
   tenantSiteId: string;
@@ -36,11 +40,14 @@ function serializeBooking(record: {
   customerPhone: string | null;
   preferredDate: string | null;
   preferredTime: string | null;
+  startDateTime: Date | null;
+  endDateTime: Date | null;
   staffMemberId: string | null;
   staffName: string | null;
   status: string;
   paymentStatus: string | null;
   notes: string | null;
+  policyAcceptedAt: Date | null;
   source: string | null;
   rawPayload: unknown;
   createdAt: Date;
@@ -50,49 +57,33 @@ function serializeBooking(record: {
     ...record,
     status: record.status as CustomerSiteBookingRecord["status"],
     paymentStatus: record.paymentStatus as CustomerSiteBookingRecord["paymentStatus"],
+    startDateTime: record.startDateTime?.toISOString() ?? null,
+    endDateTime: record.endDateTime?.toISOString() ?? null,
+    policyAcceptedAt: record.policyAcceptedAt?.toISOString() ?? null,
     createdAt: record.createdAt.toISOString(),
     updatedAt: record.updatedAt.toISOString(),
   };
 }
 
-async function assertTenantService(tenantSiteId: string, serviceId?: string): Promise<void> {
-  if (!serviceId) return;
+async function getTenantService(tenantSiteId: string, serviceId: string) {
   const row = await prisma.customerSiteService.findFirst({
     where: { id: serviceId, tenantSiteId },
-    select: { id: true },
+    select: { id: true, name: true, active: true, durationMinutes: true },
   });
   if (!row) throw new Error("Invalid service for tenant site");
+  if (!row.active || !row.durationMinutes || row.durationMinutes <= 0) {
+    throw new Error("BOOKING_SERVICE_UNAVAILABLE");
+  }
+  return { ...row, durationMinutes: row.durationMinutes };
 }
 
 async function assertTenantStaff(tenantSiteId: string, staffMemberId?: string): Promise<void> {
   if (!staffMemberId) return;
   const row = await prisma.customerSiteStaffMember.findFirst({
-    where: { id: staffMemberId, tenantSiteId },
-    select: { id: true, displayName: true },
-  });
-  if (!row) throw new Error("Invalid staff member for tenant site");
-}
-
-async function assertNoActiveSlotConflict(
-  tenantSiteId: string,
-  preferredDate?: string,
-  preferredTime?: string,
-  staffMemberId?: string,
-): Promise<void> {
-  if (!preferredDate || !preferredTime || !staffMemberId) return;
-  const existing = await prisma.customerSiteBooking.findFirst({
-    where: {
-      tenantSiteId,
-      preferredDate,
-      preferredTime,
-      staffMemberId,
-      status: { notIn: ["CANCELLED", "NO_SHOW"] },
-    },
+    where: { id: staffMemberId, tenantSiteId, active: true },
     select: { id: true },
   });
-  if (existing) {
-    throw new Error("BOOKING_SLOT_CONFLICT");
-  }
+  if (!row) throw new Error("Invalid staff member for tenant site");
 }
 
 export async function createCustomerSiteBooking(
@@ -102,14 +93,9 @@ export async function createCustomerSiteBooking(
   const parsedTenant = parseOrThrow(tenantSiteIdSchema, { tenantSiteId }, "tenant site id");
   const parsed = parseOrThrow(createCustomerSiteBookingSchema, input, "customer site booking");
 
-  await assertTenantService(parsedTenant.tenantSiteId, parsed.serviceId);
+  const service = await getTenantService(parsedTenant.tenantSiteId, parsed.serviceId);
+  const serviceDuration = service.durationMinutes;
   await assertTenantStaff(parsedTenant.tenantSiteId, parsed.staffMemberId);
-  await assertNoActiveSlotConflict(
-    parsedTenant.tenantSiteId,
-    parsed.preferredDate,
-    parsed.preferredTime,
-    parsed.staffMemberId,
-  );
 
   const staffName = parsed.staffMemberId
     ? (
@@ -120,31 +106,28 @@ export async function createCustomerSiteBooking(
       )?.displayName ?? parsed.staffName ?? null
     : parsed.staffName ?? null;
 
-  const serviceName = parsed.serviceId
-    ? (
-        await prisma.customerSiteService.findFirst({
-          where: { id: parsed.serviceId, tenantSiteId: parsedTenant.tenantSiteId },
-          select: { name: true },
-        })
-      )?.name ?? parsed.serviceName ?? null
-    : parsed.serviceName ?? null;
+  const startDateTime = toUtcDateTime(parsed.preferredDate, parsed.preferredTime);
+  const endDateTime = new Date(startDateTime.getTime() + serviceDuration * 60 * 1000);
 
   const row = await prisma.customerSiteBooking.create({
     data: {
       tenantSiteId: parsedTenant.tenantSiteId,
-      serviceId: parsed.serviceId ?? null,
-      serviceName,
+      serviceId: parsed.serviceId,
+      serviceName: service.name ?? parsed.serviceName ?? null,
       customerName: parsed.customerName,
-      customerEmail: parsed.customerEmail ?? null,
-      customerPhone: parsed.customerPhone ?? null,
-      preferredDate: parsed.preferredDate ?? null,
-      preferredTime: parsed.preferredTime ?? null,
+      customerEmail: parsed.customerEmail,
+      customerPhone: parsed.customerPhone,
+      preferredDate: parsed.preferredDate,
+      preferredTime: parsed.preferredTime,
+      startDateTime,
+      endDateTime,
       staffMemberId: parsed.staffMemberId ?? null,
       staffName,
       status: parsed.status,
-      paymentStatus: parsed.paymentStatus ?? "PAYMENT_REQUIRED",
+      paymentStatus: parsed.paymentStatus ?? "NOT_REQUIRED",
       notes: parsed.notes ?? null,
-      source: parsed.source ?? "preview",
+      policyAcceptedAt: parsed.policyAcceptedAt ?? new Date(),
+      source: parsed.source ?? "customer_site",
       rawPayload:
         parsed.rawPayload === undefined
           ? undefined
@@ -210,7 +193,9 @@ export async function updateCustomerSiteBookingStatus(
     throw new Error("BOOKING_NOT_FOUND");
   }
 
-  const found = await prisma.customerSiteBooking.findUnique({ where: { id: parsed.bookingId } });
+  const found = await prisma.customerSiteBooking.findFirst({
+    where: { id: parsed.bookingId, tenantSiteId: parsedTenant.tenantSiteId },
+  });
   if (!found) throw new Error("BOOKING_NOT_FOUND");
   return serializeBooking(found);
 }

@@ -76,6 +76,7 @@ export async function createPersistedBooking(
     paymentStatus?: CustomerSitePaymentStatus;
     notes?: string;
     source?: string;
+    policyAccepted?: boolean;
     rawPayload?: unknown;
   },
 ): Promise<ClientResult<{ booking: CustomerSiteBookingRecord }>> {
@@ -136,4 +137,3 @@ export async function updatePersistedBookingStatus(
     return { ok: false, error: "NETWORK_ERROR", status: 0 };
   }
 }
-

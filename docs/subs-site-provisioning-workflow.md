@@ -366,3 +366,11 @@ Still local/mock in current product:
 - `getLiveTenantSiteByDomainHost()` is prepared for future live host routing; current debug tooling can still test broad domain matches before the domain routing switch is enabled.
 - `/sites/[siteSlug]` remains the safe preview route and does not require custom-domain routing to work.
 - Provisioning remains clean: no demo data is copied into paid subscriber sites.
+
+## 2026-06-02 Booking Request Provisioning Note
+
+- Clean provisioned subscriber sites now have the first real guest booking request flow once the business owner has configured services, opening hours, staff, and rota.
+- Booking requests are stored as tenant-scoped `CustomerSiteBooking` rows and remain part of the shared app/central database model.
+- Booking requests are not copied from demos or localStorage.
+- Requests default to `REQUESTED`; the business owner reviews them in `/site-admin/[siteSlug]` before confirming/cancelling/completing.
+- Payment/prepayment, customer login, staff login, calendar sync, and recurring booking fulfilment remain future milestones.

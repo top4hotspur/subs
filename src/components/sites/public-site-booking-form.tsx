@@ -49,6 +49,7 @@ export function PublicSiteBookingForm({ siteSlug, services, staff }: PublicSiteB
   const [preferredDate, setPreferredDate] = useState("");
   const [preferredTime, setPreferredTime] = useState("");
   const [notes, setNotes] = useState("");
+  const [policyAccepted, setPolicyAccepted] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -70,6 +71,7 @@ export function PublicSiteBookingForm({ siteSlug, services, staff }: PublicSiteB
       staffMemberId: selectedStaff?.id || undefined,
       staffName: selectedStaff?.displayName || undefined,
       notes: notes.trim() || undefined,
+      policyAccepted,
     });
 
     if (!result.ok) {
@@ -86,6 +88,7 @@ export function PublicSiteBookingForm({ siteSlug, services, staff }: PublicSiteB
     setPreferredTime("");
     setStaffMemberId("");
     setNotes("");
+    setPolicyAccepted(false);
     setSaving(false);
   }
 
@@ -139,7 +142,7 @@ export function PublicSiteBookingForm({ siteSlug, services, staff }: PublicSiteB
         </label>
 
         <label className="text-sm font-medium text-slate-700">
-          Email (or phone)
+          Email
           <input
             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
             value={customerEmail}
@@ -148,7 +151,7 @@ export function PublicSiteBookingForm({ siteSlug, services, staff }: PublicSiteB
         </label>
 
         <label className="text-sm font-medium text-slate-700">
-          Phone (or email)
+          Phone
           <input
             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
             value={customerPhone}
@@ -188,6 +191,15 @@ export function PublicSiteBookingForm({ siteSlug, services, staff }: PublicSiteB
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
+        <label className="flex w-full items-start gap-2 text-sm text-slate-700">
+          <input type="checkbox" className="mt-1" checked={policyAccepted} onChange={(event) => setPolicyAccepted(event.target.checked)} />
+          <span>
+            I have read and accept the{" "}
+            <Link href={`/sites/${encodeURIComponent(siteSlug)}/policy`} className="font-semibold text-teal-700 underline">
+              booking and cancellation policy
+            </Link>.
+          </span>
+        </label>
         <button
           type="button"
           className="inline-flex rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
@@ -209,4 +221,3 @@ export function PublicSiteBookingForm({ siteSlug, services, staff }: PublicSiteB
     </section>
   );
 }
-

@@ -1089,3 +1089,22 @@ Notes:
 9. Open `/sites/luna-hair-studio`, check availability with `Any available staff`, and confirm slot cards show times only, not staff names.
 10. Select a specific staff member publicly and confirm showing that staff name on slots remains acceptable.
 11. Confirm public availability wording is limited to `Available times found.` or `No available times found for this date. Please try another date.` and does not expose internal debug reasons.
+
+## 2026-06-02 Hosted Smoke Checks: First Guest Booking Request Flow
+
+1. Open `/site-admin/luna-hair-studio`.
+2. Ensure at least one active service, active staff member, business opening-hours day, and matching staff rota day exist.
+3. Open `/sites/luna-hair-studio`.
+4. Click `Check availability` for an active service.
+5. Select a valid date and choose an available slot.
+6. Enter customer name, email, phone, and optional notes.
+7. Try submitting without accepting the booking/cancellation policy and confirm a validation error appears.
+8. Accept the policy and click `Send booking request`.
+9. Confirm the message says `Your booking request has been sent. The business will confirm your appointment.`
+10. Return to `/site-admin/luna-hair-studio`.
+11. Open `Bookings` and confirm the request appears with date/time, service, staff, customer contact details, notes, status, created time, and policy acceptance time.
+12. Return to `/sites/luna-hair-studio` and check the same service/date again.
+13. Confirm the selected/overlapping slot is no longer available while the request is `REQUESTED`.
+14. Cancel the booking in site-admin.
+15. Confirm the slot can become available again where opening hours, rota, closures, staff leave, and other active bookings allow.
+16. Confirm no payment is taken and no customer/staff account is required.

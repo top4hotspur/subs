@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { outlineButtonClass, primaryButtonClass, smallButtonClass } from "@/lib/ui/button-styles";
+import { createPublicSiteBooking } from "@/lib/sites/public-site-bookings-client";
 
 type PublicAvailabilityStaff = {
   id: string;
@@ -40,6 +41,16 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+function toErrorMessage(error: string, status: number): string {
+  if (error === "BOOKING_SLOT_CONFLICT" || error === "BOOKING_SLOT_UNAVAILABLE" || status === 409) {
+    return "That slot is no longer available. Please choose another time.";
+  }
+  if (error === "VALIDATION_ERROR" || status === 400) {
+    return "Please check your details, accept the policy, and try again.";
+  }
+  return "Could not send booking request right now.";
+}
+
 export function PublicSiteAvailabilityPreview({
   siteSlug,
   serviceId,
@@ -54,6 +65,13 @@ export function PublicSiteAvailabilityPreview({
   const [message, setMessage] = useState<string | null>(null);
   const [slots, setSlots] = useState<PublicAvailabilitySlot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<PublicAvailabilitySlot | null>(null);
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerNotes, setCustomerNotes] = useState("");
+  const [policyAccepted, setPolicyAccepted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   async function checkAvailability() {
     setLoading(true);
@@ -77,6 +95,46 @@ export function PublicSiteAvailabilityPreview({
     } finally {
       setLoading(false);
     }
+  }
+
+  async function submitBookingRequest() {
+    if (!selectedSlot) {
+      setMessage("Choose an available time before sending your request.");
+      return;
+    }
+    if (!policyAccepted) {
+      setMessage("Please accept the booking and cancellation policy before sending your request.");
+      return;
+    }
+    setSubmitting(true);
+    setMessage("Sending booking request...");
+    const result = await createPublicSiteBooking(siteSlug, {
+      serviceId,
+      serviceName,
+      customerName: customerName.trim(),
+      customerEmail: customerEmail.trim(),
+      customerPhone: customerPhone.trim(),
+      preferredDate: selectedSlot.date,
+      preferredTime: selectedSlot.startTime,
+      staffMemberId: selectedSlot.staffMemberId,
+      staffName: selectedSlot.staffName,
+      notes: customerNotes.trim() || undefined,
+      policyAccepted,
+    });
+    setSubmitting(false);
+    if (!result.ok) {
+      setMessage(toErrorMessage(result.error, result.status));
+      return;
+    }
+    setSuccessMessage("Your booking request has been sent. The business will confirm your appointment.");
+    setMessage(null);
+    setCustomerName("");
+    setCustomerEmail("");
+    setCustomerPhone("");
+    setCustomerNotes("");
+    setPolicyAccepted(false);
+    setSelectedSlot(null);
+    await checkAvailability();
   }
 
   return (
@@ -139,7 +197,10 @@ export function PublicSiteAvailabilityPreview({
                   key={`${slot.staffMemberId}-${slot.startTime}`}
                   type="button"
                   className="rounded-md border border-teal-200 bg-white px-3 py-2 text-left text-xs font-semibold text-slate-800 hover:border-teal-400 hover:bg-teal-50"
-                  onClick={() => setSelectedSlot(slot)}
+                  onClick={() => {
+                    setSelectedSlot(slot);
+                    setSuccessMessage(null);
+                  }}
                 >
                   <span className="block">{slot.startTime}-{slot.endTime}</span>
                   {staffId ? <span className="block font-normal text-slate-500">{slot.staffName}</span> : null}
@@ -148,8 +209,53 @@ export function PublicSiteAvailabilityPreview({
             </div>
           ) : null}
           {selectedSlot ? (
-            <div className="rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-xs text-teal-950">
-              <span className="font-semibold">Next step:</span> customer details and confirmation. Booking request flow coming soon.
+            <div className="rounded-lg border border-teal-200 bg-white p-3">
+              <p className="text-sm font-semibold text-slate-900">
+                Request {selectedSlot.startTime}-{selectedSlot.endTime}
+              </p>
+              <p className="mt-1 text-xs text-slate-600">
+                Send your details and the business will confirm your appointment. No payment is taken here.
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <label className="text-xs font-semibold text-slate-700">
+                  Your name
+                  <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={customerName} onChange={(event) => setCustomerName(event.target.value)} />
+                </label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Email
+                  <input type="email" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={customerEmail} onChange={(event) => setCustomerEmail(event.target.value)} />
+                </label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Phone
+                  <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={customerPhone} onChange={(event) => setCustomerPhone(event.target.value)} />
+                </label>
+                <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
+                  Notes (optional)
+                  <textarea className="mt-1 min-h-16 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={customerNotes} onChange={(event) => setCustomerNotes(event.target.value)} />
+                </label>
+              </div>
+              <label className="mt-3 flex items-start gap-2 text-xs text-slate-700">
+                <input type="checkbox" className="mt-0.5" checked={policyAccepted} onChange={(event) => setPolicyAccepted(event.target.checked)} />
+                <span>
+                  I have read and accept the{" "}
+                  <a href={`/sites/${encodeURIComponent(siteSlug)}/policy`} className="font-semibold text-teal-700 underline">
+                    booking and cancellation policy
+                  </a>.
+                </span>
+              </label>
+              <button
+                type="button"
+                className={`mt-3 ${primaryButtonClass} ${smallButtonClass}`}
+                onClick={() => void submitBookingRequest()}
+                disabled={submitting}
+              >
+                {submitting ? "Sending..." : "Send booking request"}
+              </button>
+            </div>
+          ) : null}
+          {successMessage ? (
+            <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-900">
+              {successMessage}
             </div>
           ) : null}
         </div>

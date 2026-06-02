@@ -3,6 +3,7 @@ import { ZodError } from "zod";
 import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
 import { createCustomerSiteBooking } from "@/lib/sites/customer-site-booking-repository";
 import { createCustomerSiteBookingSchema } from "@/lib/sites/customer-site-booking-schema";
+import { calculateCustomerSiteAvailability } from "@/lib/sites/customer-site-availability";
 import { getCustomerSitePreviewDataBySlug } from "@/lib/sites/customer-site-preview-repository";
 import { tenantBookingCustomerConfirmation } from "@/lib/email/email-templates";
 import { sendTransactionalEmail } from "@/lib/email/email-provider";
@@ -29,8 +30,26 @@ export async function POST(
 
     const body = await request.json();
     const parsed = createCustomerSiteBookingSchema.parse(body);
+    const availability = await calculateCustomerSiteAvailability({
+      siteSlug,
+      serviceId: parsed.serviceId,
+      staffId: parsed.staffMemberId ?? null,
+      date: parsed.preferredDate,
+    });
+    const matchingSlot = availability.slots.find(
+      (slot) =>
+        slot.serviceId === parsed.serviceId &&
+        (!parsed.staffMemberId || slot.staffMemberId === parsed.staffMemberId) &&
+        slot.date === parsed.preferredDate &&
+        slot.startTime === parsed.preferredTime,
+    );
+    if (!matchingSlot) {
+      return NextResponse.json({ ok: false, error: "BOOKING_SLOT_UNAVAILABLE" }, { status: 409 });
+    }
     const booking = await createCustomerSiteBooking(site.tenantSite.id, {
       ...parsed,
+      staffMemberId: matchingSlot.staffMemberId,
+      staffName: matchingSlot.staffName,
       source: "customer_site",
     });
     const siteName =

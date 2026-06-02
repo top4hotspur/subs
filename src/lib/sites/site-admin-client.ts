@@ -333,6 +333,33 @@ export async function listSiteAdminBookings(
   }
 }
 
+export async function updateSiteAdminBookingStatus(
+  siteSlug: string,
+  input: { bookingId: string; status: CustomerSiteBookingRecord["status"]; notes?: string | null },
+): Promise<ClientResult<{ booking: CustomerSiteBookingRecord }>> {
+  try {
+    const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/bookings`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    const body = (await parseJsonSafe(response)) as
+      | { ok?: boolean; booking?: CustomerSiteBookingRecord; error?: string; details?: unknown }
+      | null;
+    if (!response.ok || !body?.ok || !body.booking) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_BOOKING_STATUS_UPDATE_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, booking: body.booking };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
 export async function getSiteAdminAvailability(
   siteSlug: string,
   options: { serviceId: string; staffId?: string | null; date: string },

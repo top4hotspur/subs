@@ -794,3 +794,17 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - The availability calculator already intersects staff rota with business opening hours, so out-of-hours staff rota does not create public bookable slots.
 - Public availability hides staff names when the customer chooses `Any available staff`; staff names remain visible in admin preview and when a customer explicitly selects a specific staff member.
 - Public availability wording remains customer-safe and does not expose internal debug reasons.
+
+## 2026-06-02 First Guest Booking Request Flow
+
+- Subscriber public sites now let a visitor turn an available slot into a stored tenant-scoped booking request.
+- The request flow starts from `/sites/[siteSlug]` service availability:
+  1. customer checks availability for a service
+  2. customer selects a date, optional staff member, and available slot
+  3. customer enters name, email, phone, optional notes, and accepts the booking/cancellation policy
+  4. the site stores a `CustomerSiteBooking` request with status `REQUESTED`
+- No payment, prepayment, customer login, staff login, or recurring booking creation is implemented in this milestone.
+- Server-side booking creation recalculates availability immediately before inserting the booking. The client-selected slot is not trusted by itself.
+- When the customer chooses `Any available staff`, the public UI can hide staff names, but the selected slot still carries a staff member internally so the request can block availability correctly.
+- `REQUESTED`, legacy `SUBMITTED`, and `CONFIRMED` booking records block future availability. `CANCELLED` bookings do not block slots.
+- Subscriber admins can view booking requests in `/site-admin/[siteSlug]` and mark them confirmed, cancelled, or completed.

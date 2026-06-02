@@ -1,4 +1,5 @@
 export type CustomerSiteBookingStatus =
+  | "REQUESTED"
   | "SUBMITTED"
   | "CONFIRMED"
   | "CANCELLED"
@@ -20,11 +21,14 @@ export type CustomerSiteBookingRecord = {
   customerPhone: string | null;
   preferredDate: string | null;
   preferredTime: string | null;
+  startDateTime: string | null;
+  endDateTime: string | null;
   staffMemberId: string | null;
   staffName: string | null;
   status: CustomerSiteBookingStatus;
   paymentStatus: CustomerSitePaymentStatus | null;
   notes: string | null;
+  policyAcceptedAt: string | null;
   source: string | null;
   rawPayload: unknown;
   createdAt: string;
@@ -37,4 +41,3 @@ export type CustomerSiteBookingListOptions = {
   take?: number;
   skip?: number;
 };
-

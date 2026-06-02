@@ -99,8 +99,9 @@ export function PersistedSiteBookingForm({
       staffName: selectedStaff?.displayName || undefined,
       notes: notes.trim() || undefined,
       source: "preview",
-      status: "SUBMITTED",
-      paymentStatus: "PAYMENT_REQUIRED",
+      status: "REQUESTED",
+      paymentStatus: "NOT_REQUIRED",
+      policyAccepted: true,
     });
 
     if (!result.ok) {
@@ -184,7 +185,7 @@ export function PersistedSiteBookingForm({
           </label>
 
           <label className="text-sm font-medium text-slate-700">
-            Customer email (or phone)
+            Customer email
             <input
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
               value={customerEmail}
@@ -193,7 +194,7 @@ export function PersistedSiteBookingForm({
           </label>
 
           <label className="text-sm font-medium text-slate-700">
-            Customer phone (or email)
+            Customer phone
             <input
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
               value={customerPhone}
@@ -287,4 +288,3 @@ export function PersistedSiteBookingForm({
     </div>
   );
 }
-

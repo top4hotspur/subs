@@ -20,6 +20,7 @@ import {
   getSiteAdminAvailability,
   saveSiteAdminScheduling,
   listSiteAdminBookings,
+  updateSiteAdminBookingStatus,
   removeSiteAdminBrandingFavicon,
   removeSiteAdminBrandingLogo,
   uploadSiteAdminBrandingFavicon,
@@ -1152,6 +1153,19 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
     }
     setAvailabilityResult(result.availability);
     setMessage(result.availability.slots.length > 0 ? "Availability preview generated." : "No slots found for that setup/date.");
+  }
+
+  async function updateBookingStatus(bookingId: string, status: CustomerSiteBookingRecord["status"]) {
+    setMessage(`Updating booking status to ${status.toLowerCase()}...`);
+    const result = await updateSiteAdminBookingStatus(siteSlug, { bookingId, status });
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status, result.details));
+      return;
+    }
+    setBookings((current) => current.map((booking) => (booking.id === bookingId ? result.booking : booking)));
+    setMessage(`Booking status updated to ${status}.`);
+    setAvailabilityResult(null);
+    router.refresh();
   }
 
   if (loading) {
@@ -2637,9 +2651,9 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
 
       {activeSection === "bookings" ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="text-lg font-semibold text-slate-900">Bookings summary (read-only)</h3>
+          <h3 className="text-lg font-semibold text-slate-900">Bookings</h3>
           <p className="mt-1 text-sm text-slate-600">
-            Upcoming and recent bookings for your site. Full booking management will be expanded in a later pass.
+            Review customer booking requests and update their basic status. Payment handling is not connected yet.
           </p>
           <div className="mt-3 space-y-2">
             {bookings.length === 0 ? (
@@ -2647,14 +2661,44 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
             ) : (
               bookings.map((booking) => (
                 <div key={booking.id} className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-                  <p className="font-semibold text-slate-900">{booking.customerName}</p>
-                  <p>
-                    {booking.serviceName ?? "Service not set"} | {booking.preferredDate ?? "Date not set"}{" "}
-                    {booking.preferredTime ?? ""}
-                  </p>
-                  <p>Staff: {booking.staffName ?? "Unassigned"}</p>
-                  <p>Status: {booking.status}</p>
-                  <p>Payment status: {booking.paymentStatus ?? "Not set"}</p>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-slate-900">{booking.customerName}</p>
+                      <p>
+                        {booking.serviceName ?? "Service not set"} | {booking.preferredDate ?? "Date not set"}{" "}
+                        {booking.preferredTime ?? ""}
+                      </p>
+                      <p>Staff: {booking.staffName ?? "Unassigned"}</p>
+                      <p>Email: {booking.customerEmail ?? "Not provided"}</p>
+                      <p>Phone: {booking.customerPhone ?? "Not provided"}</p>
+                      {booking.notes ? <p>Notes: {booking.notes}</p> : null}
+                      <p>Created: {new Date(booking.createdAt).toLocaleString("en-GB")}</p>
+                      <p>Policy accepted: {booking.policyAcceptedAt ? new Date(booking.policyAcceptedAt).toLocaleString("en-GB") : "Not recorded"}</p>
+                    </div>
+                    <div className="min-w-40 text-right">
+                      <span className="inline-flex rounded-full border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-800">
+                        {booking.status}
+                      </span>
+                      <p className="mt-1 text-xs text-slate-500">Payment: {booking.paymentStatus ?? "Not set"}</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {booking.status !== "CONFIRMED" && booking.status !== "CANCELLED" && booking.status !== "COMPLETED" ? (
+                      <button type="button" className={`${primaryButtonClass} ${smallButtonClass}`} onClick={() => void updateBookingStatus(booking.id, "CONFIRMED")}>
+                        Mark confirmed
+                      </button>
+                    ) : null}
+                    {booking.status !== "CANCELLED" && booking.status !== "COMPLETED" ? (
+                      <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void updateBookingStatus(booking.id, "CANCELLED")}>
+                        Cancel
+                      </button>
+                    ) : null}
+                    {booking.status !== "COMPLETED" && booking.status !== "CANCELLED" ? (
+                      <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void updateBookingStatus(booking.id, "COMPLETED")}>
+                        Mark completed
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
               ))
             )}
