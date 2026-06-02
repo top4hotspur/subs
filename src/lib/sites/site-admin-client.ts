@@ -254,6 +254,53 @@ export async function saveSiteAdminStaff(
   }
 }
 
+export async function updateSiteAdminStaffAccess(
+  siteSlug: string,
+  staffId: string,
+  action: "generate" | "enable" | "disable",
+): Promise<ClientResult<{
+  staff: CustomerSiteStaffMemberRecord;
+  accessCode: string | null;
+  staffLoginUrl: string;
+}>> {
+  try {
+    const response = await fetch(
+      `/api/site-admin/${encodeURIComponent(siteSlug)}/staff/${encodeURIComponent(staffId)}/access`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      },
+    );
+    const body = (await parseJsonSafe(response)) as
+      | {
+          ok?: boolean;
+          staff?: CustomerSiteStaffMemberRecord;
+          accessCode?: string | null;
+          staffLoginUrl?: string;
+          error?: string;
+          details?: unknown;
+        }
+      | null;
+    if (!response.ok || !body?.ok || !body.staff) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_STAFF_ACCESS_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return {
+      ok: true,
+      staff: body.staff,
+      accessCode: body.accessCode ?? null,
+      staffLoginUrl: body.staffLoginUrl ?? `/site-staff/${encodeURIComponent(siteSlug)}`,
+    };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
 export async function getSiteAdminScheduling(
   siteSlug: string,
 ): Promise<ClientResult<{ scheduling: CustomerSiteSchedulingSnapshot }>> {

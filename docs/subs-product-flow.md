@@ -873,3 +873,15 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - The booking page does not expose platform admin links, provider secrets, internal tenant IDs, or other customer bookings.
 - Customer self-service cancellation is conservative in this pass: future unpaid/manual/no-online-payment bookings can be cancelled from the secure link; paid or online-card bookings show contact/refund guidance instead.
 - Customer self-rescheduling remains future work. The page tells customers to contact the business to change a booking.
+
+## Shared Staff Appointment View
+
+- Provisioned subscriber sites now have a first-pass staff route at `/site-staff/[siteSlug]`.
+- The staff view is tenant-scoped and shows a shared business appointment diary, not only the signed-in staff member's own appointments.
+- Business owners generate/reset staff access from `/site-admin/[siteSlug]` in the Staff setup section.
+- Staff access uses the existing staff member email plus a generated access code. The code is hashed before storage; only an immediate one-time handover code is shown in the business admin UI.
+- Staff login uses `/site-staff/login` and stores a signed, HTTP-only staff session cookie scoped to `/site-staff`.
+- Any active staff member with enabled access can view today's appointments, upcoming appointments, and recent completed/cancelled appointments for the tenant site.
+- Staff can mark active bookings completed. Staff cannot edit settings, pricing, rota, policies, payments, refunds, platform admin state, or subscriber admin controls in this pass.
+- `/sites/[siteSlug]` footer staff login now points to the new staff route while remaining low prominence.
+- Full staff permissions, staff-specific auth roles, staff email delivery, notes/audit history, cancellation/reschedule actions, and customer/staff account systems remain future milestones.

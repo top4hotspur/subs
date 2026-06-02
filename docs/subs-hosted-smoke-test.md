@@ -1200,3 +1200,24 @@ Notes:
 6. For an unpaid/manual future booking, use the customer cancellation form and confirm the booking becomes `CANCELLED`, the slot is released where rota/opening hours allow, and customer/business cancellation emails are attempted fail-soft.
 7. For a paid or online-card booking, confirm the page shows contact/refund guidance instead of unsafe auto-cancellation/refund.
 8. Confirm the page says online rescheduling is future work and directs the customer to contact the business.
+
+## Hosted Smoke Test - Shared Staff Appointment View
+
+1. Open `/site-admin/luna-hair-studio` as the subscriber business admin.
+2. Go to `Staff setup`.
+3. Confirm saved staff cards show staff appointment view access status, whether an access code exists, and the staff login link `/site-staff/luna-hair-studio`.
+4. Add or confirm an active staff member with an email address.
+5. Click `Generate access code` or `Reset access code`.
+6. Confirm a one-time code is shown in the business admin UI and the staff access status becomes enabled.
+7. Open `/site-staff/luna-hair-studio`.
+8. Confirm unauthenticated access redirects to `/site-staff/login` with the site slug prefilled.
+9. Log in with:
+   - site slug: `luna-hair-studio`
+   - staff email: the saved staff member email
+   - access code: the latest generated code
+10. Confirm the page title is `[Business Name] staff appointments` and the page shows the shared appointment diary.
+11. Confirm the default filter is all staff, with optional staff filters available.
+12. Confirm today's appointments, upcoming appointments, and recently completed/cancelled sections show tenant bookings only.
+13. Create a test active booking if needed and confirm staff can mark it completed.
+14. Confirm staff cannot access `/site-admin/[siteSlug]` controls, platform admin, settings, pricing, rota, payment/refund controls, or provisioning actions through the staff diary.
+15. Disable staff access in site-admin and confirm the old code no longer opens the staff diary after logout/session expiry or fresh login attempt.

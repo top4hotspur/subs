@@ -16,6 +16,7 @@ import {
   saveSiteAdminStaffRoles,
   listSiteAdminStaff,
   saveSiteAdminStaff,
+  updateSiteAdminStaffAccess,
   getSiteAdminScheduling,
   getSiteAdminAvailability,
   saveSiteAdminScheduling,
@@ -195,6 +196,8 @@ type StaffMemberDraft = {
   active: boolean;
   customerSelectable: boolean;
   isSuperUser: boolean;
+  staffAccessEnabled: boolean;
+  staffAccessCodeExists: boolean;
   availableWeekdays: WeekdayValue[];
   notes: string;
   sortOrder: string;
@@ -788,6 +791,8 @@ function toStaffDraft(staff: CustomerSiteStaffMemberRecord): StaffMemberDraft {
     active: staff.active,
     customerSelectable: staff.customerSelectable,
     isSuperUser: staff.isSuperUser,
+    staffAccessEnabled: staff.staffAccessEnabled,
+    staffAccessCodeExists: staff.staffAccessCodeExists,
     availableWeekdays: staff.availableWeekdays ?? [],
     notes: staff.notes ?? "",
     sortOrder: String(staff.sortOrder),
@@ -860,6 +865,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   const [servicesDraft, setServicesDraft] = useState<ServiceDraft[]>([]);
   const [rolesDraft, setRolesDraft] = useState<StaffRoleDraft[]>([]);
   const [staffDraft, setStaffDraft] = useState<StaffMemberDraft[]>([]);
+  const [staffAccessCodes, setStaffAccessCodes] = useState<Record<string, string>>({});
   const [rotaDaysDraft, setRotaDaysDraft] = useState<RotaDayDraft[]>([]);
   const [breakWindowsDraft, setBreakWindowsDraft] = useState<BreakWindowDraft[]>([]);
   const [businessClosuresDraft, setBusinessClosuresDraft] = useState<BusinessClosureDraft[]>([]);
@@ -1230,6 +1236,36 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       setSelectedSchedulingStaffId(staffResult.staff[0].id);
     }
     setMessage("Staff roles and staff members saved.");
+  }
+
+  async function updateStaffAccess(staffId: string | undefined, action: "generate" | "enable" | "disable") {
+    if (!staffId) {
+      setMessage("Save this staff member before generating staff access.");
+      return;
+    }
+    const staff = staffDraft.find((item) => item.id === staffId);
+    if (!staff?.email.trim()) {
+      setMessage("Add and save a staff email before generating staff access.");
+      return;
+    }
+    setMessage(action === "generate" ? "Generating staff access code..." : "Updating staff access...");
+    const result = await updateSiteAdminStaffAccess(siteSlug, staffId, action);
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status, result.details));
+      return;
+    }
+    setStaffDraft((current) => current.map((item) => (item.id === result.staff.id ? toStaffDraft(result.staff) : item)));
+    if (result.accessCode) {
+      setStaffAccessCodes((current) => ({ ...current, [result.staff.id]: result.accessCode ?? "" }));
+      setMessage("Staff access code generated. Copy it now; it is only shown once.");
+    } else {
+      setStaffAccessCodes((current) => {
+        const next = { ...current };
+        delete next[result.staff.id];
+        return next;
+      });
+      setMessage(result.staff.staffAccessEnabled ? "Staff access enabled." : "Staff access disabled.");
+    }
   }
 
   async function saveScheduling() {
@@ -2253,7 +2289,10 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
           <h3 className="text-lg font-semibold text-slate-900">Staff setup</h3>
           <p className="mt-2 text-sm text-slate-600">
             Add team members if customers can choose who they book with, or if you want appointments assigned to your team.
-            Staff login/auth comes later.
+            Staff access lets active staff open the shared appointment view without full admin permissions.
+          </p>
+          <p className="mt-1 text-xs text-slate-600">
+            Staff access lets this person open the shared appointment view for your business. Full staff permissions and super-user controls will expand later.
           </p>
           <div className="mt-3 grid gap-6 lg:grid-cols-2">
             <div>
@@ -2279,7 +2318,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
             <div>
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold text-slate-900">Staff members</p>
-                <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setStaffDraft((current) => [...current, { firstName: "", lastName: "", roleId: "", displayName: "", roleLabel: "", email: "", phone: "", bio: "", active: true, customerSelectable: false, isSuperUser: false, availableWeekdays: [], notes: "", sortOrder: String(current.length) }])}>Add staff</button>
+                <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setStaffDraft((current) => [...current, { firstName: "", lastName: "", roleId: "", displayName: "", roleLabel: "", email: "", phone: "", bio: "", active: true, customerSelectable: false, isSuperUser: false, staffAccessEnabled: false, staffAccessCodeExists: false, availableWeekdays: [], notes: "", sortOrder: String(current.length) }])}>Add staff</button>
               </div>
               <div className="mt-2 space-y-2">
                 {staffDraft.length === 0 ? (
@@ -2322,6 +2361,56 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                         Bookable online / customer selectable
                       </label>
                       <textarea className="rounded-md border border-slate-300 px-2 py-1 text-xs sm:col-span-2" placeholder="Bio/notes (optional)" value={staff.bio || staff.notes} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, bio: event.target.value, notes: event.target.value } : item))} />
+                      {staff.id ? (
+                        <div className="rounded-lg border border-slate-200 bg-white p-3 sm:col-span-2">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <p className="text-xs font-semibold text-slate-900">Staff appointment view access</p>
+                              <p className="mt-1 text-[11px] text-slate-600">
+                                Login link: <a href={`/site-staff/${encodeURIComponent(siteSlug)}`} className="font-semibold text-slate-900 underline" target="_blank" rel="noopener noreferrer">/site-staff/{siteSlug}</a>
+                              </p>
+                              <p className="mt-1 text-[11px] text-slate-600">
+                                Status: {staff.staffAccessEnabled ? "Enabled" : "Disabled"} | Code: {staff.staffAccessCodeExists ? "exists" : "not generated"}
+                              </p>
+                              {staffAccessCodes[staff.id] ? (
+                                <p className="mt-2 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-900">
+                                  One-time code: <span className="font-mono">{staffAccessCodes[staff.id]}</span>
+                                </p>
+                              ) : null}
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                className={`${outlineButtonClass} ${smallButtonClass}`}
+                                onClick={() => void updateStaffAccess(staff.id, "generate")}
+                              >
+                                {staff.staffAccessCodeExists ? "Reset access code" : "Generate access code"}
+                              </button>
+                              {staff.staffAccessEnabled ? (
+                                <button
+                                  type="button"
+                                  className={`${outlineButtonClass} ${smallButtonClass}`}
+                                  onClick={() => void updateStaffAccess(staff.id, "disable")}
+                                >
+                                  Disable access
+                                </button>
+                              ) : staff.staffAccessCodeExists ? (
+                                <button
+                                  type="button"
+                                  className={`${outlineButtonClass} ${smallButtonClass}`}
+                                  onClick={() => void updateStaffAccess(staff.id, "enable")}
+                                >
+                                  Enable access
+                                </button>
+                              ) : null}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 sm:col-span-2">
+                          Save this staff member before generating staff appointment view access.
+                        </p>
+                      )}
                       <div className="sm:col-span-2">
                         <p className="text-xs font-semibold text-slate-700">Available weekdays</p>
                         <div className="mt-1 flex flex-wrap gap-2">

@@ -471,6 +471,8 @@ model CustomerSiteStaffMember {
   active            Boolean                @default(true)
   customerSelectable Boolean               @default(false)
   isSuperUser       Boolean                @default(false)
+  staffAccessEnabled Boolean               @default(false)
+  staffAccessCodeHash String?
   availableWeekdays Json?
   serviceIds        Json?
   notes             String?
@@ -485,6 +487,7 @@ model CustomerSiteStaffMember {
 
   @@index([tenantSiteId])
   @@index([tenantSiteId, active])
+  @@index([tenantSiteId, staffAccessEnabled])
   @@index([tenantSiteId, sortOrder])
   @@index([roleId])
 }

@@ -58,6 +58,8 @@ export type CustomerSiteStaffMemberRecord = {
   active: boolean;
   customerSelectable: boolean;
   isSuperUser: boolean;
+  staffAccessEnabled: boolean;
+  staffAccessCodeExists: boolean;
   availableWeekdays: WeekdayValue[];
   serviceIds: string[];
   notes: string | null;

@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
+import { generateTemporaryAccessCode, hashAccessCode, verifyAccessCode } from "@/lib/auth/access-code";
 import { prisma } from "@/lib/db/prisma";
 import {
   deleteStaffMemberSchema,
@@ -82,6 +83,8 @@ function serializeStaff(record: {
   active: boolean;
   customerSelectable: boolean;
   isSuperUser: boolean;
+  staffAccessEnabled: boolean;
+  staffAccessCodeHash: string | null;
   availableWeekdays: unknown;
   serviceIds: unknown;
   notes: string | null;
@@ -90,7 +93,21 @@ function serializeStaff(record: {
   updatedAt: Date;
 }): CustomerSiteStaffMemberRecord {
   return {
-    ...record,
+    id: record.id,
+    tenantSiteId: record.tenantSiteId,
+    roleId: record.roleId,
+    displayName: record.displayName,
+    roleLabel: record.roleLabel,
+    email: record.email,
+    phone: record.phone,
+    bio: record.bio,
+    active: record.active,
+    customerSelectable: record.customerSelectable,
+    isSuperUser: record.isSuperUser,
+    staffAccessEnabled: record.staffAccessEnabled,
+    staffAccessCodeExists: Boolean(record.staffAccessCodeHash),
+    notes: record.notes,
+    sortOrder: record.sortOrder,
     availableWeekdays: parseWeekdays(record.availableWeekdays),
     serviceIds: parseServiceIds(record.serviceIds),
     createdAt: record.createdAt.toISOString(),
@@ -440,4 +457,93 @@ export async function deleteCustomerSiteStaffMember(tenantSiteId: string, staffM
   });
 
   return deleted.count > 0;
+}
+
+export async function generateCustomerSiteStaffAccessCode(
+  tenantSiteId: string,
+  staffMemberId: string,
+) {
+  const parsed = parseOrThrow(
+    deleteStaffMemberSchema,
+    { tenantSiteId, staffMemberId },
+    "generate staff access code",
+  );
+  const accessCode = generateTemporaryAccessCode();
+  const updated = await prisma.customerSiteStaffMember.updateMany({
+    where: {
+      id: parsed.staffMemberId,
+      tenantSiteId: parsed.tenantSiteId,
+      active: true,
+    },
+    data: {
+      staffAccessEnabled: true,
+      staffAccessCodeHash: hashAccessCode(accessCode),
+    },
+  });
+  if (updated.count === 0) throw new Error("STAFF_MEMBER_NOT_FOUND");
+
+  const staff = await prisma.customerSiteStaffMember.findFirst({
+    where: { id: parsed.staffMemberId, tenantSiteId: parsed.tenantSiteId },
+  });
+  if (!staff) throw new Error("STAFF_MEMBER_NOT_FOUND");
+  return { staff: serializeStaff(staff), accessCode };
+}
+
+export async function setCustomerSiteStaffAccessEnabled(
+  tenantSiteId: string,
+  staffMemberId: string,
+  enabled: boolean,
+) {
+  const parsed = parseOrThrow(
+    deleteStaffMemberSchema,
+    { tenantSiteId, staffMemberId },
+    "set staff access state",
+  );
+  const updated = await prisma.customerSiteStaffMember.updateMany({
+    where: { id: parsed.staffMemberId, tenantSiteId: parsed.tenantSiteId },
+    data: { staffAccessEnabled: enabled },
+  });
+  if (updated.count === 0) throw new Error("STAFF_MEMBER_NOT_FOUND");
+
+  const staff = await prisma.customerSiteStaffMember.findFirst({
+    where: { id: parsed.staffMemberId, tenantSiteId: parsed.tenantSiteId },
+  });
+  if (!staff) throw new Error("STAFF_MEMBER_NOT_FOUND");
+  return serializeStaff(staff);
+}
+
+export async function authenticateCustomerSiteStaffMember(input: {
+  siteSlug: string;
+  email: string;
+  accessCode: string;
+}) {
+  const siteSlug = input.siteSlug.trim().toLowerCase();
+  const email = input.email.trim().toLowerCase();
+  const accessCode = input.accessCode.trim();
+  if (!siteSlug || !email || !accessCode) return null;
+
+  const site = await prisma.tenantSite.findUnique({
+    where: { slug: siteSlug },
+    select: { id: true, slug: true, displayName: true },
+  });
+  if (!site) return null;
+
+  const staff = await prisma.customerSiteStaffMember.findFirst({
+    where: {
+      tenantSiteId: site.id,
+      email,
+      active: true,
+      staffAccessEnabled: true,
+    },
+  });
+  if (!staff || !verifyAccessCode(accessCode, staff.staffAccessCodeHash)) return null;
+
+  return {
+    tenantSiteId: site.id,
+    tenantSlug: site.slug,
+    tenantDisplayName: site.displayName,
+    staffMemberId: staff.id,
+    staffDisplayName: staff.displayName,
+    email: staff.email?.trim().toLowerCase() ?? email,
+  };
 }

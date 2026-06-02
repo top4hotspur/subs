@@ -427,3 +427,15 @@ Still local/mock in current product:
 - Tokens are signed with server-side secret material and include tenant/site/booking context, so the booking page re-checks the token against the requested site slug and tenant before loading data.
 - This is not a full customer account system. It is a controlled single-booking lookup flow for customer convenience and smoke testing.
 - Customer cancellation is only allowed for unpaid/manual/no-online-payment future bookings; paid/card bookings require direct business contact for refund review.
+
+## Shared Staff Appointment View
+
+- After a paid setup request creates a clean tenant site, the business owner can configure staff in `/site-admin/[siteSlug]` without copying demo staff data.
+- Staff setup now includes access handover controls for saved active staff members:
+  - generate/reset staff access code
+  - enable/disable staff access
+  - staff login link `/site-staff/[siteSlug]`
+- Staff access is intentionally separate from platform admin and subscriber business admin.
+- Staff access codes are hashed in `CustomerSiteStaffMember.staffAccessCodeHash`; `staffAccessEnabled` controls whether the staff member can log in.
+- `/site-staff/[siteSlug]` is a shared appointment diary for the tenant site. It reads tenant bookings from the central database and does not expose platform provisioning controls.
+- This milestone does not send staff access emails automatically, create demo data, add full staff permissions, or implement staff-specific booking ownership.

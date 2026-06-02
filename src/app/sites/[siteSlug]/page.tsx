@@ -171,6 +171,7 @@ export default async function PublicSiteSlugPage({
   const cookiesHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/cookies`;
   const privacyHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/privacy`;
   const siteAdminHref = `/site-admin/${encodeURIComponent(preview.tenantSite.slug)}`;
+  const staffLoginHref = `/site-staff/${encodeURIComponent(preview.tenantSite.slug)}`;
 
   return (
     <main className={`min-h-screen ${shellClass}`}>
@@ -322,7 +323,7 @@ export default async function PublicSiteSlugPage({
                   <Link href={policyHref} className="hover:text-slate-900">Terms / Policies</Link>
                 ) : null}
                 <span className="mx-1 text-slate-300">|</span>
-                <span id="staff-access" className="hover:text-slate-900">Staff login/view is coming soon.</span>
+                <Link href={staffLoginHref} id="staff-access" className="hover:text-slate-900">Staff login</Link>
                 <Link href={siteAdminHref} className="hover:text-slate-900">Business admin login</Link>
               </div>
             </footer>
