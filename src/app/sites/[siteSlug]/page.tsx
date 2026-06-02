@@ -319,7 +319,7 @@ export default async function PublicSiteSlugPage({
                   <Link href={policyHref} className="hover:text-slate-900">Terms / Policies</Link>
                 ) : null}
                 <span className="mx-1 text-slate-300">|</span>
-                <span id="staff-access" className="hover:text-slate-900">Staff login (coming soon)</span>
+                <span id="staff-access" className="hover:text-slate-900">Staff login/view is coming soon.</span>
                 <Link href={siteAdminHref} className="hover:text-slate-900">Business admin login</Link>
               </div>
             </footer>

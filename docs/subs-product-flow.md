@@ -699,12 +699,12 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - `/site-admin/[siteSlug]` now supports tenant-scoped staff rota setup using existing `CustomerSiteStaffRotaDay` records.
 - Business owners select an active staff member and set Monday-Sunday working state plus 24-hour start/end times.
 - Working days require start/end times and the end time must be after the start time; validation is enforced in the UI and API schema.
-- Helper actions let owners mark weekdays working or copy Monday's working hours to Tuesday-Friday.
+- Helper actions let owners set Monday-Friday as working or copy Monday's working hours only to weekdays already marked working.
 - Rota warnings are shown when staff hours sit outside configured business opening hours, but the save is not hard-blocked because some real businesses may need exceptions before the booking engine is live.
 - Break windows remain simple tenant-scoped staff breaks. Active breaks must sit inside that staff member's working rota day.
 - The onboarding checklist now treats staff/rota readiness as complete only when at least one active staff member has at least one valid working day.
-- Public subscriber pages do not expose detailed rota rows; this data is reserved for future online booking availability.
-- Staff login/auth, customer login/auth, and the full booking engine remain future milestones.
+- Public subscriber pages do not expose detailed rota rows; rota data is used by the tenant-scoped booking availability and confirmed-booking flow.
+- Staff login/auth, customer login/auth, payment/prepayment, amendments/rescheduling, recurring bookings, and calendar sync remain future milestones.
 
 ## 2026-06-02 Subscriber Closures, Holidays and Staff Leave
 
