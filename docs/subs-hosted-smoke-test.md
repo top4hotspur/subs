@@ -1189,3 +1189,14 @@ Notes:
 9. Create a paid card booking if Stripe Checkout is configured, then cancel it.
 10. Confirm the UI says online provider refund is not connected yet and records manual-required refund handling rather than fake refund success.
 11. Confirm no provider refund is issued automatically in this pass.
+
+## Hosted Smoke Test - Customer Booking Lookup Link
+
+1. Create a confirmed booking from `/sites/luna-hair-studio`.
+2. Check the customer confirmation email and open the `View your booking details here` link.
+3. Confirm `/sites/luna-hair-studio/booking/[token]` loads the correct booking only.
+4. Confirm the page shows business name, booking status, service, staff, UK date/time, customer name, payment status, refund status/guidance, business contact details, and policy link.
+5. Try changing the site slug in the URL and confirm the page does not leak booking data.
+6. For an unpaid/manual future booking, use the customer cancellation form and confirm the booking becomes `CANCELLED`, the slot is released where rota/opening hours allow, and customer/business cancellation emails are attempted fail-soft.
+7. For a paid or online-card booking, confirm the page shows contact/refund guidance instead of unsafe auto-cancellation/refund.
+8. Confirm the page says online rescheduling is future work and directs the customer to contact the business.

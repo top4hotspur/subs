@@ -13,6 +13,8 @@ import {
   tenantBookingCustomerConfirmation,
 } from "@/lib/email/email-templates";
 import { sendTransactionalEmail } from "@/lib/email/email-provider";
+import { createBookingAccessUrl } from "@/lib/sites/booking-access-token";
+import { getOptionalServerEnv } from "@/lib/config/server-env";
 
 async function sendBookingPaymentConfirmationEmails(
   bookingId: string,
@@ -34,6 +36,12 @@ async function sendBookingPaymentConfirmationEmails(
     contactEmail: site.settings?.email ?? null,
     contactPhone: site.settings?.phone ?? null,
     adminUrl: `/site-admin/${encodeURIComponent(site.tenantSite.slug)}`,
+    bookingUrl: createBookingAccessUrl({
+      baseUrl: getOptionalServerEnv("NEXT_PUBLIC_SITE_URL"),
+      siteSlug: site.tenantSite.slug,
+      tenantSiteId,
+      bookingId,
+    }),
   };
 
   if (booking.customerEmail) {

@@ -17,6 +17,7 @@ import {
   createStripeBookingCheckoutSession,
   isStripeBookingCheckoutConfigured,
 } from "@/lib/billing/stripe-booking-checkout";
+import { createBookingAccessUrl } from "@/lib/sites/booking-access-token";
 
 function backendNotConfigured() {
   return NextResponse.json(
@@ -188,6 +189,12 @@ export async function POST(
       contactEmail: site.settings?.email ?? null,
       contactPhone: site.settings?.phone ?? null,
       adminUrl: absoluteSiteAdminUrl(site.tenantSite.slug),
+      bookingUrl: createBookingAccessUrl({
+        baseUrl: getOptionalServerEnv("NEXT_PUBLIC_SITE_URL"),
+        siteSlug: site.tenantSite.slug,
+        tenantSiteId: site.tenantSite.id,
+        bookingId: booking.id,
+      }),
     };
     const customerEmailStatus = booking.customerEmail
       ? await sendTransactionalEmail({

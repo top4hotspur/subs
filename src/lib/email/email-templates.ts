@@ -19,6 +19,7 @@ type SiteSummaryForEmail = {
   contactEmail?: string | null;
   contactPhone?: string | null;
   adminUrl?: string | null;
+  bookingUrl?: string | null;
 };
 
 type BusinessAdminAccessEmailInput = {
@@ -129,6 +130,7 @@ export function tenantBookingCustomerConfirmation(
     `Staff: ${booking.staffName || "-"}`,
     site.contactEmail ? `Business email: ${site.contactEmail}` : "",
     site.contactPhone ? `Business phone: ${site.contactPhone}` : "",
+    site.bookingUrl ? `View your booking details here: ${site.bookingUrl}` : "",
     "",
     paymentLine,
     "Please check the booking and cancellation policy if you need to change or cancel this appointment.",
@@ -138,6 +140,7 @@ export function tenantBookingCustomerConfirmation(
 <strong>Date/time:</strong> ${escapeHtml(appointment)}<br/>
 <strong>Staff:</strong> ${escapeHtml(booking.staffName || "-")}</p>
 ${site.contactEmail || site.contactPhone ? `<p><strong>Business contact:</strong><br/>${site.contactEmail ? `Email: ${escapeHtml(site.contactEmail)}<br/>` : ""}${site.contactPhone ? `Phone: ${escapeHtml(site.contactPhone)}` : ""}</p>` : ""}
+${site.bookingUrl ? `<p><a href="${escapeHtml(site.bookingUrl)}">View your booking details here</a></p>` : ""}
 <p>${escapeHtml(paymentLine)}</p>
 <p>Please check the booking and cancellation policy if you need to change or cancel this appointment.</p>`;
   return { subject, text, html };
@@ -175,6 +178,40 @@ ${site.adminUrl ? `<p><a href="${escapeHtml(site.adminUrl)}">Open booking in sit
   return { subject, text, html };
 }
 
+export function tenantBookingBusinessCancellationNotification(
+  booking: CustomerSiteBookingRecord,
+  site: SiteSummaryForEmail,
+) {
+  const subject = `Booking cancelled - ${site.siteName}`;
+  const appointment = formatBookingDateTime(booking);
+  const text = [
+    `A booking has been cancelled for ${site.siteName}.`,
+    "",
+    `Customer: ${booking.customerName}`,
+    `Email: ${booking.customerEmail || "-"}`,
+    `Phone: ${booking.customerPhone || "-"}`,
+    `Service: ${booking.serviceName || "-"}`,
+    `Staff: ${booking.staffName || "-"}`,
+    `Date/time: ${appointment}`,
+    `Payment: ${formatBookingPaymentForEmail(booking)}`,
+    `Refund status: ${booking.refundStatus || "-"}`,
+    booking.cancellationReason ? `Cancellation note: ${booking.cancellationReason}` : "",
+    site.adminUrl ? `Open admin: ${site.adminUrl}` : "",
+  ].filter(Boolean).join("\n");
+  const html = `<p><strong>A booking has been cancelled for ${escapeHtml(site.siteName)}.</strong></p>
+<p><strong>Customer:</strong> ${escapeHtml(booking.customerName)}<br/>
+<strong>Email:</strong> ${escapeHtml(booking.customerEmail || "-")}<br/>
+<strong>Phone:</strong> ${escapeHtml(booking.customerPhone || "-")}<br/>
+<strong>Service:</strong> ${escapeHtml(booking.serviceName || "-")}<br/>
+<strong>Staff:</strong> ${escapeHtml(booking.staffName || "-")}<br/>
+<strong>Date/time:</strong> ${escapeHtml(appointment)}<br/>
+<strong>Payment:</strong> ${escapeHtml(formatBookingPaymentForEmail(booking))}<br/>
+<strong>Refund status:</strong> ${escapeHtml(booking.refundStatus || "-")}</p>
+${booking.cancellationReason ? `<p><strong>Cancellation note:</strong><br/>${escapeHtml(booking.cancellationReason).replace(/\n/g, "<br/>")}</p>` : ""}
+${site.adminUrl ? `<p><a href="${escapeHtml(site.adminUrl)}">Open booking in site admin</a></p>` : ""}`;
+  return { subject, text, html };
+}
+
 function formatBookingPaymentForEmail(booking: CustomerSiteBookingRecord): string {
   if (booking.paymentStatus === "PAID" || booking.paymentStatus === "PAYMENT_COMPLETED") return "Paid";
   if (booking.paymentStatus === "PENDING" || booking.paymentStatus === "PAYMENT_REQUIRED") {
@@ -206,6 +243,7 @@ export function tenantBookingCustomerCancellation(
     "",
     site.contactEmail ? `Business email: ${site.contactEmail}` : "",
     site.contactPhone ? `Business phone: ${site.contactPhone}` : "",
+    site.bookingUrl ? `View your booking details here: ${site.bookingUrl}` : "",
     "Please contact the business if you have any questions.",
   ].filter(Boolean).join("\n");
   const html = `<p>Your booking with <strong>${escapeHtml(site.siteName)}</strong> has been cancelled.</p>
@@ -215,6 +253,7 @@ export function tenantBookingCustomerCancellation(
 ${booking.cancellationReason ? `<p><strong>Cancellation note:</strong><br/>${escapeHtml(booking.cancellationReason).replace(/\n/g, "<br/>")}</p>` : ""}
 <p>${escapeHtml(refundLine)}</p>
 ${site.contactEmail || site.contactPhone ? `<p>${site.contactEmail ? `Email: ${escapeHtml(site.contactEmail)}<br/>` : ""}${site.contactPhone ? `Phone: ${escapeHtml(site.contactPhone)}` : ""}</p>` : ""}
+${site.bookingUrl ? `<p><a href="${escapeHtml(site.bookingUrl)}">View your booking details here</a></p>` : ""}
 <p>Please contact the business if you have any questions.</p>`;
   return { subject, text, html };
 }
@@ -234,6 +273,7 @@ export function tenantBookingCustomerUpdated(
     "",
     site.contactEmail ? `Business email: ${site.contactEmail}` : "",
     site.contactPhone ? `Business phone: ${site.contactPhone}` : "",
+    site.bookingUrl ? `View your booking details here: ${site.bookingUrl}` : "",
     "Please contact the business if you have any questions.",
   ].filter(Boolean).join("\n");
   const html = `<p>Your booking with <strong>${escapeHtml(site.siteName)}</strong> has been updated.</p>
@@ -241,6 +281,7 @@ export function tenantBookingCustomerUpdated(
 <strong>Date/time:</strong> ${escapeHtml(appointment)}<br/>
 <strong>Staff:</strong> ${escapeHtml(booking.staffName || "-")}</p>
 ${site.contactEmail || site.contactPhone ? `<p>${site.contactEmail ? `Email: ${escapeHtml(site.contactEmail)}<br/>` : ""}${site.contactPhone ? `Phone: ${escapeHtml(site.contactPhone)}` : ""}</p>` : ""}
+${site.bookingUrl ? `<p><a href="${escapeHtml(site.bookingUrl)}">View your booking details here</a></p>` : ""}
 <p>Please contact the business if you have any questions.</p>`;
   return { subject, text, html };
 }

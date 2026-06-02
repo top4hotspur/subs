@@ -15,6 +15,8 @@ import {
 import { calculateCustomerSiteAvailability } from "@/lib/sites/customer-site-availability";
 import { getCustomerSitePreviewDataBySlug } from "@/lib/sites/customer-site-preview-repository";
 import { getBookingRefundGuidance } from "@/lib/sites/booking-cancellation-refund";
+import { createBookingAccessUrl } from "@/lib/sites/booking-access-token";
+import { getOptionalServerEnv } from "@/lib/config/server-env";
 import {
   tenantBookingCustomerCancellation,
   tenantBookingCustomerConfirmation,
@@ -189,6 +191,14 @@ export async function PATCH(
       siteSlug: site?.tenantSite.slug ?? siteSlug,
       contactEmail: site?.settings?.email ?? null,
       contactPhone: site?.settings?.phone ?? null,
+      bookingUrl: site
+        ? createBookingAccessUrl({
+            baseUrl: getOptionalServerEnv("NEXT_PUBLIC_SITE_URL"),
+            siteSlug: site.tenantSite.slug,
+            tenantSiteId: resolved.tenantSiteId,
+            bookingId: booking.id,
+          })
+        : null,
     };
     const shouldSendCustomerEmail =
       Boolean(booking.customerEmail) && emailKind !== null;

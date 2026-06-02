@@ -864,3 +864,12 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Paid online-card bookings are marked `MANUAL_REQUIRED` for refund handling, with instructions to process any refund manually in the payment provider.
 - Customer cancellation emails are attempted fail-soft and include service, date/time, staff, optional cancellation reason, and payment/refund wording.
 - Full refund API calls, refund ledgers, accounting reports, customer self-service cancellation, and recurring booking refunds remain future work.
+
+## Customer Booking Lookup Link
+
+- Customer booking emails now include a signed booking details link for the specific tenant/site/booking.
+- The route is `/sites/[siteSlug]/booking/[token]`; the token is HMAC-signed and scoped to tenant site, site slug, and booking ID.
+- Customers can view booking status, service, staff, date/time, payment status, refund status/guidance, business contact details, and policy links without a full customer account.
+- The booking page does not expose platform admin links, provider secrets, internal tenant IDs, or other customer bookings.
+- Customer self-service cancellation is conservative in this pass: future unpaid/manual/no-online-payment bookings can be cancelled from the secure link; paid or online-card bookings show contact/refund guidance instead.
+- Customer self-rescheduling remains future work. The page tells customers to contact the business to change a booking.

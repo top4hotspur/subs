@@ -420,3 +420,10 @@ Still local/mock in current product:
 - Refund eligibility guidance uses the tenant site's configured full-refund and no-refund windows.
 - Online card provider refunds are intentionally not automated yet; admins receive manual-required guidance for paid card bookings.
 - Cancellation email delivery is fail-soft and does not block saving the cancellation.
+
+## Customer Booking Lookup
+
+- Subscriber booking confirmation/update/cancellation emails can now include a secure no-login customer booking link.
+- Tokens are signed with server-side secret material and include tenant/site/booking context, so the booking page re-checks the token against the requested site slug and tenant before loading data.
+- This is not a full customer account system. It is a controlled single-booking lookup flow for customer convenience and smoke testing.
+- Customer cancellation is only allowed for unpaid/manual/no-online-payment future bookings; paid/card bookings require direct business contact for refund review.

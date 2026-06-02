@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getCustomerSiteBookingById } from "@/lib/sites/customer-site-booking-repository";
 import { getCustomerSitePreviewDataBySlug } from "@/lib/sites/customer-site-preview-repository";
 import { formatBookingDateTime } from "@/lib/sites/customer-site-booking-display";
+import { createBookingAccessPath } from "@/lib/sites/booking-access-token";
 
 type BookingPaymentReturnPageProps = {
   params: Promise<{ siteSlug: string }>;
@@ -63,6 +64,13 @@ export default async function BookingPaymentReturnPage({
     site?.tenantSite.displayName ||
     "This business";
   const copy = statusCopy(query.checkout, booking?.paymentStatus);
+  const bookingDetailsHref = site && booking
+    ? createBookingAccessPath({
+        siteSlug: site.tenantSite.slug,
+        tenantSiteId: site.tenantSite.id,
+        bookingId: booking.id,
+      })
+    : null;
   const panelClass = copy.tone === "success"
     ? "border-emerald-200 bg-emerald-50 text-emerald-950"
     : copy.tone === "warning"
@@ -108,6 +116,14 @@ export default async function BookingPaymentReturnPage({
           >
             Contact business
           </Link>
+          {bookingDetailsHref ? (
+            <Link
+              href={bookingDetailsHref}
+              className="inline-flex rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900"
+            >
+              View booking details
+            </Link>
+          ) : null}
         </div>
       </section>
     </main>
