@@ -745,12 +745,12 @@ CSV import/export setup tools moved out of demo customisation and into business 
   - business closures/holidays
   - staff leave/unavailability
   - existing active subscriber bookings where available
-- Public `/sites/[siteSlug]` service cards now offer `Check availability` and show available time buttons for a selected date and optional customer-selectable staff member.
-- Selecting a slot does not create a booking yet; it shows the next-step/booking-request-coming-soon message.
+- Public `/sites/[siteSlug]` service cards now offer `Check availability` and show compact available time chips grouped by morning, afternoon, and evening for a selected date and optional customer-selectable staff member.
+- Selecting a slot highlights the time, scrolls/focuses the booking form, and lets the customer confirm a booking after entering details and accepting the policy.
 - Site-admin `/site-admin/[siteSlug]` includes a `Booking availability preview` inside `Opening hours / rota` so business owners can test their setup before live booking submission is built.
 - Public availability responses stay customer-friendly and do not expose internal setup/debug reasons.
 - Admin availability preview shows setup/debug reasons such as missing service duration, no active staff, no staff rota, business closure, staff leave, breaks, or existing booking conflicts.
-- Booking submission, payment/prepayment, customer login, staff login, email confirmations, recurring bookings, and calendar sync remain future milestones.
+- Payment/prepayment, customer login, staff login, recurring bookings, amendment/reschedule handling, and calendar sync remain future milestones.
 
 ## 2026-06-02 Platform Domain and Go-Live Workflow
 
@@ -789,11 +789,16 @@ CSV import/export setup tools moved out of demo customisation and into business 
 
 - The site-admin staff selector for rota editing now lives inside the `Staff weekly rota` section so business opening hours no longer look tied to a selected staff member.
 - The rota UI separates business opening hours, staff weekly rota, break windows, and booking availability preview more clearly.
-- `Copy Monday to weekdays` now copies Monday's times only to weekdays that are already marked `Working`; `Mark weekdays working` remains the explicit helper for turning weekdays on.
+- `Copy Monday times to working weekdays` copies Monday's times only to Tuesday-Friday rows that are already marked `Working`; it does not turn non-working days on.
+- `Set Monday-Friday as working` is the explicit helper for turning weekdays on, using Monday times where available and otherwise business opening hours/default hours.
+- Non-working days clear visible start/end times and persist as unset/null values.
 - Staff rota can still be saved outside business opening hours, but the warning now states that appointments will only be bookable inside business opening hours.
 - The availability calculator already intersects staff rota with business opening hours, so out-of-hours staff rota does not create public bookable slots.
 - Public availability hides staff names when the customer chooses `Any available staff`; staff names remain visible in admin preview and when a customer explicitly selects a specific staff member.
 - Public availability wording remains customer-safe and does not expose internal debug reasons.
+- Public availability uses compact start-time chips rather than large vertical cards. Long groups initially show the first 16 times with a `Show more times` control.
+- Site-admin now shows an interim `Staffing coverage` visualisation beside the rota: red for open days with no staff, amber for one staff member, green for two or more, and grey for closed days.
+- Target staffing levels by day/time period are not persisted yet; the coverage card documents this as the next staffing-planning milestone.
 
 ## 2026-06-02 First Guest Booking Flow
 

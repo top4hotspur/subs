@@ -961,8 +961,8 @@ Notes:
 2. Confirm at least one active staff member exists in `Staff setup`; add and save one if needed.
 3. Open `Opening hours / rota`.
 4. Select an active staff member.
-5. Confirm the rota area explains staff rota sits inside business opening hours and booking availability is still future work.
-6. Use `Mark weekdays working` or set manually:
+5. Confirm the rota area explains staff rota can be saved outside business hours but appointments are only bookable inside business opening hours.
+6. Use `Set Monday-Friday as working` or set manually:
    - Monday-Friday `09:00`-`17:00`
    - Saturday `09:00`-`13:00`
    - Sunday not working
@@ -1080,15 +1080,22 @@ Notes:
 
 1. Open `/site-admin/luna-hair-studio` and go to `Opening hours / rota`.
 2. Confirm the `Staff member` dropdown appears inside the `Staff weekly rota` section, not in the overall business opening-hours header.
-3. Confirm the page visually separates business opening hours, staff weekly rota, break windows, and booking availability preview.
+3. Confirm the page visually separates business opening hours, staff weekly rota, staffing coverage, break windows, and booking availability preview.
 4. Mark Monday and selected weekdays as working for one staff member.
-5. Click `Copy Monday to weekdays` and confirm it copies times only into weekdays already marked `Working`; it must not turn Thursday/Friday on or populate non-working days.
-6. Use `Mark weekdays working` separately and confirm that helper explicitly turns weekdays on.
-7. Set a staff rota outside business hours and confirm save is allowed with a warning that appointments are only bookable inside business opening hours.
-8. Preview availability in admin and confirm staff names/debug reasons still show there.
-9. Open `/sites/luna-hair-studio`, check availability with `Any available staff`, and confirm slot cards show times only, not staff names.
-10. Select a specific staff member publicly and confirm showing that staff name on slots remains acceptable.
-11. Confirm public availability wording is limited to `Available times found.` or `No available times found for this date. Please try another date.` and does not expose internal debug reasons.
+5. Untick Thursday and Friday.
+6. Click `Copy Monday times to working weekdays` and confirm Thursday/Friday remain not working and have no stale times.
+7. Use `Set Monday-Friday as working` separately and confirm that helper clearly turns Monday-Friday on with sensible default times.
+8. Save and reload, then confirm non-working days persist without visible/saved times.
+9. Confirm the `Staffing coverage` card shows staff counts by day and highlights open days with no staff as needing attention.
+10. Confirm target staff levels by day/period are not yet editable in this pass.
+11. Set a staff rota outside business hours and confirm save is allowed with a warning that appointments are only bookable inside business opening hours.
+12. Preview availability in admin and confirm staff names/debug reasons still show there.
+13. Open `/sites/luna-hair-studio`, check availability with `Any available staff`, and confirm compact start-time chips are grouped by `Morning`, `Afternoon`, and `Evening`.
+14. Confirm the selected chip highlights green and the selected summary shows the full time range.
+15. Confirm `Any available staff` does not show staff names on every chip and the selected summary says staff will be assigned automatically.
+16. Confirm long groups show a limited initial list with `Show more times`.
+17. Select a specific staff member publicly and confirm the selected summary can show that staff member.
+18. Confirm public availability wording is limited to `Available times found.` or `No available times found for this date. Please try another date.` and does not expose internal debug reasons.
 
 ## 2026-06-02 Hosted Smoke Checks: First Guest Booking Flow
 
@@ -1096,7 +1103,7 @@ Notes:
 2. Ensure at least one active service, active staff member, business opening-hours day, and matching staff rota day exist.
 3. Open `/sites/luna-hair-studio`.
 4. Click `Check availability` for an active service.
-5. Select a valid date and choose an available slot. Confirm the selected slot is highlighted green and the page scrolls/focuses the booking form.
+5. Select a valid date and choose an available slot. Confirm the compact selected time chip is highlighted green and the page scrolls/focuses the booking form.
 6. Enter customer name, email, phone, and optional notes.
 7. Try submitting without accepting the booking/cancellation policy and confirm the message says `Please confirm that you have read and accepted the booking and cancellation policy.`
 8. Accept the policy and click `Confirm booking`.

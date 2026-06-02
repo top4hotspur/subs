@@ -385,6 +385,80 @@ function rotaBusinessHoursWarning(
   return null;
 }
 
+function businessDayForWeekday(openingHours: BusinessOpeningHours, weekday: WeekdayValue) {
+  return openingHours.days.find((day) => day.weekday === weekday);
+}
+
+function defaultRotaTimesForWeekday(
+  openingHours: BusinessOpeningHours,
+  weekday: WeekdayValue,
+  monday?: RotaDayDraft | null,
+): { startTime: string; endTime: string } {
+  if (monday?.working && monday.startTime && monday.endTime) {
+    return { startTime: monday.startTime, endTime: monday.endTime };
+  }
+  const businessDay = businessDayForWeekday(openingHours, weekday);
+  if (businessDay?.open && businessDay.startTime && businessDay.endTime) {
+    return { startTime: businessDay.startTime, endTime: businessDay.endTime };
+  }
+  return { startTime: "09:00", endTime: "17:00" };
+}
+
+function rotaOverlapsBusinessHours(rotaDay: RotaDayDraft, openingHours: BusinessOpeningHours): boolean {
+  if (!rotaDay.working || !rotaDay.startTime || !rotaDay.endTime) return false;
+  const businessDay = businessDayForWeekday(openingHours, rotaDay.weekday);
+  if (!businessDay?.open) return false;
+  const rotaStart = timeToMinutes(rotaDay.startTime);
+  const rotaEnd = timeToMinutes(rotaDay.endTime);
+  const businessStart = timeToMinutes(businessDay.startTime);
+  const businessEnd = timeToMinutes(businessDay.endTime);
+  if (rotaStart === null || rotaEnd === null || businessStart === null || businessEnd === null) return false;
+  return rotaStart < businessEnd && rotaEnd > businessStart;
+}
+
+function staffingCoverageForWeekday(
+  weekday: WeekdayValue,
+  rotaDays: RotaDayDraft[],
+  staff: StaffMemberDraft[],
+  openingHours: BusinessOpeningHours,
+) {
+  const businessDay = businessDayForWeekday(openingHours, weekday);
+  const open = Boolean(businessDay?.open);
+  const activeStaffIds = new Set(staff.filter((member) => member.active && member.id).map((member) => member.id));
+  const staffCount = new Set(
+    rotaDays
+      .filter((day) => day.weekday === weekday && activeStaffIds.has(day.staffMemberId) && rotaOverlapsBusinessHours(day, openingHours))
+      .map((day) => day.staffMemberId),
+  ).size;
+
+  if (!open) {
+    return {
+      staffCount,
+      label: "Business closed",
+      className: "border-slate-200 bg-slate-50 text-slate-600",
+    };
+  }
+  if (staffCount === 0) {
+    return {
+      staffCount,
+      label: "Needs cover",
+      className: "border-rose-200 bg-rose-50 text-rose-800",
+    };
+  }
+  if (staffCount === 1) {
+    return {
+      staffCount,
+      label: "Light cover",
+      className: "border-amber-200 bg-amber-50 text-amber-900",
+    };
+  }
+  return {
+    staffCount,
+    label: "Covered",
+    className: "border-emerald-200 bg-emerald-50 text-emerald-800",
+  };
+}
+
 function toMessage(error: string, status: number, details?: unknown): string {
   const validationMessage = validationDetailsToMessage(details);
   if (validationMessage) return validationMessage;
@@ -639,8 +713,8 @@ function toRotaDayDraft(day: CustomerSiteStaffRotaDayRecord): RotaDayDraft {
     staffMemberId: day.staffMemberId,
     weekday: day.weekday,
     working: day.working,
-    startTime: day.startTime ?? "",
-    endTime: day.endTime ?? "",
+    startTime: day.working ? day.startTime ?? "" : "",
+    endTime: day.working ? day.endTime ?? "" : "",
   };
 }
 
@@ -2182,6 +2256,8 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     setRotaDaysDraft((current) => {
                       let next = current;
                       for (const weekday of ["monday", "tuesday", "wednesday", "thursday", "friday"] as WeekdayValue[]) {
+                        const monday = findRotaDay(next, selectedSchedulingStaffId, "monday");
+                        const defaults = defaultRotaTimesForWeekday(settingsDraft.openingHours, weekday, monday);
                         const existing = findRotaDay(next, selectedSchedulingStaffId, weekday) ?? {
                           staffMemberId: selectedSchedulingStaffId,
                           weekday,
@@ -2192,15 +2268,16 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                         next = upsertRotaDayDraft(next, {
                           ...existing,
                           working: true,
-                          startTime: existing.startTime || "09:00",
-                          endTime: existing.endTime || "17:00",
+                          startTime: existing.startTime || defaults.startTime,
+                          endTime: existing.endTime || defaults.endTime,
                         });
                       }
                       return next;
                     });
+                    setMessage("Set Monday-Friday as working using Monday times where available, otherwise business opening hours.");
                   }}
                 >
-                  Mark weekdays working
+                  Set Monday-Friday as working
                 </button>
                 <button
                   type="button"
@@ -2232,13 +2309,16 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     setMessage(
                       copyTargets.length > 0
                         ? `Copied Monday times to ${copyTargets.length} already-working weekday${copyTargets.length === 1 ? "" : "s"}.`
-                        : "No already-working weekdays found to copy Monday times into.",
+                        : "No working weekdays to copy to.",
                     );
                   }}
                 >
-                  Copy Monday to weekdays
+                  Copy Monday times to working weekdays
                 </button>
               </div>
+              <p className="mt-2 text-xs text-slate-500">
+                Copying Monday times only updates Tuesday-Friday rows that are already marked Working. It will not turn non-working days on.
+              </p>
               <div className="mt-2 space-y-2">
                 {weekdayValues.map((weekday) => {
                   const allowed = selectedStaff ? selectedStaff.availableWeekdays.includes(weekday) : true;
@@ -2250,6 +2330,8 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     startTime: "",
                     endTime: "",
                   };
+                  const monday = findRotaDay(rotaDaysDraft, selectedSchedulingStaffId, "monday");
+                  const defaultTimes = defaultRotaTimesForWeekday(settingsDraft.openingHours, weekday, weekday === "monday" ? null : monday);
                   const warning = rotaBusinessHoursWarning(row, settingsDraft.openingHours);
                   return (
                     <div key={weekday} className={`rounded-md border p-2 ${allowed ? "border-slate-200 bg-slate-50" : "border-amber-300 bg-amber-50"}`}>
@@ -2266,8 +2348,8 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                               const next = {
                                 ...row,
                                 working,
-                                startTime: working ? row.startTime : "",
-                                endTime: working ? row.endTime : "",
+                                startTime: working ? row.startTime || defaultTimes.startTime : "",
+                                endTime: working ? row.endTime || defaultTimes.endTime : "",
                               };
                               setRotaDaysDraft((current) => {
                                 return upsertRotaDayDraft(current, next);
@@ -2289,7 +2371,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                           className="rounded-md border border-slate-300 px-2 py-1 text-xs"
                           type="time"
                           placeholder="09:00"
-                          value={row.startTime}
+                          value={row.working ? row.startTime : ""}
                           disabled={!row.working || !selectedSchedulingStaffId || !allowed}
                           onChange={(event) => {
                             if (!selectedSchedulingStaffId) return;
@@ -2303,7 +2385,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                           className="rounded-md border border-slate-300 px-2 py-1 text-xs"
                           type="time"
                           placeholder="17:00"
-                          value={row.endTime}
+                          value={row.working ? row.endTime : ""}
                           disabled={!row.working || !selectedSchedulingStaffId || !allowed}
                           onChange={(event) => {
                             if (!selectedSchedulingStaffId) return;
@@ -2326,7 +2408,41 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
               </div>
             </div>
 
-            <div>
+            <div className="space-y-4">
+              <div className="rounded-lg border border-slate-200 bg-white p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">Staffing coverage</p>
+                    <p className="mt-1 text-xs text-slate-600">
+                      Quick view of active staff scheduled during business opening hours. Targets by day/period are planned next.
+                    </p>
+                  </div>
+                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-600">
+                    Interim logic
+                  </span>
+                </div>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {weekdayValues.map((weekday) => {
+                    const coverage = staffingCoverageForWeekday(weekday, rotaDaysDraft, staffDraft, settingsDraft.openingHours);
+                    return (
+                      <div key={weekday} className={`rounded-md border px-3 py-2 text-xs ${coverage.className}`}>
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="font-semibold">{weekdayLabel(weekday).slice(0, 3)}</p>
+                          <p className="font-semibold">{coverage.label}</p>
+                        </div>
+                        <p className="mt-1">
+                          {coverage.staffCount} staff working
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="mt-3 text-xs text-slate-500">
+                  Red = open day with no staff, amber = one staff member, green = two or more staff, grey = business closed.
+                </p>
+              </div>
+
+              <div>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-slate-900">Break windows</p>
@@ -2387,6 +2503,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                   </div>
                 ))}
                 {breakWindowsDraft.length === 0 ? <p className="text-sm text-slate-600">No break windows yet.</p> : null}
+              </div>
               </div>
             </div>
           </div>

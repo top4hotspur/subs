@@ -338,7 +338,8 @@ Still local/mock in current product:
   6. staff breaks and staff leave block that staff member
   7. existing `SUBMITTED`/`CONFIRMED` subscriber bookings block overlapping slots where date/time/staff data exists
 - Slot generation uses 15-minute increments and applies the selected service duration plus buffer when checking conflicts.
-- This is still an availability preview milestone: it does not create confirmed bookings, take payments, send customer emails, or sync calendars.
+- The public site now presents generated slots as compact grouped start-time chips and can create confirmed bookings after the server rechecks availability.
+- Payment/prepayment, customer/staff login, amendment/reschedule handling, target staffing persistence, and calendar sync remain future milestones.
 
 ## Platform domain/go-live workflow milestone
 
@@ -376,3 +377,13 @@ Still local/mock in current product:
 - Customer and business notification emails are attempted fail-soft when a public booking is confirmed. Site-admin cancellation also attempts a customer cancellation email.
 - Amend/reschedule handling is still a future booking-management pass.
 - Payment/prepayment, customer login, staff login, calendar sync, and recurring booking fulfilment remain future milestones.
+
+## 2026-06-02 Rota Coverage and Compact Slot UI Note
+
+- Public subscriber sites group available times into `Morning`, `Afternoon`, and `Evening` and show start-time chips so short services do not create unusably long vertical lists.
+- The selected public chip remains highlighted and the booking form shows the full selected time range. If the visitor chose `Any available staff`, the selected summary says staff will be assigned automatically while preserving the internal staff assignment.
+- Site-admin rota helpers now separate intent:
+  - `Set Monday-Friday as working` turns weekdays on and applies sensible default times.
+  - `Copy Monday times to working weekdays` only copies times into weekdays that are already working.
+- Non-working rota days clear and persist unset start/end times.
+- The first `Staffing coverage` visualisation counts active staff whose rota overlaps business opening hours. It uses interim red/amber/green/grey logic until target staffing levels are stored.

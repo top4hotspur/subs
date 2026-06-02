@@ -31,6 +31,10 @@ type AvailabilityResponse = {
   error?: string;
 };
 
+type SlotGroupName = "Morning" | "Afternoon" | "Evening";
+
+const INITIAL_SLOTS_PER_GROUP = 16;
+
 type PublicSiteAvailabilityPreviewProps = {
   siteSlug: string;
   serviceId: string;
@@ -50,6 +54,13 @@ function toErrorMessage(error: string, status: number): string {
     return "Please confirm that you have read and accepted the booking and cancellation policy.";
   }
   return "Could not send booking request right now.";
+}
+
+function slotGroupName(startTime: string): SlotGroupName {
+  const hour = Number(startTime.slice(0, 2));
+  if (Number.isFinite(hour) && hour < 12) return "Morning";
+  if (Number.isFinite(hour) && hour < 17) return "Afternoon";
+  return "Evening";
 }
 
 export function PublicSiteAvailabilityPreview({
@@ -73,7 +84,34 @@ export function PublicSiteAvailabilityPreview({
   const [policyAccepted, setPolicyAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [expandedGroups, setExpandedGroups] = useState<Record<SlotGroupName, boolean>>({
+    Morning: false,
+    Afternoon: false,
+    Evening: false,
+  });
   const bookingFormRef = useRef<HTMLDivElement | null>(null);
+
+  const displaySlots = useMemo(() => {
+    if (staffId) return slots;
+    const byTime = new Map<string, PublicAvailabilitySlot>();
+    for (const slot of slots) {
+      const key = `${slot.date}-${slot.startTime}-${slot.endTime}`;
+      if (!byTime.has(key)) byTime.set(key, slot);
+    }
+    return Array.from(byTime.values());
+  }, [slots, staffId]);
+
+  const slotGroups = useMemo(() => {
+    const groups: Record<SlotGroupName, PublicAvailabilitySlot[]> = {
+      Morning: [],
+      Afternoon: [],
+      Evening: [],
+    };
+    for (const slot of displaySlots) {
+      groups[slotGroupName(slot.startTime)].push(slot);
+    }
+    return groups;
+  }, [displaySlots]);
 
   function selectSlot(slot: PublicAvailabilitySlot) {
     setSelectedSlot(slot);
@@ -107,6 +145,7 @@ export function PublicSiteAvailabilityPreview({
         return;
       }
       setSlots(body.slots ?? []);
+      setExpandedGroups({ Morning: false, Afternoon: false, Evening: false });
       setMessage((body.slots?.length ?? 0) > 0 ? "Available times found." : "No available times found for this date. Please try another date.");
     } catch {
       setSlots([]);
@@ -151,7 +190,7 @@ export function PublicSiteAvailabilityPreview({
       startDateTime: null,
     });
     setSuccessMessage(
-      `Your booking has been confirmed. ${serviceName} at ${appointment}${selectedSlot.staffName ? ` with ${selectedSlot.staffName}` : ""}.`,
+      `Your booking has been confirmed. ${serviceName} at ${appointment}${staffId && selectedSlot.staffName ? ` with ${selectedSlot.staffName}` : ""}.`,
     );
     setMessage(null);
     setCustomerName("");
@@ -216,24 +255,50 @@ export function PublicSiteAvailabilityPreview({
             {loading ? "Checking..." : `View times for ${serviceName}`}
           </button>
           {message ? <p className="text-xs text-slate-600">{message}</p> : null}
-          {slots.length > 0 ? (
-            <div className="grid gap-2 sm:grid-cols-2">
-              {slots.slice(0, 24).map((slot) => {
-                const selected = isSelectedSlot(slot);
+          {displaySlots.length > 0 ? (
+            <div className="space-y-3">
+              {(["Morning", "Afternoon", "Evening"] as SlotGroupName[]).map((groupName) => {
+                const groupSlots = slotGroups[groupName];
+                if (groupSlots.length === 0) return null;
+                const expanded = expandedGroups[groupName];
+                const visibleSlots = expanded ? groupSlots : groupSlots.slice(0, INITIAL_SLOTS_PER_GROUP);
+                const hiddenCount = groupSlots.length - visibleSlots.length;
                 return (
-                <button
-                  key={`${slot.staffMemberId}-${slot.startTime}`}
-                  type="button"
-                  className={
-                    selected
-                      ? "rounded-md border border-emerald-500 bg-emerald-50 px-3 py-2 text-left text-xs font-semibold text-emerald-950 shadow-sm ring-2 ring-emerald-200"
-                      : "rounded-md border border-teal-200 bg-white px-3 py-2 text-left text-xs font-semibold text-slate-800 hover:border-teal-400 hover:bg-teal-50"
-                  }
-                  onClick={() => selectSlot(slot)}
-                >
-                  <span className="block">{slot.startTime}-{slot.endTime}</span>
-                  {staffId ? <span className="block font-normal text-slate-500">{slot.staffName}</span> : null}
-                </button>
+                  <div key={groupName} className="rounded-lg border border-slate-200 bg-white p-2">
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <p className="text-xs font-semibold text-slate-800">{groupName}</p>
+                      <p className="text-[11px] text-slate-500">{groupSlots.length} time{groupSlots.length === 1 ? "" : "s"}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {visibleSlots.map((slot) => {
+                        const selected = isSelectedSlot(slot);
+                        return (
+                          <button
+                            key={`${slot.staffMemberId}-${slot.startTime}`}
+                            type="button"
+                            aria-pressed={selected}
+                            className={
+                              selected
+                                ? "rounded-full border border-emerald-500 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-950 shadow-sm ring-2 ring-emerald-200"
+                                : "rounded-full border border-teal-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 hover:border-teal-400 hover:bg-teal-50"
+                            }
+                            onClick={() => selectSlot(slot)}
+                          >
+                            {slot.startTime}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {hiddenCount > 0 ? (
+                      <button
+                        type="button"
+                        className="mt-2 text-xs font-semibold text-teal-700 underline"
+                        onClick={() => setExpandedGroups((current) => ({ ...current, [groupName]: true }))}
+                      >
+                        Show {hiddenCount} more time{hiddenCount === 1 ? "" : "s"}
+                      </button>
+                    ) : null}
+                  </div>
                 );
               })}
             </div>
@@ -246,6 +311,10 @@ export function PublicSiteAvailabilityPreview({
               <p className="mt-1 text-xs text-slate-600">
                 Complete your details to confirm this booking. No payment is taken online yet.
               </p>
+              <div className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-950">
+                <p className="font-semibold">Selected: {selectedSlot.startTime}-{selectedSlot.endTime}</p>
+                <p>{staffId ? `Staff: ${selectedSlot.staffName}` : "Staff will be assigned automatically."}</p>
+              </div>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 <label className="text-xs font-semibold text-slate-700">
                   Your name
