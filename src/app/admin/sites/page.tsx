@@ -3,7 +3,9 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
+  applyAdminSiteLifecycleAction,
   AdminTenantSiteSummary,
+  type AdminSiteLifecycleAction,
   createAdminTenantSiteFromSetupRequest,
   getAdminTenantSiteDetail,
   listAdminTenantSites,
@@ -17,6 +19,7 @@ import {
 import { formatGbp, formatOptional, formatUkDateTime } from "@/lib/ui/display-labels";
 import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
 import { AdminPillNav } from "@/components/admin/admin-pill-nav";
+import { lifecycleStatusLabel } from "@/lib/sites/site-lifecycle";
 
 const TASK_STATUS_OPTIONS = ["TODO", "IN_PROGRESS", "DONE", "BLOCKED", "SKIPPED"];
 
@@ -73,6 +76,13 @@ function getDomainOptionSummary(value?: string | null): string {
   if (value === "CUSTOMER_BUYS_DOMAIN") return "Customer buys domain";
   if (value === "WE_REGISTER_DOMAIN") return "We register/manage domain";
   return value;
+}
+
+function lifecycleActionLabel(action: AdminSiteLifecycleAction): string {
+  if (action === "MARK_DNS_INSTRUCTIONS_SENT") return "Mark DNS instructions sent";
+  if (action === "MARK_DOMAIN_READY") return "Mark domain configured/ready";
+  if (action === "MARK_SITE_LIVE") return "Mark site live";
+  return "Suspend site";
 }
 
 export default function AdminSitesPage() {
@@ -225,6 +235,25 @@ export default function AdminSitesPage() {
     await loadSiteDetail(selectedSiteId);
   }
 
+  async function runLifecycleAction(action: AdminSiteLifecycleAction): Promise<void> {
+    if (!selectedSiteId) return;
+    const confirmation =
+      action === "SUSPEND_SITE"
+        ? "Suspend this subscriber site? This does not cancel Stripe automatically and should only be used when platform access should be paused."
+        : `${lifecycleActionLabel(action)}? DNS/domain changes are still manual; this only updates platform tracking.`;
+    if (!window.confirm(confirmation)) return;
+
+    const result = await applyAdminSiteLifecycleAction(selectedSiteId, action);
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status));
+      return;
+    }
+
+    setMessage(`${lifecycleActionLabel(action)} completed.`);
+    await loadSites();
+    await loadSiteDetail(selectedSiteId);
+  }
+
   async function runDomainResolutionTest(): Promise<void> {
     const candidate = domainTestHost.trim();
     if (!candidate) {
@@ -346,9 +375,10 @@ export default function AdminSitesPage() {
                   <p className="font-semibold text-slate-900">{site.displayName}</p>
                   <div className="mt-1 grid gap-1 text-xs text-slate-600">
                     <p>Industry: {formatOptional(site.industrySlug)}</p>
-                    <p>Provisioning: {formatOptional(site.provisioningStatus)}</p>
-                    <p>Domain: {formatOptional(site.domainStatus)}</p>
-                    <p>Subscription: {formatOptional(site.subscriptionStatus)}</p>
+                    <p>Lifecycle: {lifecycleStatusLabel(site.status)}</p>
+                    <p>Provisioning: {lifecycleStatusLabel(site.provisioningStatus)}</p>
+                    <p>Domain: {lifecycleStatusLabel(site.domainStatus)}</p>
+                    <p>Subscription: {lifecycleStatusLabel(site.subscriptionStatus)}</p>
                     <p>Primary domain: {formatOptional(site.domainPrimary)}</p>
                     <p>WhatsApp add-on: {site.whatsappAddonEnabled ? "Enabled" : "Disabled"}</p>
                     <p>Created: {formatUkDateTime(site.createdAt)}</p>
@@ -368,9 +398,10 @@ export default function AdminSitesPage() {
               <div className="grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
                 <p><span className="font-semibold">Business:</span> {selectedSite.displayName}</p>
                 <p><span className="font-semibold">Industry:</span> {formatOptional(selectedSite.industrySlug)}</p>
-                <p><span className="font-semibold">Provisioning status:</span> {formatOptional(selectedSite.provisioningStatus)}</p>
-                <p><span className="font-semibold">Domain status:</span> {formatOptional(selectedSite.domainStatus)}</p>
-                <p><span className="font-semibold">Subscription status:</span> {formatOptional(selectedSite.subscriptionStatus)}</p>
+                <p><span className="font-semibold">Lifecycle status:</span> {lifecycleStatusLabel(selectedSite.status)}</p>
+                <p><span className="font-semibold">Provisioning status:</span> {lifecycleStatusLabel(selectedSite.provisioningStatus)}</p>
+                <p><span className="font-semibold">Domain status:</span> {lifecycleStatusLabel(selectedSite.domainStatus)}</p>
+                <p><span className="font-semibold">Subscription status:</span> {lifecycleStatusLabel(selectedSite.subscriptionStatus)}</p>
                 <p><span className="font-semibold">Primary domain:</span> {formatOptional(selectedSite.domainPrimary)}</p>
                 <p><span className="font-semibold">WhatsApp add-on:</span> {selectedSite.whatsappAddonEnabled ? "Enabled" : "Disabled"}</p>
                 <p><span className="font-semibold">Created:</span> {formatUkDateTime(selectedSite.createdAt)}</p>
@@ -385,6 +416,42 @@ export default function AdminSitesPage() {
                     /sites/{selectedSite.slug}
                   </Link>
                 </p>
+                <p>
+                  <span className="font-semibold">Subscriber admin:</span>{" "}
+                  <Link
+                    href={`/site-admin/${encodeURIComponent(selectedSite.slug)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sky-700 underline underline-offset-2"
+                  >
+                    /site-admin/{selectedSite.slug}
+                  </Link>
+                </p>
+              </div>
+              <div className="rounded-xl border border-sky-200 bg-sky-50 p-3">
+                <p className="text-sm font-semibold text-sky-950">Domain and go-live actions</p>
+                <p className="mt-1 text-xs text-sky-900">
+                  These actions update platform tracking only. Domain purchase, DNS records, certificate checks and final host routing are still manual/future work.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {([
+                    "MARK_DNS_INSTRUCTIONS_SENT",
+                    "MARK_DOMAIN_READY",
+                    "MARK_SITE_LIVE",
+                    "SUSPEND_SITE",
+                  ] as AdminSiteLifecycleAction[]).map((action) => (
+                    <button
+                      key={action}
+                      type="button"
+                      className={`${action === "SUSPEND_SITE" ? "rounded-md border border-rose-300 bg-white px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50" : `${outlineButtonClass} ${smallButtonClass}`}`}
+                      onClick={() => {
+                        void runLifecycleAction(action);
+                      }}
+                    >
+                      {lifecycleActionLabel(action)}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div>
                 <Link
@@ -408,7 +475,7 @@ export default function AdminSitesPage() {
                 <p className="text-sm font-semibold text-slate-900">Domain panel</p>
                 <div className="mt-2 grid gap-1 text-xs text-slate-700 sm:grid-cols-2">
                   <p><span className="font-semibold">Domain option:</span> {getDomainOptionSummary(detail.site.setupRequest?.domainOption)}</p>
-                  <p><span className="font-semibold">Domain status:</span> {formatOptional(selectedSite.domainStatus)}</p>
+                  <p><span className="font-semibold">Domain status:</span> {lifecycleStatusLabel(selectedSite.domainStatus)}</p>
                   <p><span className="font-semibold">Existing domain:</span> {formatOptional(detail.site.setupRequest?.existingDomain)}</p>
                   <p><span className="font-semibold">Desired domain:</span> {formatOptional(detail.site.setupRequest?.desiredDomain)}</p>
                 </div>
@@ -418,7 +485,7 @@ export default function AdminSitesPage() {
                   <div className="mt-2 space-y-1 text-xs text-slate-700">
                     {detail.domains.map((domain) => (
                       <p key={domain.id}>
-                        {domain.domain} ({domain.domainType}) - {domain.status}
+                        {domain.domain} ({domain.domainType}) - {lifecycleStatusLabel(domain.status)}
                         {domain.registrarNotes ? ` | ${domain.registrarNotes}` : ""}
                       </p>
                     ))}

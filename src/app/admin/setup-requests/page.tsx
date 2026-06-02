@@ -27,6 +27,7 @@ import {
   formatUkDateTime,
 } from "@/lib/ui/display-labels";
 import { getWebsiteSubscriptionOffer } from "@/lib/pricing/subscription-offer";
+import { lifecycleStatusLabel } from "@/lib/sites/site-lifecycle";
 import {
   dangerButtonClass,
   outlineButtonClass,
@@ -419,6 +420,29 @@ export default function AdminSetupRequestsPage() {
               {selectedRequest.tenantSite?.slug ? (
                 <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
                   <p className="font-semibold">Subscriber site created</p>
+                  <div className="mt-2 grid gap-1 text-xs sm:grid-cols-2">
+                    <p><span className="font-semibold">Preview route:</span> /sites/{selectedRequest.tenantSite.slug}</p>
+                    <p><span className="font-semibold">Subscriber admin:</span> /site-admin/{selectedRequest.tenantSite.slug}</p>
+                    <p><span className="font-semibold">Lifecycle:</span> {lifecycleStatusLabel(selectedRequest.tenantSite.status)}</p>
+                    <p><span className="font-semibold">Go-live:</span> {lifecycleStatusLabel(selectedRequest.tenantSite.provisioningStatus)}</p>
+                    <p><span className="font-semibold">Domain status:</span> {lifecycleStatusLabel(selectedRequest.tenantSite.domainStatus)}</p>
+                    <p><span className="font-semibold">Primary domain:</span> {formatOptional(selectedRequest.tenantSite.domainPrimary)}</p>
+                  </div>
+                  {selectedRequest.tenantSite.siteDomains?.length ? (
+                    <div className="mt-2 rounded-md border border-emerald-200 bg-white/70 px-3 py-2">
+                      <p className="text-xs font-semibold text-emerald-950">SiteDomain records</p>
+                      <div className="mt-1 space-y-1 text-xs">
+                        {selectedRequest.tenantSite.siteDomains.map((domain) => (
+                          <p key={domain.id}>
+                            {domain.domain} ({domain.domainType}) - {lifecycleStatusLabel(domain.status)}
+                            {domain.registrarNotes ? ` | ${domain.registrarNotes}` : ""}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-xs">No SiteDomain record yet. Confirm requested domain before go-live.</p>
+                  )}
                   <div className="mt-2 flex flex-wrap gap-2">
                     <Link
                       href={`/sites/${selectedRequest.tenantSite.slug}`}
@@ -431,6 +455,12 @@ export default function AdminSetupRequestsPage() {
                       className={`${primaryButtonClass} ${smallButtonClass}`}
                     >
                       Open subscriber admin
+                    </Link>
+                    <Link
+                      href={`/admin/sites?siteId=${encodeURIComponent(selectedRequest.tenantSite.id)}`}
+                      className={`${outlineButtonClass} ${smallButtonClass}`}
+                    >
+                      Manage domain/go-live
                     </Link>
                   </div>
                 </div>

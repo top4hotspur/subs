@@ -1031,3 +1031,33 @@ Notes:
 18. Confirm no booking is created merely by selecting the slot.
 19. Confirm the public page remains service-led and does not expose internal debug reasons.
 20. If an existing active booking is present for that staff/date/time, confirm overlapping slots are blocked in the preview.
+
+## 2026-06-02 Hosted Smoke Checks: Platform Domain and Go-Live Workflow
+
+1. Open `/admin/setup-requests`.
+2. Select a paid/provisioned setup request.
+3. Confirm the detail panel shows:
+   - requested domain/domain option
+   - linked tenant site slug
+   - lifecycle/go-live status
+   - primary domain
+   - SiteDomain records if available
+   - `/sites/[siteSlug]` preview link
+   - `/site-admin/[siteSlug]` subscriber-admin link
+   - `Manage domain/go-live` link.
+4. Open `/admin/sites` and select the same tenant site.
+5. Confirm the selected site detail shows:
+   - lifecycle status
+   - provisioning status
+   - domain status
+   - requested existing/desired domain
+   - SiteDomain records
+   - public preview link
+   - subscriber-admin link.
+6. Click `Mark DNS instructions sent` and confirm status/event/task state updates without claiming DNS was automated.
+7. Click `Mark domain configured/ready` and confirm the SiteDomain/domain status becomes ready.
+8. Click `Mark site live` and confirm the site lifecycle/provisioning status becomes live and the linked setup request moves to `SITE_LIVE`.
+9. Use the domain resolution tester with the stored domain and confirm it maps to the expected tenant when a matching SiteDomain exists.
+10. Confirm `/sites/[siteSlug]` still opens as the preview route.
+11. Confirm no DNS purchase, DNS record changes, AWS/hosting resource creation, or demo-data copying occurs in this pass.
+12. If testing suspension, click `Suspend site` only on a test tenant and confirm platform status changes; note that Stripe cancellation is not automatic.

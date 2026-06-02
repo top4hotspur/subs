@@ -7,6 +7,8 @@ type ResolvedTenantSite = {
   domain: string;
   domainType: string;
   domainStatus: string;
+  siteStatus?: string | null;
+  provisioningStatus?: string | null;
 };
 
 function trimProtocolAndPath(value: string): string {
@@ -56,6 +58,7 @@ function isLocalDevHost(host: string): boolean {
 
 export async function getTenantSiteByDomainHost(
   host: string,
+  options: { requireLive?: boolean } = {},
 ): Promise<ResolvedTenantSite | null> {
   const normalized = normalizeHost(host);
   if (!normalized || isLocalDevHost(normalized)) return null;
@@ -64,9 +67,9 @@ export async function getTenantSiteByDomainHost(
   const domainMatch = await prisma.siteDomain.findFirst({
     where: {
       domain: { in: candidates },
-      // Keep broad for current provisioning/testing statuses.
-      // Future hardening can restrict to connected/verified live statuses.
-      status: { notIn: ["ARCHIVED", "REMOVED", "DELETED"] },
+      status: options.requireLive
+        ? { in: ["LIVE", "DOMAIN_READY"] }
+        : { notIn: ["ARCHIVED", "REMOVED", "DELETED", "CANCELLED"] },
     },
     orderBy: [{ domainType: "asc" }, { createdAt: "asc" }],
     select: {
@@ -78,6 +81,8 @@ export async function getTenantSiteByDomainHost(
           id: true,
           slug: true,
           displayName: true,
+          status: true,
+          provisioningStatus: true,
         },
       },
     },
@@ -92,7 +97,16 @@ export async function getTenantSiteByDomainHost(
     domain: domainMatch.domain,
     domainType: domainMatch.domainType,
     domainStatus: domainMatch.status,
+    siteStatus: domainMatch.tenantSite.status,
+    provisioningStatus: domainMatch.tenantSite.provisioningStatus,
   };
+}
+
+export async function getLiveTenantSiteByDomainHost(host: string): Promise<ResolvedTenantSite | null> {
+  const match = await getTenantSiteByDomainHost(host, { requireLive: true });
+  if (!match) return null;
+  if (match.siteStatus !== "LIVE" && match.provisioningStatus !== "LIVE") return null;
+  return match;
 }
 
 export async function resolveTenantFromRequestHost(
@@ -104,4 +118,3 @@ export async function resolveTenantFromRequestHost(
     "";
   return getTenantSiteByDomainHost(hostHeader);
 }
-

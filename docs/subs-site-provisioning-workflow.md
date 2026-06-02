@@ -339,3 +339,30 @@ Still local/mock in current product:
   7. existing `SUBMITTED`/`CONFIRMED` subscriber bookings block overlapping slots where date/time/staff data exists
 - Slot generation uses 15-minute increments and applies the selected service duration plus buffer when checking conflicts.
 - This is still an availability preview milestone: it does not create confirmed bookings, take payments, send customer emails, or sync calendars.
+
+## Platform domain/go-live workflow milestone
+
+- Tenant/domain/subscription state remains centralised in existing models:
+  - `TenantSite`
+  - `SiteDomain`
+  - `SubscriptionRecord`
+  - `SiteStatusEvent`
+  - `SiteProvisioningTask`
+- No schema migration was required for the first go-live workflow. Statuses are stored as lifecycle strings in existing status fields.
+- Admin lifecycle actions are exposed through `POST /api/admin/sites/[id]/lifecycle`.
+- Supported actions:
+  - `MARK_DNS_INSTRUCTIONS_SENT`: marks domain work as pending/instructions sent and completes the DNS preparation task.
+  - `MARK_DOMAIN_READY`: marks domain/SiteDomain as configured and ready.
+  - `MARK_SITE_LIVE`: marks the tenant site live and updates the linked setup request to `SITE_LIVE`.
+  - `SUSPEND_SITE`: marks the tenant site/subscription/domain as suspended for platform tracking.
+- Domain purchase and DNS changes remain manual in this pass.
+- Runtime custom-domain design:
+  1. customer domain/subdomain points DNS to the shared MyExperiment.club app/hosting target
+  2. app reads the incoming `Host`/`x-forwarded-host` header
+  3. host is normalised by `src/lib/sites/tenant-resolver.ts`
+  4. `SiteDomain.domain` is matched, including root/www candidate handling
+  5. matched `SiteDomain` resolves to `TenantSite`
+  6. tenant-scoped public site is rendered from the shared app and central database
+- `getLiveTenantSiteByDomainHost()` is prepared for future live host routing; current debug tooling can still test broad domain matches before the domain routing switch is enabled.
+- `/sites/[siteSlug]` remains the safe preview route and does not require custom-domain routing to work.
+- Provisioning remains clean: no demo data is copied into paid subscriber sites.

@@ -37,7 +37,29 @@ export type BackendSetupRequestRecord = {
   paymentStartedAt?: string | null;
   paymentCompletedAt?: string | null;
   archivedAt?: string | null;
-  tenantSite?: { id: string; slug: string } | null;
+  tenantSite?: {
+    id: string;
+    slug: string;
+    status?: string | null;
+    provisioningStatus?: string | null;
+    subscriptionStatus?: string | null;
+    domainPrimary?: string | null;
+    domainStatus?: string | null;
+    siteDomains?: Array<{
+      id: string;
+      domain: string;
+      domainType: string;
+      status: string;
+      registrarNotes?: string | null;
+    }>;
+    subscriptions?: Array<{
+      id: string;
+      status: string;
+      setupFeeGbp: number;
+      monthlyFeeGbp: number;
+      domainFeeGbp: number;
+    }>;
+  } | null;
   notes?: string | null;
   createdAt: string;
   updatedAt: string;

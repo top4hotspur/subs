@@ -83,7 +83,12 @@ export async function getSetupRequestById(id: string) {
     include: {
       demoDraftSnapshot: true,
       events: { orderBy: { createdAt: "desc" } },
-      tenantSite: true,
+      tenantSite: {
+        include: {
+          siteDomains: true,
+          subscriptions: { orderBy: { createdAt: "desc" }, take: 1 },
+        },
+      },
     },
   });
 }
@@ -100,7 +105,12 @@ export async function getSetupRequestByIdForConfirmation(id: string, token: stri
     include: {
       demoDraftSnapshot: true,
       events: { orderBy: { createdAt: "desc" } },
-      tenantSite: true,
+      tenantSite: {
+        include: {
+          siteDomains: true,
+          subscriptions: { orderBy: { createdAt: "desc" }, take: 1 },
+        },
+      },
     },
   });
 
@@ -136,7 +146,12 @@ export async function listSetupRequests(options: Partial<ListSetupRequestsInput>
     },
     include: {
       demoDraftSnapshot: true,
-      tenantSite: true,
+      tenantSite: {
+        include: {
+          siteDomains: true,
+          subscriptions: { orderBy: { createdAt: "desc" }, take: 1 },
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
     take: parsed.take,

@@ -751,3 +751,28 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Public availability responses stay customer-friendly and do not expose internal setup/debug reasons.
 - Admin availability preview shows setup/debug reasons such as missing service duration, no active staff, no staff rota, business closure, staff leave, breaks, or existing booking conflicts.
 - Booking submission, payment/prepayment, customer login, staff login, email confirmations, recurring bookings, and calendar sync remain future milestones.
+
+## 2026-06-02 Platform Domain and Go-Live Workflow
+
+- Platform admin now tracks subscriber-site lifecycle using the existing tenant fields rather than a new model:
+  - `TenantSite.status`
+  - `TenantSite.provisioningStatus`
+  - `TenantSite.domainStatus`
+  - `SiteDomain.status`
+- New lifecycle vocabulary for the go-live path:
+  - `PROVISIONED`
+  - `DOMAIN_PENDING`
+  - `DOMAIN_READY`
+  - `LIVE`
+  - `SUSPENDED`
+  - `CANCELLED` where applicable
+- New paid subscriber sites are created as clean `PROVISIONED` tenant sites. If a requested domain exists, the initial domain state is `DOMAIN_PENDING`.
+- `/admin/setup-requests` now shows the linked tenant site's lifecycle, go-live state, primary domain, SiteDomain records, preview route, subscriber-admin route, and a link to manage domain/go-live.
+- `/admin/sites` now provides platform actions:
+  - mark DNS instructions sent
+  - mark domain configured/ready
+  - mark site live
+  - suspend site
+- These actions update platform tracking, SiteDomain status, provisioning tasks, and status events. They do not automate domain purchase, DNS updates, SSL/certificate configuration, or Stripe subscription cancellation.
+- `/sites/[siteSlug]` remains the platform preview route for provisioned subscriber sites.
+- Final production destination remains the customer's own domain once host/domain routing is enabled.

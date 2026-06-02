@@ -39,6 +39,12 @@ export type AdminTenantSiteSummary = {
   } | null;
 };
 
+export type AdminSiteLifecycleAction =
+  | "MARK_DNS_INSTRUCTIONS_SENT"
+  | "MARK_DOMAIN_READY"
+  | "MARK_SITE_LIVE"
+  | "SUSPEND_SITE";
+
 async function parseJsonSafe(response: Response): Promise<unknown> {
   try {
     return await response.json();
@@ -210,6 +216,33 @@ export async function updateAdminSiteTaskStatus(
       };
     }
     return { ok: true, task: body.task };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function applyAdminSiteLifecycleAction(
+  siteId: string,
+  action: AdminSiteLifecycleAction,
+): Promise<ClientResult<{ site: AdminTenantSiteSummary; action: AdminSiteLifecycleAction }>> {
+  try {
+    const response = await fetch(`/api/admin/sites/${encodeURIComponent(siteId)}/lifecycle`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
+    });
+    const body = (await parseJsonSafe(response)) as
+      | { ok?: boolean; site?: AdminTenantSiteSummary; action?: AdminSiteLifecycleAction; error?: string; details?: unknown }
+      | null;
+    if (!response.ok || !body?.ok || !body.site || !body.action) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_LIFECYCLE_ACTION_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, site: body.site, action: body.action };
   } catch {
     return { ok: false, error: "NETWORK_ERROR", status: 0 };
   }

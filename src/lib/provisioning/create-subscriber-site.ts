@@ -111,15 +111,15 @@ export async function createSubscriberSiteFromPaidSetupRequest(
     const domainPrimary =
       extractRequestedDomain(setupRequest.existingDomain) ??
       extractRequestedDomain(setupRequest.desiredDomain);
-    const domainStatus = domainPrimary ? "DETAILS_NEEDED" : "NOT_STARTED";
+    const domainStatus = domainPrimary ? "DOMAIN_PENDING" : "NOT_STARTED";
 
     const tenantSite = await tx.tenantSite.create({
       data: {
         slug,
         displayName: setupRequest.businessName,
         industrySlug: setupRequest.industrySlug,
-        status: "SITE_PROVISIONING",
-        provisioningStatus: "SITE_PROVISIONING",
+        status: "PROVISIONED",
+        provisioningStatus: "PROVISIONED",
         subscriptionStatus: "ACTIVE",
         domainStatus,
         domainPrimary,
@@ -146,14 +146,14 @@ export async function createSubscriberSiteFromPaidSetupRequest(
           },
         },
         update: {
-          status: "DETAILS_NEEDED",
+          status: "DOMAIN_PENDING",
           registrarNotes: "Created from paid setup request.",
         },
         create: {
           tenantSiteId: tenantSite.id,
           domain: domainPrimary,
           domainType: "PRIMARY",
-          status: "DETAILS_NEEDED",
+          status: "DOMAIN_PENDING",
           registrarNotes: "Created from paid setup request.",
         },
       });
@@ -232,4 +232,3 @@ export async function createSubscriberSiteFromPaidSetupRequest(
     };
   });
 }
-
