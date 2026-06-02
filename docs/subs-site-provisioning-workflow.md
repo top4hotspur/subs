@@ -106,7 +106,7 @@ Still local/mock in current product:
 - `/demo/[industry]` remains local/mock demo playground.
 
 ## Persisted booking flow (support/provisioning preview phase)
-- Tenant-scoped booking requests can now be created for a selected subscriber site.
+- Tenant-scoped booking records can now be created for a selected subscriber site.
 - Route used in this milestone:
   - `/admin/sites/[siteId]/preview/booking`
 - This route is platform-admin protected and intended to prove persisted booking rendering/creation before public live routing.
@@ -367,10 +367,12 @@ Still local/mock in current product:
 - `/sites/[siteSlug]` remains the safe preview route and does not require custom-domain routing to work.
 - Provisioning remains clean: no demo data is copied into paid subscriber sites.
 
-## 2026-06-02 Booking Request Provisioning Note
+## 2026-06-02 Booking Provisioning Note
 
-- Clean provisioned subscriber sites now have the first real guest booking request flow once the business owner has configured services, opening hours, staff, and rota.
-- Booking requests are stored as tenant-scoped `CustomerSiteBooking` rows and remain part of the shared app/central database model.
-- Booking requests are not copied from demos or localStorage.
-- Requests default to `REQUESTED`; the business owner reviews them in `/site-admin/[siteSlug]` before confirming/cancelling/completing.
+- Clean provisioned subscriber sites now have the first real guest booking flow once the business owner has configured services, opening hours, staff, and rota.
+- Public bookings are stored as tenant-scoped `CustomerSiteBooking` rows and remain part of the shared app/central database model.
+- Bookings are not copied from demos or localStorage.
+- Public slot bookings default to `CONFIRMED` after the server rechecks availability. Legacy `REQUESTED`/`SUBMITTED` records can still be confirmed by the business owner in `/site-admin/[siteSlug]`.
+- Customer and business notification emails are attempted fail-soft when a public booking is confirmed. Site-admin cancellation also attempts a customer cancellation email.
+- Amend/reschedule handling is still a future booking-management pass.
 - Payment/prepayment, customer login, staff login, calendar sync, and recurring booking fulfilment remain future milestones.

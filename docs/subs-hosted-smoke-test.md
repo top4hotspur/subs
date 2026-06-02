@@ -1090,21 +1090,23 @@ Notes:
 10. Select a specific staff member publicly and confirm showing that staff name on slots remains acceptable.
 11. Confirm public availability wording is limited to `Available times found.` or `No available times found for this date. Please try another date.` and does not expose internal debug reasons.
 
-## 2026-06-02 Hosted Smoke Checks: First Guest Booking Request Flow
+## 2026-06-02 Hosted Smoke Checks: First Guest Booking Flow
 
 1. Open `/site-admin/luna-hair-studio`.
 2. Ensure at least one active service, active staff member, business opening-hours day, and matching staff rota day exist.
 3. Open `/sites/luna-hair-studio`.
 4. Click `Check availability` for an active service.
-5. Select a valid date and choose an available slot.
+5. Select a valid date and choose an available slot. Confirm the selected slot is highlighted green and the page scrolls/focuses the booking form.
 6. Enter customer name, email, phone, and optional notes.
-7. Try submitting without accepting the booking/cancellation policy and confirm a validation error appears.
-8. Accept the policy and click `Send booking request`.
-9. Confirm the message says `Your booking request has been sent. The business will confirm your appointment.`
+7. Try submitting without accepting the booking/cancellation policy and confirm the message says `Please confirm that you have read and accepted the booking and cancellation policy.`
+8. Accept the policy and click `Confirm booking`.
+9. Confirm the message says `Your booking has been confirmed.` and includes the service/date/time/staff where assigned.
 10. Return to `/site-admin/luna-hair-studio`.
-11. Open `Bookings` and confirm the request appears with date/time, service, staff, customer contact details, notes, status, created time, and policy acceptance time.
+11. Open `Bookings` and confirm the booking appears as `CONFIRMED` with UK-formatted date/time, service, staff, customer contact details, notes, created time, and policy acceptance time.
 12. Return to `/sites/luna-hair-studio` and check the same service/date again.
-13. Confirm the selected/overlapping slot is no longer available while the request is `REQUESTED`.
+13. Confirm the selected/overlapping slot is no longer available while the booking is `CONFIRMED`.
 14. Cancel the booking in site-admin.
-15. Confirm the slot can become available again where opening hours, rota, closures, staff leave, and other active bookings allow.
-16. Confirm no payment is taken and no customer/staff account is required.
+15. Confirm cancellation succeeds and, where email is configured, the customer cancellation email is attempted fail-soft.
+16. Confirm the slot can become available again where opening hours, rota, closures, staff leave, and other active bookings allow.
+17. Confirm public booking creation attempts both `Your booking is confirmed` customer email and `New confirmed booking for [Business Name]` business email.
+18. Confirm no payment is taken and no customer/staff account is required. Staff login remains a footer-level `coming soon` placeholder until staff auth is built.

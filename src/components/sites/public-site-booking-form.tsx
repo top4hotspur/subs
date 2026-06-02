@@ -26,12 +26,12 @@ function toErrorMessage(error: string, status: number): string {
     return "That preferred slot is no longer available. Please choose another date/time.";
   }
   if (error === "VALIDATION_ERROR" || status === 400) {
-    return "Please check your details and try again.";
+    return "Please confirm that you have read and accepted the booking and cancellation policy.";
   }
   if (error === "SITE_NOT_FOUND" || status === 404) {
     return "This site is not available.";
   }
-  return "Could not submit booking request right now.";
+  return "Could not confirm booking right now.";
 }
 
 export function PublicSiteBookingForm({ siteSlug, services, staff }: PublicSiteBookingFormProps) {
@@ -55,7 +55,7 @@ export function PublicSiteBookingForm({ siteSlug, services, staff }: PublicSiteB
 
   async function submit(): Promise<void> {
     setSaving(true);
-    setMessage("Submitting booking request...");
+    setMessage("Confirming booking...");
 
     const selectedService = activeServices.find((item) => item.id === serviceId);
     const selectedStaff = selectableStaff.find((item) => item.id === staffMemberId);
@@ -80,7 +80,7 @@ export function PublicSiteBookingForm({ siteSlug, services, staff }: PublicSiteB
       return;
     }
 
-    setMessage("Your booking request has been submitted.");
+    setMessage("Your booking has been confirmed.");
     setCustomerName("");
     setCustomerEmail("");
     setCustomerPhone("");
@@ -96,7 +96,7 @@ export function PublicSiteBookingForm({ siteSlug, services, staff }: PublicSiteB
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="text-xl font-semibold text-slate-900">Book appointment</h2>
       <p className="mt-2 text-sm text-slate-600">
-        Choose a service and send your request. We&apos;ll confirm details with you.
+        Choose a service and time to confirm your booking. No payment is taken online yet.
       </p>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -191,6 +191,9 @@ export function PublicSiteBookingForm({ siteSlug, services, staff }: PublicSiteB
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
+        <p className="w-full text-sm text-slate-600">
+          Please read the booking and cancellation policy before submitting your booking.
+        </p>
         <label className="flex w-full items-start gap-2 text-sm text-slate-700">
           <input type="checkbox" className="mt-1" checked={policyAccepted} onChange={(event) => setPolicyAccepted(event.target.checked)} />
           <span>
@@ -208,7 +211,7 @@ export function PublicSiteBookingForm({ siteSlug, services, staff }: PublicSiteB
           }}
           disabled={saving}
         >
-          {saving ? "Submitting..." : "Submit booking request"}
+          {saving ? "Confirming..." : "Confirm booking"}
         </button>
         <Link
           href={`/sites/${encodeURIComponent(siteSlug)}`}

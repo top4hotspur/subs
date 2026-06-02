@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { outlineButtonClass, primaryButtonClass, smallButtonClass } from "@/lib/ui/button-styles";
 import { createPublicSiteBooking } from "@/lib/sites/public-site-bookings-client";
+import { formatBookingDateTime } from "@/lib/sites/customer-site-booking-display";
 
 type PublicAvailabilityStaff = {
   id: string;
@@ -46,7 +47,7 @@ function toErrorMessage(error: string, status: number): string {
     return "That slot is no longer available. Please choose another time.";
   }
   if (error === "VALIDATION_ERROR" || status === 400) {
-    return "Please check your details, accept the policy, and try again.";
+    return "Please confirm that you have read and accepted the booking and cancellation policy.";
   }
   return "Could not send booking request right now.";
 }
@@ -72,6 +73,24 @@ export function PublicSiteAvailabilityPreview({
   const [policyAccepted, setPolicyAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const bookingFormRef = useRef<HTMLDivElement | null>(null);
+
+  function selectSlot(slot: PublicAvailabilitySlot) {
+    setSelectedSlot(slot);
+    setSuccessMessage(null);
+    window.setTimeout(() => {
+      bookingFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      bookingFormRef.current?.focus({ preventScroll: true });
+    }, 0);
+  }
+
+  function isSelectedSlot(slot: PublicAvailabilitySlot): boolean {
+    return (
+      selectedSlot?.date === slot.date &&
+      selectedSlot?.startTime === slot.startTime &&
+      selectedSlot?.staffMemberId === slot.staffMemberId
+    );
+  }
 
   async function checkAvailability() {
     setLoading(true);
@@ -99,15 +118,15 @@ export function PublicSiteAvailabilityPreview({
 
   async function submitBookingRequest() {
     if (!selectedSlot) {
-      setMessage("Choose an available time before sending your request.");
+      setMessage("Choose an available time before confirming your booking.");
       return;
     }
     if (!policyAccepted) {
-      setMessage("Please accept the booking and cancellation policy before sending your request.");
+      setMessage("Please confirm that you have read and accepted the booking and cancellation policy.");
       return;
     }
     setSubmitting(true);
-    setMessage("Sending booking request...");
+    setMessage("Confirming booking...");
     const result = await createPublicSiteBooking(siteSlug, {
       serviceId,
       serviceName,
@@ -126,7 +145,14 @@ export function PublicSiteAvailabilityPreview({
       setMessage(toErrorMessage(result.error, result.status));
       return;
     }
-    setSuccessMessage("Your booking request has been sent. The business will confirm your appointment.");
+    const appointment = formatBookingDateTime({
+      preferredDate: selectedSlot.date,
+      preferredTime: selectedSlot.startTime,
+      startDateTime: null,
+    });
+    setSuccessMessage(
+      `Your booking has been confirmed. ${serviceName} at ${appointment}${selectedSlot.staffName ? ` with ${selectedSlot.staffName}` : ""}.`,
+    );
     setMessage(null);
     setCustomerName("");
     setCustomerEmail("");
@@ -192,29 +218,33 @@ export function PublicSiteAvailabilityPreview({
           {message ? <p className="text-xs text-slate-600">{message}</p> : null}
           {slots.length > 0 ? (
             <div className="grid gap-2 sm:grid-cols-2">
-              {slots.slice(0, 24).map((slot) => (
+              {slots.slice(0, 24).map((slot) => {
+                const selected = isSelectedSlot(slot);
+                return (
                 <button
                   key={`${slot.staffMemberId}-${slot.startTime}`}
                   type="button"
-                  className="rounded-md border border-teal-200 bg-white px-3 py-2 text-left text-xs font-semibold text-slate-800 hover:border-teal-400 hover:bg-teal-50"
-                  onClick={() => {
-                    setSelectedSlot(slot);
-                    setSuccessMessage(null);
-                  }}
+                  className={
+                    selected
+                      ? "rounded-md border border-emerald-500 bg-emerald-50 px-3 py-2 text-left text-xs font-semibold text-emerald-950 shadow-sm ring-2 ring-emerald-200"
+                      : "rounded-md border border-teal-200 bg-white px-3 py-2 text-left text-xs font-semibold text-slate-800 hover:border-teal-400 hover:bg-teal-50"
+                  }
+                  onClick={() => selectSlot(slot)}
                 >
                   <span className="block">{slot.startTime}-{slot.endTime}</span>
                   {staffId ? <span className="block font-normal text-slate-500">{slot.staffName}</span> : null}
                 </button>
-              ))}
+                );
+              })}
             </div>
           ) : null}
           {selectedSlot ? (
-            <div className="rounded-lg border border-teal-200 bg-white p-3">
+            <div ref={bookingFormRef} tabIndex={-1} className="scroll-mt-6 rounded-lg border border-teal-200 bg-white p-3 outline-none focus:ring-2 focus:ring-teal-200">
               <p className="text-sm font-semibold text-slate-900">
-                Request {selectedSlot.startTime}-{selectedSlot.endTime}
+                Confirm {selectedSlot.startTime}-{selectedSlot.endTime}
               </p>
               <p className="mt-1 text-xs text-slate-600">
-                Send your details and the business will confirm your appointment. No payment is taken here.
+                Complete your details to confirm this booking. No payment is taken online yet.
               </p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 <label className="text-xs font-semibold text-slate-700">
@@ -234,7 +264,10 @@ export function PublicSiteAvailabilityPreview({
                   <textarea className="mt-1 min-h-16 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={customerNotes} onChange={(event) => setCustomerNotes(event.target.value)} />
                 </label>
               </div>
-              <label className="mt-3 flex items-start gap-2 text-xs text-slate-700">
+              <p className="mt-3 text-xs text-slate-600">
+                Please read the booking and cancellation policy before submitting your booking.
+              </p>
+              <label className="mt-2 flex items-start gap-2 text-xs text-slate-700">
                 <input type="checkbox" className="mt-0.5" checked={policyAccepted} onChange={(event) => setPolicyAccepted(event.target.checked)} />
                 <span>
                   I have read and accept the{" "}
@@ -249,7 +282,7 @@ export function PublicSiteAvailabilityPreview({
                 onClick={() => void submitBookingRequest()}
                 disabled={submitting}
               >
-                {submitting ? "Sending..." : "Send booking request"}
+                {submitting ? "Confirming..." : "Confirm booking"}
               </button>
             </div>
           ) : null}

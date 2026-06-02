@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
-import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
+import { getOptionalServerEnv, isBackendPersistenceConfigured } from "@/lib/config/server-env";
 import { createCustomerSiteBooking } from "@/lib/sites/customer-site-booking-repository";
 import { createCustomerSiteBookingSchema } from "@/lib/sites/customer-site-booking-schema";
 import { calculateCustomerSiteAvailability } from "@/lib/sites/customer-site-availability";
 import { getCustomerSitePreviewDataBySlug } from "@/lib/sites/customer-site-preview-repository";
-import { tenantBookingCustomerConfirmation } from "@/lib/email/email-templates";
+import {
+  tenantBookingBusinessNotification,
+  tenantBookingCustomerConfirmation,
+} from "@/lib/email/email-templates";
 import { sendTransactionalEmail } from "@/lib/email/email-provider";
 
 function backendNotConfigured() {
@@ -13,6 +16,12 @@ function backendNotConfigured() {
     { ok: false, error: "BACKEND_PERSISTENCE_NOT_CONFIGURED" },
     { status: 503 },
   );
+}
+
+function absoluteSiteAdminUrl(siteSlug: string): string {
+  const baseUrl = getOptionalServerEnv("NEXT_PUBLIC_SITE_URL")?.replace(/\/+$/, "");
+  const path = `/site-admin/${encodeURIComponent(siteSlug)}`;
+  return baseUrl ? `${baseUrl}${path}` : path;
 }
 
 export async function POST(
@@ -50,6 +59,7 @@ export async function POST(
       ...parsed,
       staffMemberId: matchingSlot.staffMemberId,
       staffName: matchingSlot.staffName,
+      status: "CONFIRMED",
       source: "customer_site",
     });
     const siteName =
@@ -57,15 +67,32 @@ export async function POST(
       site.settings?.businessName ||
       site.tenantSite.displayName ||
       "Your business";
-    const bookingEmailStatus = booking.customerEmail
+    const siteSummary = {
+      siteName,
+      siteSlug: site.tenantSite.slug,
+      contactEmail: site.settings?.email ?? null,
+      contactPhone: site.settings?.phone ?? null,
+      adminUrl: absoluteSiteAdminUrl(site.tenantSite.slug),
+    };
+    const customerEmailStatus = booking.customerEmail
       ? await sendTransactionalEmail({
           to: booking.customerEmail,
-          ...tenantBookingCustomerConfirmation(booking, { siteName }),
+          ...tenantBookingCustomerConfirmation(booking, siteSummary),
           replyTo: site.settings?.email ?? undefined,
         })
       : { ok: false as const, skipped: true as const, reason: "EMAIL_NOT_CONFIGURED" as const };
+    const businessEmailStatus = site.settings?.email
+      ? await sendTransactionalEmail({
+          to: site.settings.email,
+          ...tenantBookingBusinessNotification(booking, siteSummary),
+          replyTo: booking.customerEmail ?? undefined,
+        })
+      : { ok: false as const, skipped: true as const, reason: "EMAIL_NOT_CONFIGURED" as const };
 
-    return NextResponse.json({ ok: true, booking, emailStatus: bookingEmailStatus }, { status: 201 });
+    return NextResponse.json(
+      { ok: true, booking, emailStatus: { customer: customerEmailStatus, business: businessEmailStatus } },
+      { status: 201 },
+    );
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(

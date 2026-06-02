@@ -39,6 +39,7 @@ import type {
   CustomerSiteStaffRotaDayRecord,
 } from "@/lib/sites/customer-site-scheduling-types";
 import type { CustomerSiteBookingRecord } from "@/lib/sites/customer-site-booking-types";
+import { formatBookingDateTime, formatUkDateTime } from "@/lib/sites/customer-site-booking-display";
 import type { CustomerSiteAvailabilityResult } from "@/lib/sites/customer-site-availability";
 import {
   mapAppearanceToTheme,
@@ -2653,7 +2654,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <h3 className="text-lg font-semibold text-slate-900">Bookings</h3>
           <p className="mt-1 text-sm text-slate-600">
-            Review customer booking requests and update their basic status. Payment handling is not connected yet.
+            Review confirmed customer bookings and update their basic status. Payment handling is not connected yet.
           </p>
           <div className="mt-3 space-y-2">
             {bookings.length === 0 ? (
@@ -2665,15 +2666,14 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     <div>
                       <p className="font-semibold text-slate-900">{booking.customerName}</p>
                       <p>
-                        {booking.serviceName ?? "Service not set"} | {booking.preferredDate ?? "Date not set"}{" "}
-                        {booking.preferredTime ?? ""}
+                        {booking.serviceName ?? "Service not set"} | {formatBookingDateTime(booking)}
                       </p>
                       <p>Staff: {booking.staffName ?? "Unassigned"}</p>
                       <p>Email: {booking.customerEmail ?? "Not provided"}</p>
                       <p>Phone: {booking.customerPhone ?? "Not provided"}</p>
                       {booking.notes ? <p>Notes: {booking.notes}</p> : null}
-                      <p>Created: {new Date(booking.createdAt).toLocaleString("en-GB")}</p>
-                      <p>Policy accepted: {booking.policyAcceptedAt ? new Date(booking.policyAcceptedAt).toLocaleString("en-GB") : "Not recorded"}</p>
+                      <p>Created: {formatUkDateTime(booking.createdAt)}</p>
+                      <p>Policy accepted: {formatUkDateTime(booking.policyAcceptedAt)}</p>
                     </div>
                     <div className="min-w-40 text-right">
                       <span className="inline-flex rounded-full border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-800">
@@ -2690,7 +2690,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     ) : null}
                     {booking.status !== "CANCELLED" && booking.status !== "COMPLETED" ? (
                       <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void updateBookingStatus(booking.id, "CANCELLED")}>
-                        Cancel
+                        Cancel booking
                       </button>
                     ) : null}
                     {booking.status !== "COMPLETED" && booking.status !== "CANCELLED" ? (
@@ -2698,6 +2698,9 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                         Mark completed
                       </button>
                     ) : null}
+                    <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} disabled title="Booking amendments are planned for a later booking-management pass.">
+                      Amend booking (coming soon)
+                    </button>
                   </div>
                 </div>
               ))

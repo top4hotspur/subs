@@ -795,16 +795,18 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Public availability hides staff names when the customer chooses `Any available staff`; staff names remain visible in admin preview and when a customer explicitly selects a specific staff member.
 - Public availability wording remains customer-safe and does not expose internal debug reasons.
 
-## 2026-06-02 First Guest Booking Request Flow
+## 2026-06-02 First Guest Booking Flow
 
-- Subscriber public sites now let a visitor turn an available slot into a stored tenant-scoped booking request.
-- The request flow starts from `/sites/[siteSlug]` service availability:
+- Subscriber public sites now let a visitor turn an available slot into a stored tenant-scoped confirmed booking.
+- The booking flow starts from `/sites/[siteSlug]` service availability:
   1. customer checks availability for a service
   2. customer selects a date, optional staff member, and available slot
   3. customer enters name, email, phone, optional notes, and accepts the booking/cancellation policy
-  4. the site stores a `CustomerSiteBooking` request with status `REQUESTED`
+  4. the site stores a `CustomerSiteBooking` with status `CONFIRMED`
 - No payment, prepayment, customer login, staff login, or recurring booking creation is implemented in this milestone.
 - Server-side booking creation recalculates availability immediately before inserting the booking. The client-selected slot is not trusted by itself.
-- When the customer chooses `Any available staff`, the public UI can hide staff names, but the selected slot still carries a staff member internally so the request can block availability correctly.
+- When the customer chooses `Any available staff`, the public UI hides staff names, but the selected slot still carries a staff member internally so the booking can block availability correctly.
 - `REQUESTED`, legacy `SUBMITTED`, and `CONFIRMED` booking records block future availability. `CANCELLED` bookings do not block slots.
-- Subscriber admins can view booking requests in `/site-admin/[siteSlug]` and mark them confirmed, cancelled, or completed.
+- Public booking confirmation sends fail-soft transactional emails to the customer and the business/site admin when email is configured. The booking still succeeds if email delivery fails.
+- Subscriber admins can view bookings in `/site-admin/[siteSlug]` and mark legacy requests confirmed, cancel bookings, or mark bookings completed. Booking amendment is intentionally a future booking-management pass.
+- Cancelling a booking from site-admin attempts a fail-soft customer cancellation email. Marking completed does not send email.

@@ -43,7 +43,7 @@ export const createCustomerSiteBookingSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["policyAccepted"],
-        message: "Please accept the booking and cancellation policy.",
+        message: "Please confirm that you have read and accepted the booking and cancellation policy.",
       });
     }
   });

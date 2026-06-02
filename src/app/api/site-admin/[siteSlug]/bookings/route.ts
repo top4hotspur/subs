@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ZodError } from "zod";
 import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
 import { resolveSiteAdminTenantBySlug } from "@/lib/auth/site-admin-tenant";
 import {
+  getCustomerSiteBookingById,
   listCustomerSiteBookings,
   updateCustomerSiteBookingStatus,
 } from "@/lib/sites/customer-site-booking-repository";
 import { updateCustomerSiteBookingStatusSchema } from "@/lib/sites/customer-site-booking-schema";
-import { ZodError } from "zod";
+import { getCustomerSitePreviewDataBySlug } from "@/lib/sites/customer-site-preview-repository";
+import {
+  tenantBookingCustomerCancellation,
+  tenantBookingCustomerConfirmation,
+} from "@/lib/email/email-templates";
+import { sendTransactionalEmail } from "@/lib/email/email-provider";
 
 function backendNotConfigured() {
   return NextResponse.json(
@@ -64,8 +71,34 @@ export async function PATCH(
       paymentStatus: body?.paymentStatus,
       notes: body?.notes,
     });
+    const existing = await getCustomerSiteBookingById(resolved.tenantSiteId, parsed.bookingId);
     const booking = await updateCustomerSiteBookingStatus(resolved.tenantSiteId, parsed);
-    return NextResponse.json({ ok: true, booking });
+    const site = await getCustomerSitePreviewDataBySlug(siteSlug);
+    const siteName =
+      site?.settings?.siteDisplayName ||
+      site?.settings?.businessName ||
+      site?.tenantSite.displayName ||
+      "Your business";
+    const siteSummary = {
+      siteName,
+      siteSlug: site?.tenantSite.slug ?? siteSlug,
+      contactEmail: site?.settings?.email ?? null,
+      contactPhone: site?.settings?.phone ?? null,
+    };
+    const shouldSendCustomerEmail =
+      Boolean(booking.customerEmail) &&
+      ((parsed.status === "CANCELLED" && existing?.status !== "CANCELLED") ||
+        (parsed.status === "CONFIRMED" && existing?.status !== "CONFIRMED"));
+    const emailStatus = shouldSendCustomerEmail
+      ? await sendTransactionalEmail({
+          to: booking.customerEmail ?? "",
+          ...(parsed.status === "CANCELLED"
+            ? tenantBookingCustomerCancellation(booking, siteSummary)
+            : tenantBookingCustomerConfirmation(booking, siteSummary)),
+          replyTo: site?.settings?.email ?? undefined,
+        })
+      : { ok: false as const, skipped: true as const, reason: "EMAIL_NOT_CONFIGURED" as const };
+    return NextResponse.json({ ok: true, booking, emailStatus });
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(
