@@ -40,6 +40,7 @@ type CalculateAvailabilityInput = {
   serviceId: string;
   staffId?: string | null;
   date: string;
+  excludeBookingId?: string | null;
   includeDebug?: boolean;
 };
 
@@ -149,6 +150,7 @@ export async function calculateCustomerSiteAvailability(
         where: {
           preferredDate: date,
           status: { in: ACTIVE_BOOKING_STATUSES },
+          ...(input.excludeBookingId ? { id: { not: input.excludeBookingId } } : {}),
         },
       },
     },

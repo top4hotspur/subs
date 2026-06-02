@@ -3,15 +3,21 @@ import { ZodError } from "zod";
 import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
 import { resolveSiteAdminTenantBySlug } from "@/lib/auth/site-admin-tenant";
 import {
+  amendCustomerSiteBooking,
   getCustomerSiteBookingById,
   listCustomerSiteBookings,
   updateCustomerSiteBookingStatus,
 } from "@/lib/sites/customer-site-booking-repository";
-import { updateCustomerSiteBookingStatusSchema } from "@/lib/sites/customer-site-booking-schema";
+import {
+  amendCustomerSiteBookingSchema,
+  updateCustomerSiteBookingStatusSchema,
+} from "@/lib/sites/customer-site-booking-schema";
+import { calculateCustomerSiteAvailability } from "@/lib/sites/customer-site-availability";
 import { getCustomerSitePreviewDataBySlug } from "@/lib/sites/customer-site-preview-repository";
 import {
   tenantBookingCustomerCancellation,
   tenantBookingCustomerConfirmation,
+  tenantBookingCustomerUpdated,
 } from "@/lib/email/email-templates";
 import { sendTransactionalEmail } from "@/lib/email/email-provider";
 
@@ -65,14 +71,80 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const parsed = updateCustomerSiteBookingStatusSchema.parse({
-      bookingId: body?.bookingId,
-      status: body?.status,
-      paymentStatus: body?.paymentStatus,
-      notes: body?.notes,
-    });
-    const existing = await getCustomerSiteBookingById(resolved.tenantSiteId, parsed.bookingId);
-    const booking = await updateCustomerSiteBookingStatus(resolved.tenantSiteId, parsed);
+    const action = body?.action === "amend" ? "amend" : "status";
+    let booking;
+    let emailKind: "updated" | "cancelled" | "confirmed" | null = null;
+    let existing;
+    if (action === "amend") {
+      const parsed = amendCustomerSiteBookingSchema.parse({
+        bookingId: body?.bookingId,
+        customerName: body?.customerName,
+        customerEmail: body?.customerEmail,
+        customerPhone: body?.customerPhone,
+        notes: body?.notes,
+        status: body?.status,
+        serviceId: body?.serviceId,
+        staffMemberId: body?.staffMemberId,
+        preferredDate: body?.preferredDate,
+        preferredTime: body?.preferredTime,
+      });
+      existing = await getCustomerSiteBookingById(resolved.tenantSiteId, parsed.bookingId);
+      if (!existing) {
+        return NextResponse.json({ ok: false, error: "BOOKING_NOT_FOUND" }, { status: 404 });
+      }
+      if (existing.status === "CANCELLED" || existing.status === "COMPLETED") {
+        return NextResponse.json({ ok: false, error: "BOOKING_AMEND_NOT_ALLOWED" }, { status: 400 });
+      }
+      const wantsReschedule = Boolean(parsed.serviceId || parsed.preferredDate || parsed.preferredTime || parsed.staffMemberId !== undefined);
+      if (wantsReschedule) {
+        const serviceId = parsed.serviceId ?? existing.serviceId ?? "";
+        const preferredDate = parsed.preferredDate ?? existing.preferredDate ?? "";
+        const preferredTime = parsed.preferredTime ?? existing.preferredTime ?? "";
+        const staffId = parsed.staffMemberId === undefined ? existing.staffMemberId : parsed.staffMemberId;
+        const availability = await calculateCustomerSiteAvailability({
+          siteSlug,
+          serviceId,
+          staffId,
+          date: preferredDate,
+          excludeBookingId: existing.id,
+          includeDebug: true,
+        });
+        const matchingSlot = availability.slots.find(
+          (slot) =>
+            slot.serviceId === serviceId &&
+            (!staffId || slot.staffMemberId === staffId) &&
+            slot.date === preferredDate &&
+            slot.startTime === preferredTime,
+        );
+        if (!matchingSlot) {
+          return NextResponse.json({ ok: false, error: "BOOKING_SLOT_UNAVAILABLE" }, { status: 409 });
+        }
+        booking = await amendCustomerSiteBooking(resolved.tenantSiteId, {
+          ...parsed,
+          serviceId,
+          preferredDate,
+          preferredTime,
+          staffMemberId: matchingSlot.staffMemberId,
+        });
+      } else {
+        booking = await amendCustomerSiteBooking(resolved.tenantSiteId, parsed);
+      }
+      emailKind = "updated";
+    } else {
+      const parsed = updateCustomerSiteBookingStatusSchema.parse({
+        bookingId: body?.bookingId,
+        status: body?.status,
+        paymentStatus: body?.paymentStatus,
+        notes: body?.notes,
+      });
+      existing = await getCustomerSiteBookingById(resolved.tenantSiteId, parsed.bookingId);
+      if (!existing) {
+        return NextResponse.json({ ok: false, error: "BOOKING_NOT_FOUND" }, { status: 404 });
+      }
+      booking = await updateCustomerSiteBookingStatus(resolved.tenantSiteId, parsed);
+      if (parsed.status === "CANCELLED" && existing.status !== "CANCELLED") emailKind = "cancelled";
+      if (parsed.status === "CONFIRMED" && existing.status !== "CONFIRMED") emailKind = "confirmed";
+    }
     const site = await getCustomerSitePreviewDataBySlug(siteSlug);
     const siteName =
       site?.settings?.siteDisplayName ||
@@ -86,13 +158,13 @@ export async function PATCH(
       contactPhone: site?.settings?.phone ?? null,
     };
     const shouldSendCustomerEmail =
-      Boolean(booking.customerEmail) &&
-      ((parsed.status === "CANCELLED" && existing?.status !== "CANCELLED") ||
-        (parsed.status === "CONFIRMED" && existing?.status !== "CONFIRMED"));
+      Boolean(booking.customerEmail) && emailKind !== null;
     const emailStatus = shouldSendCustomerEmail
       ? await sendTransactionalEmail({
           to: booking.customerEmail ?? "",
-          ...(parsed.status === "CANCELLED"
+          ...(emailKind === "updated"
+            ? tenantBookingCustomerUpdated(booking, siteSummary)
+            : emailKind === "cancelled"
             ? tenantBookingCustomerCancellation(booking, siteSummary)
             : tenantBookingCustomerConfirmation(booking, siteSummary)),
           replyTo: site?.settings?.email ?? undefined,

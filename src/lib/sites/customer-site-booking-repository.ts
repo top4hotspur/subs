@@ -2,6 +2,7 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import {
+  amendCustomerSiteBookingSchema,
   createCustomerSiteBookingSchema,
   listCustomerSiteBookingsSchema,
   updateCustomerSiteBookingStatusSchema,
@@ -75,6 +76,16 @@ async function getTenantService(tenantSiteId: string, serviceId: string) {
     throw new Error("BOOKING_SERVICE_UNAVAILABLE");
   }
   return { ...row, durationMinutes: row.durationMinutes };
+}
+
+async function getTenantStaffName(tenantSiteId: string, staffMemberId?: string | null): Promise<string | null> {
+  if (!staffMemberId) return null;
+  const row = await prisma.customerSiteStaffMember.findFirst({
+    where: { id: staffMemberId, tenantSiteId, active: true },
+    select: { displayName: true },
+  });
+  if (!row) throw new Error("Invalid staff member for tenant site");
+  return row.displayName;
 }
 
 async function assertTenantStaff(tenantSiteId: string, staffMemberId?: string): Promise<void> {
@@ -198,4 +209,54 @@ export async function updateCustomerSiteBookingStatus(
   });
   if (!found) throw new Error("BOOKING_NOT_FOUND");
   return serializeBooking(found);
+}
+
+export async function amendCustomerSiteBooking(
+  tenantSiteId: string,
+  input: z.infer<typeof amendCustomerSiteBookingSchema>,
+): Promise<CustomerSiteBookingRecord> {
+  const parsedTenant = parseOrThrow(tenantSiteIdSchema, { tenantSiteId }, "tenant site id");
+  const parsed = parseOrThrow(amendCustomerSiteBookingSchema, input, "amend booking");
+
+  const existing = await prisma.customerSiteBooking.findFirst({
+    where: { id: parsed.bookingId, tenantSiteId: parsedTenant.tenantSiteId },
+  });
+  if (!existing) throw new Error("BOOKING_NOT_FOUND");
+  if (existing.status === "CANCELLED" || existing.status === "COMPLETED") {
+    throw new Error("BOOKING_AMEND_NOT_ALLOWED");
+  }
+
+  const serviceId = parsed.serviceId ?? existing.serviceId;
+  if (!serviceId) throw new Error("BOOKING_SERVICE_UNAVAILABLE");
+  const service = await getTenantService(parsedTenant.tenantSiteId, serviceId);
+  const staffMemberId =
+    parsed.staffMemberId === undefined ? existing.staffMemberId : parsed.staffMemberId;
+  const staffName = await getTenantStaffName(parsedTenant.tenantSiteId, staffMemberId);
+  const preferredDate = parsed.preferredDate ?? existing.preferredDate;
+  const preferredTime = parsed.preferredTime ?? existing.preferredTime;
+  if (!preferredDate || !preferredTime) throw new Error("BOOKING_TIME_REQUIRED");
+
+  const startDateTime = toUtcDateTime(preferredDate, preferredTime);
+  const endDateTime = new Date(startDateTime.getTime() + service.durationMinutes * 60 * 1000);
+
+  const row = await prisma.customerSiteBooking.update({
+    where: { id: parsed.bookingId },
+    data: {
+      customerName: parsed.customerName ?? undefined,
+      customerEmail: parsed.customerEmail ?? undefined,
+      customerPhone: parsed.customerPhone ?? undefined,
+      notes: parsed.notes === undefined ? undefined : parsed.notes,
+      status: parsed.status ?? undefined,
+      serviceId: service.id,
+      serviceName: service.name,
+      preferredDate,
+      preferredTime,
+      startDateTime,
+      endDateTime,
+      staffMemberId,
+      staffName,
+    },
+  });
+
+  return serializeBooking(row);
 }

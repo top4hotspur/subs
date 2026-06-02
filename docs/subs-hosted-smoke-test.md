@@ -1117,3 +1117,24 @@ Notes:
 16. Confirm the slot can become available again where opening hours, rota, closures, staff leave, and other active bookings allow.
 17. Confirm public booking creation attempts both `Your booking is confirmed` customer email and `New confirmed booking for [Business Name]` business email.
 18. Confirm no payment is taken and no customer/staff account is required. Staff login remains a footer-level `coming soon` placeholder until staff auth is built.
+
+## 2026-06-02 Hosted Smoke Checks: Admin Booking Amend / Reschedule
+
+1. Open `/sites/luna-hair-studio`.
+2. Create a confirmed booking for a test service/date/time.
+3. Open `/site-admin/luna-hair-studio`.
+4. Open `Bookings`.
+5. Click `Amend / reschedule` on the active booking.
+6. Amend customer phone and notes, then save.
+7. Reload and confirm the changed phone/notes persist.
+8. Click `Amend / reschedule` again.
+9. Select the same service/staff/date and click `Check reschedule times`.
+10. Confirm the current booking does not block itself in the returned availability.
+11. Select a different available slot and save.
+12. Confirm the booking date/time updates in UK format.
+13. Return to `/sites/luna-hair-studio`.
+14. Confirm the old slot can become available again where rota/opening hours allow.
+15. Confirm the new slot is blocked.
+16. Try rescheduling into a slot already occupied by another active booking and confirm it is blocked or rejected.
+17. Confirm customer update email is attempted with subject `Your booking has been updated` when email is configured.
+18. Confirm completed/cancelled bookings cannot be amended in this pass.

@@ -186,6 +186,32 @@ ${site.contactEmail || site.contactPhone ? `<p>${site.contactEmail ? `Email: ${e
   return { subject, text, html };
 }
 
+export function tenantBookingCustomerUpdated(
+  booking: CustomerSiteBookingRecord,
+  site: SiteSummaryForEmail,
+) {
+  const subject = "Your booking has been updated";
+  const appointment = formatBookingDateTime(booking);
+  const text = [
+    `Your booking with ${site.siteName} has been updated.`,
+    "",
+    `Service: ${booking.serviceName || "-"}`,
+    `Date/time: ${appointment}`,
+    `Staff: ${booking.staffName || "-"}`,
+    "",
+    site.contactEmail ? `Business email: ${site.contactEmail}` : "",
+    site.contactPhone ? `Business phone: ${site.contactPhone}` : "",
+    "Please contact the business if you have any questions.",
+  ].filter(Boolean).join("\n");
+  const html = `<p>Your booking with <strong>${escapeHtml(site.siteName)}</strong> has been updated.</p>
+<p><strong>Service:</strong> ${escapeHtml(booking.serviceName || "-")}<br/>
+<strong>Date/time:</strong> ${escapeHtml(appointment)}<br/>
+<strong>Staff:</strong> ${escapeHtml(booking.staffName || "-")}</p>
+${site.contactEmail || site.contactPhone ? `<p>${site.contactEmail ? `Email: ${escapeHtml(site.contactEmail)}<br/>` : ""}${site.contactPhone ? `Phone: ${escapeHtml(site.contactPhone)}` : ""}</p>` : ""}
+<p>Please contact the business if you have any questions.</p>`;
+  return { subject, text, html };
+}
+
 export function businessAdminAccessHandoverEmail(input: BusinessAdminAccessEmailInput) {
   const subject = `Your ${input.businessName} website admin access`;
   const text = [

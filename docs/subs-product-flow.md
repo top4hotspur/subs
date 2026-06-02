@@ -815,3 +815,13 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Public booking confirmation sends fail-soft transactional emails to the customer and the business/site admin when email is configured. The booking still succeeds if email delivery fails.
 - Subscriber admins can view bookings in `/site-admin/[siteSlug]` and mark legacy requests confirmed, cancel bookings, or mark bookings completed. Booking amendment is intentionally a future booking-management pass.
 - Cancelling a booking from site-admin attempts a fail-soft customer cancellation email. Marking completed does not send email.
+
+## 2026-06-02 Admin Booking Amend and Reschedule
+
+- Subscriber admins can now amend active booking details from `/site-admin/[siteSlug]` without leaving the Bookings section.
+- Editable fields include customer name, email, phone, notes, status, service, staff, and date/time through the reschedule picker.
+- Rescheduling uses the same tenant-scoped availability calculator as public booking. The booking being edited is excluded as a self-conflict, while other active bookings, business hours, rota, breaks, closures, and staff leave still block slots.
+- Saving a reschedule rechecks availability server-side; if the slot has been taken, the admin sees a clear unavailable-slot message.
+- Confirmed bookings remain `CONFIRMED` after amendment unless the admin explicitly changes status. Completed/cancelled bookings are not amendable in this first pass.
+- Customer update emails are attempted fail-soft with subject `Your booking has been updated`. The booking update still succeeds if email delivery fails.
+- Manual time override, customer self-service rescheduling, payment/prepayment, recurring booking amendments, and audit-history events remain future milestones.

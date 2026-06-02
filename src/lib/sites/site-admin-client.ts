@@ -360,9 +360,47 @@ export async function updateSiteAdminBookingStatus(
   }
 }
 
+export async function amendSiteAdminBooking(
+  siteSlug: string,
+  input: {
+    bookingId: string;
+    customerName?: string;
+    customerEmail?: string;
+    customerPhone?: string;
+    notes?: string | null;
+    status?: CustomerSiteBookingRecord["status"];
+    serviceId?: string;
+    staffMemberId?: string | null;
+    preferredDate?: string;
+    preferredTime?: string;
+  },
+): Promise<ClientResult<{ booking: CustomerSiteBookingRecord }>> {
+  try {
+    const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/bookings`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "amend", ...input }),
+    });
+    const body = (await parseJsonSafe(response)) as
+      | { ok?: boolean; booking?: CustomerSiteBookingRecord; error?: string; details?: unknown }
+      | null;
+    if (!response.ok || !body?.ok || !body.booking) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_BOOKING_AMEND_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, booking: body.booking };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
 export async function getSiteAdminAvailability(
   siteSlug: string,
-  options: { serviceId: string; staffId?: string | null; date: string },
+  options: { serviceId: string; staffId?: string | null; date: string; excludeBookingId?: string | null },
 ): Promise<ClientResult<{ availability: CustomerSiteAvailabilityResult }>> {
   try {
     const params = new URLSearchParams({
@@ -370,6 +408,7 @@ export async function getSiteAdminAvailability(
       date: options.date,
     });
     if (options.staffId) params.set("staffId", options.staffId);
+    if (options.excludeBookingId) params.set("excludeBookingId", options.excludeBookingId);
     const response = await fetch(
       `/api/site-admin/${encodeURIComponent(siteSlug)}/availability?${params.toString()}`,
     );

@@ -26,6 +26,7 @@ export async function GET(
     const serviceId = request.nextUrl.searchParams.get("serviceId") ?? "";
     const staffId = request.nextUrl.searchParams.get("staffId") || null;
     const date = request.nextUrl.searchParams.get("date") ?? "";
+    const excludeBookingId = request.nextUrl.searchParams.get("excludeBookingId") || null;
 
     if (!serviceId || !date) {
       return NextResponse.json(
@@ -39,6 +40,7 @@ export async function GET(
       serviceId,
       staffId,
       date,
+      excludeBookingId,
       includeDebug: true,
     });
 

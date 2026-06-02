@@ -55,6 +55,19 @@ export const updateCustomerSiteBookingStatusSchema = z.object({
   notes: z.string().trim().max(2000).optional(),
 });
 
+export const amendCustomerSiteBookingSchema = z.object({
+  bookingId: cuidSchema,
+  customerName: z.string().trim().min(1).max(120).optional(),
+  customerEmail: z.string().trim().email().max(320).optional(),
+  customerPhone: z.string().trim().min(5).max(40).optional(),
+  notes: z.string().trim().max(2000).nullable().optional(),
+  status: bookingStatusSchema.optional(),
+  serviceId: cuidSchema.optional(),
+  preferredDate: dateSchema.optional(),
+  preferredTime: timeSchema.optional(),
+  staffMemberId: cuidSchema.nullable().optional(),
+});
+
 export const listCustomerSiteBookingsSchema = z.object({
   status: bookingStatusSchema.optional(),
   preferredDate: dateSchema.optional(),

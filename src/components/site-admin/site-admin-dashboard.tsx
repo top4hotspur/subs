@@ -20,6 +20,7 @@ import {
   getSiteAdminAvailability,
   saveSiteAdminScheduling,
   listSiteAdminBookings,
+  amendSiteAdminBooking,
   updateSiteAdminBookingStatus,
   removeSiteAdminBrandingFavicon,
   removeSiteAdminBrandingLogo,
@@ -239,6 +240,24 @@ type StaffHolidayDraft = {
   endTime: string;
   active: boolean;
   notes: string;
+};
+
+type BookingAmendDraft = {
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  notes: string;
+  status: CustomerSiteBookingRecord["status"];
+  serviceId: string;
+  staffMemberId: string;
+  preferredDate: string;
+  selectedSlot: {
+    date: string;
+    startTime: string;
+    endTime: string;
+    staffMemberId: string;
+    staffName: string;
+  } | null;
 };
 
 function findRotaDay(
@@ -483,6 +502,12 @@ function toMessage(error: string, status: number, details?: unknown): string {
   if (error === "VALIDATION_ERROR" || status === 400) {
     return "Some scheduling details need checking before saving.";
   }
+  if (error === "BOOKING_SLOT_UNAVAILABLE" || status === 409) {
+    return "That booking slot is no longer available. Please choose another time.";
+  }
+  if (error === "BOOKING_AMEND_NOT_ALLOWED") {
+    return "Completed or cancelled bookings cannot be amended in this pass.";
+  }
   return `Request failed: ${error}`;
 }
 
@@ -531,6 +556,28 @@ function formatUkDate(value: string): string {
 function formatDateRange(startDate: string, endDate: string): string {
   const end = endDate || startDate;
   return end === startDate ? formatUkDate(startDate) : `${formatUkDate(startDate)} to ${formatUkDate(end)}`;
+}
+
+function toBookingAmendDraft(booking: CustomerSiteBookingRecord): BookingAmendDraft {
+  return {
+    customerName: booking.customerName,
+    customerEmail: booking.customerEmail ?? "",
+    customerPhone: booking.customerPhone ?? "",
+    notes: booking.notes ?? "",
+    status: booking.status,
+    serviceId: booking.serviceId ?? "",
+    staffMemberId: booking.staffMemberId ?? "",
+    preferredDate: booking.preferredDate ?? todayIso(),
+    selectedSlot: booking.preferredDate && booking.preferredTime
+      ? {
+          date: booking.preferredDate,
+          startTime: booking.preferredTime,
+          endTime: booking.endDateTime ? new Date(booking.endDateTime).toISOString().slice(11, 16) : booking.preferredTime,
+          staffMemberId: booking.staffMemberId ?? "",
+          staffName: booking.staffName ?? "",
+        }
+      : null,
+  };
 }
 
 function splitActiveFutureAndPast<T extends { active: boolean; date: string; endDate: string }>(items: T[]) {
@@ -784,6 +831,10 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   const [availabilityDate, setAvailabilityDate] = useState(todayIso());
   const [availabilityResult, setAvailabilityResult] = useState<CustomerSiteAvailabilityResult | null>(null);
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [editingBookingId, setEditingBookingId] = useState<string | null>(null);
+  const [bookingAmendDraft, setBookingAmendDraft] = useState<BookingAmendDraft | null>(null);
+  const [bookingAmendAvailability, setBookingAmendAvailability] = useState<CustomerSiteAvailabilityResult | null>(null);
+  const [bookingAmendLoading, setBookingAmendLoading] = useState(false);
 
   const selectedStaff = useMemo(
     () => staffDraft.find((item) => item.id === selectedSchedulingStaffId) ?? null,
@@ -1240,6 +1291,94 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
     setBookings((current) => current.map((booking) => (booking.id === bookingId ? result.booking : booking)));
     setMessage(`Booking status updated to ${status}.`);
     setAvailabilityResult(null);
+    router.refresh();
+  }
+
+  function startBookingAmend(booking: CustomerSiteBookingRecord) {
+    setEditingBookingId(booking.id);
+    setBookingAmendDraft(toBookingAmendDraft(booking));
+    setBookingAmendAvailability(null);
+    setMessage(null);
+  }
+
+  async function checkBookingAmendAvailability() {
+    if (!editingBookingId || !bookingAmendDraft) return;
+    if (!bookingAmendDraft.serviceId) {
+      setMessage("Select a service before checking reschedule times.");
+      return;
+    }
+    if (!bookingAmendDraft.preferredDate) {
+      setMessage("Select a date before checking reschedule times.");
+      return;
+    }
+    setBookingAmendLoading(true);
+    setMessage("Checking reschedule availability...");
+    const result = await getSiteAdminAvailability(siteSlug, {
+      serviceId: bookingAmendDraft.serviceId,
+      staffId: bookingAmendDraft.staffMemberId || null,
+      date: bookingAmendDraft.preferredDate,
+      excludeBookingId: editingBookingId,
+    });
+    setBookingAmendLoading(false);
+    if (!result.ok) {
+      setBookingAmendAvailability(null);
+      setMessage(toMessage(result.error, result.status, result.details));
+      return;
+    }
+    setBookingAmendAvailability(result.availability);
+    setBookingAmendDraft((current) => current ? { ...current, selectedSlot: null } : current);
+    setMessage(result.availability.slots.length > 0 ? "Choose a reschedule time below." : "No available reschedule times found.");
+  }
+
+  async function saveBookingAmend(booking: CustomerSiteBookingRecord) {
+    if (!bookingAmendDraft) return;
+    if (!bookingAmendDraft.customerName.trim()) {
+      setMessage("Customer name is required.");
+      return;
+    }
+    if (!bookingAmendDraft.customerEmail.trim()) {
+      setMessage("Customer email is required.");
+      return;
+    }
+    if (!bookingAmendDraft.customerPhone.trim()) {
+      setMessage("Customer phone is required.");
+      return;
+    }
+    const rescheduleChanged =
+      bookingAmendDraft.serviceId !== (booking.serviceId ?? "") ||
+      bookingAmendDraft.staffMemberId !== (booking.staffMemberId ?? "") ||
+      bookingAmendDraft.preferredDate !== (booking.preferredDate ?? "") ||
+      Boolean(bookingAmendDraft.selectedSlot && bookingAmendDraft.selectedSlot.startTime !== booking.preferredTime);
+    if (rescheduleChanged && !bookingAmendDraft.selectedSlot) {
+      setMessage("Choose an available reschedule slot before saving date, service, or staff changes.");
+      return;
+    }
+    setMessage("Saving booking changes...");
+    const amendInput: Parameters<typeof amendSiteAdminBooking>[1] = {
+      bookingId: booking.id,
+      customerName: bookingAmendDraft.customerName.trim(),
+      customerEmail: bookingAmendDraft.customerEmail.trim(),
+      customerPhone: bookingAmendDraft.customerPhone.trim(),
+      notes: bookingAmendDraft.notes.trim() || null,
+      status: bookingAmendDraft.status,
+    };
+    if (rescheduleChanged && bookingAmendDraft.selectedSlot) {
+      amendInput.serviceId = bookingAmendDraft.serviceId;
+      amendInput.staffMemberId = bookingAmendDraft.selectedSlot.staffMemberId;
+      amendInput.preferredDate = bookingAmendDraft.selectedSlot.date;
+      amendInput.preferredTime = bookingAmendDraft.selectedSlot.startTime;
+    }
+    const result = await amendSiteAdminBooking(siteSlug, amendInput);
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status, result.details));
+      return;
+    }
+    setBookings((current) => current.map((item) => (item.id === booking.id ? result.booking : item)));
+    setEditingBookingId(null);
+    setBookingAmendDraft(null);
+    setBookingAmendAvailability(null);
+    setAvailabilityResult(null);
+    setMessage("Booking updated.");
     router.refresh();
   }
 
@@ -2800,6 +2939,11 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
+                    {booking.status !== "CANCELLED" && booking.status !== "COMPLETED" ? (
+                      <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => startBookingAmend(booking)}>
+                        Amend / reschedule
+                      </button>
+                    ) : null}
                     {booking.status !== "CONFIRMED" && booking.status !== "CANCELLED" && booking.status !== "COMPLETED" ? (
                       <button type="button" className={`${primaryButtonClass} ${smallButtonClass}`} onClick={() => void updateBookingStatus(booking.id, "CONFIRMED")}>
                         Mark confirmed
@@ -2815,10 +2959,128 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                         Mark completed
                       </button>
                     ) : null}
-                    <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} disabled title="Booking amendments are planned for a later booking-management pass.">
-                      Amend booking (coming soon)
-                    </button>
                   </div>
+                  {editingBookingId === booking.id && bookingAmendDraft ? (
+                    <div className="mt-3 rounded-lg border border-teal-200 bg-white p-3">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900">Amend / reschedule booking</p>
+                          <p className="mt-1 text-xs text-slate-600">
+                            Update customer details or choose a calculated available slot. The current booking is ignored as a self-conflict.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          className={`${outlineButtonClass} ${smallButtonClass}`}
+                          onClick={() => {
+                            setEditingBookingId(null);
+                            setBookingAmendDraft(null);
+                            setBookingAmendAvailability(null);
+                          }}
+                        >
+                          Close
+                        </button>
+                      </div>
+                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                        <label className="text-xs font-semibold text-slate-700">
+                          Customer name
+                          <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={bookingAmendDraft.customerName} onChange={(event) => setBookingAmendDraft((current) => current ? { ...current, customerName: event.target.value } : current)} />
+                        </label>
+                        <label className="text-xs font-semibold text-slate-700">
+                          Customer email
+                          <input type="email" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={bookingAmendDraft.customerEmail} onChange={(event) => setBookingAmendDraft((current) => current ? { ...current, customerEmail: event.target.value } : current)} />
+                        </label>
+                        <label className="text-xs font-semibold text-slate-700">
+                          Customer phone
+                          <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={bookingAmendDraft.customerPhone} onChange={(event) => setBookingAmendDraft((current) => current ? { ...current, customerPhone: event.target.value } : current)} />
+                        </label>
+                        <label className="text-xs font-semibold text-slate-700">
+                          Status
+                          <select className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={bookingAmendDraft.status} onChange={(event) => setBookingAmendDraft((current) => current ? { ...current, status: event.target.value as CustomerSiteBookingRecord["status"] } : current)}>
+                            {(["REQUESTED", "SUBMITTED", "CONFIRMED", "CANCELLED", "COMPLETED", "NO_SHOW"] as CustomerSiteBookingRecord["status"][]).map((status) => (
+                              <option key={status} value={status}>{status}</option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="text-xs font-semibold text-slate-700">
+                          Service
+                          <select className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={bookingAmendDraft.serviceId} onChange={(event) => setBookingAmendDraft((current) => current ? { ...current, serviceId: event.target.value, selectedSlot: null } : current)}>
+                            <option value="">Select service</option>
+                            {servicesDraft.filter((service) => service.id && service.active).map((service) => (
+                              <option key={service.id} value={service.id}>{service.name || "Unnamed service"}</option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="text-xs font-semibold text-slate-700">
+                          Staff
+                          <select className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={bookingAmendDraft.staffMemberId} onChange={(event) => setBookingAmendDraft((current) => current ? { ...current, staffMemberId: event.target.value, selectedSlot: null } : current)}>
+                            <option value="">Any available staff</option>
+                            {staffDraft.filter((staff) => staff.id && staff.active).map((staff) => (
+                              <option key={staff.id} value={staff.id}>{staff.displayName || "Unnamed staff"}</option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="text-xs font-semibold text-slate-700">
+                          Date
+                          <input type="date" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={bookingAmendDraft.preferredDate} onChange={(event) => setBookingAmendDraft((current) => current ? { ...current, preferredDate: event.target.value, selectedSlot: null } : current)} />
+                        </label>
+                        <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
+                          Notes
+                          <textarea className="mt-1 min-h-16 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={bookingAmendDraft.notes} onChange={(event) => setBookingAmendDraft((current) => current ? { ...current, notes: event.target.value } : current)} />
+                        </label>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void checkBookingAmendAvailability()} disabled={bookingAmendLoading}>
+                          {bookingAmendLoading ? "Checking..." : "Check reschedule times"}
+                        </button>
+                        <button type="button" className={`${primaryButtonClass} ${smallButtonClass}`} onClick={() => void saveBookingAmend(booking)}>
+                          Save booking changes
+                        </button>
+                      </div>
+                      {bookingAmendDraft.selectedSlot ? (
+                        <p className="mt-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-900">
+                          Selected: {bookingAmendDraft.selectedSlot.startTime}-{bookingAmendDraft.selectedSlot.endTime} {bookingAmendDraft.staffMemberId ? `with ${bookingAmendDraft.selectedSlot.staffName}` : "(staff assigned automatically)"}
+                        </p>
+                      ) : null}
+                      {bookingAmendAvailability ? (
+                        <div className="mt-3">
+                          <p className="text-xs font-semibold text-slate-800">Available reschedule times</p>
+                          {bookingAmendAvailability.slots.length > 0 ? (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {bookingAmendAvailability.slots.slice(0, 48).map((slot) => {
+                                const selected =
+                                  bookingAmendDraft.selectedSlot?.date === slot.date &&
+                                  bookingAmendDraft.selectedSlot?.startTime === slot.startTime &&
+                                  bookingAmendDraft.selectedSlot?.staffMemberId === slot.staffMemberId;
+                                return (
+                                  <button
+                                    key={`${slot.staffMemberId}-${slot.startTime}`}
+                                    type="button"
+                                    aria-pressed={selected}
+                                    className={selected ? "rounded-full border border-emerald-500 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-950" : "rounded-full border border-teal-200 bg-white px-3 py-1 text-xs font-semibold text-slate-800 hover:bg-teal-50"}
+                                    onClick={() => setBookingAmendDraft((current) => current ? {
+                                      ...current,
+                                      selectedSlot: {
+                                        date: slot.date,
+                                        startTime: slot.startTime,
+                                        endTime: slot.endTime,
+                                        staffMemberId: slot.staffMemberId,
+                                        staffName: slot.staffName,
+                                      },
+                                    } : current)}
+                                  >
+                                    {slot.startTime}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <p className="mt-2 text-xs text-slate-600">No available slots found for that service/staff/date.</p>
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
               ))
             )}

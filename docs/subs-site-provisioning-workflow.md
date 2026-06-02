@@ -387,3 +387,11 @@ Still local/mock in current product:
   - `Copy Monday times to working weekdays` only copies times into weekdays that are already working.
 - Non-working rota days clear and persist unset start/end times.
 - The first `Staffing coverage` visualisation counts active staff whose rota overlaps business opening hours. It uses interim red/amber/green/grey logic until target staffing levels are stored.
+
+## 2026-06-02 Admin Booking Amendment Note
+
+- `/site-admin/[siteSlug]` now supports admin-side booking amendments for active tenant bookings.
+- The amendment panel can update customer contact details, notes, status, service, staff, and date/time.
+- Reschedule availability is calculated through the tenant availability helper with the current booking excluded, so the booking does not block its own current slot.
+- Other active bookings and normal scheduling rules still block unavailable slots, and the API rechecks availability before saving.
+- Customer update notifications are fail-soft. Manual override, customer self-service rescheduling, and full booking audit history remain future milestones.
