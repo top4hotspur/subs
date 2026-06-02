@@ -198,7 +198,7 @@ export function PublicSiteBookingForm({ siteSlug, services, staff }: PublicSiteB
           <input type="checkbox" className="mt-1" checked={policyAccepted} onChange={(event) => setPolicyAccepted(event.target.checked)} />
           <span>
             I have read and accept the{" "}
-            <Link href={`/sites/${encodeURIComponent(siteSlug)}/policy`} className="font-semibold text-teal-700 underline">
+            <Link href={`/sites/${encodeURIComponent(siteSlug)}/policy`} target="_blank" rel="noreferrer" className="font-semibold text-teal-700 underline">
               booking and cancellation policy
             </Link>.
           </span>

@@ -106,6 +106,7 @@ export async function PATCH(
       policyTitle: body?.policyTitle,
       policyIntro: body?.policyIntro,
       policyBody: body?.policyBody,
+      policyDefaultAccepted: body?.policyDefaultAccepted,
       socialLinks: body?.socialLinks,
     });
 
@@ -149,6 +150,7 @@ export async function PATCH(
       policyTitle: parsed.policyTitle,
       policyIntro: parsed.policyIntro,
       policyBody: parsed.policyBody,
+      policyDefaultAccepted: parsed.policyDefaultAccepted,
       socialLinks: parsed.socialLinks,
     });
     return NextResponse.json({ ok: true, settings });

@@ -7,9 +7,19 @@ export type CustomerSiteBookingStatus =
   | "NO_SHOW";
 
 export type CustomerSitePaymentStatus =
+  | "NOT_REQUIRED"
+  | "PENDING"
+  | "PAID"
+  | "FAILED"
+  | "REFUNDED"
   | "PAYMENT_REQUIRED"
-  | "PAYMENT_COMPLETED"
-  | "NOT_REQUIRED";
+  | "PAYMENT_COMPLETED";
+
+export type CustomerSitePaymentMethod =
+  | "NONE"
+  | "CASH"
+  | "CARD_ONLINE"
+  | "MANUAL";
 
 export type CustomerSiteBookingRecord = {
   id: string;
@@ -27,6 +37,7 @@ export type CustomerSiteBookingRecord = {
   staffName: string | null;
   status: CustomerSiteBookingStatus;
   paymentStatus: CustomerSitePaymentStatus | null;
+  paymentMethod: CustomerSitePaymentMethod | null;
   notes: string | null;
   policyAcceptedAt: string | null;
   source: string | null;

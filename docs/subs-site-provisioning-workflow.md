@@ -395,3 +395,11 @@ Still local/mock in current product:
 - Reschedule availability is calculated through the tenant availability helper with the current booking excluded, so the booking does not block its own current slot.
 - Other active bookings and normal scheduling rules still block unavailable slots, and the API rechecks availability before saving.
 - Customer update notifications are fail-soft. Manual override, customer self-service rescheduling, and full booking audit history remain future milestones.
+
+## 2026-06-02 Booking Policy and Payment Status Note
+
+- Public tenant policy pages now always render for valid tenant sites and fall back to the standard booking/cancellation policy when custom policy content is missing.
+- Subscriber admins must either customise policy wording or explicitly accept the default policy before the setup checklist marks policy complete.
+- Public bookings remain tenant-scoped and are server-forced to `CONFIRMED` after availability is rechecked.
+- Booking payment state is tracked on `CustomerSiteBooking` with `paymentStatus` and `paymentMethod`.
+- Subscriber-site payment provider checkout is not connected yet. Pending prepayment/manual/cash cases are recorded honestly and shown to both customer and site admin without collecting card details.

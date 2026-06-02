@@ -41,6 +41,7 @@ import type {
 } from "@/lib/sites/customer-site-scheduling-types";
 import type { CustomerSiteBookingRecord } from "@/lib/sites/customer-site-booking-types";
 import { formatBookingDateTime, formatUkDateTime } from "@/lib/sites/customer-site-booking-display";
+import { DEFAULT_BOOKING_POLICY_BODY, isCustomPolicyContent } from "@/lib/sites/default-booking-policy";
 import type { CustomerSiteAvailabilityResult } from "@/lib/sites/customer-site-availability";
 import {
   mapAppearanceToTheme,
@@ -136,6 +137,7 @@ type SettingsDraft = {
   policyTitle: string;
   policyIntro: string;
   policyBody: string;
+  policyDefaultAccepted: boolean;
   recurringPaymentsEnabled: boolean;
   customerBlockBookingsEnabled: boolean;
   socialLinks: {
@@ -558,6 +560,18 @@ function formatDateRange(startDate: string, endDate: string): string {
   return end === startDate ? formatUkDate(startDate) : `${formatUkDate(startDate)} to ${formatUkDate(end)}`;
 }
 
+function formatBookingPaymentStatus(booking: CustomerSiteBookingRecord): string {
+  if (booking.paymentStatus === "PAID" || booking.paymentStatus === "PAYMENT_COMPLETED") return "Paid";
+  if (booking.paymentStatus === "FAILED") return "Failed";
+  if (booking.paymentStatus === "REFUNDED") return "Refunded";
+  if (booking.paymentStatus === "PENDING" || booking.paymentStatus === "PAYMENT_REQUIRED") {
+    if (booking.paymentMethod === "CASH") return "Cash/manual payment expected";
+    if (booking.paymentMethod === "CARD_ONLINE") return "Online payment pending";
+    return "Payment pending";
+  }
+  return "Payment not required";
+}
+
 function toBookingAmendDraft(booking: CustomerSiteBookingRecord): BookingAmendDraft {
   return {
     customerName: booking.customerName,
@@ -666,6 +680,7 @@ function toSettingsDraft(settings: PersistedCustomerSiteSettings | null): Settin
     policyTitle: settings?.policyTitle ?? "",
     policyIntro: settings?.policyIntro ?? "",
     policyBody: settings?.policyBody ?? "",
+    policyDefaultAccepted: settings?.policyDefaultAccepted ?? false,
     recurringPaymentsEnabled: settings?.recurringPaymentsEnabled ?? false,
     customerBlockBookingsEnabled: settings?.customerBlockBookingsEnabled ?? false,
     socialLinks: parseSocialDraft(settings?.socialLinks),
@@ -988,6 +1003,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       policyTitle: settingsDraft.policyTitle.trim() || null,
       policyIntro: settingsDraft.policyIntro.trim() || null,
       policyBody: settingsDraft.policyBody.trim() || null,
+      policyDefaultAccepted: settingsDraft.policyDefaultAccepted,
       socialLinks: settingsDraft.socialLinks,
       recurringPaymentsEnabled: settingsDraft.recurringPaymentsEnabled,
       customerBlockBookingsEnabled: settingsDraft.customerBlockBookingsEnabled,
@@ -1281,9 +1297,9 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
     setMessage(result.availability.slots.length > 0 ? "Availability preview generated." : "No slots found for that setup/date.");
   }
 
-  async function updateBookingStatus(bookingId: string, status: CustomerSiteBookingRecord["status"]) {
+  async function updateBookingStatus(bookingId: string, status: CustomerSiteBookingRecord["status"], paymentStatus?: CustomerSiteBookingRecord["paymentStatus"]) {
     setMessage(`Updating booking status to ${status.toLowerCase()}...`);
-    const result = await updateSiteAdminBookingStatus(siteSlug, { bookingId, status });
+    const result = await updateSiteAdminBookingStatus(siteSlug, { bookingId, status, paymentStatus });
     if (!result.ok) {
       setMessage(toMessage(result.error, result.status, result.details));
       return;
@@ -1387,6 +1403,8 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   }
   const closureGroups = splitActiveFutureAndPast(businessClosuresDraft);
   const staffLeaveGroups = splitActiveFutureAndPast(staffHolidaysDraft);
+  const hasCustomPolicy = isCustomPolicyContent(settingsDraft);
+  const policyNeedsReview = !hasCustomPolicy && !settingsDraft.policyDefaultAccepted;
 
   return (
     <div className="space-y-6">
@@ -1787,6 +1805,21 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
               <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">
                 <input type="checkbox" checked={settingsDraft.contactMapEnabled} onChange={(event) => setSettingsDraft((current) => ({ ...current, contactMapEnabled: event.target.checked }))} />
                 Show Google Maps link from business address
+              </label>
+              {policyNeedsReview ? (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 sm:col-span-2">
+                  <p className="font-semibold">A default booking and cancellation policy is currently being used.</p>
+                  <p className="mt-1">Please review it and update it if your terms are different.</p>
+                  <p className="mt-2 whitespace-pre-wrap">{DEFAULT_BOOKING_POLICY_BODY}</p>
+                </div>
+              ) : null}
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">
+                <input
+                  type="checkbox"
+                  checked={settingsDraft.policyDefaultAccepted}
+                  onChange={(event) => setSettingsDraft((current) => ({ ...current, policyDefaultAccepted: event.target.checked }))}
+                />
+                I have reviewed and accept the default booking and cancellation policy
               </label>
               <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Policy title
                 <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.policyTitle} onChange={(event) => setSettingsDraft((current) => ({ ...current, policyTitle: event.target.value }))} />
@@ -2935,7 +2968,8 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                       <span className="inline-flex rounded-full border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-800">
                         {booking.status}
                       </span>
-                      <p className="mt-1 text-xs text-slate-500">Payment: {booking.paymentStatus ?? "Not set"}</p>
+                      <p className="mt-1 text-xs text-slate-500">Payment: {formatBookingPaymentStatus(booking)}</p>
+                      <p className="mt-1 text-[11px] text-slate-400">Payment handling is not connected yet.</p>
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -2957,6 +2991,11 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     {booking.status !== "COMPLETED" && booking.status !== "CANCELLED" ? (
                       <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void updateBookingStatus(booking.id, "COMPLETED")}>
                         Mark completed
+                      </button>
+                    ) : null}
+                    {(booking.paymentStatus === "PENDING" || booking.paymentStatus === "PAYMENT_REQUIRED") && booking.status !== "CANCELLED" ? (
+                      <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void updateBookingStatus(booking.id, booking.status, "PAID")}>
+                        Mark manual payment received
                       </button>
                     ) : null}
                   </div>

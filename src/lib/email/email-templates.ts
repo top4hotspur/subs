@@ -106,10 +106,17 @@ export function tenantBookingCustomerConfirmation(
   booking: CustomerSiteBookingRecord,
   site: SiteSummaryForEmail,
 ) {
-  const subject = "Your booking is confirmed";
+  const subject = booking.paymentStatus === "PENDING" && booking.paymentMethod === "CARD_ONLINE"
+    ? "Your booking is pending payment"
+    : "Your booking is confirmed";
   const appointment = formatBookingDateTime(booking);
+  const paymentLine = booking.paymentStatus === "PENDING"
+    ? "Payment is pending and will be arranged directly with the business."
+    : "Payment has not been taken online yet.";
   const text = [
-    `Your booking with ${site.siteName} is confirmed.`,
+    booking.paymentStatus === "PENDING" && booking.paymentMethod === "CARD_ONLINE"
+      ? `Your booking with ${site.siteName} is pending payment.`
+      : `Your booking with ${site.siteName} is confirmed.`,
     "",
     `Service: ${booking.serviceName || "-"}`,
     `Date/time: ${appointment}`,
@@ -117,15 +124,15 @@ export function tenantBookingCustomerConfirmation(
     site.contactEmail ? `Business email: ${site.contactEmail}` : "",
     site.contactPhone ? `Business phone: ${site.contactPhone}` : "",
     "",
-    "Payment has not been taken online yet.",
+    paymentLine,
     "Please check the booking and cancellation policy if you need to change or cancel this appointment.",
   ].filter(Boolean).join("\n");
-  const html = `<p>Your booking with <strong>${escapeHtml(site.siteName)}</strong> is confirmed.</p>
+  const html = `<p>Your booking with <strong>${escapeHtml(site.siteName)}</strong> ${booking.paymentStatus === "PENDING" && booking.paymentMethod === "CARD_ONLINE" ? "is pending payment." : "is confirmed."}</p>
 <p><strong>Service:</strong> ${escapeHtml(booking.serviceName || "-")}<br/>
 <strong>Date/time:</strong> ${escapeHtml(appointment)}<br/>
 <strong>Staff:</strong> ${escapeHtml(booking.staffName || "-")}</p>
 ${site.contactEmail || site.contactPhone ? `<p><strong>Business contact:</strong><br/>${site.contactEmail ? `Email: ${escapeHtml(site.contactEmail)}<br/>` : ""}${site.contactPhone ? `Phone: ${escapeHtml(site.contactPhone)}` : ""}</p>` : ""}
-<p>Payment has not been taken online yet.</p>
+<p>${escapeHtml(paymentLine)}</p>
 <p>Please check the booking and cancellation policy if you need to change or cancel this appointment.</p>`;
   return { subject, text, html };
 }
@@ -145,6 +152,7 @@ export function tenantBookingBusinessNotification(
     `Service: ${booking.serviceName || "-"}`,
     `Staff: ${booking.staffName || "-"}`,
     `Date/time: ${appointment}`,
+    `Payment: ${formatBookingPaymentForEmail(booking)}`,
     `Notes: ${booking.notes || "-"}`,
     site.adminUrl ? `Open admin: ${site.adminUrl}` : "",
   ].filter(Boolean).join("\n");
@@ -155,9 +163,22 @@ export function tenantBookingBusinessNotification(
 <strong>Service:</strong> ${escapeHtml(booking.serviceName || "-")}<br/>
 <strong>Staff:</strong> ${escapeHtml(booking.staffName || "-")}<br/>
 <strong>Date/time:</strong> ${escapeHtml(appointment)}<br/>
+<strong>Payment:</strong> ${escapeHtml(formatBookingPaymentForEmail(booking))}<br/>
 <strong>Notes:</strong> ${escapeHtml(booking.notes || "-")}</p>
 ${site.adminUrl ? `<p><a href="${escapeHtml(site.adminUrl)}">Open booking in site admin</a></p>` : ""}`;
   return { subject, text, html };
+}
+
+function formatBookingPaymentForEmail(booking: CustomerSiteBookingRecord): string {
+  if (booking.paymentStatus === "PAID" || booking.paymentStatus === "PAYMENT_COMPLETED") return "Paid";
+  if (booking.paymentStatus === "PENDING" || booking.paymentStatus === "PAYMENT_REQUIRED") {
+    if (booking.paymentMethod === "CASH") return "Cash/manual payment expected";
+    if (booking.paymentMethod === "CARD_ONLINE") return "Online payment pending";
+    return "Payment pending";
+  }
+  if (booking.paymentStatus === "FAILED") return "Payment failed";
+  if (booking.paymentStatus === "REFUNDED") return "Refunded";
+  return "Payment not required";
 }
 
 export function tenantBookingCustomerCancellation(

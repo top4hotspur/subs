@@ -1138,3 +1138,23 @@ Notes:
 16. Try rescheduling into a slot already occupied by another active booking and confirm it is blocked or rejected.
 17. Confirm customer update email is attempted with subject `Your booking has been updated` when email is configured.
 18. Confirm completed/cancelled bookings cannot be amended in this pass.
+
+## 2026-06-02 Hosted Smoke Checks: Booking Policy and Payment Status
+
+1. Open `/sites/luna-hair-studio/policy`.
+2. Confirm the policy page loads and does not 404.
+3. Confirm the default policy appears if custom policy text is not set.
+4. Open `/site-admin/luna-hair-studio`.
+5. Confirm the policy section warns if the default policy has not been reviewed.
+6. Tick `I have reviewed and accept the default booking and cancellation policy` or customise policy wording, save, and confirm the checklist can mark policy done.
+7. Open `/sites/luna-hair-studio`.
+8. Start a booking and click the `booking and cancellation policy` link.
+9. Confirm the policy opens in a new tab and the booking form is not lost.
+10. Submit a booking with policy accepted.
+11. Confirm customer success says the booking is confirmed.
+12. Open admin `Bookings`.
+13. Confirm the new booking status is `CONFIRMED`.
+14. Confirm the booking date/time is UK formatted.
+15. Confirm payment status is shown clearly, for example `Payment not required`, `Cash/manual payment expected`, or `Online payment pending`.
+16. If payment is pending, click `Mark manual payment received` and confirm payment becomes paid.
+17. If prepayment is required but provider checkout is not wired, confirm the UI explains payment is not connected and does not fake payment.

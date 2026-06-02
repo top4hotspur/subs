@@ -825,3 +825,19 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Confirmed bookings remain `CONFIRMED` after amendment unless the admin explicitly changes status. Completed/cancelled bookings are not amendable in this first pass.
 - Customer update emails are attempted fail-soft with subject `Your booking has been updated`. The booking update still succeeds if email delivery fails.
 - Manual time override, customer self-service rescheduling, payment/prepayment, recurring booking amendments, and audit-history events remain future milestones.
+
+## 2026-06-02 Booking Policy and Payment Status Foundation
+
+- `/sites/[siteSlug]/policy` now loads for every valid tenant site and no longer 404s just because the business has not enabled/customised the policy page.
+- If the business has not customised policy content, the public policy page shows a professional default booking/cancellation policy and explains that customers should review it before booking.
+- `/site-admin/[siteSlug]` warns when the default policy is still being used and lets the business explicitly confirm they have reviewed/accepted the default policy.
+- The onboarding checklist only treats booking/cancellation policy as done when policy content is customised or the default has been explicitly accepted.
+- Public booking form policy links open `/sites/[siteSlug]/policy` in a new tab and the policy checkbox remains required.
+- New public slot bookings are forced to `CONFIRMED` by the server; client defaults cannot downgrade them to `REQUESTED`.
+- First payment/prepayment handling is conservative:
+  - no card details are collected or stored
+  - no subscriber Stripe/Square checkout is created yet
+  - if prepayment is required and card payments are enabled, the booking is confirmed with payment status `PENDING` and the customer is told payment will be arranged directly
+  - if cash/manual payment is expected, the booking is confirmed with payment status `PENDING`
+  - if no payment is required online, the booking is confirmed with payment status `NOT_REQUIRED`
+- Site-admin Bookings show friendly payment labels and can mark pending manual/cash payment as received. Refund handling remains future work.

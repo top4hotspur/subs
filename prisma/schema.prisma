@@ -390,6 +390,7 @@ model CustomerSiteSettings {
   policyTitle           String?
   policyIntro           String?
   policyBody            String?
+  policyDefaultAccepted Boolean   @default(false)
   socialLinks           Json?
   recurringPaymentsEnabled Boolean @default(false)
   customerBlockBookingsEnabled Boolean @default(false)
@@ -589,6 +590,7 @@ model CustomerSiteBooking {
   staffName     String?
   status        String
   paymentStatus String?
+  paymentMethod String?
   notes         String?
   policyAcceptedAt DateTime?
   source        String?

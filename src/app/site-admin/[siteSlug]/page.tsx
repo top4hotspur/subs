@@ -6,6 +6,7 @@ import { getSiteAdminSessionContext } from "@/lib/auth/site-admin";
 import { getTenantSiteBySlug } from "@/lib/sites/tenant-resolver";
 import { prisma } from "@/lib/db/prisma";
 import { hasValidOpenBusinessDay, normalizeBusinessOpeningHours, timeToMinutes } from "@/lib/sites/customer-site-opening-hours";
+import { isCustomPolicyContent } from "@/lib/sites/default-booking-policy";
 
 type SiteAdminPageProps = {
   params: Promise<{ siteSlug: string }>;
@@ -81,6 +82,16 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
     return start !== null && end !== null && end > start;
   }).length;
   const staffRotaReady = staffCount > 0 && validRotaCount > 0;
+  const policyReady = Boolean(
+    settings &&
+      (settings.policyDefaultAccepted ||
+        isCustomPolicyContent({
+          policyTitle: settings.policyTitle,
+          policyIntro: settings.policyIntro,
+          policyBody: settings.policyBody,
+          cancellationPolicyNote: settings.cancellationPolicyNote,
+        })),
+  );
 
   const checklist = [
     {
@@ -101,12 +112,7 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
     },
     {
       title: "Set booking/cancellation policy",
-      status:
-        settings?.cancellationPolicyNote?.trim() ||
-        settings?.cancellationFullRefundNoticeDays !== null ||
-        settings?.cancellationNoRefundWithinDays !== null
-          ? "Done"
-          : "Needs setup",
+      status: policyReady ? "Done" : "Needs setup",
     },
     {
       title: "Preview public site",

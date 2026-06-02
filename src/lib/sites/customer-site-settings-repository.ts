@@ -59,6 +59,7 @@ export type CustomerSiteSettingsRecord = {
   policyTitle: string | null;
   policyIntro: string | null;
   policyBody: string | null;
+  policyDefaultAccepted: boolean;
   socialLinks: unknown;
   recurringPaymentsEnabled: boolean;
   customerBlockBookingsEnabled: boolean;
@@ -161,6 +162,7 @@ function serializeSettings(record: {
   policyTitle: string | null;
   policyIntro: string | null;
   policyBody: string | null;
+  policyDefaultAccepted: boolean;
   socialLinks: unknown;
   recurringPaymentsEnabled: boolean;
   customerBlockBookingsEnabled: boolean;
@@ -294,6 +296,7 @@ export async function upsertCustomerSiteSettings(
     policyTitle: parsed.policyTitle ?? null,
     policyIntro: parsed.policyIntro ?? null,
     policyBody: parsed.policyBody ?? null,
+    policyDefaultAccepted: parsed.policyDefaultAccepted ?? false,
     socialLinks:
       parsed.socialLinks === undefined
         ? undefined
@@ -385,6 +388,7 @@ export async function upsertCustomerSiteSettings(
   if (parsed.policyTitle !== undefined) updateData.policyTitle = parsed.policyTitle;
   if (parsed.policyIntro !== undefined) updateData.policyIntro = parsed.policyIntro;
   if (parsed.policyBody !== undefined) updateData.policyBody = parsed.policyBody;
+  if (parsed.policyDefaultAccepted !== undefined) updateData.policyDefaultAccepted = parsed.policyDefaultAccepted;
   if (parsed.socialLinks !== undefined) {
     updateData.socialLinks =
       parsed.socialLinks === null

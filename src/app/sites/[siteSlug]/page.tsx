@@ -255,6 +255,9 @@ export default async function PublicSiteSlugPage({
                                 siteSlug={preview.tenantSite.slug}
                                 serviceId={service.id}
                                 serviceName={service.name}
+                                acceptCashPayments={settings?.acceptCashPayments ?? false}
+                                acceptCardPayments={settings?.acceptCardPayments ?? true}
+                                requireBookingPrepayment={settings?.requireBookingPrepayment ?? false}
                                 staff={publicStaff.map((member) => ({
                                   id: member.id,
                                   displayName: member.displayName,

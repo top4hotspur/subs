@@ -48,6 +48,7 @@ export type PersistedCustomerSiteSettings = {
   policyTitle: string | null;
   policyIntro: string | null;
   policyBody: string | null;
+  policyDefaultAccepted: boolean;
   socialLinks: unknown;
   recurringPaymentsEnabled: boolean;
   customerBlockBookingsEnabled: boolean;

@@ -335,7 +335,7 @@ export async function listSiteAdminBookings(
 
 export async function updateSiteAdminBookingStatus(
   siteSlug: string,
-  input: { bookingId: string; status: CustomerSiteBookingRecord["status"]; notes?: string | null },
+  input: { bookingId: string; status: CustomerSiteBookingRecord["status"]; paymentStatus?: CustomerSiteBookingRecord["paymentStatus"]; notes?: string | null },
 ): Promise<ClientResult<{ booking: CustomerSiteBookingRecord }>> {
   try {
     const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/bookings`, {

@@ -93,6 +93,7 @@ export const upsertCustomerSiteSettingsSchema = z.object({
   policyTitle: z.string().trim().min(1).max(180).nullable().optional(),
   policyIntro: z.string().trim().min(1).max(2000).nullable().optional(),
   policyBody: z.string().trim().min(1).max(8000).nullable().optional(),
+  policyDefaultAccepted: z.boolean().optional(),
   socialLinks: socialLinksSchema.nullable().optional(),
   recurringPaymentsEnabled: z.boolean().optional(),
   customerBlockBookingsEnabled: z.boolean().optional(),

@@ -40,6 +40,9 @@ type PublicSiteAvailabilityPreviewProps = {
   serviceId: string;
   serviceName: string;
   staff: PublicAvailabilityStaff[];
+  acceptCashPayments?: boolean;
+  acceptCardPayments?: boolean;
+  requireBookingPrepayment?: boolean;
 };
 
 function todayIso(): string {
@@ -68,6 +71,9 @@ export function PublicSiteAvailabilityPreview({
   serviceId,
   serviceName,
   staff,
+  acceptCashPayments = false,
+  acceptCardPayments = true,
+  requireBookingPrepayment = false,
 }: PublicSiteAvailabilityPreviewProps) {
   const selectableStaff = useMemo(() => staff.filter((member) => member.customerSelectable), [staff]);
   const [open, setOpen] = useState(false);
@@ -190,7 +196,13 @@ export function PublicSiteAvailabilityPreview({
       startDateTime: null,
     });
     setSuccessMessage(
-      `Your booking has been confirmed. ${serviceName} at ${appointment}${staffId && selectedSlot.staffName ? ` with ${selectedSlot.staffName}` : ""}.`,
+      `Your booking has been confirmed. ${serviceName} at ${appointment}${staffId && selectedSlot.staffName ? ` with ${selectedSlot.staffName}` : ""}. ${
+        requireBookingPrepayment && acceptCardPayments
+          ? "Payment is pending and will be arranged directly with the business."
+          : acceptCashPayments
+            ? "Payment can be arranged directly with the business."
+            : ""
+      }`.trim(),
     );
     setMessage(null);
     setCustomerName("");
@@ -309,7 +321,14 @@ export function PublicSiteAvailabilityPreview({
                 Confirm {selectedSlot.startTime}-{selectedSlot.endTime}
               </p>
               <p className="mt-1 text-xs text-slate-600">
-                Complete your details to confirm this booking. No payment is taken online yet.
+                Complete your details to confirm this booking.
+              </p>
+              <p className="mt-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                {requireBookingPrepayment && acceptCardPayments
+                  ? "This business requires payment before booking. Online payment setup is not yet connected, so the business will arrange payment directly."
+                  : acceptCashPayments
+                    ? "No payment is taken online for this booking. Payment can be arranged directly with the business."
+                    : "No payment is taken online for this booking."}
               </p>
               <div className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-950">
                 <p className="font-semibold">Selected: {selectedSlot.startTime}-{selectedSlot.endTime}</p>
@@ -340,7 +359,7 @@ export function PublicSiteAvailabilityPreview({
                 <input type="checkbox" className="mt-0.5" checked={policyAccepted} onChange={(event) => setPolicyAccepted(event.target.checked)} />
                 <span>
                   I have read and accept the{" "}
-                  <a href={`/sites/${encodeURIComponent(siteSlug)}/policy`} className="font-semibold text-teal-700 underline">
+                  <a href={`/sites/${encodeURIComponent(siteSlug)}/policy`} target="_blank" rel="noreferrer" className="font-semibold text-teal-700 underline">
                     booking and cancellation policy
                   </a>.
                 </span>

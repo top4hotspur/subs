@@ -55,11 +55,24 @@ export async function POST(
     if (!matchingSlot) {
       return NextResponse.json({ ok: false, error: "BOOKING_SLOT_UNAVAILABLE" }, { status: 409 });
     }
+    const requiresPrepayment = Boolean(site.settings?.requireBookingPrepayment && site.settings.acceptCardPayments);
+    const paymentStatus = requiresPrepayment
+      ? "PENDING"
+      : site.settings?.acceptCashPayments
+        ? "PENDING"
+        : "NOT_REQUIRED";
+    const paymentMethod = requiresPrepayment
+      ? "CARD_ONLINE"
+      : site.settings?.acceptCashPayments
+        ? "CASH"
+        : "NONE";
     const booking = await createCustomerSiteBooking(site.tenantSite.id, {
       ...parsed,
       staffMemberId: matchingSlot.staffMemberId,
       staffName: matchingSlot.staffName,
       status: "CONFIRMED",
+      paymentStatus,
+      paymentMethod,
       source: "customer_site",
     });
     const siteName =

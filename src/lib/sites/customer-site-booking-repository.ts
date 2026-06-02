@@ -47,6 +47,7 @@ function serializeBooking(record: {
   staffName: string | null;
   status: string;
   paymentStatus: string | null;
+  paymentMethod: string | null;
   notes: string | null;
   policyAcceptedAt: Date | null;
   source: string | null;
@@ -58,6 +59,7 @@ function serializeBooking(record: {
     ...record,
     status: record.status as CustomerSiteBookingRecord["status"],
     paymentStatus: record.paymentStatus as CustomerSiteBookingRecord["paymentStatus"],
+    paymentMethod: record.paymentMethod as CustomerSiteBookingRecord["paymentMethod"],
     startDateTime: record.startDateTime?.toISOString() ?? null,
     endDateTime: record.endDateTime?.toISOString() ?? null,
     policyAcceptedAt: record.policyAcceptedAt?.toISOString() ?? null,
@@ -136,6 +138,7 @@ export async function createCustomerSiteBooking(
       staffName,
       status: parsed.status,
       paymentStatus: parsed.paymentStatus ?? "NOT_REQUIRED",
+      paymentMethod: parsed.paymentMethod ?? "NONE",
       notes: parsed.notes ?? null,
       policyAcceptedAt: parsed.policyAcceptedAt ?? new Date(),
       source: parsed.source ?? "customer_site",
@@ -197,6 +200,7 @@ export async function updateCustomerSiteBookingStatus(
     data: {
       status: parsed.status,
       paymentStatus: parsed.paymentStatus ?? undefined,
+      paymentMethod: parsed.paymentMethod ?? undefined,
       notes: parsed.notes ?? undefined,
     },
   });

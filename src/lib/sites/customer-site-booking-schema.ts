@@ -14,9 +14,20 @@ const bookingStatusSchema = z.enum([
 ]);
 
 const paymentStatusSchema = z.enum([
+  "NOT_REQUIRED",
+  "PENDING",
+  "PAID",
+  "FAILED",
+  "REFUNDED",
   "PAYMENT_REQUIRED",
   "PAYMENT_COMPLETED",
-  "NOT_REQUIRED",
+]);
+
+const paymentMethodSchema = z.enum([
+  "NONE",
+  "CASH",
+  "CARD_ONLINE",
+  "MANUAL",
 ]);
 
 export const createCustomerSiteBookingSchema = z
@@ -32,6 +43,7 @@ export const createCustomerSiteBookingSchema = z
     staffName: z.string().trim().min(1).max(120).optional(),
     status: bookingStatusSchema.default("REQUESTED"),
     paymentStatus: paymentStatusSchema.optional(),
+    paymentMethod: paymentMethodSchema.optional(),
     notes: z.string().trim().max(2000).optional(),
     policyAccepted: z.boolean().optional().default(false),
     policyAcceptedAt: z.coerce.date().optional(),
@@ -52,6 +64,7 @@ export const updateCustomerSiteBookingStatusSchema = z.object({
   bookingId: cuidSchema,
   status: bookingStatusSchema,
   paymentStatus: paymentStatusSchema.optional(),
+  paymentMethod: paymentMethodSchema.optional(),
   notes: z.string().trim().max(2000).optional(),
 });
 
