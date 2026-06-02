@@ -69,7 +69,7 @@ export async function PUT(
         { status: 400 },
       );
     }
-    if (error instanceof Error && /rota|break|working|time/i.test(error.message)) {
+    if (error instanceof Error && /rota|break|working|time|closure|leave|holiday|date/i.test(error.message)) {
       return NextResponse.json(
         { ok: false, error: "VALIDATION_ERROR", details: [{ message: error.message }] },
         { status: 400 },

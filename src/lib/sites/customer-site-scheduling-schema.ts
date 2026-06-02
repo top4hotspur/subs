@@ -64,11 +64,31 @@ export const replaceStaffBreaksSchema = z.object({
 export const businessClosureInputSchema = z.object({
   id: cuid.optional(),
   date: dateSchema,
+  endDate: dateSchema.nullable().optional(),
   label: z.string().trim().min(1).max(200),
   allDay: z.boolean().optional().default(true),
   startTime: timeSchema.nullable().optional(),
   endTime: timeSchema.nullable().optional(),
   active: z.boolean().optional().default(true),
+  customerNote: z.string().trim().max(600).nullable().optional(),
+}).superRefine((value, ctx) => {
+  const endDate = value.endDate || value.date;
+  if (endDate < value.date) {
+    ctx.addIssue({ code: "custom", path: ["endDate"], message: "Closure end date cannot be before start date." });
+  }
+  if (!value.allDay) {
+    if (!value.startTime) {
+      ctx.addIssue({ code: "custom", path: ["startTime"], message: "Partial-day closures need a start time." });
+    }
+    if (!value.endTime) {
+      ctx.addIssue({ code: "custom", path: ["endTime"], message: "Partial-day closures need an end time." });
+    }
+    const start = toMinutes(value.startTime);
+    const end = toMinutes(value.endTime);
+    if (endDate === value.date && start !== null && end !== null && end <= start) {
+      ctx.addIssue({ code: "custom", path: ["endTime"], message: "Closure end time must be after start time." });
+    }
+  }
 });
 
 export const replaceBusinessClosuresSchema = z.object({
@@ -80,11 +100,31 @@ export const staffHolidayInputSchema = z.object({
   id: cuid.optional(),
   staffMemberId: cuid,
   date: dateSchema,
+  endDate: dateSchema.nullable().optional(),
   label: z.string().trim().min(1).max(200),
   allDay: z.boolean().optional().default(true),
   startTime: timeSchema.nullable().optional(),
   endTime: timeSchema.nullable().optional(),
   active: z.boolean().optional().default(true),
+  notes: z.string().trim().max(800).nullable().optional(),
+}).superRefine((value, ctx) => {
+  const endDate = value.endDate || value.date;
+  if (endDate < value.date) {
+    ctx.addIssue({ code: "custom", path: ["endDate"], message: "Staff leave end date cannot be before start date." });
+  }
+  if (!value.allDay) {
+    if (!value.startTime) {
+      ctx.addIssue({ code: "custom", path: ["startTime"], message: "Partial-day staff leave needs a start time." });
+    }
+    if (!value.endTime) {
+      ctx.addIssue({ code: "custom", path: ["endTime"], message: "Partial-day staff leave needs an end time." });
+    }
+    const start = toMinutes(value.startTime);
+    const end = toMinutes(value.endTime);
+    if (endDate === value.date && start !== null && end !== null && end <= start) {
+      ctx.addIssue({ code: "custom", path: ["endTime"], message: "Staff leave end time must be after start time." });
+    }
+  }
 });
 
 export const replaceStaffHolidaysSchema = z.object({

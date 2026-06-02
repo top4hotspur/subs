@@ -56,7 +56,7 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
     );
   }
 
-  const [settings, servicesCount, activeStaff, rotaDays, closureCount] = await Promise.all([
+  const [settings, servicesCount, activeStaff, rotaDays, closureCount, staffLeaveCount] = await Promise.all([
     prisma.customerSiteSettings.findUnique({ where: { tenantSiteId: site.id } }),
     prisma.customerSiteService.count({ where: { tenantSiteId: site.id, active: true } }),
     prisma.customerSiteStaffMember.findMany({
@@ -68,6 +68,7 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
       select: { staffMemberId: true, working: true, startTime: true, endTime: true },
     }),
     prisma.customerSiteBusinessClosure.count({ where: { tenantSiteId: site.id, active: true } }),
+    prisma.customerSiteStaffHoliday.count({ where: { tenantSiteId: site.id, active: true } }),
   ]);
   const businessOpeningHours = normalizeBusinessOpeningHours(settings?.openingHoursJson ?? null);
   const openingHoursDone = hasValidOpenBusinessDay(businessOpeningHours);
@@ -148,7 +149,10 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
     },
     {
       title: "Breaks and closures",
-      summary: closureCount > 0 ? `${closureCount} active closure(s)` : "Add exceptions when needed",
+      summary:
+        closureCount + staffLeaveCount > 0
+          ? `${closureCount} active closure(s), ${staffLeaveCount} staff leave record(s)`
+          : "Optional override dates for closures and staff leave",
     },
     { title: "Booking settings", summary: "Configure booking preferences below" },
     { title: "Gift vouchers", summary: "Future voucher setup area" },

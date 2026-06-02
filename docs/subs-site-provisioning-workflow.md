@@ -304,3 +304,18 @@ Still local/mock in current product:
 - Simple break windows use the existing `CustomerSiteStaffBreakWindow` model and are validated to sit inside a working rota day.
 - Closures and staff holidays remain date-specific override layers for later booking availability work.
 - Public tenant sites stay service-led and do not expose internal staff rota details.
+
+## Subscriber closures, holidays and staff leave milestone
+
+- Business closures and staff leave use existing tenant-scoped scheduling models, extended with date ranges and notes for real operational use.
+- `/site-admin/[siteSlug]` now groups these controls as `Closures, holidays and staff leave` under the scheduling area.
+- Business closures are whole-site overrides for holidays, shutdown days, training days, or short partial-day closures.
+- Staff leave is staff-specific unavailability for holidays, appointments, sickness, or other internal leave.
+- Validation rules:
+  - end date cannot be before start date
+  - partial-day entries require both start and end time
+  - same-day partial-day entries must end after they start
+  - staff leave must reference staff belonging to the same tenant site
+- These records form future booking-availability override layers. The intended hierarchy is business opening hours -> staff rota -> business closures -> staff leave -> existing booking conflict checks.
+- Public tenant sites stay customer/service-led and do not show internal staff leave. A small active/upcoming business closure notice may appear in the footer/contact area when relevant.
+- Provisioning remains clean: no demo closures, holidays, staff leave, bookings, services, or vouchers are copied into paid subscriber sites.

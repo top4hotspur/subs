@@ -33,22 +33,26 @@ export type CustomerSiteStaffBreakWindowInput = {
 export type CustomerSiteBusinessClosureInput = {
   id?: string;
   date: string;
+  endDate?: string | null;
   label: string;
   allDay?: boolean;
   startTime?: string | null;
   endTime?: string | null;
   active?: boolean;
+  customerNote?: string | null;
 };
 
 export type CustomerSiteStaffHolidayInput = {
   id?: string;
   staffMemberId: string;
   date: string;
+  endDate?: string | null;
   label: string;
   allDay?: boolean;
   startTime?: string | null;
   endTime?: string | null;
   active?: boolean;
+  notes?: string | null;
 };
 
 export type CustomerSiteStaffRotaDayRecord = {
@@ -81,11 +85,13 @@ export type CustomerSiteBusinessClosureRecord = {
   id: string;
   tenantSiteId: string;
   date: string;
+  endDate: string | null;
   label: string;
   allDay: boolean;
   startTime: string | null;
   endTime: string | null;
   active: boolean;
+  customerNote: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -95,11 +101,13 @@ export type CustomerSiteStaffHolidayRecord = {
   tenantSiteId: string;
   staffMemberId: string;
   date: string;
+  endDate: string | null;
   label: string;
   allDay: boolean;
   startTime: string | null;
   endTime: string | null;
   active: boolean;
+  notes: string | null;
   createdAt: string;
   updatedAt: string;
 };

@@ -973,3 +973,34 @@ Notes:
 12. Add a break window inside a working day, save, and confirm it persists.
 13. Try a break outside the staff rota and confirm it is rejected with a helpful validation error.
 14. Open `/sites/luna-hair-studio` and confirm the public homepage remains service-led and does not expose detailed internal rota rows.
+
+## 2026-06-02 Hosted Smoke Checks: Subscriber Closures, Holidays and Staff Leave
+
+1. Sign in at `/site-admin/login` and open `/site-admin/luna-hair-studio`.
+2. Confirm at least one active staff member exists in `Staff setup`; add and save one if needed.
+3. Open `Opening hours / rota`.
+4. Confirm the section is labelled `Closures, holidays and staff leave`.
+5. Add a business closure:
+   - reason/name: `Bank holiday closure`
+   - start date: a future date
+   - end date: same date or a later date
+   - all day: enabled
+   - active: enabled
+   - customer-facing note: `We are closed for the bank holiday.`
+6. Save scheduling and confirm a clear success message appears.
+7. Reload `/site-admin/luna-hair-studio` and confirm the closure persists in the current/upcoming group.
+8. Add a partial-day closure on one date with start/end times and confirm it saves.
+9. Try an invalid closure end date before the start date and confirm a helpful validation error appears.
+10. Try a partial-day closure without start/end time and confirm a helpful validation error appears.
+11. Add staff leave for an active staff member:
+    - reason: `Annual leave`
+    - start date and end date: future range
+    - all day: enabled
+    - active: enabled
+    - internal notes: test note
+12. Save and reload admin, then confirm the staff leave persists and shows the staff member name.
+13. Try same-day partial staff leave where end time is before start time and confirm it is rejected.
+14. Confirm closures/staff leave are optional and do not block the overall `Ready to go live` checklist status.
+15. Open `/sites/luna-hair-studio` and confirm the public homepage remains service-led.
+16. If an active/upcoming business closure has a customer-facing note, confirm only a small closure notice appears near contact/footer details.
+17. Confirm internal staff leave is not exposed publicly.

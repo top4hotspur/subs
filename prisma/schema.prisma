@@ -533,11 +533,13 @@ model CustomerSiteBusinessClosure {
   id           String    @id @default(cuid())
   tenantSiteId String
   date         String
+  endDate      String?
   label        String
   allDay       Boolean   @default(true)
   startTime    String?
   endTime      String?
   active       Boolean   @default(true)
+  customerNote String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   tenantSite   TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
@@ -552,11 +554,13 @@ model CustomerSiteStaffHoliday {
   tenantSiteId  String
   staffMemberId String
   date          String
+  endDate       String?
   label         String
   allDay        Boolean                 @default(true)
   startTime     String?
   endTime       String?
   active        Boolean                 @default(true)
+  notes         String?
   createdAt     DateTime                @default(now())
   updatedAt     DateTime                @updatedAt
   tenantSite    TenantSite              @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)

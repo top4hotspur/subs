@@ -111,21 +111,25 @@ export type CustomerSitePreviewData = {
     businessClosures: Array<{
       id: string;
       date: string;
+      endDate: string | null;
       label: string;
       allDay: boolean;
       startTime: string | null;
       endTime: string | null;
       active: boolean;
+      customerNote: string | null;
     }>;
     staffHolidays: Array<{
       id: string;
       staffMemberId: string;
       date: string;
+      endDate: string | null;
       label: string;
       allDay: boolean;
       startTime: string | null;
       endTime: string | null;
       active: boolean;
+      notes: string | null;
     }>;
   };
   recentBookings: Array<{
@@ -311,21 +315,25 @@ export async function getCustomerSitePreviewData(
       businessClosures: site.customerSiteBusinessClosures.map((closure) => ({
         id: closure.id,
         date: closure.date,
+        endDate: closure.endDate ?? null,
         label: closure.label,
         allDay: closure.allDay,
         startTime: closure.startTime ?? null,
         endTime: closure.endTime ?? null,
         active: closure.active,
+        customerNote: closure.customerNote ?? null,
       })),
       staffHolidays: site.customerSiteStaffHolidays.map((holiday) => ({
         id: holiday.id,
         staffMemberId: holiday.staffMemberId,
         date: holiday.date,
+        endDate: holiday.endDate ?? null,
         label: holiday.label,
         allDay: holiday.allDay,
         startTime: holiday.startTime ?? null,
         endTime: holiday.endTime ?? null,
         active: holiday.active,
+        notes: holiday.notes ?? null,
       })),
     },
     recentBookings: site.customerSiteBookings.map((booking) => ({

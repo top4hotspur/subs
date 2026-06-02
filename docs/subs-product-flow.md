@@ -705,3 +705,30 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - The onboarding checklist now treats staff/rota readiness as complete only when at least one active staff member has at least one valid working day.
 - Public subscriber pages do not expose detailed rota rows; this data is reserved for future online booking availability.
 - Staff login/auth, customer login/auth, and the full booking engine remain future milestones.
+
+## 2026-06-02 Subscriber Closures, Holidays and Staff Leave
+
+- `/site-admin/[siteSlug]` now provides a tenant-scoped `Closures, holidays and staff leave` area inside `Opening hours / rota`.
+- Business closures are whole-business date overrides and can capture:
+  - reason/name
+  - start date and end date
+  - all-day or partial-day time range
+  - active/inactive state
+  - optional customer-facing note
+- Staff leave is individual staff unavailability and can capture:
+  - staff member
+  - reason
+  - start date and end date
+  - all-day or partial-day time range
+  - active/inactive state
+  - optional internal notes
+- Validation prevents end dates before start dates and requires valid start/end times for partial-day entries.
+- Staff leave is checked against active tenant staff so one tenant cannot assign leave to another tenant's staff member.
+- Booking availability hierarchy is now documented for future work:
+  1. business opening hours define the normal business window
+  2. staff rota defines normal staff availability
+  3. business closures override the whole business
+  4. staff leave overrides individual staff rota
+  5. the full booking engine will later combine these with service durations and existing bookings
+- Closures and staff leave are optional setup data and do not block `Ready to go live`.
+- Public subscriber pages remain service-led. They may show a small current/upcoming business-closure notice near contact/footer details, but they do not expose internal staff leave.

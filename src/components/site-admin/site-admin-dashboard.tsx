@@ -215,22 +215,26 @@ type BreakWindowDraft = {
 type BusinessClosureDraft = {
   id?: string;
   date: string;
+  endDate: string;
   label: string;
   allDay: boolean;
   startTime: string;
   endTime: string;
   active: boolean;
+  customerNote: string;
 };
 
 type StaffHolidayDraft = {
   id?: string;
   staffMemberId: string;
   date: string;
+  endDate: string;
   label: string;
   allDay: boolean;
   startTime: string;
   endTime: string;
   active: boolean;
+  notes: string;
 };
 
 function findRotaDay(
@@ -308,6 +312,57 @@ function validateRotaAndBreakDrafts(
   return errors;
 }
 
+function validateClosureAndLeaveDrafts(
+  closures: BusinessClosureDraft[],
+  holidays: StaffHolidayDraft[],
+): string[] {
+  const errors: string[] = [];
+  for (const closure of closures) {
+    if (!closure.label.trim()) errors.push("Business closures need a name/reason.");
+    if (!closure.date.trim()) errors.push("Business closures need a start date.");
+    const endDate = closure.endDate.trim() || closure.date.trim();
+    if (closure.date.trim() && endDate && endDate < closure.date.trim()) {
+      errors.push("Closure end date cannot be before start date.");
+    }
+    if (!closure.allDay) {
+      if (!closure.startTime.trim() || !closure.endTime.trim()) {
+        errors.push("Partial-day closures need start and end times.");
+      } else {
+        const start = timeToMinutes(closure.startTime);
+        const end = timeToMinutes(closure.endTime);
+        if (start === null || end === null) errors.push("Partial-day closures need valid HH:mm times.");
+        if (start !== null && end !== null && endDate === closure.date.trim() && end <= start) {
+          errors.push("Closure end time must be after start time for same-day partial closures.");
+        }
+      }
+    }
+  }
+
+  for (const holiday of holidays) {
+    if (!holiday.staffMemberId) errors.push("Staff leave needs a staff member.");
+    if (!holiday.label.trim()) errors.push("Staff leave needs a reason.");
+    if (!holiday.date.trim()) errors.push("Staff leave needs a start date.");
+    const endDate = holiday.endDate.trim() || holiday.date.trim();
+    if (holiday.date.trim() && endDate && endDate < holiday.date.trim()) {
+      errors.push("Staff leave end date cannot be before start date.");
+    }
+    if (!holiday.allDay) {
+      if (!holiday.startTime.trim() || !holiday.endTime.trim()) {
+        errors.push("Partial-day staff leave needs start and end times.");
+      } else {
+        const start = timeToMinutes(holiday.startTime);
+        const end = timeToMinutes(holiday.endTime);
+        if (start === null || end === null) errors.push("Partial-day staff leave needs valid HH:mm times.");
+        if (start !== null && end !== null && endDate === holiday.date.trim() && end <= start) {
+          errors.push("Staff leave end time must be after start time for same-day partial leave.");
+        }
+      }
+    }
+  }
+
+  return errors;
+}
+
 function rotaBusinessHoursWarning(
   rotaDay: RotaDayDraft,
   openingHours: BusinessOpeningHours,
@@ -377,6 +432,29 @@ function formatAdminDuration(value: string): string {
   if (hours > 0 && remainder > 0) return `${hours} hr ${remainder} mins`;
   if (hours > 0) return hours === 1 ? "1 hr" : `${hours} hrs`;
   return `${minutes} mins`;
+}
+
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function formatUkDate(value: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value || "Date not set";
+  const [year, month, day] = value.split("-");
+  return `${day}/${month}/${year}`;
+}
+
+function formatDateRange(startDate: string, endDate: string): string {
+  const end = endDate || startDate;
+  return end === startDate ? formatUkDate(startDate) : `${formatUkDate(startDate)} to ${formatUkDate(end)}`;
+}
+
+function splitActiveFutureAndPast<T extends { active: boolean; date: string; endDate: string }>(items: T[]) {
+  const today = todayIso();
+  return {
+    currentUpcoming: items.filter((item) => item.active && (item.endDate || item.date) >= today),
+    pastOrInactive: items.filter((item) => !item.active || (item.endDate || item.date) < today),
+  };
 }
 
 
@@ -573,11 +651,13 @@ function toBusinessClosureDraft(closure: CustomerSiteBusinessClosureRecord): Bus
   return {
     id: closure.id,
     date: closure.date,
+    endDate: closure.endDate ?? closure.date,
     label: closure.label,
     allDay: closure.allDay,
     startTime: closure.startTime ?? "",
     endTime: closure.endTime ?? "",
     active: closure.active,
+    customerNote: closure.customerNote ?? "",
   };
 }
 
@@ -586,11 +666,13 @@ function toStaffHolidayDraft(holiday: CustomerSiteStaffHolidayRecord): StaffHoli
     id: holiday.id,
     staffMemberId: holiday.staffMemberId,
     date: holiday.date,
+    endDate: holiday.endDate ?? holiday.date,
     label: holiday.label,
     allDay: holiday.allDay,
     startTime: holiday.startTime ?? "",
     endTime: holiday.endTime ?? "",
     active: holiday.active,
+    notes: holiday.notes ?? "",
   };
 }
 
@@ -621,6 +703,10 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   const serviceCategoryById = useMemo(
     () => new Map(serviceCategoriesDraft.filter((category) => category.id).map((category) => [category.id!, category])),
     [serviceCategoriesDraft],
+  );
+  const staffById = useMemo(
+    () => new Map(staffDraft.filter((staff) => staff.id).map((staff) => [staff.id!, staff])),
+    [staffDraft],
   );
 
   useEffect(() => {
@@ -961,7 +1047,10 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   }
 
   async function saveScheduling() {
-    const validationErrors = validateRotaAndBreakDrafts(rotaDaysDraft, breakWindowsDraft);
+    const validationErrors = [
+      ...validateRotaAndBreakDrafts(rotaDaysDraft, breakWindowsDraft),
+      ...validateClosureAndLeaveDrafts(businessClosuresDraft, staffHolidaysDraft),
+    ];
     if (validationErrors.length > 0) {
       setMessage(validationErrors.join(" "));
       return;
@@ -989,21 +1078,25 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       businessClosures: businessClosuresDraft.map((closure) => ({
         id: closure.id,
         date: closure.date.trim(),
+        endDate: closure.endDate.trim() || closure.date.trim(),
         label: closure.label.trim(),
         allDay: closure.allDay,
-        startTime: closure.startTime.trim() || null,
-        endTime: closure.endTime.trim() || null,
+        startTime: closure.allDay ? null : closure.startTime.trim() || null,
+        endTime: closure.allDay ? null : closure.endTime.trim() || null,
         active: closure.active,
+        customerNote: closure.customerNote.trim() || null,
       })),
       staffHolidays: staffHolidaysDraft.map((holiday) => ({
         id: holiday.id,
         staffMemberId: holiday.staffMemberId,
         date: holiday.date.trim(),
+        endDate: holiday.endDate.trim() || holiday.date.trim(),
         label: holiday.label.trim(),
         allDay: holiday.allDay,
-        startTime: holiday.startTime.trim() || null,
-        endTime: holiday.endTime.trim() || null,
+        startTime: holiday.allDay ? null : holiday.startTime.trim() || null,
+        endTime: holiday.allDay ? null : holiday.endTime.trim() || null,
         active: holiday.active,
+        notes: holiday.notes.trim() || null,
       })),
     });
     if (!result.ok) {
@@ -1022,6 +1115,8 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   if (loading) {
     return <p className="text-sm text-slate-600">Loading business admin data...</p>;
   }
+  const closureGroups = splitActiveFutureAndPast(businessClosuresDraft);
+  const staffLeaveGroups = splitActiveFutureAndPast(staffHolidaysDraft);
 
   return (
     <div className="space-y-6">
@@ -2219,83 +2314,157 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
 
       {activeSection === "closuresHolidays" ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="text-lg font-semibold text-slate-900">Closures & holidays</h3>
+          <h3 className="text-lg font-semibold text-slate-900">Closures, holidays and staff leave</h3>
+          <p className="mt-1 text-sm text-slate-600">
+            Use this to block dates when the whole business is closed, or when individual staff members are unavailable. These will be used by online booking availability once booking goes live.
+          </p>
           <div className="mt-3 grid gap-6 lg:grid-cols-2">
             <div>
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-slate-900">Business closures</p>
-                <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setBusinessClosuresDraft((current) => [...current, { date: "", label: "", allDay: true, startTime: "", endTime: "", active: true }])}>
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">Business closures</p>
+                  <p className="mt-1 text-xs text-slate-600">Whole-business holidays, training days, bank holidays, or temporary closures.</p>
+                </div>
+                <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setBusinessClosuresDraft((current) => [...current, { date: "", endDate: "", label: "", allDay: true, startTime: "", endTime: "", active: true, customerNote: "" }])}>
                   Add closure
                 </button>
               </div>
               <div className="mt-2 space-y-2">
-                {businessClosuresDraft.map((closure, index) => (
-                  <div key={`${closure.id ?? "new"}-${index}`} className="rounded-md border border-slate-200 bg-slate-50 p-2">
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="YYYY-MM-DD" value={closure.date} onChange={(event) => setBusinessClosuresDraft((current) => current.map((row, i) => i === index ? { ...row, date: event.target.value } : row))} />
-                      <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Label" value={closure.label} onChange={(event) => setBusinessClosuresDraft((current) => current.map((row, i) => i === index ? { ...row, label: event.target.value } : row))} />
-                      <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                        <input type="checkbox" checked={closure.allDay} onChange={(event) => setBusinessClosuresDraft((current) => current.map((row, i) => i === index ? { ...row, allDay: event.target.checked } : row))} />
-                        All day
-                      </label>
-                      <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                        <input type="checkbox" checked={closure.active} onChange={(event) => setBusinessClosuresDraft((current) => current.map((row, i) => i === index ? { ...row, active: event.target.checked } : row))} />
-                        Active
-                      </label>
-                      {!closure.allDay ? (
-                        <>
-                          <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Start HH:mm" value={closure.startTime} onChange={(event) => setBusinessClosuresDraft((current) => current.map((row, i) => i === index ? { ...row, startTime: event.target.value } : row))} />
-                          <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="End HH:mm" value={closure.endTime} onChange={(event) => setBusinessClosuresDraft((current) => current.map((row, i) => i === index ? { ...row, endTime: event.target.value } : row))} />
-                        </>
-                      ) : null}
-                    </div>
-                    <button type="button" className="mt-2 rounded-md border border-rose-300 bg-white px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50" onClick={() => setBusinessClosuresDraft((current) => current.filter((_, i) => i !== index))}>
-                      Remove
-                    </button>
+                {[["Current/upcoming", closureGroups.currentUpcoming], ["Past/inactive", closureGroups.pastOrInactive]] .map(([groupLabel, group]) => (
+                  <div key={groupLabel as string} className="space-y-2">
+                    {(group as BusinessClosureDraft[]).length > 0 ? <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{groupLabel as string}</p> : null}
+                    {(group as BusinessClosureDraft[]).map((closure) => {
+                      const index = businessClosuresDraft.indexOf(closure);
+                      return (
+                        <div key={`${closure.id ?? "new"}-${index}`} className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                            <p className="text-xs font-semibold text-slate-900">
+                              {closure.label.trim() || "New closure"} | {formatDateRange(closure.date, closure.endDate || closure.date)}
+                            </p>
+                            <span className={`rounded-full border px-2 py-1 text-[11px] font-semibold ${closure.active ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-slate-200 bg-slate-100 text-slate-600"}`}>
+                              {closure.active ? "Active" : "Inactive"}
+                            </span>
+                          </div>
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            <label className="text-xs font-semibold text-slate-700">Closure name / reason
+                              <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Christmas closure" value={closure.label} onChange={(event) => setBusinessClosuresDraft((current) => current.map((row, i) => i === index ? { ...row, label: event.target.value } : row))} />
+                            </label>
+                            <label className="text-xs font-semibold text-slate-700">Customer-facing note
+                              <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Optional public note" value={closure.customerNote} onChange={(event) => setBusinessClosuresDraft((current) => current.map((row, i) => i === index ? { ...row, customerNote: event.target.value } : row))} />
+                            </label>
+                            <label className="text-xs font-semibold text-slate-700">Start date
+                              <input type="date" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs" value={closure.date} onChange={(event) => setBusinessClosuresDraft((current) => current.map((row, i) => i === index ? { ...row, date: event.target.value, endDate: row.endDate || event.target.value } : row))} />
+                            </label>
+                            <label className="text-xs font-semibold text-slate-700">End date
+                              <input type="date" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs" value={closure.endDate} onChange={(event) => setBusinessClosuresDraft((current) => current.map((row, i) => i === index ? { ...row, endDate: event.target.value } : row))} />
+                            </label>
+                            <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                              <input type="checkbox" checked={closure.allDay} onChange={(event) => setBusinessClosuresDraft((current) => current.map((row, i) => i === index ? { ...row, allDay: event.target.checked } : row))} />
+                              All day
+                            </label>
+                            <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                              <input type="checkbox" checked={closure.active} onChange={(event) => setBusinessClosuresDraft((current) => current.map((row, i) => i === index ? { ...row, active: event.target.checked } : row))} />
+                              Active
+                            </label>
+                            {!closure.allDay ? (
+                              <>
+                                <label className="text-xs font-semibold text-slate-700">Start time
+                                  <input type="time" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs" value={closure.startTime} onChange={(event) => setBusinessClosuresDraft((current) => current.map((row, i) => i === index ? { ...row, startTime: event.target.value } : row))} />
+                                </label>
+                                <label className="text-xs font-semibold text-slate-700">End time
+                                  <input type="time" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs" value={closure.endTime} onChange={(event) => setBusinessClosuresDraft((current) => current.map((row, i) => i === index ? { ...row, endTime: event.target.value } : row))} />
+                                </label>
+                              </>
+                            ) : null}
+                          </div>
+                          <button type="button" className="mt-2 rounded-md border border-rose-300 bg-white px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50" onClick={() => setBusinessClosuresDraft((current) => current.filter((_, i) => i !== index))}>
+                            Remove draft/delete row
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 ))}
+                {businessClosuresDraft.length === 0 ? <p className="text-sm text-slate-600">No business closures yet.</p> : null}
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-slate-900">Staff holidays</p>
-                <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setStaffHolidaysDraft((current) => [...current, { staffMemberId: selectedSchedulingStaffId || "", date: "", label: "", allDay: true, startTime: "", endTime: "", active: true }])}>
-                  Add holiday
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">Staff leave / unavailable dates</p>
+                  <p className="mt-1 text-xs text-slate-600">Individual holidays, sickness, training, or personal appointments.</p>
+                </div>
+                <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setStaffHolidaysDraft((current) => [...current, { staffMemberId: selectedSchedulingStaffId || "", date: "", endDate: "", label: "", allDay: true, startTime: "", endTime: "", active: true, notes: "" }])}>
+                  Add staff leave
                 </button>
               </div>
               <div className="mt-2 space-y-2">
-                {staffHolidaysDraft.map((holiday, index) => (
-                  <div key={`${holiday.id ?? "new"}-${index}`} className="rounded-md border border-slate-200 bg-slate-50 p-2">
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      <select className="rounded-md border border-slate-300 px-2 py-1 text-xs" value={holiday.staffMemberId} onChange={(event) => setStaffHolidaysDraft((current) => current.map((row, i) => i === index ? { ...row, staffMemberId: event.target.value } : row))}>
-                        <option value="">Select staff</option>
-                        {staffDraft.map((staff, staffIndex) => (
-                          <option key={`${staff.id ?? "new"}-${staffIndex}`} value={staff.id ?? ""}>{staff.displayName || "Unnamed staff"}</option>
-                        ))}
-                      </select>
-                      <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="YYYY-MM-DD" value={holiday.date} onChange={(event) => setStaffHolidaysDraft((current) => current.map((row, i) => i === index ? { ...row, date: event.target.value } : row))} />
-                      <input className="rounded-md border border-slate-300 px-2 py-1 text-xs sm:col-span-2" placeholder="Label" value={holiday.label} onChange={(event) => setStaffHolidaysDraft((current) => current.map((row, i) => i === index ? { ...row, label: event.target.value } : row))} />
-                      <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                        <input type="checkbox" checked={holiday.allDay} onChange={(event) => setStaffHolidaysDraft((current) => current.map((row, i) => i === index ? { ...row, allDay: event.target.checked } : row))} />
-                        All day
-                      </label>
-                      <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                        <input type="checkbox" checked={holiday.active} onChange={(event) => setStaffHolidaysDraft((current) => current.map((row, i) => i === index ? { ...row, active: event.target.checked } : row))} />
-                        Active
-                      </label>
-                      {!holiday.allDay ? (
-                        <>
-                          <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Start HH:mm" value={holiday.startTime} onChange={(event) => setStaffHolidaysDraft((current) => current.map((row, i) => i === index ? { ...row, startTime: event.target.value } : row))} />
-                          <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="End HH:mm" value={holiday.endTime} onChange={(event) => setStaffHolidaysDraft((current) => current.map((row, i) => i === index ? { ...row, endTime: event.target.value } : row))} />
-                        </>
-                      ) : null}
-                    </div>
-                    <button type="button" className="mt-2 rounded-md border border-rose-300 bg-white px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50" onClick={() => setStaffHolidaysDraft((current) => current.filter((_, i) => i !== index))}>
-                      Remove
-                    </button>
+                {[["Current/upcoming", staffLeaveGroups.currentUpcoming], ["Past/inactive", staffLeaveGroups.pastOrInactive]] .map(([groupLabel, group]) => (
+                  <div key={groupLabel as string} className="space-y-2">
+                    {(group as StaffHolidayDraft[]).length > 0 ? <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{groupLabel as string}</p> : null}
+                    {(group as StaffHolidayDraft[]).map((holiday) => {
+                      const index = staffHolidaysDraft.indexOf(holiday);
+                      const staffName = staffById.get(holiday.staffMemberId)?.displayName || "Staff not selected";
+                      return (
+                        <div key={`${holiday.id ?? "new"}-${index}`} className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                            <p className="text-xs font-semibold text-slate-900">
+                              {holiday.label.trim() || "New staff leave"} | {staffName} | {formatDateRange(holiday.date, holiday.endDate || holiday.date)}
+                            </p>
+                            <span className={`rounded-full border px-2 py-1 text-[11px] font-semibold ${holiday.active ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-slate-200 bg-slate-100 text-slate-600"}`}>
+                              {holiday.active ? "Active" : "Inactive"}
+                            </span>
+                          </div>
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            <label className="text-xs font-semibold text-slate-700">Staff member
+                              <select className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs" value={holiday.staffMemberId} onChange={(event) => setStaffHolidaysDraft((current) => current.map((row, i) => i === index ? { ...row, staffMemberId: event.target.value } : row))}>
+                                <option value="">Select staff</option>
+                                {staffDraft.filter((staff) => staff.active && staff.id).map((staff, staffIndex) => (
+                                  <option key={`${staff.id ?? "new"}-${staffIndex}`} value={staff.id ?? ""}>{staff.displayName || "Unnamed staff"}</option>
+                                ))}
+                              </select>
+                            </label>
+                            <label className="text-xs font-semibold text-slate-700">Reason
+                              <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Holiday" value={holiday.label} onChange={(event) => setStaffHolidaysDraft((current) => current.map((row, i) => i === index ? { ...row, label: event.target.value } : row))} />
+                            </label>
+                            <label className="text-xs font-semibold text-slate-700">Start date
+                              <input type="date" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs" value={holiday.date} onChange={(event) => setStaffHolidaysDraft((current) => current.map((row, i) => i === index ? { ...row, date: event.target.value, endDate: row.endDate || event.target.value } : row))} />
+                            </label>
+                            <label className="text-xs font-semibold text-slate-700">End date
+                              <input type="date" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs" value={holiday.endDate} onChange={(event) => setStaffHolidaysDraft((current) => current.map((row, i) => i === index ? { ...row, endDate: event.target.value } : row))} />
+                            </label>
+                            <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                              <input type="checkbox" checked={holiday.allDay} onChange={(event) => setStaffHolidaysDraft((current) => current.map((row, i) => i === index ? { ...row, allDay: event.target.checked } : row))} />
+                              All day
+                            </label>
+                            <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                              <input type="checkbox" checked={holiday.active} onChange={(event) => setStaffHolidaysDraft((current) => current.map((row, i) => i === index ? { ...row, active: event.target.checked } : row))} />
+                              Active
+                            </label>
+                            {!holiday.allDay ? (
+                              <>
+                                <label className="text-xs font-semibold text-slate-700">Start time
+                                  <input type="time" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs" value={holiday.startTime} onChange={(event) => setStaffHolidaysDraft((current) => current.map((row, i) => i === index ? { ...row, startTime: event.target.value } : row))} />
+                                </label>
+                                <label className="text-xs font-semibold text-slate-700">End time
+                                  <input type="time" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs" value={holiday.endTime} onChange={(event) => setStaffHolidaysDraft((current) => current.map((row, i) => i === index ? { ...row, endTime: event.target.value } : row))} />
+                                </label>
+                              </>
+                            ) : null}
+                            <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Internal notes
+                              <textarea className="mt-1 min-h-[52px] w-full rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Optional internal note" value={holiday.notes} onChange={(event) => setStaffHolidaysDraft((current) => current.map((row, i) => i === index ? { ...row, notes: event.target.value } : row))} />
+                            </label>
+                          </div>
+                          <button type="button" className="mt-2 rounded-md border border-rose-300 bg-white px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50" onClick={() => setStaffHolidaysDraft((current) => current.filter((_, i) => i !== index))}>
+                            Remove draft/delete row
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 ))}
+                {staffHolidaysDraft.length === 0 ? <p className="text-sm text-slate-600">No staff leave yet.</p> : null}
               </div>
             </div>
           </div>

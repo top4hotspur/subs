@@ -125,11 +125,13 @@ function serializeBusinessClosure(record: {
   id: string;
   tenantSiteId: string;
   date: string;
+  endDate: string | null;
   label: string;
   allDay: boolean;
   startTime: string | null;
   endTime: string | null;
   active: boolean;
+  customerNote: string | null;
   createdAt: Date;
   updatedAt: Date;
 }): CustomerSiteBusinessClosureRecord {
@@ -145,11 +147,13 @@ function serializeStaffHoliday(record: {
   tenantSiteId: string;
   staffMemberId: string;
   date: string;
+  endDate: string | null;
   label: string;
   allDay: boolean;
   startTime: string | null;
   endTime: string | null;
   active: boolean;
+  notes: string | null;
   createdAt: Date;
   updatedAt: Date;
 }): CustomerSiteStaffHolidayRecord {
@@ -276,11 +280,13 @@ export async function replaceCustomerSiteBusinessClosures(
         data: parsed.businessClosures.map((item) => ({
           tenantSiteId: parsed.tenantSiteId,
           date: item.date,
+          endDate: item.endDate || item.date,
           label: item.label,
           allDay: item.allDay ?? true,
           startTime: item.startTime ?? null,
           endTime: item.endTime ?? null,
           active: item.active ?? true,
+          customerNote: item.customerNote ?? null,
         })),
       });
     }
@@ -321,11 +327,13 @@ export async function replaceCustomerSiteStaffHolidays(
           tenantSiteId: parsed.tenantSiteId,
           staffMemberId: item.staffMemberId,
           date: item.date,
+          endDate: item.endDate || item.date,
           label: item.label,
           allDay: item.allDay ?? true,
           startTime: item.startTime ?? null,
           endTime: item.endTime ?? null,
           active: item.active ?? true,
+          notes: item.notes ?? null,
         })),
       });
     }
@@ -410,11 +418,13 @@ export async function replaceCustomerSiteSchedulingSnapshot(
         data: parsed.businessClosures.map((item) => ({
           tenantSiteId: parsed.tenantSiteId,
           date: item.date,
+          endDate: item.endDate || item.date,
           label: item.label,
           allDay: item.allDay ?? true,
           startTime: item.startTime ?? null,
           endTime: item.endTime ?? null,
           active: item.active ?? true,
+          customerNote: item.customerNote ?? null,
         })),
       });
     }
@@ -425,11 +435,13 @@ export async function replaceCustomerSiteSchedulingSnapshot(
           tenantSiteId: parsed.tenantSiteId,
           staffMemberId: item.staffMemberId,
           date: item.date,
+          endDate: item.endDate || item.date,
           label: item.label,
           allDay: item.allDay ?? true,
           startTime: item.startTime ?? null,
           endTime: item.endTime ?? null,
           active: item.active ?? true,
+          notes: item.notes ?? null,
         })),
       });
     }

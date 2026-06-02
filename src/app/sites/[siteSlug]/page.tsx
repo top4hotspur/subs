@@ -39,6 +39,17 @@ function mapUrlFromAddress(address: string | null): string | null {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address.trim())}`;
 }
 
+function formatUkDate(value: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const [year, month, day] = value.split("-");
+  return `${day}/${month}/${year}`;
+}
+
+function formatClosureRange(startDate: string, endDate: string | null): string {
+  const end = endDate || startDate;
+  return end === startDate ? formatUkDate(startDate) : `${formatUkDate(startDate)} to ${formatUkDate(end)}`;
+}
+
 function getEnabledSocialEntries(socialLinks: PersistedSocialLinks) {
   const entries = [
     { key: "facebook", id: "facebook" },
@@ -139,6 +150,12 @@ export default async function PublicSiteSlugPage({
     formatBusinessOpeningHoursSummary(normalizeBusinessOpeningHours(settings?.openingHoursJson)) ||
     settings?.openingHoursSummary ||
     "";
+  const today = new Date().toISOString().slice(0, 10);
+  const upcomingClosure = preview.scheduling.businessClosures.find((closure) =>
+    closure.active &&
+    (closure.endDate || closure.date) >= today &&
+    (closure.customerNote?.trim() || closure.label.trim()),
+  );
 
   const isDark = appearanceMode === "DARK";
   const shellClass = `${scheme.pageBackgroundClass} ${scheme.textClass}`;
@@ -258,6 +275,12 @@ export default async function PublicSiteSlugPage({
             </div>
 
             <footer className={`rounded-xl border ${scheme.borderClass} bg-white p-4 text-xs text-slate-600`}>
+              {upcomingClosure ? (
+                <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
+                  <span className="font-semibold">Upcoming closure:</span>{" "}
+                  {upcomingClosure.customerNote?.trim() || upcomingClosure.label} ({formatClosureRange(upcomingClosure.date, upcomingClosure.endDate)})
+                </div>
+              ) : null}
               <div id="contact" className="mb-3 flex flex-wrap gap-x-4 gap-y-1">
                 {settings?.phone ? <span>Phone: {settings.phone}</span> : null}
                 {settings?.email ? <span>Email: {settings.email}</span> : null}
