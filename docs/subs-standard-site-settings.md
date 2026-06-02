@@ -232,3 +232,12 @@ No real provider credentials/API keys are stored or connected in this phase.
 - Legacy theme/palette records are mapped to Light/Dark compatibility defaults for rendering.
 - Public and demo pages no longer switch to legacy named theme layouts.
 - Stripe checkout env note: setup/monthly/domain values must be Stripe Price IDs (`price_...`), not product IDs (`prod_...`) or numeric amounts.
+
+## Future Provider-Aware Payment Settings
+
+- The current Payments and policies section records payment intent, preferred provider, non-secret account reference, card/cash preferences, prepayment preference, in-store recording, and cancellation/refund wording.
+- A future milestone should make this section provider-aware rather than assuming one fixed API setup.
+- Provider-specific guidance should vary for Stripe, Square, PayPal, SumUp, Zettle, and other supported/requested providers.
+- Future fields must distinguish safe business references from sensitive credentials. API keys, secrets, webhook signing secrets, OAuth tokens, and private credentials require secure handling and must not be displayed publicly or logged.
+- Provider integrations must include clear test/live mode separation, provider-specific webhook validation, payment/refund status reconciliation, and provider-specific operational error states.
+- Until that milestone is built, site-admin should continue to avoid asking businesses for API keys/passwords and should not imply provider automation is live.

@@ -325,3 +325,12 @@ Important:
 - Site-admin appearance control remains Light/Dark only and maps to controlled internal defaults.
 - Legacy theme selections are not exposed to business owners and are ignored by public rendering.
 - Existing persisted fields remain intact for compatibility.
+
+## Future Subscriber Payment Provider Model
+
+- Subscriber businesses will eventually need to connect their own payment processor for customer bookings and payments.
+- Business-admin payment setup should be conditional by provider and integration method rather than exposing one generic set of API fields.
+- Planned provider families to consider include Stripe, Square, PayPal, SumUp, Zettle, and more on request where practical.
+- The future business-owner experience should provide provider-specific setup guidance, safe onboarding steps, test/live status, webhook verification status, refund handling notes, and payment-status diagnostics.
+- Secure credential handling is a prerequisite. Secrets must not be stored in normal visible settings, returned through public APIs, exposed in UI, or written to logs.
+- Current behaviour remains intentionally conservative: payment settings capture preferences and policy wording, while live provider connection beyond the existing controlled foundations is future work.

@@ -912,3 +912,13 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - `resolveTenantSiteByHost()` is the prepared host/domain resolver. It normalises hosts, strips protocol/path/port, handles root/www candidates, resolves `SiteDomain` to `TenantSite`, and excludes suspended/cancelled sites.
 - Full runtime custom-domain rendering is not switched on in this pass. `/sites/[siteSlug]` remains the preview route until hosting/DNS target and safe host rewrite routing are finalised.
 - Suspended/cancelled sites are excluded from live domain resolution. Preview routes also avoid rendering suspended/cancelled tenant sites through the public preview repository.
+
+## Future Subscriber Payment Provider Integrations
+
+- Future subscriber businesses should be able to connect their own payment processor rather than using one fixed MyExperiment.club/provider configuration.
+- Likely supported providers to document and evaluate include Stripe, Square, PayPal, SumUp, Zettle, and additional providers on request where technically and commercially suitable.
+- Business-admin payment settings should eventually become provider-aware: selected provider and integration method should determine which guidance, non-secret fields, credential steps, test/live controls, webhook setup, and refund/status options are shown.
+- Secure credential handling is required before live provider sync: secrets must never be exposed publicly, stored casually in visible settings, logged, or sent through public routes.
+- Each provider integration will need separate webhook signature validation, test/live mode distinction, payment-status reconciliation, cancellation/refund behaviour, and operational error reporting.
+- Marketing and FAQ copy should say MyExperiment.club can accommodate common payment providers, with more available on request, without implying every provider is already automated.
+- Current handling remains conservative: payment setup records business intent and preferences, Stripe booking checkout is only the current controlled foundation, and unsupported provider integrations must not be faked.

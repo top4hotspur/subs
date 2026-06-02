@@ -312,3 +312,10 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - Added cancelled-only queue cleanup in `/admin/setup-requests` so archived cancellations do not clutter active operations.
 - Queue cleanup uses soft archive (`archivedAt`) and keeps paid/provisioning records protected from accidental removal.
 - Setup-request admin detail now exposes clearer webhook/payment confirmation visibility using payment status and completion timestamp.
+
+## Future Payment Provider Roadmap Note
+
+- Subscriber-site payment processing should eventually support common business providers such as Stripe, Square, PayPal, SumUp and Zettle, with other providers considered on request.
+- The implementation should be provider-aware rather than a single generic API configuration: setup fields, webhook checks, credential storage, refunds, payment statuses, and test/live mode controls differ by provider.
+- Marketing/FAQ wording should remain honest: MyExperiment.club can help accommodate common payment providers, but integrations must be confirmed and configured safely.
+- Current product state must not fake provider sync. Sensitive credentials, webhook secrets, live refunds, and provider-specific reconciliation remain future work unless explicitly implemented and validated.
