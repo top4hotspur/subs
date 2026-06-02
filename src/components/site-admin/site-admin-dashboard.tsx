@@ -48,6 +48,7 @@ import {
   formatBusinessOpeningHoursSummary,
   hasValidOpenBusinessDay,
   normalizeBusinessOpeningHours,
+  timeToMinutes,
   validateBusinessOpeningHours,
   weekdayLabel as businessWeekdayLabel,
   type BusinessOpeningHours,
@@ -232,6 +233,99 @@ type StaffHolidayDraft = {
   active: boolean;
 };
 
+function findRotaDay(
+  rotaDays: RotaDayDraft[],
+  staffMemberId: string,
+  weekday: WeekdayValue,
+): RotaDayDraft | null {
+  return rotaDays.find((day) => day.staffMemberId === staffMemberId && day.weekday === weekday) ?? null;
+}
+
+function upsertRotaDayDraft(
+  rows: RotaDayDraft[],
+  next: RotaDayDraft,
+): RotaDayDraft[] {
+  const without = rows.filter((item) => !(item.staffMemberId === next.staffMemberId && item.weekday === next.weekday));
+  return [...without, next];
+}
+
+function validateRotaAndBreakDrafts(
+  rotaDays: RotaDayDraft[],
+  breakWindows: BreakWindowDraft[],
+): string[] {
+  const errors: string[] = [];
+  for (const day of rotaDays) {
+    if (!day.working) continue;
+    const label = weekdayLabel(day.weekday);
+    if (!day.staffMemberId) {
+      errors.push(`${label}: select a staff member before saving rota.`);
+      continue;
+    }
+    if (!day.startTime || !day.endTime) {
+      errors.push(`${label}: working days need both start and end times.`);
+      continue;
+    }
+    const start = timeToMinutes(day.startTime);
+    const end = timeToMinutes(day.endTime);
+    if (start === null || end === null) {
+      errors.push(`${label}: use 24-hour HH:mm rota times, for example 09:00.`);
+      continue;
+    }
+    if (end <= start) {
+      errors.push(`${label}: rota end time must be after start time.`);
+    }
+  }
+
+  for (const window of breakWindows) {
+    if (!window.active) continue;
+    const label = weekdayLabel(window.weekday);
+    if (!window.staffMemberId) {
+      errors.push(`${label}: select a staff member for each active break window.`);
+      continue;
+    }
+    const start = timeToMinutes(window.startTime);
+    const end = timeToMinutes(window.endTime);
+    if (start === null || end === null) {
+      errors.push(`${label}: use 24-hour HH:mm break times, for example 12:00.`);
+      continue;
+    }
+    if (end <= start) {
+      errors.push(`${label}: break end time must be after break start time.`);
+      continue;
+    }
+    const rotaDay = findRotaDay(rotaDays, window.staffMemberId, window.weekday);
+    if (!rotaDay?.working || !rotaDay.startTime || !rotaDay.endTime) {
+      errors.push(`${label}: break windows need a working rota day for the same staff member.`);
+      continue;
+    }
+    const rotaStart = timeToMinutes(rotaDay.startTime);
+    const rotaEnd = timeToMinutes(rotaDay.endTime);
+    if (rotaStart !== null && rotaEnd !== null && (start < rotaStart || end > rotaEnd)) {
+      errors.push(`${label}: break window must sit inside that staff member's rota hours.`);
+    }
+  }
+
+  return errors;
+}
+
+function rotaBusinessHoursWarning(
+  rotaDay: RotaDayDraft,
+  openingHours: BusinessOpeningHours,
+): string | null {
+  if (!rotaDay.working || !rotaDay.startTime || !rotaDay.endTime) return null;
+  const businessDay = openingHours.days.find((day) => day.weekday === rotaDay.weekday);
+  if (!businessDay?.open) return "This rota is outside the current business opening hours for this day.";
+  const rotaStart = timeToMinutes(rotaDay.startTime);
+  const rotaEnd = timeToMinutes(rotaDay.endTime);
+  const businessStart = timeToMinutes(businessDay.startTime);
+  const businessEnd = timeToMinutes(businessDay.endTime);
+  if (rotaStart === null || rotaEnd === null || businessStart === null || businessEnd === null) return null;
+  if (rotaStart < businessStart || rotaEnd > businessEnd) {
+    return `This rota sits outside business hours (${businessDay.startTime}-${businessDay.endTime}). You can save it, but booking rules may need review later.`;
+  }
+  return null;
+}
+
 function toMessage(error: string, status: number): string {
   if (error === "BACKEND_PERSISTENCE_NOT_CONFIGURED" || status === 503) {
     return "Backend persistence is not configured for this environment yet.";
@@ -252,6 +346,17 @@ function toMessage(error: string, status: number): string {
     return "File type is not supported for this upload type.";
   }
   return `Request failed: ${error}`;
+}
+
+function validationDetailsToMessage(details: unknown): string | null {
+  if (!Array.isArray(details)) return null;
+  const messages = details
+    .map((item) => {
+      if (!item || typeof item !== "object" || !("message" in item)) return null;
+      return typeof item.message === "string" ? item.message : null;
+    })
+    .filter((message): message is string => Boolean(message));
+  return messages.length > 0 ? messages.join(" ") : null;
 }
 
 function formatAdminServicePrice(value: string): string {
@@ -659,6 +764,10 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       customerBlockBookingsEnabled: settingsDraft.customerBlockBookingsEnabled,
     });
     if (!result.ok) {
+      if (result.error === "VALIDATION_ERROR") {
+        setMessage(validationDetailsToMessage(result.details) ?? "Please check the rota times before saving.");
+        return;
+      }
       setMessage(toMessage(result.error, result.status));
       return;
     }
@@ -852,6 +961,11 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   }
 
   async function saveScheduling() {
+    const validationErrors = validateRotaAndBreakDrafts(rotaDaysDraft, breakWindowsDraft);
+    if (validationErrors.length > 0) {
+      setMessage(validationErrors.join(" "));
+      return;
+    }
     setMessage("Saving scheduling...");
     const result = await saveSiteAdminScheduling(siteSlug, {
       rotaDays: rotaDaysDraft.map((day) => ({
@@ -900,7 +1014,9 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
     setBreakWindowsDraft(result.scheduling.breakWindows.map(toBreakWindowDraft));
     setBusinessClosuresDraft(result.scheduling.businessClosures.map(toBusinessClosureDraft));
     setStaffHolidaysDraft(result.scheduling.staffHolidays.map(toStaffHolidayDraft));
-    setMessage("Scheduling saved.");
+    const activeRotaCount = result.scheduling.rotaDays.filter((day) => day.working && day.startTime && day.endTime).length;
+    setMessage(activeRotaCount > 0 ? "Staff rota saved." : "Scheduling saved. No working rota days are currently set.");
+    router.refresh();
   }
 
   if (loading) {
@@ -1805,7 +1921,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
             </div>
             <select className="rounded-md border border-slate-300 px-2 py-1 text-sm" value={selectedSchedulingStaffId} onChange={(event) => setSelectedSchedulingStaffId(event.target.value)}>
               <option value="">Select staff member</option>
-              {staffDraft.map((staff, index) => (
+              {staffDraft.filter((staff) => staff.active && staff.id).map((staff, index) => (
                 <option key={`${staff.id ?? "new"}-${index}`} value={staff.id ?? ""}>
                   {staff.displayName || "Unnamed staff"}
                 </option>
@@ -1888,6 +2004,76 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
               <p className="mt-1 text-xs text-slate-600">
                 Staff rota sits inside business opening hours and will be connected to booking availability in a later milestone.
               </p>
+              {staffDraft.filter((staff) => staff.active && staff.id).length === 0 ? (
+                <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                  Add and save at least one active staff member before setting rota.
+                </p>
+              ) : null}
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className={`${outlineButtonClass} ${smallButtonClass}`}
+                  disabled={!selectedSchedulingStaffId}
+                  onClick={() => {
+                    if (!selectedSchedulingStaffId) return;
+                    setRotaDaysDraft((current) => {
+                      let next = current;
+                      for (const weekday of ["monday", "tuesday", "wednesday", "thursday", "friday"] as WeekdayValue[]) {
+                        const existing = findRotaDay(next, selectedSchedulingStaffId, weekday) ?? {
+                          staffMemberId: selectedSchedulingStaffId,
+                          weekday,
+                          working: false,
+                          startTime: "",
+                          endTime: "",
+                        };
+                        next = upsertRotaDayDraft(next, {
+                          ...existing,
+                          working: true,
+                          startTime: existing.startTime || "09:00",
+                          endTime: existing.endTime || "17:00",
+                        });
+                      }
+                      return next;
+                    });
+                  }}
+                >
+                  Mark weekdays working
+                </button>
+                <button
+                  type="button"
+                  className={`${outlineButtonClass} ${smallButtonClass}`}
+                  disabled={!selectedSchedulingStaffId}
+                  onClick={() => {
+                    if (!selectedSchedulingStaffId) return;
+                    const monday = findRotaDay(rotaDaysDraft, selectedSchedulingStaffId, "monday");
+                    if (!monday?.working || !monday.startTime || !monday.endTime) {
+                      setMessage("Set Monday working hours first, then copy them to weekdays.");
+                      return;
+                    }
+                    setRotaDaysDraft((current) => {
+                      let next = current;
+                      for (const weekday of ["tuesday", "wednesday", "thursday", "friday"] as WeekdayValue[]) {
+                        const existing = findRotaDay(next, selectedSchedulingStaffId, weekday) ?? {
+                          staffMemberId: selectedSchedulingStaffId,
+                          weekday,
+                          working: false,
+                          startTime: "",
+                          endTime: "",
+                        };
+                        next = upsertRotaDayDraft(next, {
+                          ...existing,
+                          working: true,
+                          startTime: monday.startTime,
+                          endTime: monday.endTime,
+                        });
+                      }
+                      return next;
+                    });
+                  }}
+                >
+                  Copy Monday to weekdays
+                </button>
+              </div>
               <div className="mt-2 space-y-2">
                 {weekdayValues.map((weekday) => {
                   const allowed = selectedStaff ? selectedStaff.availableWeekdays.includes(weekday) : true;
@@ -1899,6 +2085,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     startTime: "",
                     endTime: "",
                   };
+                  const warning = rotaBusinessHoursWarning(row, settingsDraft.openingHours);
                   return (
                     <div key={weekday} className={`rounded-md border p-2 ${allowed ? "border-slate-200 bg-slate-50" : "border-amber-300 bg-amber-50"}`}>
                       <div className="flex flex-wrap items-center gap-2">
@@ -1912,8 +2099,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                               if (!selectedSchedulingStaffId) return;
                               const next = { ...row, working: event.target.checked };
                               setRotaDaysDraft((current) => {
-                                const without = current.filter((item) => !(item.staffMemberId === selectedSchedulingStaffId && item.weekday === weekday));
-                                return [...without, next];
+                                return upsertRotaDayDraft(current, next);
                               });
                             }}
                           />
@@ -1921,6 +2107,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                         </label>
                         <input
                           className="rounded-md border border-slate-300 px-2 py-1 text-xs"
+                          type="time"
                           placeholder="09:00"
                           value={row.startTime}
                           disabled={!row.working || !selectedSchedulingStaffId || !allowed}
@@ -1928,13 +2115,13 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                             if (!selectedSchedulingStaffId) return;
                             const next = { ...row, startTime: event.target.value };
                             setRotaDaysDraft((current) => {
-                              const without = current.filter((item) => !(item.staffMemberId === selectedSchedulingStaffId && item.weekday === weekday));
-                              return [...without, next];
+                              return upsertRotaDayDraft(current, next);
                             });
                           }}
                         />
                         <input
                           className="rounded-md border border-slate-300 px-2 py-1 text-xs"
+                          type="time"
                           placeholder="17:00"
                           value={row.endTime}
                           disabled={!row.working || !selectedSchedulingStaffId || !allowed}
@@ -1942,14 +2129,16 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                             if (!selectedSchedulingStaffId) return;
                             const next = { ...row, endTime: event.target.value };
                             setRotaDaysDraft((current) => {
-                              const without = current.filter((item) => !(item.staffMemberId === selectedSchedulingStaffId && item.weekday === weekday));
-                              return [...without, next];
+                              return upsertRotaDayDraft(current, next);
                             });
                           }}
                         />
                       </div>
                       {!allowed ? (
                         <p className="mt-1 text-xs text-amber-800">This staff member is not available on this day.</p>
+                      ) : null}
+                      {warning ? (
+                        <p className="mt-1 text-xs text-amber-800">{warning}</p>
                       ) : null}
                     </div>
                   );
@@ -1959,23 +2148,32 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
 
             <div>
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-slate-900">Break windows</p>
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">Break windows</p>
+                  <p className="mt-1 text-xs text-slate-600">
+                    Optional simple breaks inside a staff working day. Full closure and holiday overrides stay in the next section.
+                  </p>
+                </div>
                 <button
                   type="button"
                   className={`${outlineButtonClass} ${smallButtonClass}`}
-                  onClick={() =>
+                  onClick={() => {
+                    if (!selectedSchedulingStaffId) {
+                      setMessage("Select a staff member before adding a break window.");
+                      return;
+                    }
                     setBreakWindowsDraft((current) => [
                       ...current,
                       {
-                        staffMemberId: selectedSchedulingStaffId || "",
+                        staffMemberId: selectedSchedulingStaffId,
                         weekday: "monday",
                         label: "",
                         startTime: "12:00",
                         endTime: "13:00",
                         active: true,
                       },
-                    ])
-                  }
+                    ]);
+                  }}
                 >
                   Add break
                 </button>
@@ -1996,8 +2194,8 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                         ))}
                       </select>
                       <input className="rounded-md border border-slate-300 px-2 py-1 text-xs sm:col-span-2" placeholder="Break label" value={window.label} onChange={(event) => setBreakWindowsDraft((current) => current.map((row, i) => i === index ? { ...row, label: event.target.value } : row))} />
-                      <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="12:00" value={window.startTime} onChange={(event) => setBreakWindowsDraft((current) => current.map((row, i) => i === index ? { ...row, startTime: event.target.value } : row))} />
-                      <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="13:00" value={window.endTime} onChange={(event) => setBreakWindowsDraft((current) => current.map((row, i) => i === index ? { ...row, endTime: event.target.value } : row))} />
+                      <input type="time" className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="12:00" value={window.startTime} onChange={(event) => setBreakWindowsDraft((current) => current.map((row, i) => i === index ? { ...row, startTime: event.target.value } : row))} />
+                      <input type="time" className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="13:00" value={window.endTime} onChange={(event) => setBreakWindowsDraft((current) => current.map((row, i) => i === index ? { ...row, endTime: event.target.value } : row))} />
                       <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">
                         <input type="checkbox" checked={window.active} onChange={(event) => setBreakWindowsDraft((current) => current.map((row, i) => i === index ? { ...row, active: event.target.checked } : row))} />
                         Active

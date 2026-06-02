@@ -31,6 +31,39 @@ function parseOrThrow<T>(schema: z.ZodType<T>, value: unknown, label: string): T
   return result.data;
 }
 
+function toMinutes(value: string | null | undefined): number | null {
+  if (!value || !/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) return null;
+  const [hours, minutes] = value.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+function validateBreaksInsideRota(
+  rotaDays: Array<{ staffMemberId: string; weekday: string; working?: boolean; startTime?: string | null; endTime?: string | null }>,
+  breakWindows: Array<{ staffMemberId: string; weekday: string; active?: boolean; startTime: string; endTime: string }>,
+): void {
+  for (const window of breakWindows) {
+    if (window.active === false) continue;
+    const rotaDay = rotaDays.find((day) => day.staffMemberId === window.staffMemberId && day.weekday === window.weekday);
+    if (!rotaDay?.working || !rotaDay.startTime || !rotaDay.endTime) {
+      throw new Error("Break windows must sit inside a working rota day for the same staff member.");
+    }
+    const breakStart = toMinutes(window.startTime);
+    const breakEnd = toMinutes(window.endTime);
+    const rotaStart = toMinutes(rotaDay.startTime);
+    const rotaEnd = toMinutes(rotaDay.endTime);
+    if (
+      breakStart === null ||
+      breakEnd === null ||
+      rotaStart === null ||
+      rotaEnd === null ||
+      breakStart < rotaStart ||
+      breakEnd > rotaEnd
+    ) {
+      throw new Error("Break windows must be inside staff rota hours.");
+    }
+  }
+}
+
 async function assertStaffBelongsToTenant(
   tenantSiteId: string,
   staffMemberIds: string[],
@@ -193,6 +226,8 @@ export async function replaceCustomerSiteBreakWindows(
     parsed.tenantSiteId,
     parsed.breakWindows.map((item) => item.staffMemberId),
   );
+  const rotaDays = await listCustomerSiteRotaDays(parsed.tenantSiteId);
+  validateBreaksInsideRota(rotaDays, parsed.breakWindows);
 
   await prisma.$transaction(async (tx) => {
     await tx.customerSiteStaffBreakWindow.deleteMany({ where: { tenantSiteId: parsed.tenantSiteId } });
@@ -334,6 +369,7 @@ export async function replaceCustomerSiteSchedulingSnapshot(
     ...parsed.staffHolidays.map((item) => item.staffMemberId),
   ];
   await assertStaffBelongsToTenant(parsed.tenantSiteId, staffIds);
+  validateBreaksInsideRota(parsed.rotaDays, parsed.breakWindows);
 
   await prisma.$transaction(async (tx) => {
     await tx.customerSiteStaffBreakWindow.deleteMany({ where: { tenantSiteId: parsed.tenantSiteId } });

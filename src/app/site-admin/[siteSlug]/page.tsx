@@ -5,7 +5,7 @@ import { SiteAdminDashboard } from "@/components/site-admin/site-admin-dashboard
 import { getSiteAdminSessionContext } from "@/lib/auth/site-admin";
 import { getTenantSiteBySlug } from "@/lib/sites/tenant-resolver";
 import { prisma } from "@/lib/db/prisma";
-import { hasValidOpenBusinessDay, normalizeBusinessOpeningHours } from "@/lib/sites/customer-site-opening-hours";
+import { hasValidOpenBusinessDay, normalizeBusinessOpeningHours, timeToMinutes } from "@/lib/sites/customer-site-opening-hours";
 
 type SiteAdminPageProps = {
   params: Promise<{ siteSlug: string }>;
@@ -56,15 +56,30 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
     );
   }
 
-  const [settings, servicesCount, staffCount, rotaCount, closureCount] = await Promise.all([
+  const [settings, servicesCount, activeStaff, rotaDays, closureCount] = await Promise.all([
     prisma.customerSiteSettings.findUnique({ where: { tenantSiteId: site.id } }),
     prisma.customerSiteService.count({ where: { tenantSiteId: site.id, active: true } }),
-    prisma.customerSiteStaffMember.count({ where: { tenantSiteId: site.id, active: true } }),
-    prisma.customerSiteStaffRotaDay.count({ where: { tenantSiteId: site.id } }),
+    prisma.customerSiteStaffMember.findMany({
+      where: { tenantSiteId: site.id, active: true },
+      select: { id: true },
+    }),
+    prisma.customerSiteStaffRotaDay.findMany({
+      where: { tenantSiteId: site.id },
+      select: { staffMemberId: true, working: true, startTime: true, endTime: true },
+    }),
     prisma.customerSiteBusinessClosure.count({ where: { tenantSiteId: site.id, active: true } }),
   ]);
   const businessOpeningHours = normalizeBusinessOpeningHours(settings?.openingHoursJson ?? null);
   const openingHoursDone = hasValidOpenBusinessDay(businessOpeningHours);
+  const activeStaffIds = new Set(activeStaff.map((staff) => staff.id));
+  const staffCount = activeStaff.length;
+  const validRotaCount = rotaDays.filter((day) => {
+    if (!day.working || !activeStaffIds.has(day.staffMemberId)) return false;
+    const start = timeToMinutes(day.startTime ?? "");
+    const end = timeToMinutes(day.endTime ?? "");
+    return start !== null && end !== null && end > start;
+  }).length;
+  const staffRotaReady = staffCount > 0 && validRotaCount > 0;
 
   const checklist = [
     {
@@ -76,8 +91,8 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
       status: servicesCount > 0 ? "Done" : "Needs setup",
     },
     {
-      title: "Add staff or mark staff selection as not required",
-      status: staffCount > 0 ? "Done" : "Needs setup",
+      title: "Add staff and set staff rota",
+      status: staffRotaReady ? "Done" : "Needs setup",
     },
     {
       title: "Set opening hours",
@@ -103,7 +118,8 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
         settings?.businessName &&
         settings?.phone &&
         settings?.email &&
-        openingHoursDone
+        openingHoursDone &&
+        staffRotaReady
           ? "Done"
           : "Needs setup",
     },
@@ -125,10 +141,10 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
     {
       title: "Opening hours / rota",
       summary: openingHoursDone
-        ? "Business opening hours set"
-        : rotaCount > 0
-          ? `${rotaCount} rota row(s)`
-          : "Set business hours first; staff rota comes later",
+        ? staffRotaReady
+          ? "Business hours and staff rota configured"
+          : "Business hours set; add staff rota next"
+        : "Set business hours first; staff rota comes next",
     },
     {
       title: "Breaks and closures",

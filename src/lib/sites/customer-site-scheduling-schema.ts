@@ -6,6 +6,12 @@ const weekdaySchema = z.enum(WEEKDAY_VALUES);
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD");
 const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:mm");
 
+function toMinutes(value: string | null | undefined): number | null {
+  if (!value || !/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) return null;
+  const [hours, minutes] = value.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
 export const rotaDayInputSchema = z.object({
   id: cuid.optional(),
   staffMemberId: cuid,
@@ -13,6 +19,19 @@ export const rotaDayInputSchema = z.object({
   working: z.boolean().optional().default(false),
   startTime: timeSchema.nullable().optional(),
   endTime: timeSchema.nullable().optional(),
+}).superRefine((value, ctx) => {
+  if (!value.working) return;
+  if (!value.startTime) {
+    ctx.addIssue({ code: "custom", path: ["startTime"], message: "Working days need a start time." });
+  }
+  if (!value.endTime) {
+    ctx.addIssue({ code: "custom", path: ["endTime"], message: "Working days need an end time." });
+  }
+  const start = toMinutes(value.startTime);
+  const end = toMinutes(value.endTime);
+  if (start !== null && end !== null && end <= start) {
+    ctx.addIssue({ code: "custom", path: ["endTime"], message: "End time must be after start time." });
+  }
 });
 
 export const replaceStaffRotaSchema = z.object({
@@ -29,6 +48,12 @@ export const breakWindowInputSchema = z.object({
   startTime: timeSchema,
   endTime: timeSchema,
   active: z.boolean().optional().default(true),
+}).superRefine((value, ctx) => {
+  const start = toMinutes(value.startTime);
+  const end = toMinutes(value.endTime);
+  if (start !== null && end !== null && end <= start) {
+    ctx.addIssue({ code: "custom", path: ["endTime"], message: "Break end time must be after break start time." });
+  }
 });
 
 export const replaceStaffBreaksSchema = z.object({

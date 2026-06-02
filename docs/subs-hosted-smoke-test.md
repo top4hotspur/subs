@@ -953,3 +953,23 @@ Notes:
 12. Open `/sites/luna-hair-studio/contact` and confirm it shows the same opening-hours summary.
 13. Try invalid hours, for example Monday open `17:00`-`09:00`.
 14. Confirm a helpful validation error appears and the page does not crash.
+
+## 2026-06-02 Hosted Smoke Checks: Subscriber Staff Rota
+
+1. Sign in at `/site-admin/login` and open `/site-admin/luna-hair-studio`.
+2. Confirm at least one active staff member exists in `Staff setup`; add and save one if needed.
+3. Open `Opening hours / rota`.
+4. Select an active staff member.
+5. Confirm the rota area explains staff rota sits inside business opening hours and booking availability is still future work.
+6. Use `Mark weekdays working` or set manually:
+   - Monday-Friday `09:00`-`17:00`
+   - Saturday `09:00`-`13:00`
+   - Sunday not working
+7. Save scheduling and confirm a clear success message appears.
+8. Reload admin and confirm rota values persist.
+9. Confirm the top checklist item `Add staff and set staff rota` is `Done` once an active staff member has at least one valid working day.
+10. Try invalid rota, for example Monday `17:00`-`09:00`, and confirm a helpful validation error appears.
+11. If business opening hours are set, try staff rota outside those hours and confirm a warning appears without hard-blocking the save.
+12. Add a break window inside a working day, save, and confirm it persists.
+13. Try a break outside the staff rota and confirm it is rejected with a helpful validation error.
+14. Open `/sites/luna-hair-studio` and confirm the public homepage remains service-led and does not expose detailed internal rota rows.

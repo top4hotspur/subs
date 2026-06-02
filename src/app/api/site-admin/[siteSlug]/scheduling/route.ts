@@ -69,6 +69,12 @@ export async function PUT(
         { status: 400 },
       );
     }
+    if (error instanceof Error && /rota|break|working|time/i.test(error.message)) {
+      return NextResponse.json(
+        { ok: false, error: "VALIDATION_ERROR", details: [{ message: error.message }] },
+        { status: 400 },
+      );
+    }
     return NextResponse.json(
       {
         ok: false,
@@ -79,4 +85,3 @@ export async function PUT(
     );
   }
 }
-

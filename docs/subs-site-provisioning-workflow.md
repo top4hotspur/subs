@@ -295,3 +295,12 @@ Still local/mock in current product:
 - The existing `openingHoursSummary` remains as a generated readable summary for public display and support views.
 - Opening hours are separate from staff rota: business hours define the normal operating window, while staff availability, breaks, holidays, and closures remain later booking-availability layers.
 - `/sites/[siteSlug]` keeps services as the main public content and shows opening hours only in the small contact/footer area.
+
+## Subscriber staff rota milestone
+
+- Staff rota uses the existing tenant-scoped `CustomerSiteStaffRotaDay` model; no duplicate rota model was added.
+- `/site-admin/[siteSlug]` lets business owners configure normal weekly staff availability for active staff members.
+- Rota sits underneath business opening hours: business hours define when the business is open; staff rota defines when each staff member normally works inside or around those hours.
+- Simple break windows use the existing `CustomerSiteStaffBreakWindow` model and are validated to sit inside a working rota day.
+- Closures and staff holidays remain date-specific override layers for later booking availability work.
+- Public tenant sites stay service-led and do not expose internal staff rota details.
