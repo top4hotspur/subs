@@ -378,7 +378,7 @@ function rotaBusinessHoursWarning(
   const businessEnd = timeToMinutes(businessDay.endTime);
   if (rotaStart === null || rotaEnd === null || businessStart === null || businessEnd === null) return null;
   if (rotaStart < businessStart || rotaEnd > businessEnd) {
-    return `This rota sits outside business hours (${businessDay.startTime}-${businessDay.endTime}). You can save it, but booking rules may need review later.`;
+    return `This rota sits outside business hours (${businessDay.startTime}-${businessDay.endTime}). You can save it, but appointments will only be bookable inside business opening hours.`;
   }
   return null;
 }
@@ -2056,14 +2056,6 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                 Set the normal days and times your business is open. Staff rota, holidays and appointment availability will build on this later.
               </p>
             </div>
-            <select className="rounded-md border border-slate-300 px-2 py-1 text-sm" value={selectedSchedulingStaffId} onChange={(event) => setSelectedSchedulingStaffId(event.target.value)}>
-              <option value="">Select staff member</option>
-              {staffDraft.filter((staff) => staff.active && staff.id).map((staff, index) => (
-                <option key={`${staff.id ?? "new"}-${index}`} value={staff.id ?? ""}>
-                  {staff.displayName || "Unnamed staff"}
-                </option>
-              ))}
-            </select>
           </div>
 
           <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -2137,10 +2129,29 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
 
           <div className="mt-3 grid gap-6 lg:grid-cols-2">
             <div>
-              <p className="text-sm font-semibold text-slate-900">Staff weekly rota (future booking layer)</p>
-              <p className="mt-1 text-xs text-slate-600">
-                Staff rota sits inside business opening hours and will be connected to booking availability in a later milestone.
-              </p>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">Staff weekly rota</p>
+                  <p className="mt-1 text-xs text-slate-600">
+                    Choose a staff member, then set their normal working pattern. Rota can be saved outside business hours, but booking slots only appear inside business opening hours.
+                  </p>
+                </div>
+                <label className="text-xs font-semibold text-slate-700">
+                  Staff member
+                  <select
+                    className="mt-1 block min-w-48 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm font-normal text-slate-900"
+                    value={selectedSchedulingStaffId}
+                    onChange={(event) => setSelectedSchedulingStaffId(event.target.value)}
+                  >
+                    <option value="">Select staff member</option>
+                    {staffDraft.filter((staff) => staff.active && staff.id).map((staff, index) => (
+                      <option key={`${staff.id ?? "new"}-${index}`} value={staff.id ?? ""}>
+                        {staff.displayName || "Unnamed staff"}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
               {staffDraft.filter((staff) => staff.active && staff.id).length === 0 ? (
                 <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                   Add and save at least one active staff member before setting rota.
@@ -2187,25 +2198,27 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                       setMessage("Set Monday working hours first, then copy them to weekdays.");
                       return;
                     }
+                    const copyTargets = (["tuesday", "wednesday", "thursday", "friday"] as WeekdayValue[]).filter(
+                      (weekday) => findRotaDay(rotaDaysDraft, selectedSchedulingStaffId, weekday)?.working,
+                    );
                     setRotaDaysDraft((current) => {
                       let next = current;
                       for (const weekday of ["tuesday", "wednesday", "thursday", "friday"] as WeekdayValue[]) {
-                        const existing = findRotaDay(next, selectedSchedulingStaffId, weekday) ?? {
-                          staffMemberId: selectedSchedulingStaffId,
-                          weekday,
-                          working: false,
-                          startTime: "",
-                          endTime: "",
-                        };
+                        const existing = findRotaDay(next, selectedSchedulingStaffId, weekday);
+                        if (!existing?.working) continue;
                         next = upsertRotaDayDraft(next, {
                           ...existing,
-                          working: true,
                           startTime: monday.startTime,
                           endTime: monday.endTime,
                         });
                       }
                       return next;
                     });
+                    setMessage(
+                      copyTargets.length > 0
+                        ? `Copied Monday times to ${copyTargets.length} already-working weekday${copyTargets.length === 1 ? "" : "s"}.`
+                        : "No already-working weekdays found to copy Monday times into.",
+                    );
                   }}
                 >
                   Copy Monday to weekdays

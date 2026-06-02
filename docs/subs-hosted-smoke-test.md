@@ -1075,3 +1075,17 @@ Notes:
 9. Try a working day where the end time is before the start time and confirm the message names the day, for example `Monday end time must be after start time.`
 10. Add an active break on a non-working day and confirm a specific break/rota message appears rather than a generic request failure.
 11. Open `/sites/luna-hair-studio`, check availability for a valid active service/staff/weekday setup, and confirm slots can appear where business hours, staff rota, closures, staff leave, and existing bookings allow.
+
+## 2026-06-02 Hosted Smoke Checks: Rota UX and Public Availability Polish
+
+1. Open `/site-admin/luna-hair-studio` and go to `Opening hours / rota`.
+2. Confirm the `Staff member` dropdown appears inside the `Staff weekly rota` section, not in the overall business opening-hours header.
+3. Confirm the page visually separates business opening hours, staff weekly rota, break windows, and booking availability preview.
+4. Mark Monday and selected weekdays as working for one staff member.
+5. Click `Copy Monday to weekdays` and confirm it copies times only into weekdays already marked `Working`; it must not turn Thursday/Friday on or populate non-working days.
+6. Use `Mark weekdays working` separately and confirm that helper explicitly turns weekdays on.
+7. Set a staff rota outside business hours and confirm save is allowed with a warning that appointments are only bookable inside business opening hours.
+8. Preview availability in admin and confirm staff names/debug reasons still show there.
+9. Open `/sites/luna-hair-studio`, check availability with `Any available staff`, and confirm slot cards show times only, not staff names.
+10. Select a specific staff member publicly and confirm showing that staff name on slots remains acceptable.
+11. Confirm public availability wording is limited to `Available times found.` or `No available times found for this date. Please try another date.` and does not expose internal debug reasons.

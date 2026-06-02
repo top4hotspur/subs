@@ -70,7 +70,7 @@ export function PublicSiteAvailabilityPreview({
         return;
       }
       setSlots(body.slots ?? []);
-      setMessage(body.message ?? ((body.slots?.length ?? 0) > 0 ? "Available times found." : "No available times found for this date. Please try another date."));
+      setMessage((body.slots?.length ?? 0) > 0 ? "Available times found." : "No available times found for this date. Please try another date.");
     } catch {
       setSlots([]);
       setMessage("Could not check availability right now.");
@@ -101,7 +101,11 @@ export function PublicSiteAvailabilityPreview({
                 type="date"
                 className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
                 value={date}
-                onChange={(event) => setDate(event.target.value)}
+                onChange={(event) => {
+                  setDate(event.target.value);
+                  setSelectedSlot(null);
+                  setSlots([]);
+                }}
               />
             </label>
             {selectableStaff.length > 0 ? (
@@ -110,7 +114,11 @@ export function PublicSiteAvailabilityPreview({
                 <select
                   className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
                   value={staffId}
-                  onChange={(event) => setStaffId(event.target.value)}
+                  onChange={(event) => {
+                    setStaffId(event.target.value);
+                    setSelectedSlot(null);
+                    setSlots([]);
+                  }}
                 >
                   <option value="">Any available staff</option>
                   {selectableStaff.map((member) => (
@@ -134,7 +142,7 @@ export function PublicSiteAvailabilityPreview({
                   onClick={() => setSelectedSlot(slot)}
                 >
                   <span className="block">{slot.startTime}-{slot.endTime}</span>
-                  <span className="block font-normal text-slate-500">{slot.staffName}</span>
+                  {staffId ? <span className="block font-normal text-slate-500">{slot.staffName}</span> : null}
                 </button>
               ))}
             </div>

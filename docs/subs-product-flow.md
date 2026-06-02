@@ -784,3 +784,13 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - The scheduling API accepts empty optional time fields as unset values, while still requiring start/end times for active working days and active break windows.
 - Validation messages now surface the specific day/problem, such as `Monday requires a start and end time.` or `Monday end time must be after start time.`, instead of the generic `VALIDATION_ERROR`.
 - Active break windows still must sit inside a working rota day for the same staff member so the availability calculator can trust saved scheduling data.
+
+## 2026-06-02 Rota UX and Availability Preview Polish
+
+- The site-admin staff selector for rota editing now lives inside the `Staff weekly rota` section so business opening hours no longer look tied to a selected staff member.
+- The rota UI separates business opening hours, staff weekly rota, break windows, and booking availability preview more clearly.
+- `Copy Monday to weekdays` now copies Monday's times only to weekdays that are already marked `Working`; `Mark weekdays working` remains the explicit helper for turning weekdays on.
+- Staff rota can still be saved outside business opening hours, but the warning now states that appointments will only be bookable inside business opening hours.
+- The availability calculator already intersects staff rota with business opening hours, so out-of-hours staff rota does not create public bookable slots.
+- Public availability hides staff names when the customer chooses `Any available staff`; staff names remain visible in admin preview and when a customer explicitly selects a specific staff member.
+- Public availability wording remains customer-safe and does not expose internal debug reasons.
