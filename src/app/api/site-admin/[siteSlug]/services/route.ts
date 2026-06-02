@@ -3,7 +3,7 @@ import { ZodError } from "zod";
 import { getSiteAdminSessionContext } from "@/lib/auth/site-admin";
 import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
 import {
-  listCustomerSiteServices,
+  getCustomerSiteServicesSnapshot,
   replaceCustomerSiteServices,
 } from "@/lib/sites/customer-site-settings-repository";
 import { replaceCustomerSiteServicesSchema } from "@/lib/sites/customer-site-settings-schema";
@@ -40,8 +40,8 @@ export async function GET(
       return NextResponse.json({ ok: false, error: resolved.error }, { status: resolved.status });
     }
 
-    const services = await listCustomerSiteServices(resolved.tenantSiteId);
-    return NextResponse.json({ ok: true, services });
+    const snapshot = await getCustomerSiteServicesSnapshot(resolved.tenantSiteId);
+    return NextResponse.json({ ok: true, ...snapshot });
   } catch (error) {
     return NextResponse.json(
       {
@@ -70,10 +70,15 @@ export async function PUT(
     const body = await request.json();
     const parsed = replaceCustomerSiteServicesSchema.parse({
       tenantSiteId: resolved.tenantSiteId,
+      categories: body?.categories,
       services: body?.services,
     });
-    const services = await replaceCustomerSiteServices(resolved.tenantSiteId, parsed.services);
-    return NextResponse.json({ ok: true, services });
+    const snapshot = await replaceCustomerSiteServices(
+      resolved.tenantSiteId,
+      parsed.services,
+      parsed.categories,
+    );
+    return NextResponse.json({ ok: true, ...snapshot });
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(
@@ -91,4 +96,3 @@ export async function PUT(
     );
   }
 }
-

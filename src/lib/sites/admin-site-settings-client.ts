@@ -57,6 +57,7 @@ export type PersistedCustomerSiteSettings = {
 export type PersistedCustomerSiteService = {
   id: string;
   tenantSiteId: string;
+  categoryId: string | null;
   name: string;
   description: string | null;
   basePrice: number | null;
@@ -69,6 +70,16 @@ export type PersistedCustomerSiteService = {
   recurringIntervals: unknown;
   blockBookingEnabled: boolean;
   blockBookingSuggestedCounts: unknown;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PersistedCustomerSiteServiceCategory = {
+  id: string;
+  tenantSiteId: string;
+  name: string;
+  sortOrder: number;
+  active: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -150,14 +161,20 @@ export async function patchAdminSitePersistedSettings(
 
 export async function getAdminSitePersistedServices(
   siteId: string,
-): Promise<ClientResult<{ services: PersistedCustomerSiteService[] }>> {
+): Promise<ClientResult<{ services: PersistedCustomerSiteService[]; categories: PersistedCustomerSiteServiceCategory[] }>> {
   try {
     const response = await fetch(`/api/admin/sites/${encodeURIComponent(siteId)}/services`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
     const body = (await parseJsonSafe(response)) as
-      | { ok?: boolean; services?: PersistedCustomerSiteService[]; error?: string; details?: unknown }
+      | {
+          ok?: boolean;
+          services?: PersistedCustomerSiteService[];
+          categories?: PersistedCustomerSiteServiceCategory[];
+          error?: string;
+          details?: unknown;
+        }
       | null;
 
     if (!response.ok || !body?.ok || !Array.isArray(body.services)) {
@@ -169,7 +186,7 @@ export async function getAdminSitePersistedServices(
       };
     }
 
-    return { ok: true, services: body.services };
+    return { ok: true, services: body.services, categories: body.categories ?? [] };
   } catch {
     return { ok: false, error: "NETWORK_ERROR", status: 0 };
   }
@@ -178,15 +195,22 @@ export async function getAdminSitePersistedServices(
 export async function putAdminSitePersistedServices(
   siteId: string,
   services: Array<Omit<PersistedCustomerSiteService, "id" | "tenantSiteId" | "createdAt" | "updatedAt"> & { id?: string }>,
-): Promise<ClientResult<{ services: PersistedCustomerSiteService[] }>> {
+  categories: Array<Omit<PersistedCustomerSiteServiceCategory, "id" | "tenantSiteId" | "createdAt" | "updatedAt"> & { id?: string }> = [],
+): Promise<ClientResult<{ services: PersistedCustomerSiteService[]; categories: PersistedCustomerSiteServiceCategory[] }>> {
   try {
     const response = await fetch(`/api/admin/sites/${encodeURIComponent(siteId)}/services`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ services }),
+      body: JSON.stringify({ services, categories }),
     });
     const body = (await parseJsonSafe(response)) as
-      | { ok?: boolean; services?: PersistedCustomerSiteService[]; error?: string; details?: unknown }
+      | {
+          ok?: boolean;
+          services?: PersistedCustomerSiteService[];
+          categories?: PersistedCustomerSiteServiceCategory[];
+          error?: string;
+          details?: unknown;
+        }
       | null;
 
     if (!response.ok || !body?.ok || !Array.isArray(body.services)) {
@@ -198,7 +222,7 @@ export async function putAdminSitePersistedServices(
       };
     }
 
-    return { ok: true, services: body.services };
+    return { ok: true, services: body.services, categories: body.categories ?? [] };
   } catch {
     return { ok: false, error: "NETWORK_ERROR", status: 0 };
   }

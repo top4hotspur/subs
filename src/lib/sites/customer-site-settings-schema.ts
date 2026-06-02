@@ -99,6 +99,7 @@ export const upsertCustomerSiteSettingsSchema = z.object({
 
 export const customerSiteServiceInputSchema = z.object({
   id: cuid.optional(),
+  categoryId: cuid.nullable().optional(),
   name: z.string().trim().min(1).max(140),
   description: z.string().trim().max(600).nullable().optional(),
   basePrice: z.number().finite().min(0).max(100000).nullable().optional(),
@@ -108,13 +109,21 @@ export const customerSiteServiceInputSchema = z.object({
   sortOrder: z.number().int().min(0).max(100000).optional().default(0),
   rolePriceOverrides: z.unknown().nullable().optional(),
   recurringEnabled: z.boolean().optional().default(false),
-  recurringIntervals: z.array(z.enum(["WEEKLY", "MONTHLY", "ANNUALLY"])).max(3).nullable().optional(),
+  recurringIntervals: z.array(z.enum(["WEEKLY", "MONTHLY", "ANNUALLY"])).max(1).nullable().optional(),
   blockBookingEnabled: z.boolean().optional().default(false),
   blockBookingSuggestedCounts: z.array(z.number().int().min(2).max(52)).max(8).nullable().optional(),
 });
 
+export const customerSiteServiceCategoryInputSchema = z.object({
+  id: cuid.optional(),
+  name: z.string().trim().min(1).max(120),
+  sortOrder: z.number().int().min(0).max(100000).optional().default(0),
+  active: z.boolean().optional().default(true),
+});
+
 export const replaceCustomerSiteServicesSchema = z.object({
   tenantSiteId: cuid,
+  categories: z.array(customerSiteServiceCategoryInputSchema).max(100).optional().default([]),
   services: z.array(customerSiteServiceInputSchema).max(500),
 });
 

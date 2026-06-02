@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type {
+  PersistedCustomerSiteServiceCategory,
   PersistedCustomerSiteService,
   PersistedCustomerSiteSettings,
 } from "@/lib/sites/admin-site-settings-client";
@@ -130,6 +131,7 @@ type SettingsDraft = {
 };
 type ServiceDraft = {
   id?: string;
+  categoryId: string;
   name: string;
   description: string;
   basePrice: string;
@@ -141,6 +143,13 @@ type ServiceDraft = {
   recurringIntervals: Array<"WEEKLY" | "MONTHLY" | "ANNUALLY">;
   blockBookingEnabled: boolean;
   blockBookingSuggestedCounts: string;
+};
+
+type ServiceCategoryDraft = {
+  id?: string;
+  name: string;
+  active: boolean;
+  sortOrder: string;
 };
 
 type StaffRoleDraft = {
@@ -336,6 +345,7 @@ function toSettingsDraft(settings: PersistedCustomerSiteSettings | null): Settin
 function toServiceDraft(service: PersistedCustomerSiteService): ServiceDraft {
   return {
     id: service.id,
+    categoryId: service.categoryId ?? "",
     name: service.name,
     description: service.description ?? "",
     basePrice: service.basePrice === null ? "" : String(service.basePrice),
@@ -348,7 +358,7 @@ function toServiceDraft(service: PersistedCustomerSiteService): ServiceDraft {
       ? service.recurringIntervals.filter(
           (item): item is "WEEKLY" | "MONTHLY" | "ANNUALLY" =>
             item === "WEEKLY" || item === "MONTHLY" || item === "ANNUALLY",
-        )
+        ).slice(0, 1)
       : [],
     blockBookingEnabled: service.blockBookingEnabled ?? false,
     blockBookingSuggestedCounts: Array.isArray(service.blockBookingSuggestedCounts)
@@ -357,11 +367,20 @@ function toServiceDraft(service: PersistedCustomerSiteService): ServiceDraft {
   };
 }
 
+function toServiceCategoryDraft(category: PersistedCustomerSiteServiceCategory): ServiceCategoryDraft {
+  return {
+    id: category.id,
+    name: category.name,
+    active: category.active,
+    sortOrder: String(category.sortOrder),
+  };
+}
+
 function toRoleDraft(role: CustomerSiteStaffRoleRecord): StaffRoleDraft {
   return {
     id: role.id,
     label: role.label,
-    platformRole: role.platformRole ?? "",
+    platformRole: "",
     active: role.active,
     sortOrder: String(role.sortOrder),
   };
@@ -459,6 +478,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
 
   const [settingsDraft, setSettingsDraft] = useState<SettingsDraft>(() => toSettingsDraft(null));
   const [persistedSettings, setPersistedSettings] = useState<PersistedCustomerSiteSettings | null>(null);
+  const [serviceCategoriesDraft, setServiceCategoriesDraft] = useState<ServiceCategoryDraft[]>([]);
   const [servicesDraft, setServicesDraft] = useState<ServiceDraft[]>([]);
   const [rolesDraft, setRolesDraft] = useState<StaffRoleDraft[]>([]);
   const [staffDraft, setStaffDraft] = useState<StaffMemberDraft[]>([]);
@@ -529,6 +549,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
 
       setSettingsDraft(toSettingsDraft(settingsResult.settings));
       setPersistedSettings(settingsResult.settings);
+      setServiceCategoriesDraft(servicesResult.categories.map(toServiceCategoryDraft));
       setServicesDraft(servicesResult.services.map(toServiceDraft));
       setRolesDraft(rolesResult.roles.map(toRoleDraft));
       setStaffDraft(staffResult.staff.map(toStaffDraft));
@@ -671,10 +692,16 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       setMessage("Please add a service name before saving.");
       return;
     }
+    const invalidCategory = serviceCategoriesDraft.find((category) => category.name.trim().length === 0);
+    if (invalidCategory) {
+      setMessage("Please add a category name before saving, or remove the blank category.");
+      return;
+    }
     const result = await putSiteAdminServices(
       siteSlug,
       servicesDraft.map((service, index) => ({
         id: service.id,
+        categoryId: service.categoryId || null,
         name: service.name.trim(),
         description: service.description.trim() || null,
         basePrice: service.basePrice.trim() ? Number(service.basePrice) : null,
@@ -686,7 +713,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
         sortOrder: service.sortOrder.trim() ? Number(service.sortOrder) : index,
         rolePriceOverrides: null,
         recurringEnabled: service.recurringEnabled,
-        recurringIntervals: service.recurringIntervals,
+        recurringIntervals: service.recurringIntervals.slice(0, 1),
         blockBookingEnabled: service.blockBookingEnabled,
         blockBookingSuggestedCounts: service.blockBookingSuggestedCounts
           .split(",")
@@ -695,11 +722,18 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
           .map((value) => Number(value))
           .filter((value) => Number.isFinite(value) && value >= 2 && value <= 52),
       })),
+      serviceCategoriesDraft.map((category, index) => ({
+        id: category.id,
+        name: category.name.trim(),
+        active: category.active,
+        sortOrder: category.sortOrder.trim() ? Number(category.sortOrder) : index,
+      })),
     );
     if (!result.ok) {
       setMessage(toMessage(result.error, result.status));
       return;
     }
+    setServiceCategoriesDraft(result.categories.map(toServiceCategoryDraft));
     setServicesDraft(result.services.map(toServiceDraft));
     const activeCount = result.services.filter((service) => service.active).length;
     setMessage(
@@ -717,7 +751,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       rolesDraft.map((role, index) => ({
         id: role.id,
         label: role.label.trim(),
-        platformRole: role.platformRole.trim() || null,
+        platformRole: null,
         active: role.active,
         sortOrder: role.sortOrder.trim() ? Number(role.sortOrder) : index,
       })),
@@ -1314,6 +1348,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                   ...current,
                   {
                     name: "",
+                    categoryId: "",
                     description: "",
                     basePrice: "",
                     durationMinutes: "",
@@ -1332,6 +1367,88 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
             </button>
           </div>
           <div className="mt-3 space-y-3">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h4 className="text-sm font-semibold text-slate-900">Service categories</h4>
+                  <p className="mt-1 text-xs text-slate-600">
+                    Group services for a cleaner public Services section. Services without a category still display safely.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className={`${outlineButtonClass} ${smallButtonClass}`}
+                  onClick={() =>
+                    setServiceCategoriesDraft((current) => [
+                      ...current,
+                      { name: "", active: true, sortOrder: String(current.length) },
+                    ])
+                  }
+                >
+                  Add category
+                </button>
+              </div>
+              <div className="mt-3 space-y-2">
+                {serviceCategoriesDraft.length === 0 ? (
+                  <p className="text-xs text-slate-600">No categories yet. Add one if you want to group related services.</p>
+                ) : null}
+                {serviceCategoriesDraft.map((category, categoryIndex) => (
+                  <div key={`${category.id ?? "new"}-${categoryIndex}`} className="grid gap-2 rounded-lg border border-slate-200 bg-white p-3 sm:grid-cols-[1fr_110px_140px_auto] sm:items-end">
+                    <label className="text-xs font-semibold text-slate-700">
+                      Category name
+                      <input
+                        className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                        placeholder="Hair services"
+                        value={category.name}
+                        onChange={(event) =>
+                          setServiceCategoriesDraft((current) =>
+                            current.map((row, i) => i === categoryIndex ? { ...row, name: event.target.value } : row),
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="text-xs font-semibold text-slate-700">
+                      Order
+                      <input
+                        className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                        inputMode="numeric"
+                        value={category.sortOrder}
+                        onChange={(event) =>
+                          setServiceCategoriesDraft((current) =>
+                            current.map((row, i) => i === categoryIndex ? { ...row, sortOrder: event.target.value } : row),
+                          )
+                        }
+                      />
+                    </label>
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={category.active}
+                        onChange={(event) =>
+                          setServiceCategoriesDraft((current) =>
+                            current.map((row, i) => i === categoryIndex ? { ...row, active: event.target.checked } : row),
+                          )
+                        }
+                      />
+                      Public visible
+                    </label>
+                    <button
+                      type="button"
+                      className="rounded-md border border-rose-300 bg-white px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50"
+                      onClick={() =>
+                        setServiceCategoriesDraft((current) => {
+                          const row = current[categoryIndex];
+                          if (!row?.id) return current.filter((_, i) => i !== categoryIndex);
+                          return current.map((item, i) => i === categoryIndex ? { ...item, active: false } : item);
+                        })
+                      }
+                    >
+                      {category.id ? "Hide category" : "Remove"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
             {servicesDraft.length === 0 ? (
               <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
                 <p className="text-sm font-semibold text-slate-900">Add your first service so customers can see what you offer.</p>
@@ -1364,6 +1481,24 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                   <label className="text-xs font-semibold text-slate-700 lg:col-span-1">Service name
                     <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={service.name} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, name: event.target.value } : row))} />
                   </label>
+                  <label className="text-xs font-semibold text-slate-700">
+                    Category
+                    <select
+                      className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                      value={service.categoryId}
+                      onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, categoryId: event.target.value } : row))}
+                    >
+                      <option value="">Uncategorised</option>
+                      {serviceCategoriesDraft
+                        .filter((category) => category.active && category.id)
+                        .map((category) => (
+                          <option key={category.id} value={category.id}>
+                            {category.name}
+                          </option>
+                        ))}
+                    </select>
+                    <span className="mt-1 block text-[11px] font-normal text-slate-600">Save new categories before assigning them.</span>
+                  </label>
                   <label className="text-xs font-semibold text-slate-700">Base price (£)
                     <input className="mt-1 w-full max-w-[140px] rounded-md border border-slate-300 px-2 py-1 text-sm" inputMode="decimal" placeholder="35" value={service.basePrice} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, basePrice: event.target.value } : row))} />
                     <span className="mt-1 block text-[11px] font-normal text-slate-600">Example: £35.</span>
@@ -1390,21 +1525,19 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                   </div>
                   {service.recurringEnabled ? (
                     <div className="sm:col-span-2 lg:col-span-4">
-                      <p className="text-xs font-semibold text-slate-700">Recurring intervals</p>
+                      <p className="text-xs font-semibold text-slate-700">Recurring interval</p>
                       <div className="mt-1 flex flex-wrap gap-3">
                         {(["WEEKLY", "MONTHLY", "ANNUALLY"] as const).map((interval) => (
                           <label key={interval} className="flex items-center gap-1 text-xs text-slate-700">
                             <input
-                              type="checkbox"
+                              type="radio"
+                              name={`recurring-interval-${service.id ?? index}`}
                               checked={service.recurringIntervals.includes(interval)}
                               onChange={(event) =>
                                 setServicesDraft((current) =>
                                   current.map((row, i) => {
                                     if (i !== index) return row;
-                                    const next = new Set(row.recurringIntervals);
-                                    if (event.target.checked) next.add(interval);
-                                    else next.delete(interval);
-                                    return { ...row, recurringIntervals: [...next] };
+                                    return { ...row, recurringIntervals: event.target.checked ? [interval] : [] };
                                   }),
                                 )
                               }
@@ -1463,15 +1596,14 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
           <div className="mt-3 grid gap-6 lg:grid-cols-2">
             <div>
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-slate-900">Roles</p>
+                <p className="text-sm font-semibold text-slate-900">Roles / positions</p>
                 <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setRolesDraft((current) => [...current, { label: "", platformRole: "", active: true, sortOrder: String(current.length) }])}>Add role</button>
               </div>
               <div className="mt-2 space-y-2">
                 {rolesDraft.map((role, index) => (
                   <div key={`${role.id ?? "new"}-${index}`} className="rounded-md border border-slate-200 bg-slate-50 p-2">
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Role label" value={role.label} onChange={(event) => setRolesDraft((current) => current.map((item, i) => i === index ? { ...item, label: event.target.value } : item))} />
-                      <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Platform role label" value={role.platformRole} onChange={(event) => setRolesDraft((current) => current.map((item, i) => i === index ? { ...item, platformRole: event.target.value } : item))} />
+                    <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                      <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Role / Position, e.g. Senior Stylist" value={role.label} onChange={(event) => setRolesDraft((current) => current.map((item, i) => i === index ? { ...item, label: event.target.value } : item))} />
                       <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
                         <input type="checkbox" checked={role.active} onChange={(event) => setRolesDraft((current) => current.map((item, i) => i === index ? { ...item, active: event.target.checked } : item))} />
                         Active
@@ -1515,12 +1647,12 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                         const nextRole = rolesDraft.find((role) => role.id === nextRoleId);
                         setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, roleId: nextRoleId, roleLabel: nextRole?.label ?? item.roleLabel } : item));
                       }}>
-                        <option value="">Select role</option>
+                        <option value="">Select role / position</option>
                         {rolesDraft.map((role, roleIndex) => (
                           <option key={`${role.id ?? "new"}-${roleIndex}`} value={role.id ?? ""}>{role.label || "Unnamed role"}</option>
                         ))}
                       </select>
-                      <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Role/position if no role selected" value={staff.roleLabel} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, roleLabel: event.target.value } : item))} />
+                      <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Role / Position if no saved role selected" value={staff.roleLabel} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, roleLabel: event.target.value } : item))} />
                       <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Email" value={staff.email} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, email: event.target.value } : item))} />
                       <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Phone" value={staff.phone} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, phone: event.target.value } : item))} />
                       <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">

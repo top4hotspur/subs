@@ -886,7 +886,7 @@ Notes:
    - Active/public visible: yes
 4. Save.
 5. Open `/sites/luna-hair-studio`.
-6. Confirm `Emma Jones` appears in Staff options.
+6. Confirm staff is not shown as a large homepage tile; staff choice is reserved for the future booking flow.
 7. Add inactive staff member.
 8. Confirm inactive staff does not appear publicly.
 9. Edit role/display name.
@@ -899,18 +899,26 @@ Notes:
 
 1. Open `/site-admin/luna-hair-studio`.
 2. Confirm `Preview public site` opens `/sites/luna-hair-studio` in a new browser tab/window.
-3. Confirm `Get your site ready` is the main progress checklist and `Setup section guide` is a navigation/section map, not a duplicate checklist.
-4. Confirm checklist and setup guide statuses use subtle green/amber badges.
-5. Open `Services/prices`.
-6. Add a service with:
+3. Confirm `Get your site ready` is clearly the progress checklist.
+4. Confirm `Setup section guide` is clearly navigation and uses `Open`, not duplicate progress states.
+5. Confirm progress states are understandable: `Done`, `Needs setup`, and `Ready` only for preview/openable action.
+6. Open `Services/prices`.
+7. Add a category, for example `Hair services`.
+8. Save, then assign a service to the category.
+9. Add a service with:
    - Name: `Cut & Blow Dry`
    - Base price: `35`
    - Duration: `45`
    - Buffer: `10`
-7. Toggle `Allow this service to be sold as recurring`, select at least one interval, and toggle `Allow block bookings for this service`.
-8. Save and confirm a clear success message appears.
-9. Confirm `Add at least one service` changes to `Done` without manually refreshing the page.
-10. Confirm the `Services/prices` setup guide card changes to configured/done state.
-11. Open the public site and confirm the active service appears.
-12. Reload `/site-admin/luna-hair-studio` and confirm recurring/block-booking values persisted.
-13. Hide/archive the service, save, and confirm the checklist returns to `Not set yet` if no active services remain.
+10. Toggle `Allow this service to be sold as recurring`.
+11. Confirm only one interval can be selected (`Weekly`, `Monthly`, or `Annually`).
+12. Toggle `Allow block bookings for this service`.
+13. Save and confirm a clear success message appears.
+14. Confirm `Add at least one service` changes to `Done` without manually refreshing the page.
+15. Reload `/site-admin/luna-hair-studio` and confirm category assignment plus recurring/block-booking values persisted.
+16. Open `Staff setup` and confirm role field wording is `Role / Position`, with no `Platform role label`.
+17. Open `/sites/luna-hair-studio`.
+18. Confirm homepage focuses on services and groups the service under `Hair services`.
+19. Confirm contact/opening summary, staff options, customer account access, and booking policy notice are no longer large homepage tiles.
+20. Confirm contact, policy, account, staff, and business admin links/details remain available in header/footer/support areas where appropriate.
+21. Hide/archive the service, save, and confirm the checklist returns to `Needs setup` if no active services remain.

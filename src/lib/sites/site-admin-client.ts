@@ -1,4 +1,5 @@
 import type {
+  PersistedCustomerSiteServiceCategory,
   PersistedCustomerSiteService,
   PersistedCustomerSiteSettings,
 } from "@/lib/sites/admin-site-settings-client";
@@ -86,11 +87,17 @@ export async function patchSiteAdminSettings(
 
 export async function getSiteAdminServices(
   siteSlug: string,
-): Promise<ClientResult<{ services: PersistedCustomerSiteService[] }>> {
+): Promise<ClientResult<{ services: PersistedCustomerSiteService[]; categories: PersistedCustomerSiteServiceCategory[] }>> {
   try {
     const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/services`);
     const body = (await parseJsonSafe(response)) as
-      | { ok?: boolean; services?: PersistedCustomerSiteService[]; error?: string; details?: unknown }
+      | {
+          ok?: boolean;
+          services?: PersistedCustomerSiteService[];
+          categories?: PersistedCustomerSiteServiceCategory[];
+          error?: string;
+          details?: unknown;
+        }
       | null;
     if (!response.ok || !body?.ok || !Array.isArray(body.services)) {
       return {
@@ -100,7 +107,7 @@ export async function getSiteAdminServices(
         details: body?.details,
       };
     }
-    return { ok: true, services: body.services };
+    return { ok: true, services: body.services, categories: body.categories ?? [] };
   } catch {
     return { ok: false, error: "NETWORK_ERROR", status: 0 };
   }
@@ -113,15 +120,26 @@ export async function putSiteAdminServices(
       id?: string;
     }
   >,
-): Promise<ClientResult<{ services: PersistedCustomerSiteService[] }>> {
+  categories: Array<
+    Omit<PersistedCustomerSiteServiceCategory, "tenantSiteId" | "createdAt" | "updatedAt" | "id"> & {
+      id?: string;
+    }
+  > = [],
+): Promise<ClientResult<{ services: PersistedCustomerSiteService[]; categories: PersistedCustomerSiteServiceCategory[] }>> {
   try {
     const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/services`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ services }),
+      body: JSON.stringify({ services, categories }),
     });
     const body = (await parseJsonSafe(response)) as
-      | { ok?: boolean; services?: PersistedCustomerSiteService[]; error?: string; details?: unknown }
+      | {
+          ok?: boolean;
+          services?: PersistedCustomerSiteService[];
+          categories?: PersistedCustomerSiteServiceCategory[];
+          error?: string;
+          details?: unknown;
+        }
       | null;
     if (!response.ok || !body?.ok || !Array.isArray(body.services)) {
       return {
@@ -131,7 +149,7 @@ export async function putSiteAdminServices(
         details: body?.details,
       };
     }
-    return { ok: true, services: body.services };
+    return { ok: true, services: body.services, categories: body.categories ?? [] };
   } catch {
     return { ok: false, error: "NETWORK_ERROR", status: 0 };
   }

@@ -647,15 +647,29 @@ CSV import/export setup tools moved out of demo customisation and into business 
 
 - `/site-admin/[siteSlug]` now opens the public preview in a separate tab so business owners can keep admin open while checking progress.
 - The top `Get your site ready` area is the main progress checklist; the lower `Setup section guide` is a setup map with separate status badges.
-- Progress/status labels use subtle green badges for done/ready/configured states and amber badges for not-set/in-progress states.
+- Progress/status labels now use `Done` for complete items and `Needs setup` for incomplete items; the lower setup guide uses `Open` navigation labels instead of duplicate progress states.
 - The `Services/prices` editor now uses compact fields for base price, duration, and buffer minutes.
 - Per-service recurring and block-booking options are clickable and saved as future booking configuration, even though the full booking engine is not active yet.
+- Recurring service interval is single-select (`Weekly`, `Monthly`, or `Annually`) even though the underlying JSON storage can preserve older multi-value data.
+- Services can be grouped into tenant-scoped service categories for cleaner public display.
 - Saving services refreshes the server-rendered onboarding checklist so active-service progress updates without requiring a manual browser refresh.
 
 ## 2026-06-02 Subscriber Staff Management
 
 - `/site-admin/[siteSlug]` now provides a tenant-scoped `Staff setup` section.
 - Business owners can add, edit, publish/hide, and archive staff members.
-- `/sites/[siteSlug]` displays only active tenant staff in Staff options; inactive staff and demo staff are not shown.
+- Subscriber admin uses business-friendly `Role / Position` wording and hides internal/platform role terminology.
+- `/sites/[siteSlug]` keeps staff choice secondary for the future booking flow rather than showing staff as a large homepage tile.
 - The onboarding checklist uses active tenant staff for the `Add staff or mark staff selection as not required` step.
 - Staff login/auth and full rota/availability remain future milestones.
+
+## 2026-06-02 Public Subscriber Homepage IA Polish
+
+- `/sites/[siteSlug]` is now service-led:
+  - hero/business intro
+  - service categories and active services
+  - optional about section only when content is set
+- Contact/opening details, policy links, customer account placeholder, staff login, and business admin login are secondary footer/header items.
+- Staff options, customer account access, and booking policy notices are no longer large homepage tiles.
+- Public service cards show customer-facing fields only: service name, description, price, duration, and a disabled `Book this service (coming soon)` placeholder.
+- Internal service configuration such as buffer, recurring options, and block-booking settings is not shown publicly in this pass.

@@ -266,14 +266,17 @@ Still local/mock in current product:
 - `/sites/[siteSlug]` reads active tenant services only. If there are no active services, the public Services section shows the clean empty state.
 - Public booking remains future work; service cards currently show a disabled `Book this service (coming soon)` action.
 - The subscriber-admin preview action opens `/sites/[siteSlug]` in a new tab so site owners can compare admin changes with the public preview.
-- The onboarding page separates progress from navigation: `Get your site ready` shows completion status and `Setup section guide` maps the setup areas.
-- Service-level recurring and block-booking checkboxes are saved as tenant service configuration for later booking setup; no full recurring billing or multi-session booking engine is connected in this pass.
+- The onboarding page separates progress from navigation: `Get your site ready` shows completion status and `Setup section guide` maps the setup areas with `Open` navigation labels.
+- Service categories are tenant-scoped and let business owners group active public services; inactive categories are not shown publicly and their active services fall back to uncategorised/other grouping.
+- Service-level recurring and block-booking settings are saved as tenant service configuration for later booking setup; recurring interval selection is single-select. No full recurring billing or multi-session booking engine is connected in this pass.
 - After service save, the admin refreshes its server-derived checklist counts so `Add at least one service` reflects active services immediately.
+- Public subscriber homepages now prioritise service categories/services. Contact, policy, account, staff, and admin links are secondary header/footer/support items, not large homepage diagnostic tiles.
 
 ## Subscriber Staff Management
 
 - Business owners manage tenant staff from `/site-admin/[siteSlug]` under `Staff setup`.
 - Staff records belong to the tenant site and include first/last name entry, display name, role/position, email, phone, active visibility, customer-selectable/bookable flag, and notes/bio.
+- Subscriber admin displays a single business-friendly `Role / Position` field and hides internal/platform role labels.
 - Hiding/removing an existing staff member marks it inactive so future bookings/rota references can remain safe.
-- `/sites/[siteSlug]` reads active tenant staff only. If no active staff exist, the public Staff options section shows the clean empty state.
+- `/sites/[siteSlug]` no longer shows staff as a large homepage tile; active tenant staff remains available for future booking/staff-choice flows.
 - Staff rota/availability and staff login/auth remain future milestones.

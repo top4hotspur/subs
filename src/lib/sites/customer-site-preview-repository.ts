@@ -49,6 +49,7 @@ export type CustomerSitePreviewData = {
   } | null;
   services: Array<{
     id: string;
+    categoryId: string | null;
     name: string;
     description: string | null;
     basePrice: number | null;
@@ -61,6 +62,12 @@ export type CustomerSitePreviewData = {
     recurringIntervals: unknown;
     blockBookingEnabled: boolean;
     blockBookingSuggestedCounts: unknown;
+  }>;
+  serviceCategories: Array<{
+    id: string;
+    name: string;
+    sortOrder: number;
+    active: boolean;
   }>;
   staffRoles: Array<{
     id: string;
@@ -158,6 +165,9 @@ export async function getCustomerSitePreviewData(
       customerSiteServices: {
         orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
       },
+      customerSiteServiceCategories: {
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      },
       customerSiteStaffRoles: {
         orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
       },
@@ -238,6 +248,7 @@ export async function getCustomerSitePreviewData(
       : null,
     services: site.customerSiteServices.map((service) => ({
       id: service.id,
+      categoryId: service.categoryId ?? null,
       name: service.name,
       description: service.description ?? null,
       basePrice: service.basePrice === null ? null : Number(service.basePrice),
@@ -250,6 +261,12 @@ export async function getCustomerSitePreviewData(
       recurringIntervals: service.recurringIntervals ?? null,
       blockBookingEnabled: service.blockBookingEnabled,
       blockBookingSuggestedCounts: service.blockBookingSuggestedCounts ?? null,
+    })),
+    serviceCategories: site.customerSiteServiceCategories.map((category) => ({
+      id: category.id,
+      name: category.name,
+      sortOrder: category.sortOrder,
+      active: category.active,
     })),
     staffRoles: site.customerSiteStaffRoles.map((role) => ({
       id: role.id,

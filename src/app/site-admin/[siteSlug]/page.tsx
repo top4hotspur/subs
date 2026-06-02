@@ -10,16 +10,16 @@ type SiteAdminPageProps = {
   params: Promise<{ siteSlug: string }>;
 };
 
-type ProgressStatus = "Done" | "Ready" | "Configured" | "In progress" | "Needs attention" | "Not set yet";
+type ProgressStatus = "Done" | "Ready" | "Needs setup";
 
 function getStatusBadgeClass(status: ProgressStatus): string {
-  if (status === "Done" || status === "Ready" || status === "Configured") {
+  if (status === "Done") {
     return "border-emerald-200 bg-emerald-50 text-emerald-800";
   }
-  if (status === "In progress" || status === "Needs attention" || status === "Not set yet") {
+  if (status === "Needs setup") {
     return "border-amber-200 bg-amber-50 text-amber-800";
   }
-  return "border-slate-200 bg-slate-50 text-slate-700";
+  return "border-sky-200 bg-sky-50 text-sky-800";
 }
 
 export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
@@ -66,19 +66,19 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
   const checklist = [
     {
       title: "Confirm business details",
-      status: settings?.businessName && settings?.phone && settings?.email ? "Done" : "Not set yet",
+      status: settings?.businessName && settings?.phone && settings?.email ? "Done" : "Needs setup",
     },
     {
       title: "Add at least one service",
-      status: servicesCount > 0 ? "Done" : "Not set yet",
+      status: servicesCount > 0 ? "Done" : "Needs setup",
     },
     {
       title: "Add staff or mark staff selection as not required",
-      status: staffCount > 0 ? "Done" : "Not set yet",
+      status: staffCount > 0 ? "Done" : "Needs setup",
     },
     {
       title: "Set opening hours",
-      status: settings?.openingHoursSummary?.trim() ? "Done" : "Not set yet",
+      status: settings?.openingHoursSummary?.trim() ? "Done" : "Needs setup",
     },
     {
       title: "Set booking/cancellation policy",
@@ -87,7 +87,7 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
         settings?.cancellationFullRefundNoticeDays !== null ||
         settings?.cancellationNoRefundWithinDays !== null
           ? "Done"
-          : "Not set yet",
+          : "Needs setup",
     },
     {
       title: "Preview public site",
@@ -101,8 +101,8 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
         settings?.phone &&
         settings?.email &&
         settings?.openingHoursSummary?.trim()
-          ? "In progress"
-          : "Not set yet",
+          ? "Done"
+          : "Needs setup",
     },
   ];
 
@@ -110,35 +110,30 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
     {
       title: "Business details",
       summary: settings?.businessName ? "Business identity started" : "Add contact basics below",
-      status: settings?.businessName ? "Configured" : "Not set yet",
     },
     {
       title: "Services/prices",
       summary: servicesCount > 0 ? `${servicesCount} active service(s)` : "Add your first public service below",
-      status: servicesCount > 0 ? "Configured" : "Not set yet",
     },
     {
       title: "Staff setup",
       summary: staffCount > 0 ? `${staffCount} active staff member(s)` : "Add staff or decide staff choice is not needed",
-      status: staffCount > 0 ? "Configured" : "Not set yet",
     },
     {
       title: "Opening hours / rota",
       summary: rotaCount > 0 ? `${rotaCount} rota row(s)` : "Set opening hours and rota details below",
-      status: rotaCount > 0 ? "Configured" : "Not set yet",
     },
     {
       title: "Breaks and closures",
       summary: closureCount > 0 ? `${closureCount} active closure(s)` : "Add exceptions when needed",
-      status: closureCount > 0 ? "Configured" : "Ready",
     },
-    { title: "Booking settings", summary: "Configure booking preferences below", status: "Ready" },
-    { title: "Gift vouchers", summary: "Future voucher setup area", status: "Ready" },
-    { title: "Policies", summary: "Edit cancellation and customer policy wording below", status: "Ready" },
-    { title: "Page content / visibility", summary: "Edit public page content below", status: "Ready" },
-    { title: "Payments/sales", summary: "Record payment preferences below", status: "Ready" },
-    { title: "Customer CRM", summary: "Future tenant CRM tooling", status: "Ready" },
-    { title: "Preview public site", summary: "Open the tenant preview route in a new tab", status: "Ready" },
+    { title: "Booking settings", summary: "Configure booking preferences below" },
+    { title: "Gift vouchers", summary: "Future voucher setup area" },
+    { title: "Policies", summary: "Edit cancellation and customer policy wording below" },
+    { title: "Page content / visibility", summary: "Edit public page content below" },
+    { title: "Payments/sales", summary: "Record payment preferences below" },
+    { title: "Customer CRM", summary: "Future tenant CRM tooling" },
+    { title: "Preview public site", summary: "Open the tenant preview route in a new tab" },
   ];
 
   return (
@@ -190,8 +185,8 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
             <article key={section.title} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="text-sm font-semibold text-slate-900">{section.title}</h3>
-                <span className={`rounded-full border px-2 py-1 text-[11px] font-semibold ${getStatusBadgeClass(section.status as ProgressStatus)}`}>
-                  {section.status}
+                <span className="rounded-full border border-sky-200 bg-sky-50 px-2 py-1 text-[11px] font-semibold text-sky-800">
+                  Open
                 </span>
               </div>
               <p className="mt-1 text-xs text-slate-600">{section.summary}</p>

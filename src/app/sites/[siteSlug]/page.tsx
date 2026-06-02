@@ -21,7 +21,7 @@ function formatMoney(amount: number | null, currencyCode: string): string {
   }).format(amount);
 }
 
-function formatServiceSummary(durationMinutes: number | null, bufferAfterMinutes: number | null): string {
+function formatServiceSummary(durationMinutes: number | null): string {
   const segments: string[] = [];
   if (durationMinutes !== null) {
     const hours = Math.floor(durationMinutes / 60);
@@ -30,7 +30,6 @@ function formatServiceSummary(durationMinutes: number | null, bufferAfterMinutes
     else if (hours > 0) segments.push(hours === 1 ? "1 hr" : `${hours} hrs`);
     else segments.push(`${durationMinutes} mins`);
   }
-  if (bufferAfterMinutes !== null) segments.push(`${bufferAfterMinutes} mins buffer`);
   return segments.length > 0 ? segments.join(" - ") : "Duration available at booking";
 }
 
@@ -109,6 +108,28 @@ export default async function PublicSiteSlugPage({
   const heroHeadline = settings?.heroHeadline || `Welcome to ${siteName}`;
   const heroSubheading = settings?.heroSubheading || "";
   const activeServices = preview.services.filter((service) => service.active);
+  const activeCategories = preview.serviceCategories.filter((category) => category.active);
+  const activeCategoryIds = new Set(activeCategories.map((category) => category.id));
+  const groupedServices = activeCategories
+    .map((category) => ({
+      id: category.id,
+      name: category.name,
+      services: activeServices.filter((service) => service.categoryId === category.id),
+    }))
+    .filter((group) => group.services.length > 0);
+  const uncategorisedServices = activeServices.filter(
+    (service) => !service.categoryId || !activeCategoryIds.has(service.categoryId),
+  );
+  const serviceGroups = [
+    ...groupedServices,
+    ...(uncategorisedServices.length > 0
+      ? [{
+          id: "uncategorised",
+          name: groupedServices.length > 0 ? "Other services" : "Services",
+          services: uncategorisedServices,
+        }]
+      : []),
+  ];
   const publicStaff = preview.staffMembers.filter((member) => member.active);
   const socialLinks = normalizePersistedSocialLinks(settings?.socialLinks);
   const socialEntries = getEnabledSocialEntries(socialLinks);
@@ -165,145 +186,103 @@ export default async function PublicSiteSlugPage({
               {heroSubheading ? <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>{heroSubheading}</p> : null}
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-              <div className="space-y-4">
-                <div id="services" className={cardClass}>
-                  <h2 className="text-lg font-semibold">Services</h2>
-                  {activeServices.length === 0 ? (
-                    <div className="mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
-                      <p className={`text-sm ${scheme.mutedTextClass}`}>
-                        Services, prices and durations will appear here once the business owner finishes setup.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                      {activeServices.map((service) => (
-                        <article key={service.id} className={`rounded-xl border ${scheme.borderClass} bg-white p-4`}>
-                          <p className="text-sm font-semibold text-slate-900">{service.name}</p>
-                          <p className="mt-1 text-xs text-slate-600">
-                            {service.description || "Professional service details will appear here."}
-                          </p>
-                          <p className="mt-3 text-sm font-semibold text-slate-900">
-                            {formatMoney(service.basePrice, currencyCode)}
-                          </p>
-                          <p className="text-xs text-slate-600">
-                            {formatServiceSummary(service.durationMinutes, service.bufferAfterMinutes)}
-                          </p>
-                          <button
-                            type="button"
-                            disabled
-                            className="mt-3 inline-flex cursor-not-allowed rounded-md border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500"
-                          >
-                            Book this service (coming soon)
-                          </button>
-                        </article>
-                      ))}
-                    </div>
-                  )}
+            <div className="space-y-6">
+              <div id="services" className={cardClass}>
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <div>
+                    <h2 className="text-xl font-semibold">Services</h2>
+                    <p className={`mt-1 text-sm ${scheme.mutedTextClass}`}>
+                      Choose a service to start. Online booking will be connected in a later milestone.
+                    </p>
+                  </div>
+                  {publicStaff.length > 0 ? (
+                    <p className="text-xs font-semibold text-slate-600">
+                      Staff choice can be offered during booking once enabled.
+                    </p>
+                  ) : null}
                 </div>
+                {activeServices.length === 0 ? (
+                  <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
+                    <p className={`text-sm ${scheme.mutedTextClass}`}>
+                      Services, prices and durations will appear here once the business owner finishes setup.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="mt-5 space-y-6">
+                    {serviceGroups.map((group) => (
+                      <section key={group.id}>
+                        {(serviceGroups.length > 1 || group.id !== "uncategorised") ? (
+                          <h3 className="text-base font-semibold text-slate-900">{group.name}</h3>
+                        ) : null}
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                          {group.services.map((service) => (
+                            <article key={service.id} className={`rounded-xl border ${scheme.borderClass} bg-white p-4`}>
+                              <p className="text-sm font-semibold text-slate-900">{service.name}</p>
+                              <p className="mt-1 text-xs text-slate-600">
+                                {service.description || "Professional service details will appear here."}
+                              </p>
+                              <div className="mt-3 flex flex-wrap items-center gap-2">
+                                <p className="text-sm font-semibold text-slate-900">
+                                  {formatMoney(service.basePrice, currencyCode)}
+                                </p>
+                                <span className="text-xs text-slate-400">|</span>
+                                <p className="text-xs text-slate-600">
+                                  {formatServiceSummary(service.durationMinutes)}
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                disabled
+                                className="mt-3 inline-flex cursor-not-allowed rounded-md border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500"
+                              >
+                                Book this service (coming soon)
+                              </button>
+                            </article>
+                          ))}
+                        </div>
+                      </section>
+                    ))}
+                  </div>
+                )}
+              </div>
 
+              {settings?.aboutBody?.trim() ? (
                 <div id="about" className={cardClass}>
                   <h3 className="text-base font-semibold">About us</h3>
-                  <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>
-                    {settings?.aboutBody?.trim() || "Not set yet"}
-                  </p>
+                  <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>{settings.aboutBody}</p>
                 </div>
-              </div>
-
-              <div className="space-y-4">
-                <div id="contact" className={cardClass}>
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className="text-base font-semibold">Contact and opening summary</h3>
-                    {socialEntries.length > 0 ? (
-                      <div className="flex flex-wrap justify-end gap-2">
-                        {socialEntries.map(({ platform, url }) => (
-                          <a
-                            key={platform.id}
-                            href={url}
-                            target="_blank"
-                            rel="noreferrer"
-                            aria-label={platform.accessibleLabel}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-transparent hover:bg-slate-100/60"
-                          >
-                            <img src={platform.iconPath} alt="" className="h-5 w-5" />
-                          </a>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                  <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>{settings?.phone || "Not set yet"}</p>
-                  <p className={`text-sm ${scheme.mutedTextClass}`}>{settings?.email || "Not set yet"}</p>
-                  <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>{settings?.address || "Not set yet"}</p>
-                  <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>
-                    {settings?.openingHoursSummary || "Not set yet"}
-                  </p>
-                  {mapsUrl ? (
-                    <a
-                      href={mapsUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-3 inline-flex rounded-md border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-900 hover:bg-slate-100"
-                    >
-                      View on Google Maps
-                    </a>
-                  ) : null}
-                  {(settings?.cancellationFullRefundNoticeDays !== null ||
-                    settings?.cancellationNoRefundWithinDays !== null ||
-                    settings?.cancellationPolicyNote) ? (
-                    <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3">
-                      <p className="text-xs font-semibold text-slate-900">Cancellation policy</p>
-                      <p className="mt-1 text-xs text-slate-700">
-                        Full refund when cancelled at least {settings?.cancellationFullRefundNoticeDays ?? 1} day(s) before appointment.
-                      </p>
-                      <p className="text-xs text-slate-700">
-                        No refund within {settings?.cancellationNoRefundWithinDays ?? 1} day(s) of appointment.
-                      </p>
-                    </div>
-                  ) : null}
-                </div>
-
-                <div className={cardClass}>
-                  <h3 className="text-base font-semibold">Staff options</h3>
-                  {publicStaff.length === 0 ? (
-                    <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>
-                      Staff selection will appear here if this business enables staff choice.
-                    </p>
-                  ) : (
-                    <ul className="mt-2 space-y-2 text-sm">
-                      {publicStaff.map((staff) => (
-                        <li key={staff.id} className={`rounded-md border ${scheme.borderClass} bg-white p-3`}>
-                          <p className="font-semibold text-slate-900">{staff.displayName}</p>
-                          {staff.roleLabel ? <p className="text-xs text-slate-600">{staff.roleLabel}</p> : null}
-                          {staff.customerSelectable ? (
-                            <p className="mt-1 text-xs font-semibold text-emerald-700">Bookable online once booking is live</p>
-                          ) : null}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-
-                <div id="customer-login" className={cardClass}>
-                  <h3 className="text-base font-semibold">Customer account access</h3>
-                  <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>
-                    Customer login and registration will be available here in a future release.
-                  </p>
-                </div>
-
-                <div className={cardClass}>
-                  <h3 className="text-base font-semibold">Booking policy notice</h3>
-                  <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>
-                    Customers will be asked to confirm they have read and accepted the booking/cancellation policy before completing a booking.
-                  </p>
-                  <Link href={policyHref} className="mt-3 inline-flex rounded-md border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-900 hover:bg-slate-100">
-                    View full policy
-                  </Link>
-                </div>
-              </div>
+              ) : null}
             </div>
 
             <footer className={`rounded-xl border ${scheme.borderClass} bg-white p-4 text-xs text-slate-600`}>
+              <div id="contact" className="mb-3 flex flex-wrap gap-x-4 gap-y-1">
+                {settings?.phone ? <span>Phone: {settings.phone}</span> : null}
+                {settings?.email ? <span>Email: {settings.email}</span> : null}
+                {settings?.openingHoursSummary ? <span>Opening: {settings.openingHoursSummary}</span> : null}
+                {mapsUrl ? (
+                  <a href={mapsUrl} target="_blank" rel="noreferrer" className="hover:text-slate-900">
+                    Map
+                  </a>
+                ) : null}
+              </div>
+              {socialEntries.length > 0 ? (
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {socialEntries.map(({ platform, url }) => (
+                    <a
+                      key={platform.id}
+                      href={url}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={platform.accessibleLabel}
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-300 bg-transparent hover:bg-slate-100/60"
+                    >
+                      <img src={platform.iconPath} alt="" className="h-4 w-4" />
+                    </a>
+                  ))}
+                </div>
+              ) : null}
               <div className="flex flex-wrap items-center gap-3">
+                <span id="customer-login" className="text-slate-600">Customer login (coming soon)</span>
                 <Link href={privacyHref} className="hover:text-slate-900">Privacy Policy</Link>
                 <Link href={cookiesHref} className="hover:text-slate-900">Cookie Policy</Link>
                 <Link href={policyHref} className="hover:text-slate-900">Terms / Policies</Link>

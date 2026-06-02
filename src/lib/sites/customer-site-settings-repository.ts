@@ -73,6 +73,7 @@ export type CustomerSiteServiceRecord = {
   basePrice: number | null;
   durationMinutes: number | null;
   bufferAfterMinutes: number | null;
+  categoryId: string | null;
   active: boolean;
   sortOrder: number;
   rolePriceOverrides: unknown;
@@ -80,6 +81,16 @@ export type CustomerSiteServiceRecord = {
   recurringIntervals: unknown;
   blockBookingEnabled: boolean;
   blockBookingSuggestedCounts: unknown;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CustomerSiteServiceCategoryRecord = {
+  id: string;
+  tenantSiteId: string;
+  name: string;
+  sortOrder: number;
+  active: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -169,6 +180,7 @@ function serializeService(record: {
   basePrice: Prisma.Decimal | null;
   durationMinutes: number | null;
   bufferAfterMinutes: number | null;
+  categoryId: string | null;
   active: boolean;
   sortOrder: number;
   rolePriceOverrides: unknown;
@@ -182,6 +194,22 @@ function serializeService(record: {
   return {
     ...record,
     basePrice: record.basePrice === null ? null : Number(record.basePrice),
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
+  };
+}
+
+function serializeServiceCategory(record: {
+  id: string;
+  tenantSiteId: string;
+  name: string;
+  sortOrder: number;
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}): CustomerSiteServiceCategoryRecord {
+  return {
+    ...record,
     createdAt: record.createdAt.toISOString(),
     updatedAt: record.updatedAt.toISOString(),
   };
@@ -419,17 +447,86 @@ export async function listCustomerSiteServices(tenantSiteId: string) {
   return services.map(serializeService);
 }
 
+export async function listCustomerSiteServiceCategories(tenantSiteId: string) {
+  const parsed = parseOrThrow(tenantSiteIdSchema, { tenantSiteId }, "tenant site id");
+  const categories = await prisma.customerSiteServiceCategory.findMany({
+    where: { tenantSiteId: parsed.tenantSiteId },
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+  });
+  return categories.map(serializeServiceCategory);
+}
+
+export async function getCustomerSiteServicesSnapshot(tenantSiteId: string) {
+  const [categories, services] = await Promise.all([
+    listCustomerSiteServiceCategories(tenantSiteId),
+    listCustomerSiteServices(tenantSiteId),
+  ]);
+  return { categories, services };
+}
+
 export async function replaceCustomerSiteServices(
   tenantSiteId: string,
   services: Array<z.infer<typeof customerSiteServiceInputSchema>>,
+  categories: z.infer<typeof replaceCustomerSiteServicesSchema>["categories"] = [],
 ) {
   const parsed = parseOrThrow(
     replaceCustomerSiteServicesSchema,
-    { tenantSiteId, services },
+    { tenantSiteId, services, categories },
     "replace customer site services",
   );
 
   await prisma.$transaction(async (tx) => {
+    const incomingCategoryIds = parsed.categories
+      .map((category) => category.id)
+      .filter((id): id is string => Boolean(id));
+
+    if (incomingCategoryIds.length > 0) {
+      await tx.customerSiteServiceCategory.updateMany({
+        where: {
+          tenantSiteId: parsed.tenantSiteId,
+          id: { notIn: incomingCategoryIds },
+        },
+        data: { active: false },
+      });
+    } else {
+      await tx.customerSiteServiceCategory.updateMany({
+        where: { tenantSiteId: parsed.tenantSiteId },
+        data: { active: false },
+      });
+    }
+
+    for (const [index, category] of parsed.categories.entries()) {
+      const data = {
+        name: category.name,
+        sortOrder: category.sortOrder ?? index,
+        active: category.active ?? true,
+      };
+
+      if (category.id) {
+        const updated = await tx.customerSiteServiceCategory.updateMany({
+          where: { id: category.id, tenantSiteId: parsed.tenantSiteId },
+          data,
+        });
+        if (updated.count > 0) continue;
+      }
+
+      await tx.customerSiteServiceCategory.create({
+        data: {
+          tenantSiteId: parsed.tenantSiteId,
+          ...data,
+        },
+      });
+    }
+
+    const validCategoryIds = new Set(
+      (
+        await tx.customerSiteServiceCategory.findMany({
+          where: { tenantSiteId: parsed.tenantSiteId },
+          select: { id: true },
+        })
+      ).map((category) => category.id),
+    );
+
     const incomingIds = parsed.services
       .map((service) => service.id)
       .filter((id): id is string => Boolean(id));
@@ -451,6 +548,7 @@ export async function replaceCustomerSiteServices(
 
     for (const [index, service] of parsed.services.entries()) {
       const data = {
+        categoryId: service.categoryId && validCategoryIds.has(service.categoryId) ? service.categoryId : null,
         name: service.name,
         description: service.description ?? null,
         basePrice: service.basePrice ?? null,
@@ -497,7 +595,7 @@ export async function replaceCustomerSiteServices(
     }
   });
 
-  return listCustomerSiteServices(parsed.tenantSiteId);
+  return getCustomerSiteServicesSnapshot(parsed.tenantSiteId);
 }
 
 export async function upsertCustomerSiteService(
@@ -512,6 +610,10 @@ export async function upsertCustomerSiteService(
         const updated = await prisma.customerSiteService.updateMany({
           where: { id: parsedService.id, tenantSiteId: parsedTenantSite.tenantSiteId },
           data: {
+            categoryId:
+              parsedService.categoryId === undefined
+                ? undefined
+                : parsedService.categoryId,
             name: parsedService.name,
             description: parsedService.description ?? null,
             basePrice: parsedService.basePrice ?? null,
@@ -557,6 +659,7 @@ export async function upsertCustomerSiteService(
     : await prisma.customerSiteService.create({
         data: {
           tenantSiteId: parsedTenantSite.tenantSiteId,
+          categoryId: parsedService.categoryId ?? null,
           name: parsedService.name,
           description: parsedService.description ?? null,
           basePrice: parsedService.basePrice ?? null,

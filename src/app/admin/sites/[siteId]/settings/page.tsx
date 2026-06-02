@@ -81,6 +81,7 @@ type PersistedSettingsDraft = {
 
 type PersistedServiceDraft = {
   id?: string;
+  categoryId: string;
   name: string;
   description: string;
   basePrice: string;
@@ -217,6 +218,7 @@ function toSettingsDraft(record: PersistedCustomerSiteSettings | null): Persiste
 function toServiceDraft(service: PersistedCustomerSiteService): PersistedServiceDraft {
   return {
     id: service.id,
+    categoryId: service.categoryId ?? "",
     name: service.name,
     description: service.description ?? "",
     basePrice: service.basePrice === null ? "" : String(service.basePrice),
@@ -245,6 +247,7 @@ function toServiceDraft(service: PersistedCustomerSiteService): PersistedService
 function emptyServiceDraft(sortOrder: number): PersistedServiceDraft {
   return {
     name: "",
+    categoryId: "",
     description: "",
     basePrice: "",
     durationMinutes: "",
@@ -614,6 +617,7 @@ export default function AdminSiteSettingsPage() {
 
       return {
         id: service.id,
+        categoryId: service.categoryId || null,
         name: service.name.trim(),
         description: service.description.trim() || null,
         basePrice: service.basePrice.trim() ? Number(service.basePrice) : null,
@@ -627,7 +631,7 @@ export default function AdminSiteSettingsPage() {
         sortOrder: service.sortOrder.trim() ? Number(service.sortOrder) : index,
         rolePriceOverrides: parsedOverrides ?? null,
         recurringEnabled: service.recurringEnabled,
-        recurringIntervals: service.recurringIntervals,
+        recurringIntervals: service.recurringIntervals.slice(0, 1),
         blockBookingEnabled: service.blockBookingEnabled,
         blockBookingSuggestedCounts: service.blockBookingSuggestedCounts
           .split(",")

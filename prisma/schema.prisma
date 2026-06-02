@@ -29,6 +29,7 @@ model TenantSite {
   statusEvents              SiteStatusEvent[]
   subscriptions             SubscriptionRecord[]
   customerSiteSettings      CustomerSiteSettings?
+  customerSiteServiceCategories CustomerSiteServiceCategory[]
   customerSiteServices      CustomerSiteService[]
   customerSiteStaffRoles    CustomerSiteStaffRole[]
   customerSiteStaffMembers  CustomerSiteStaffMember[]
@@ -399,6 +400,7 @@ model CustomerSiteSettings {
 model CustomerSiteService {
   id                 String     @id @default(cuid())
   tenantSiteId       String
+  categoryId         String?
   name               String
   description        String?
   basePrice          Decimal?   @db.Decimal(10, 2)
@@ -414,10 +416,28 @@ model CustomerSiteService {
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
   tenantSite         TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  category           CustomerSiteServiceCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
   @@index([tenantSiteId])
+  @@index([categoryId])
   @@index([active])
   @@index([sortOrder])
+}
+
+model CustomerSiteServiceCategory {
+  id           String                @id @default(cuid())
+  tenantSiteId String
+  name         String
+  sortOrder    Int                   @default(0)
+  active       Boolean               @default(true)
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  tenantSite   TenantSite            @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  services     CustomerSiteService[]
+
+  @@index([tenantSiteId])
+  @@index([tenantSiteId, active])
+  @@index([tenantSiteId, sortOrder])
 }
 
 model CustomerSiteStaffRole {

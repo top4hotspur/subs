@@ -3,7 +3,7 @@ import { ZodError } from "zod";
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin";
 import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
 import {
-  listCustomerSiteServices,
+  getCustomerSiteServicesSnapshot,
   replaceCustomerSiteServices,
   upsertCustomerSiteService,
 } from "@/lib/sites/customer-site-settings-repository";
@@ -36,8 +36,8 @@ export async function GET(
       return NextResponse.json({ ok: false, error: "SITE_NOT_FOUND" }, { status: 404 });
     }
 
-    const services = await listCustomerSiteServices(id);
-    return NextResponse.json({ ok: true, services });
+    const snapshot = await getCustomerSiteServicesSnapshot(id);
+    return NextResponse.json({ ok: true, ...snapshot });
   } catch (error) {
     return NextResponse.json(
       {
@@ -69,11 +69,12 @@ export async function PUT(
     const body = await request.json();
     const parsed = replaceCustomerSiteServicesSchema.parse({
       tenantSiteId: id,
+      categories: body?.categories,
       services: body?.services,
     });
 
-    const services = await replaceCustomerSiteServices(id, parsed.services);
-    return NextResponse.json({ ok: true, services });
+    const snapshot = await replaceCustomerSiteServices(id, parsed.services, parsed.categories);
+    return NextResponse.json({ ok: true, ...snapshot });
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(
