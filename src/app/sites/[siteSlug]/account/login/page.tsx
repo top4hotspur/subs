@@ -13,7 +13,9 @@ export default async function CustomerAccountLoginPage({ params }: { params: Pro
       <section className="mx-auto max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">{site.displayName}</p>
         <h1 className="mt-2 text-2xl font-bold text-slate-950">Customer login</h1>
-        <p className="mt-2 text-sm text-slate-600">Log in to view your bookings for this business.</p>
+        <p className="mt-2 text-sm text-slate-600">
+          Log in to view your bookings for this business. Your customer account is separate from staff and business-admin access.
+        </p>
         <div className="mt-5">
           <Suspense fallback={<p className="text-sm text-slate-600">Loading login...</p>}>
             <SiteCustomerAccountForm siteSlug={site.slug} mode="login" />

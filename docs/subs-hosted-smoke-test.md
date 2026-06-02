@@ -1300,3 +1300,17 @@ Known v1 limitation: subscriber voucher payments are manual. The page does not c
 14. Reactivate if appropriate.
 
 Current limitation: final custom-domain host rendering is resolver-prepared but not wired into request routing. DNS purchase and DNS provider changes remain manual.
+
+## Hosted smoke: customer login and payment requirement flow
+1. Open `/sites/[siteSlug]` and confirm `Customer login` opens `/sites/[siteSlug]/account` or redirects to `/sites/[siteSlug]/account/login`.
+2. Register a customer account at `/sites/[siteSlug]/account/register` with first name, last name, email, phone and private access code.
+3. Log out, then log in again at `/sites/[siteSlug]/account/login` with the same tenant site, email and access code.
+4. Confirm `/sites/[siteSlug]/account` shows upcoming, past and cancelled booking sections plus the saved-payment-method placeholder.
+5. While logged in, open the public booking flow and confirm name/email/phone are prefilled from the customer account.
+6. With prepayment disabled, confirm public booking copy says no payment is taken online or payment is arranged directly with the business, and booking submission succeeds where availability allows.
+7. With cash/manual payment enabled, confirm the created booking appears in `/site-admin/[siteSlug]` with manual/cash payment pending and can be marked paid manually by the business admin.
+8. Enable `Accept card payments` and `Require prepayment for online bookings` in `/site-admin/[siteSlug]` while tenant checkout is not connected.
+9. Confirm `/site-admin/[siteSlug]` warns: online prepayment is required but payment checkout is not connected yet.
+10. Return to `/sites/[siteSlug]` and confirm the public booking form says: `This business requires payment before online booking, but online payment is not connected yet. Please contact the business to book.`
+11. Confirm the blocked prepayment flow does not create a fake paid booking and does not redirect to platform Stripe checkout.
+12. Confirm customer account, staff access, business-admin access and platform-admin access remain separate.

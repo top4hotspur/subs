@@ -35,6 +35,7 @@ export default async function PublicSiteSlugBookingPage({
           acceptCashPayments={preview.settings?.acceptCashPayments ?? false}
           acceptCardPayments={preview.settings?.acceptCardPayments ?? true}
           requireBookingPrepayment={preview.settings?.requireBookingPrepayment ?? false}
+          allowInStorePaymentRecording={preview.settings?.allowInStorePaymentRecording ?? false}
         />
       </div>
     </main>

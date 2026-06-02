@@ -493,3 +493,13 @@ Operational steps supported in platform admin:
 SiteDomain input is normalised and checked against active domains on other tenants before saving. Primary SiteDomain rows update `TenantSite.domainPrimary`.
 
 Final custom-domain rendering remains the next hosting/routing milestone: customer domain -> shared app -> host header -> `SiteDomain` -> `TenantSite` -> tenant-scoped public site. `/sites/[siteSlug]` stays as the platform preview route for now.
+
+## Customer account and payment requirement flow
+- Provisioned tenant sites expose customer account routes under `/sites/[siteSlug]/account`.
+- Customer sessions are tenant-scoped and separate from platform-admin, business-admin and staff access.
+- Booking creation can associate to a logged-in customer account, but guest booking is still supported.
+- Business payment settings control whether public booking can be submitted:
+  - no prepayment: booking can be confirmed without online payment.
+  - cash/manual enabled: booking can be confirmed and reconciled manually by the business.
+  - prepayment + card required without connected tenant checkout: booking is blocked and the customer is told to contact the business.
+- Subscriber payment-provider integration remains future work. Platform Stripe billing for MyExperiment.club subscriptions must not be treated as tenant checkout for customer bookings.

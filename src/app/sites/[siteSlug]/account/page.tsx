@@ -142,6 +142,12 @@ export default async function CustomerAccountPage({ params }: AccountPageProps) 
             <Link href={policyHref} className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-100">Booking policy</Link>
           </div>
         </section>
+        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
+          <p className="font-semibold text-slate-950">Payment methods</p>
+          <p className="mt-1">
+            Saved payment methods will be available when this business connects an online payment provider.
+          </p>
+        </section>
         <div className="mt-6 grid gap-6">
           {renderBookings("Upcoming bookings", upcoming)}
           {renderBookings("Past bookings", past)}

@@ -266,6 +266,7 @@ export default async function PublicSiteSlugPage({
                                 acceptCashPayments={settings?.acceptCashPayments ?? false}
                                 acceptCardPayments={settings?.acceptCardPayments ?? true}
                                 requireBookingPrepayment={settings?.requireBookingPrepayment ?? false}
+                                allowInStorePaymentRecording={settings?.allowInStorePaymentRecording ?? false}
                                 staff={publicStaff.map((member) => ({
                                   id: member.id,
                                   displayName: member.displayName,

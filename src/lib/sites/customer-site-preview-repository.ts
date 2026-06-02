@@ -45,9 +45,13 @@ export type CustomerSitePreviewData = {
     policyIntro: string | null;
     policyBody: string | null;
     policyDefaultAccepted: boolean;
+    paymentProcessorSetupMode: string | null;
+    paymentProcessorName: string | null;
+    paymentProcessorAccountRef: string | null;
     acceptCashPayments: boolean;
     acceptCardPayments: boolean;
     requireBookingPrepayment: boolean;
+    allowInStorePaymentRecording: boolean;
     socialLinks: unknown;
     recurringPaymentsEnabled: boolean;
     customerBlockBookingsEnabled: boolean;
@@ -257,9 +261,13 @@ export async function getCustomerSitePreviewData(
           policyIntro: site.customerSiteSettings.policyIntro ?? null,
           policyBody: site.customerSiteSettings.policyBody ?? null,
           policyDefaultAccepted: site.customerSiteSettings.policyDefaultAccepted,
+          paymentProcessorSetupMode: site.customerSiteSettings.paymentProcessorSetupMode ?? null,
+          paymentProcessorName: site.customerSiteSettings.paymentProcessorName ?? null,
+          paymentProcessorAccountRef: site.customerSiteSettings.paymentProcessorAccountRef ?? null,
           acceptCashPayments: site.customerSiteSettings.acceptCashPayments,
           acceptCardPayments: site.customerSiteSettings.acceptCardPayments,
           requireBookingPrepayment: site.customerSiteSettings.requireBookingPrepayment,
+          allowInStorePaymentRecording: site.customerSiteSettings.allowInStorePaymentRecording,
           socialLinks: site.customerSiteSettings.socialLinks ?? null,
           recurringPaymentsEnabled: site.customerSiteSettings.recurringPaymentsEnabled,
           customerBlockBookingsEnabled: site.customerSiteSettings.customerBlockBookingsEnabled,

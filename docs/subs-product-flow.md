@@ -950,3 +950,11 @@ Custom-domain runtime rendering is still not switched on in middleware/routing. 
 When a site is marked live, the platform attempts a fail-soft go-live email. Email failure does not block the status update. Suspended/cancelled sites are excluded from live domain resolution.
 
 Future payment-provider note: subscriber business payment settings must eventually adapt by provider and integration method. Common provider families include Stripe, Square, PayPal, SumUp/Zettle and others on request. Future work must include secure credential handling, no public secret exposure, provider webhook validation, test/live mode distinction, and provider-specific refund/payment-status behaviour.
+
+## 2026-06-02 customer account and booking payment guardrails
+- Public subscriber sites link customer access to `/sites/[siteSlug]/account`, with login and registration at `/sites/[siteSlug]/account/login` and `/sites/[siteSlug]/account/register`.
+- Customer account v1 is tenant-scoped and access-code based. Logged-in customers can see upcoming, past and cancelled bookings, booking status, service/staff details, payment status, policy links and business contact actions.
+- Guest booking remains allowed. If a customer is logged in while booking, the public booking form prefills their saved name/email/phone and associates the booking with that tenant-scoped customer account.
+- Subscriber booking payment behaviour now follows the business payment settings conservatively. Platform Stripe checkout for MyExperiment.club subscriptions is not reused for subscriber businesses taking payments from their own customers.
+- If online prepayment is required but subscriber checkout is not connected, public booking is blocked with a contact-the-business message. No fake payment success is recorded and no card details are collected.
+- If online payment is not required, or cash/manual payment is allowed, bookings can be confirmed with payment marked as not required or pending manual/cash handling for the business admin to reconcile.

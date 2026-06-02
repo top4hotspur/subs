@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { outlineButtonClass, primaryButtonClass, smallButtonClass } from "@/lib/ui/button-styles";
 import { createPublicSiteBooking } from "@/lib/sites/public-site-bookings-client";
 import { formatBookingDateTime } from "@/lib/sites/customer-site-booking-display";
+import { getCustomerSiteBookingPaymentDecision } from "@/lib/sites/customer-site-payment-policy";
 
 type PublicAvailabilityStaff = {
   id: string;
@@ -53,6 +54,7 @@ type PublicSiteAvailabilityPreviewProps = {
   acceptCashPayments?: boolean;
   acceptCardPayments?: boolean;
   requireBookingPrepayment?: boolean;
+  allowInStorePaymentRecording?: boolean;
 };
 
 function todayIso(): string {
@@ -64,7 +66,10 @@ function toErrorMessage(error: string, status: number): string {
     return "That slot is no longer available. Please choose another time.";
   }
   if (error === "ONLINE_PAYMENT_NOT_CONFIGURED") {
-    return "Online payment is not connected for this business yet. Please contact the business to book.";
+    return "This business requires payment before online booking, but online payment is not connected yet. Please contact the business to book.";
+  }
+  if (error === "BOOKING_PAYMENT_METHOD_UNAVAILABLE") {
+    return "This business does not currently have a payment method available for online booking. Please contact the business to book.";
   }
   if (error === "BOOKING_PAYMENT_AMOUNT_REQUIRED") {
     return "This service requires a quote before online payment can be taken.";
@@ -93,6 +98,7 @@ export function PublicSiteAvailabilityPreview({
   acceptCashPayments = false,
   acceptCardPayments = true,
   requireBookingPrepayment = false,
+  allowInStorePaymentRecording = false,
 }: PublicSiteAvailabilityPreviewProps) {
   const selectableStaff = useMemo(() => staff.filter((member) => member.customerSelectable), [staff]);
   const [open, setOpen] = useState(false);
@@ -116,6 +122,15 @@ export function PublicSiteAvailabilityPreview({
     Evening: false,
   });
   const bookingFormRef = useRef<HTMLDivElement | null>(null);
+  const paymentDecision = useMemo(
+    () => getCustomerSiteBookingPaymentDecision({
+      acceptCashPayments,
+      acceptCardPayments,
+      requireBookingPrepayment,
+      allowInStorePaymentRecording,
+    }),
+    [acceptCashPayments, acceptCardPayments, requireBookingPrepayment, allowInStorePaymentRecording],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -212,6 +227,10 @@ export function PublicSiteAvailabilityPreview({
       setMessage("Please confirm that you have read and accepted the booking and cancellation policy.");
       return;
     }
+    if (!paymentDecision.canCreateBooking) {
+      setMessage(paymentDecision.publicCopy);
+      return;
+    }
     setSubmitting(true);
     setMessage("Confirming booking...");
     const result = await createPublicSiteBooking(siteSlug, {
@@ -244,9 +263,7 @@ export function PublicSiteAvailabilityPreview({
     });
     setSuccessMessage(
       `Your booking has been confirmed. ${serviceName} at ${appointment}${staffId && selectedSlot.staffName ? ` with ${selectedSlot.staffName}` : ""}. ${
-        requireBookingPrepayment && acceptCardPayments
-          ? "Payment is pending and will be arranged directly with the business."
-          : acceptCashPayments
+        paymentDecision.paymentMethod === "CASH" || paymentDecision.paymentMethod === "MANUAL"
             ? "Payment can be arranged directly with the business."
             : ""
       }`.trim(),
@@ -376,11 +393,7 @@ export function PublicSiteAvailabilityPreview({
                 </p>
               ) : null}
               <p className="mt-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-                {requireBookingPrepayment && acceptCardPayments
-                  ? "This business requires card payment before booking. Secure payment is handled by Stripe."
-                  : acceptCashPayments
-                    ? "No payment is taken online for this booking. Payment can be arranged directly with the business."
-                    : "No payment is taken online for this booking."}
+                {paymentDecision.publicCopy}
               </p>
               <div className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-950">
                 <p className="font-semibold">Selected: {selectedSlot.startTime}-{selectedSlot.endTime}</p>
@@ -420,7 +433,7 @@ export function PublicSiteAvailabilityPreview({
                 type="button"
                 className={`mt-3 ${primaryButtonClass} ${smallButtonClass}`}
                 onClick={() => void submitBookingRequest()}
-                disabled={submitting}
+                disabled={submitting || !paymentDecision.canCreateBooking}
               >
                 {submitting ? "Confirming..." : "Confirm booking"}
               </button>

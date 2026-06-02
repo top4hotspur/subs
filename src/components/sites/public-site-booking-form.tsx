@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { createPublicSiteBooking } from "@/lib/sites/public-site-bookings-client";
+import { getCustomerSiteBookingPaymentDecision } from "@/lib/sites/customer-site-payment-policy";
 
 type PublicSiteBookingFormProps = {
   siteSlug: string;
@@ -22,6 +23,7 @@ type PublicSiteBookingFormProps = {
   acceptCashPayments?: boolean;
   acceptCardPayments?: boolean;
   requireBookingPrepayment?: boolean;
+  allowInStorePaymentRecording?: boolean;
 };
 
 type CustomerSessionResponse = {
@@ -39,7 +41,10 @@ function toErrorMessage(error: string, status: number): string {
     return "That preferred slot is no longer available. Please choose another date/time.";
   }
   if (error === "ONLINE_PAYMENT_NOT_CONFIGURED") {
-    return "Online payment is not connected for this business yet. Please contact the business to book.";
+    return "This business requires payment before online booking, but online payment is not connected yet. Please contact the business to book.";
+  }
+  if (error === "BOOKING_PAYMENT_METHOD_UNAVAILABLE") {
+    return "This business does not currently have a payment method available for online booking. Please contact the business to book.";
   }
   if (error === "BOOKING_PAYMENT_AMOUNT_REQUIRED") {
     return "This service requires a quote before online payment can be taken.";
@@ -63,6 +68,7 @@ export function PublicSiteBookingForm({
   acceptCashPayments = false,
   acceptCardPayments = true,
   requireBookingPrepayment = false,
+  allowInStorePaymentRecording = false,
 }: PublicSiteBookingFormProps) {
   const activeServices = useMemo(() => services.filter((item) => item.active), [services]);
   const selectableStaff = useMemo(
@@ -82,6 +88,15 @@ export function PublicSiteBookingForm({
   const [message, setMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [usingAccountDetails, setUsingAccountDetails] = useState(false);
+  const paymentDecision = useMemo(
+    () => getCustomerSiteBookingPaymentDecision({
+      acceptCashPayments,
+      acceptCardPayments,
+      requireBookingPrepayment,
+      allowInStorePaymentRecording,
+    }),
+    [acceptCashPayments, acceptCardPayments, requireBookingPrepayment, allowInStorePaymentRecording],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -106,6 +121,10 @@ export function PublicSiteBookingForm({
   }, [siteSlug]);
 
   async function submit(): Promise<void> {
+    if (!paymentDecision.canCreateBooking) {
+      setMessage(paymentDecision.publicCopy);
+      return;
+    }
     setSaving(true);
     setMessage("Confirming booking...");
 
@@ -153,11 +172,14 @@ export function PublicSiteBookingForm({
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="text-xl font-semibold text-slate-900">Book appointment</h2>
       <p className="mt-2 text-sm text-slate-600">
-        {requireBookingPrepayment && acceptCardPayments
-          ? "Choose a service and time to confirm your booking. Secure card payment is handled by Stripe."
-          : acceptCashPayments
-            ? "Choose a service and time to confirm your booking. Payment can be arranged directly with the business."
-            : "Choose a service and time to confirm your booking."}
+        Choose a service and time to confirm your booking.
+      </p>
+      <p className={`mt-3 rounded-md border px-3 py-2 text-sm ${
+        paymentDecision.canCreateBooking
+          ? "border-slate-200 bg-slate-50 text-slate-700"
+          : "border-amber-200 bg-amber-50 font-semibold text-amber-950"
+      }`}>
+        {paymentDecision.publicCopy}
       </p>
       {usingAccountDetails ? (
         <p className="mt-3 rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm font-semibold text-teal-950">
@@ -275,7 +297,7 @@ export function PublicSiteBookingForm({
           onClick={() => {
             void submit();
           }}
-          disabled={saving}
+          disabled={saving || !paymentDecision.canCreateBooking}
         >
           {saving ? "Confirming..." : "Confirm booking"}
         </button>

@@ -1648,6 +1648,16 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   const staffLeaveGroups = splitActiveFutureAndPast(staffHolidaysDraft);
   const hasCustomPolicy = isCustomPolicyContent(settingsDraft);
   const policyNeedsReview = !hasCustomPolicy && !settingsDraft.policyDefaultAccepted;
+  const tenantPaymentCheckoutConnected = false;
+  const prepaymentCheckoutMissing =
+    settingsDraft.requireBookingPrepayment &&
+    settingsDraft.acceptCardPayments &&
+    !tenantPaymentCheckoutConnected;
+  const noCustomerPaymentMethodAvailable =
+    settingsDraft.requireBookingPrepayment &&
+    !settingsDraft.acceptCashPayments &&
+    !settingsDraft.allowInStorePaymentRecording &&
+    !tenantPaymentCheckoutConnected;
 
   return (
     <div className="space-y-6">
@@ -1938,6 +1948,16 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
             <p className="mt-2 text-[11px] text-slate-600">
               Recommended: keep card prepayment enabled for online bookings. Cash payments can increase no-show risk.
             </p>
+            {prepaymentCheckoutMissing ? (
+              <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-950">
+                Online prepayment is required, but payment checkout is not connected yet. Customers will be told to contact you until payment setup is completed.
+              </p>
+            ) : null}
+            {noCustomerPaymentMethodAvailable ? (
+              <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-950">
+                Customers cannot complete online bookings until a payment method is available or prepayment is disabled.
+              </p>
+            ) : null}
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <label className="text-xs font-semibold text-slate-700">
                 Full refund notice period (days)
