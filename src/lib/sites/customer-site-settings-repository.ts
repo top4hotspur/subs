@@ -430,40 +430,69 @@ export async function replaceCustomerSiteServices(
   );
 
   await prisma.$transaction(async (tx) => {
-    await tx.customerSiteService.deleteMany({ where: { tenantSiteId: parsed.tenantSiteId } });
+    const incomingIds = parsed.services
+      .map((service) => service.id)
+      .filter((id): id is string => Boolean(id));
 
-    if (parsed.services.length > 0) {
-      await tx.customerSiteService.createMany({
-        data: parsed.services.map((service, index) => ({
+    if (incomingIds.length > 0) {
+      await tx.customerSiteService.updateMany({
+        where: {
           tenantSiteId: parsed.tenantSiteId,
-          name: service.name,
-          description: service.description ?? null,
-          basePrice: service.basePrice ?? null,
-          durationMinutes: service.durationMinutes ?? null,
-          bufferAfterMinutes: service.bufferAfterMinutes ?? null,
-          active: service.active ?? true,
-          sortOrder: service.sortOrder ?? index,
-          rolePriceOverrides:
-            service.rolePriceOverrides === undefined
-              ? undefined
-              : service.rolePriceOverrides === null
-                ? Prisma.DbNull
-                : toJson(service.rolePriceOverrides),
-          recurringEnabled: service.recurringEnabled ?? false,
-          recurringIntervals:
-            service.recurringIntervals === undefined
-              ? undefined
-              : service.recurringIntervals === null
-                ? Prisma.DbNull
-                : toJson(service.recurringIntervals),
-          blockBookingEnabled: service.blockBookingEnabled ?? false,
-          blockBookingSuggestedCounts:
-            service.blockBookingSuggestedCounts === undefined
-              ? undefined
-              : service.blockBookingSuggestedCounts === null
-                ? Prisma.DbNull
-                : toJson(service.blockBookingSuggestedCounts),
-        })),
+          id: { notIn: incomingIds },
+        },
+        data: { active: false },
+      });
+    } else {
+      await tx.customerSiteService.updateMany({
+        where: { tenantSiteId: parsed.tenantSiteId },
+        data: { active: false },
+      });
+    }
+
+    for (const [index, service] of parsed.services.entries()) {
+      const data = {
+        name: service.name,
+        description: service.description ?? null,
+        basePrice: service.basePrice ?? null,
+        durationMinutes: service.durationMinutes ?? null,
+        bufferAfterMinutes: service.bufferAfterMinutes ?? null,
+        active: service.active ?? true,
+        sortOrder: service.sortOrder ?? index,
+        rolePriceOverrides:
+          service.rolePriceOverrides === undefined
+            ? undefined
+            : service.rolePriceOverrides === null
+              ? Prisma.DbNull
+              : toJson(service.rolePriceOverrides),
+        recurringEnabled: service.recurringEnabled ?? false,
+        recurringIntervals:
+          service.recurringIntervals === undefined
+            ? undefined
+            : service.recurringIntervals === null
+              ? Prisma.DbNull
+              : toJson(service.recurringIntervals),
+        blockBookingEnabled: service.blockBookingEnabled ?? false,
+        blockBookingSuggestedCounts:
+          service.blockBookingSuggestedCounts === undefined
+            ? undefined
+            : service.blockBookingSuggestedCounts === null
+              ? Prisma.DbNull
+              : toJson(service.blockBookingSuggestedCounts),
+      };
+
+      if (service.id) {
+        const updated = await tx.customerSiteService.updateMany({
+          where: { id: service.id, tenantSiteId: parsed.tenantSiteId },
+          data,
+        });
+        if (updated.count > 0) continue;
+      }
+
+      await tx.customerSiteService.create({
+        data: {
+          tenantSiteId: parsed.tenantSiteId,
+          ...data,
+        },
       });
     }
   });

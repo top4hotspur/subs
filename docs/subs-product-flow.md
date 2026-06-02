@@ -635,3 +635,10 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Legacy values (for example old premium/theme-era IDs) no longer force dark/premium rendering.
 - Only explicit current appearance values (`light`/`dark`) or the current supported dark pair are treated as a valid dark selection.
 - This prevents stale localStorage values from keeping `/demo/barbers` in old dark/premium styling.
+## 2026-06-02 Subscriber Services Management
+
+- `/site-admin/[siteSlug]` now provides the first real operational subscriber admin section for `Services/prices`.
+- Business owners can add, edit, publish/hide, and archive services for their tenant site.
+- `/sites/[siteSlug]` displays only active tenant services with price and duration; inactive services and demo services are not shown.
+- The onboarding checklist marks `Add at least one service` complete when the tenant has at least one active service.
+- `Book now` currently routes visitors to the Services section and service cards show a `coming soon` booking action until the booking engine milestone.

@@ -852,3 +852,23 @@ Notes:
 4. Open `/demo/hairdressers` and confirm clean/light default appearance.
 5. In `/demo/barbers/admin`, set appearance to `Dark`, save, then confirm dark mode still works via the supported light/dark appearance control.
 6. Switch back to `Light` and confirm clean light rendering returns.
+## 2026-06-02 Hosted Smoke Checks: Subscriber Services Management
+
+1. Open `/site-admin/luna-hair-studio`.
+2. Open `Services/prices`.
+3. Add a service:
+   - Name: `Cut & Blow Dry`
+   - Description: `Wash, cut and styled finish.`
+   - Price: `35`
+   - Duration: `45`
+   - Active/public visible: yes
+4. Save.
+5. Return to `/sites/luna-hair-studio`.
+6. Confirm `Cut & Blow Dry` appears in Services with price and duration.
+7. Add a second inactive/hidden service.
+8. Confirm inactive/hidden service does not appear publicly.
+9. Edit the first service price/duration.
+10. Confirm public site updates.
+11. Hide/archive the first service.
+12. Confirm public site returns to the empty state if no active services remain.
+13. Confirm no demo services appear.

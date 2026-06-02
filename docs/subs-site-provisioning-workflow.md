@@ -257,3 +257,11 @@ Still local/mock in current product:
   - configure SPF, DKIM, and DMARC for `myexperiment.club`
   - use verified `EMAIL_FROM` domain alignment
   - test inbox placement in Outlook/Hotmail/Gmail and monitor junk/spam during reputation warm-up.
+## Subscriber Services Management
+
+- Provisioned subscriber sites start with no copied demo services.
+- Business owners manage real tenant services from `/site-admin/[siteSlug]` under `Services/prices`.
+- Service rows belong to the tenant site and include name, description, price, duration, visibility, recurring/block-booking flags, and ordering.
+- Hiding/removing an existing service marks it inactive for public display rather than copying or exposing demo data.
+- `/sites/[siteSlug]` reads active tenant services only. If there are no active services, the public Services section shows the clean empty state.
+- Public booking remains future work; service cards currently show a disabled `Book this service (coming soon)` action.

@@ -23,8 +23,14 @@ function formatMoney(amount: number | null, currencyCode: string): string {
 
 function formatServiceSummary(durationMinutes: number | null, bufferAfterMinutes: number | null): string {
   const segments: string[] = [];
-  if (durationMinutes !== null) segments.push(`${durationMinutes} min`);
-  if (bufferAfterMinutes !== null) segments.push(`${bufferAfterMinutes} min buffer`);
+  if (durationMinutes !== null) {
+    const hours = Math.floor(durationMinutes / 60);
+    const minutes = durationMinutes % 60;
+    if (hours > 0 && minutes > 0) segments.push(`${hours} hr ${minutes} mins`);
+    else if (hours > 0) segments.push(hours === 1 ? "1 hr" : `${hours} hrs`);
+    else segments.push(`${durationMinutes} mins`);
+  }
+  if (bufferAfterMinutes !== null) segments.push(`${bufferAfterMinutes} mins buffer`);
   return segments.length > 0 ? segments.join(" - ") : "Duration available at booking";
 }
 
@@ -116,7 +122,7 @@ export default async function PublicSiteSlugPage({
     ? `${scheme.heroBackgroundClass} rounded-xl border ${scheme.borderClass} p-8`
     : `${scheme.heroBackgroundClass} rounded-2xl border ${scheme.borderClass} p-8`;
   const cardClass = `${scheme.cardClass} p-5`;
-  const bookingHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/booking`;
+  const bookingHref = "#services";
   const aboutHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/about`;
   const contactHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/contact`;
   const policyHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/policy`;
@@ -134,7 +140,7 @@ export default async function PublicSiteSlugPage({
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 <a href="#home" className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Home</a>
                 <a href="#services" className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Services</a>
-                <Link href={bookingHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Book now</Link>
+                <a href={bookingHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Book now</a>
                 {settings?.aboutPageEnabled ? (
                   <Link href={aboutHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">About</Link>
                 ) : (
@@ -185,6 +191,13 @@ export default async function PublicSiteSlugPage({
                           <p className="text-xs text-slate-600">
                             {formatServiceSummary(service.durationMinutes, service.bufferAfterMinutes)}
                           </p>
+                          <button
+                            type="button"
+                            disabled
+                            className="mt-3 inline-flex cursor-not-allowed rounded-md border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500"
+                          >
+                            Book this service (coming soon)
+                          </button>
                         </article>
                       ))}
                     </div>

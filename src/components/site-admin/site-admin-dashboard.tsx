@@ -229,6 +229,26 @@ function toMessage(error: string, status: number): string {
   return `Request failed: ${error}`;
 }
 
+function formatAdminServicePrice(value: string): string {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return "Price not set";
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+    maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
+  }).format(amount);
+}
+
+function formatAdminDuration(value: string): string {
+  const minutes = Number(value);
+  if (!Number.isFinite(minutes) || minutes <= 0) return "Duration not set";
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  if (hours > 0 && remainder > 0) return `${hours} hr ${remainder} mins`;
+  if (hours > 0) return hours === 1 ? "1 hr" : `${hours} hrs`;
+  return `${minutes} mins`;
+}
+
 
 type SettingsSocialKey = keyof SettingsDraft["socialLinks"];
 
@@ -625,6 +645,11 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
 
   async function saveServices() {
     setMessage("Saving services...");
+    const invalidService = servicesDraft.find((service) => service.name.trim().length === 0);
+    if (invalidService) {
+      setMessage("Please add a service name before saving.");
+      return;
+    }
     const result = await putSiteAdminServices(
       siteSlug,
       servicesDraft.map((service, index) => ({
@@ -1242,8 +1267,13 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
 
       {activeSection === "services" ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="text-lg font-semibold text-slate-900">Services</h3>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900">Services/prices</h3>
+              <p className="mt-1 text-sm text-slate-600">
+                Add the services customers should see on your public site. Published services appear immediately in the Services section.
+              </p>
+            </div>
             <button
               type="button"
               className={`${outlineButtonClass} ${smallButtonClass}`}
@@ -1270,23 +1300,51 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
             </button>
           </div>
           <div className="mt-3 space-y-3">
+            {servicesDraft.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
+                <p className="text-sm font-semibold text-slate-900">Add your first service so customers can see what you offer.</p>
+                <p className="mt-1 text-xs text-slate-600">
+                  Start with the name, price and duration. Booking actions stay as placeholders until the booking engine milestone.
+                </p>
+              </div>
+            ) : null}
             {servicesDraft.map((service, index) => (
-              <div key={`${service.id ?? "new"}-${index}`} className="rounded-xl border border-slate-200 p-3">
+              <div key={`${service.id ?? "new"}-${index}`} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">
+                      {service.name.trim() || `Service ${index + 1}`}
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-600">
+                      {formatAdminServicePrice(service.basePrice)} | {formatAdminDuration(service.durationMinutes)}
+                    </p>
+                  </div>
+                  <label className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={service.active}
+                      onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, active: event.target.checked } : row))}
+                    />
+                    Active / public visible
+                  </label>
+                </div>
                 <div className="grid gap-2 sm:grid-cols-2">
                   <label className="text-xs font-semibold text-slate-700">Service name
-                    <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs" value={service.name} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, name: event.target.value } : row))} />
+                    <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={service.name} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, name: event.target.value } : row))} />
                   </label>
-                  <label className="text-xs font-semibold text-slate-700">Base price
-                    <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs" value={service.basePrice} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, basePrice: event.target.value } : row))} />
+                  <label className="text-xs font-semibold text-slate-700">Price
+                    <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" inputMode="decimal" placeholder="35" value={service.basePrice} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, basePrice: event.target.value } : row))} />
+                    <span className="mt-1 block text-[11px] font-normal text-slate-600">Displayed as UK currency, e.g. £35.</span>
                   </label>
                   <label className="text-xs font-semibold text-slate-700">Duration (minutes)
-                    <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs" value={service.durationMinutes} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, durationMinutes: event.target.value } : row))} />
+                    <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" inputMode="numeric" placeholder="45" value={service.durationMinutes} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, durationMinutes: event.target.value } : row))} />
+                    <span className="mt-1 block text-[11px] font-normal text-slate-600">Shown as 45 mins or 1 hr.</span>
                   </label>
                   <label className="text-xs font-semibold text-slate-700">Buffer after service (minutes)
                     <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs" value={service.bufferAfterMinutes} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, bufferAfterMinutes: event.target.value } : row))} />
                   </label>
                   <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Description
-                    <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs" value={service.description} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, description: event.target.value } : row))} />
+                    <textarea className="mt-1 min-h-[70px] w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={service.description} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, description: event.target.value } : row))} />
                   </label>
                   <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">
                     <input type="checkbox" checked={service.recurringEnabled} disabled={!settingsDraft.recurringPaymentsEnabled} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, recurringEnabled: event.target.checked } : row))} />
@@ -1330,12 +1388,21 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     </label>
                   ) : null}
                 </div>
-                <button type="button" className="mt-2 rounded-md border border-rose-300 bg-white px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50" onClick={() => setServicesDraft((current) => current.filter((_, i) => i !== index))}>
-                  Remove
+                <button
+                  type="button"
+                  className="mt-2 rounded-md border border-rose-300 bg-white px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50"
+                  onClick={() =>
+                    setServicesDraft((current) => {
+                      const row = current[index];
+                      if (!row?.id) return current.filter((_, i) => i !== index);
+                      return current.map((item, i) => i === index ? { ...item, active: false } : item);
+                    })
+                  }
+                >
+                  {service.id ? "Hide/archive service" : "Remove draft"}
                 </button>
               </div>
             ))}
-            {servicesDraft.length === 0 ? <p className="text-sm text-slate-600">No services yet.</p> : null}
           </div>
           <button type="button" className={`mt-4 ${primaryButtonClass} ${smallButtonClass}`} onClick={() => void saveServices()}>
             Save services
