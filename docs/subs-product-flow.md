@@ -776,3 +776,11 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - These actions update platform tracking, SiteDomain status, provisioning tasks, and status events. They do not automate domain purchase, DNS updates, SSL/certificate configuration, or Stripe subscription cancellation.
 - `/sites/[siteSlug]` remains the platform preview route for provisioned subscriber sites.
 - Final production destination remains the customer's own domain once host/domain routing is enabled.
+
+## 2026-06-02 Staff Rota Validation Hardening
+
+- Site-admin scheduling now normalises non-working rota days before saving: start/end times are ignored and persisted as empty/null when `Working` is off.
+- Unticking a working day in `/site-admin/[siteSlug]` clears the visible time fields and deactivates break windows for that staff/day so stale hidden values do not block saving.
+- The scheduling API accepts empty optional time fields as unset values, while still requiring start/end times for active working days and active break windows.
+- Validation messages now surface the specific day/problem, such as `Monday requires a start and end time.` or `Monday end time must be after start time.`, instead of the generic `VALIDATION_ERROR`.
+- Active break windows still must sit inside a working rota day for the same staff member so the availability calculator can trust saved scheduling data.

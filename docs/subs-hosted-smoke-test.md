@@ -1061,3 +1061,17 @@ Notes:
 10. Confirm `/sites/[siteSlug]` still opens as the preview route.
 11. Confirm no DNS purchase, DNS record changes, AWS/hosting resource creation, or demo-data copying occurs in this pass.
 12. If testing suspension, click `Suspend site` only on a test tenant and confirm platform status changes; note that Stripe cancellation is not automatic.
+
+## 2026-06-02 Hosted Smoke Checks: Staff Rota Validation Fix
+
+1. Open `/site-admin/luna-hair-studio`.
+2. Open `Opening hours / rota`.
+3. Select a staff member, for example `Foxxy`.
+4. Tick Monday, Tuesday, Wednesday, Saturday, and Sunday as working and set valid times.
+5. Untick Thursday and Friday even if stale disabled time inputs previously showed `09:00` and `17:00`.
+6. Save scheduling and confirm no generic `VALIDATION_ERROR` appears.
+7. Reload `/site-admin/luna-hair-studio` and confirm Thursday/Friday persist as non-working with no saved times.
+8. Try a working day with missing start/end times and confirm the message names the day, for example `Monday requires a start and end time.`
+9. Try a working day where the end time is before the start time and confirm the message names the day, for example `Monday end time must be after start time.`
+10. Add an active break on a non-working day and confirm a specific break/rota message appears rather than a generic request failure.
+11. Open `/sites/luna-hair-studio`, check availability for a valid active service/staff/weekday setup, and confirm slots can appear where business hours, staff rota, closures, staff leave, and existing bookings allow.

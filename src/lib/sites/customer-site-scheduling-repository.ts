@@ -20,6 +20,9 @@ import type {
   WeekdayValue,
 } from "@/lib/sites/customer-site-scheduling-types";
 
+type ParsedRotaDay = z.infer<typeof import("@/lib/sites/customer-site-scheduling-schema").rotaDayInputSchema>;
+type ParsedBreakWindow = z.infer<typeof breakWindowInputSchema>;
+
 function parseOrThrow<T>(schema: z.ZodType<T>, value: unknown, label: string): T {
   const result = schema.safeParse(value);
   if (!result.success) {
@@ -39,13 +42,17 @@ function toMinutes(value: string | null | undefined): number | null {
 
 function validateBreaksInsideRota(
   rotaDays: Array<{ staffMemberId: string; weekday: string; working?: boolean; startTime?: string | null; endTime?: string | null }>,
-  breakWindows: Array<{ staffMemberId: string; weekday: string; active?: boolean; startTime: string; endTime: string }>,
+  breakWindows: Array<{ staffMemberId: string; weekday: string; active?: boolean; startTime?: string | null; endTime?: string | null }>,
 ): void {
   for (const window of breakWindows) {
     if (window.active === false) continue;
+    const weekday = window.weekday.charAt(0).toUpperCase() + window.weekday.slice(1);
     const rotaDay = rotaDays.find((day) => day.staffMemberId === window.staffMemberId && day.weekday === window.weekday);
     if (!rotaDay?.working || !rotaDay.startTime || !rotaDay.endTime) {
-      throw new Error("Break windows must sit inside a working rota day for the same staff member.");
+      throw new Error(`${weekday} break windows need a working rota day for the same staff member.`);
+    }
+    if (!window.startTime || !window.endTime) {
+      throw new Error(`${weekday} active break windows need start and end times.`);
     }
     const breakStart = toMinutes(window.startTime);
     const breakEnd = toMinutes(window.endTime);
@@ -59,9 +66,37 @@ function validateBreaksInsideRota(
       breakStart < rotaStart ||
       breakEnd > rotaEnd
     ) {
-      throw new Error("Break windows must be inside staff rota hours.");
+      throw new Error(`${weekday} break window must sit inside that staff member's rota hours.`);
     }
   }
+}
+
+function normalizeRotaDays(rotaDays: ParsedRotaDay[]): ParsedRotaDay[] {
+  return rotaDays.map((item) => {
+    if (!item.working) {
+      return {
+        ...item,
+        working: false,
+        startTime: null,
+        endTime: null,
+      };
+    }
+    return {
+      ...item,
+      startTime: item.startTime ?? null,
+      endTime: item.endTime ?? null,
+    };
+  });
+}
+
+function normalizeBreakWindows(breakWindows: ParsedBreakWindow[]): Array<ParsedBreakWindow & { startTime: string; endTime: string }> {
+  return breakWindows
+    .filter((item) => item.active !== false || (Boolean(item.startTime) && Boolean(item.endTime)))
+    .map((item) => ({
+      ...item,
+      startTime: item.startTime ?? "",
+      endTime: item.endTime ?? "",
+    }));
 }
 
 async function assertStaffBelongsToTenant(
@@ -183,16 +218,18 @@ export async function replaceCustomerSiteRotaDays(
     "replace customer site rota days",
   );
 
+  const normalizedRotaDays = normalizeRotaDays(parsed.rotaDays);
+
   await assertStaffBelongsToTenant(
     parsed.tenantSiteId,
-    parsed.rotaDays.map((item) => item.staffMemberId),
+    normalizedRotaDays.map((item) => item.staffMemberId),
   );
 
   await prisma.$transaction(async (tx) => {
     await tx.customerSiteStaffRotaDay.deleteMany({ where: { tenantSiteId: parsed.tenantSiteId } });
-    if (parsed.rotaDays.length > 0) {
+    if (normalizedRotaDays.length > 0) {
       await tx.customerSiteStaffRotaDay.createMany({
-        data: parsed.rotaDays.map((item) => ({
+        data: normalizedRotaDays.map((item) => ({
           tenantSiteId: parsed.tenantSiteId,
           staffMemberId: item.staffMemberId,
           weekday: item.weekday,
@@ -226,18 +263,20 @@ export async function replaceCustomerSiteBreakWindows(
     "replace customer site break windows",
   );
 
+  const normalizedBreakWindows = normalizeBreakWindows(parsed.breakWindows);
+
   await assertStaffBelongsToTenant(
     parsed.tenantSiteId,
-    parsed.breakWindows.map((item) => item.staffMemberId),
+    normalizedBreakWindows.map((item) => item.staffMemberId),
   );
   const rotaDays = await listCustomerSiteRotaDays(parsed.tenantSiteId);
-  validateBreaksInsideRota(rotaDays, parsed.breakWindows);
+  validateBreaksInsideRota(rotaDays, normalizedBreakWindows);
 
   await prisma.$transaction(async (tx) => {
     await tx.customerSiteStaffBreakWindow.deleteMany({ where: { tenantSiteId: parsed.tenantSiteId } });
-    if (parsed.breakWindows.length > 0) {
+    if (normalizedBreakWindows.length > 0) {
       await tx.customerSiteStaffBreakWindow.createMany({
-        data: parsed.breakWindows.map((item) => ({
+        data: normalizedBreakWindows.map((item) => ({
           tenantSiteId: parsed.tenantSiteId,
           staffMemberId: item.staffMemberId,
           rotaDayId: item.rotaDayId ?? null,
@@ -371,13 +410,16 @@ export async function replaceCustomerSiteSchedulingSnapshot(
     "replace customer site scheduling snapshot",
   );
 
+  const normalizedRotaDays = normalizeRotaDays(parsed.rotaDays);
+  const normalizedBreakWindows = normalizeBreakWindows(parsed.breakWindows);
+
   const staffIds = [
-    ...parsed.rotaDays.map((item) => item.staffMemberId),
-    ...parsed.breakWindows.map((item) => item.staffMemberId),
+    ...normalizedRotaDays.map((item) => item.staffMemberId),
+    ...normalizedBreakWindows.map((item) => item.staffMemberId),
     ...parsed.staffHolidays.map((item) => item.staffMemberId),
   ];
   await assertStaffBelongsToTenant(parsed.tenantSiteId, staffIds);
-  validateBreaksInsideRota(parsed.rotaDays, parsed.breakWindows);
+  validateBreaksInsideRota(normalizedRotaDays, normalizedBreakWindows);
 
   await prisma.$transaction(async (tx) => {
     await tx.customerSiteStaffBreakWindow.deleteMany({ where: { tenantSiteId: parsed.tenantSiteId } });
@@ -385,9 +427,9 @@ export async function replaceCustomerSiteSchedulingSnapshot(
     await tx.customerSiteStaffHoliday.deleteMany({ where: { tenantSiteId: parsed.tenantSiteId } });
     await tx.customerSiteBusinessClosure.deleteMany({ where: { tenantSiteId: parsed.tenantSiteId } });
 
-    if (parsed.rotaDays.length > 0) {
+    if (normalizedRotaDays.length > 0) {
       await tx.customerSiteStaffRotaDay.createMany({
-        data: parsed.rotaDays.map((item) => ({
+        data: normalizedRotaDays.map((item) => ({
           tenantSiteId: parsed.tenantSiteId,
           staffMemberId: item.staffMemberId,
           weekday: item.weekday,
@@ -398,9 +440,9 @@ export async function replaceCustomerSiteSchedulingSnapshot(
       });
     }
 
-    if (parsed.breakWindows.length > 0) {
+    if (normalizedBreakWindows.length > 0) {
       await tx.customerSiteStaffBreakWindow.createMany({
-        data: parsed.breakWindows.map((item) => ({
+        data: normalizedBreakWindows.map((item) => ({
           tenantSiteId: parsed.tenantSiteId,
           staffMemberId: item.staffMemberId,
           rotaDayId: null,

@@ -264,11 +264,11 @@ function validateRotaAndBreakDrafts(
     if (!day.working) continue;
     const label = weekdayLabel(day.weekday);
     if (!day.staffMemberId) {
-      errors.push(`${label}: select a staff member before saving rota.`);
+      errors.push("Please select a staff member.");
       continue;
     }
     if (!day.startTime || !day.endTime) {
-      errors.push(`${label}: working days need both start and end times.`);
+      errors.push(`${label} requires a start and end time.`);
       continue;
     }
     const start = timeToMinutes(day.startTime);
@@ -278,7 +278,7 @@ function validateRotaAndBreakDrafts(
       continue;
     }
     if (end <= start) {
-      errors.push(`${label}: rota end time must be after start time.`);
+      errors.push(`${label} end time must be after start time.`);
     }
   }
 
@@ -383,7 +383,9 @@ function rotaBusinessHoursWarning(
   return null;
 }
 
-function toMessage(error: string, status: number): string {
+function toMessage(error: string, status: number, details?: unknown): string {
+  const validationMessage = validationDetailsToMessage(details);
+  if (validationMessage) return validationMessage;
   if (error === "BACKEND_PERSISTENCE_NOT_CONFIGURED" || status === 503) {
     return "Backend persistence is not configured for this environment yet.";
   }
@@ -402,6 +404,9 @@ function toMessage(error: string, status: number): string {
   if (error === "UNSUPPORTED_MEDIA_TYPE") {
     return "File type is not supported for this upload type.";
   }
+  if (error === "VALIDATION_ERROR" || status === 400) {
+    return "Some scheduling details need checking before saving.";
+  }
   return `Request failed: ${error}`;
 }
 
@@ -413,7 +418,8 @@ function validationDetailsToMessage(details: unknown): string | null {
       return typeof item.message === "string" ? item.message : null;
     })
     .filter((message): message is string => Boolean(message));
-  return messages.length > 0 ? messages.join(" ") : null;
+  const uniqueMessages = [...new Set(messages)];
+  return uniqueMessages.length > 0 ? uniqueMessages.join(" ") : null;
 }
 
 function formatAdminServicePrice(value: string): string {
@@ -1072,8 +1078,8 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
         staffMemberId: day.staffMemberId,
         weekday: day.weekday,
         working: day.working,
-        startTime: day.startTime.trim() || null,
-        endTime: day.endTime.trim() || null,
+        startTime: day.working ? day.startTime.trim() || null : null,
+        endTime: day.working ? day.endTime.trim() || null : null,
       })),
       breakWindows: breakWindowsDraft.map((window) => ({
         id: window.id,
@@ -1110,7 +1116,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       })),
     });
     if (!result.ok) {
-      setMessage(toMessage(result.error, result.status));
+      setMessage(toMessage(result.error, result.status, result.details));
       return;
     }
     setRotaDaysDraft(result.scheduling.rotaDays.map(toRotaDayDraft));
@@ -2228,10 +2234,25 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                             disabled={!selectedSchedulingStaffId || !allowed}
                             onChange={(event) => {
                               if (!selectedSchedulingStaffId) return;
-                              const next = { ...row, working: event.target.checked };
+                              const working = event.target.checked;
+                              const next = {
+                                ...row,
+                                working,
+                                startTime: working ? row.startTime : "",
+                                endTime: working ? row.endTime : "",
+                              };
                               setRotaDaysDraft((current) => {
                                 return upsertRotaDayDraft(current, next);
                               });
+                              if (!working) {
+                                setBreakWindowsDraft((current) =>
+                                  current.map((breakWindow) =>
+                                    breakWindow.staffMemberId === selectedSchedulingStaffId && breakWindow.weekday === weekday
+                                      ? { ...breakWindow, active: false }
+                                      : breakWindow,
+                                  ),
+                                );
+                              }
                             }}
                           />
                           Working
