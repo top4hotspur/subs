@@ -42,6 +42,7 @@ model TenantSite {
   customerSiteAdminUsers        CustomerSiteAdminUser[]
   customerSiteCustomers         CustomerSiteCustomer[]
   customerSiteContactEnquiries  CustomerSiteContactEnquiry[]
+  customerSiteMarketingCampaigns CustomerSiteMarketingCampaign[]
   setupRequest                  SetupRequest?                  @relation("SetupRequestToTenantSite", fields: [setupRequestId], references: [id])
 }
 
@@ -694,6 +695,7 @@ model CustomerSiteCustomer {
   updatedAt      DateTime              @updatedAt
   tenantSite     TenantSite            @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
   bookings       CustomerSiteBooking[]
+  marketingCampaignRecipients CustomerSiteMarketingCampaignRecipient[]
 
   @@unique([tenantSiteId, email])
   @@index([tenantSiteId])
@@ -725,6 +727,50 @@ model CustomerSiteContactEnquiry {
   @@index([tenantSiteId, createdAt])
   @@index([customerSiteCustomerId])
   @@index([bookingId])
+}
+
+model CustomerSiteMarketingCampaign {
+  id           String                                  @id @default(cuid())
+  tenantSiteId String
+  title        String
+  subject      String
+  body         String
+  campaignType String
+  status       String                                  @default("DRAFT")
+  audienceType String
+  ctaLabel     String?
+  ctaUrl       String?
+  sentAt       DateTime?
+  createdAt    DateTime                                @default(now())
+  updatedAt    DateTime                                @updatedAt
+  tenantSite   TenantSite                              @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  recipients   CustomerSiteMarketingCampaignRecipient[]
+
+  @@index([tenantSiteId])
+  @@index([tenantSiteId, status])
+  @@index([tenantSiteId, createdAt])
+}
+
+model CustomerSiteMarketingCampaignRecipient {
+  id                     String                         @id @default(cuid())
+  campaignId             String
+  tenantSiteId           String
+  customerSiteCustomerId String?
+  email                  String
+  name                   String?
+  status                 String                         @default("PENDING")
+  sentAt                 DateTime?
+  failureReason          String?
+  createdAt              DateTime                       @default(now())
+  updatedAt              DateTime                       @updatedAt
+  campaign               CustomerSiteMarketingCampaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  customer               CustomerSiteCustomer?          @relation(fields: [customerSiteCustomerId], references: [id], onDelete: SetNull)
+
+  @@unique([campaignId, email])
+  @@index([tenantSiteId])
+  @@index([campaignId])
+  @@index([customerSiteCustomerId])
+  @@index([status])
 }
 
 model CustomerSiteAdminUser {

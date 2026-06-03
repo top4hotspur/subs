@@ -519,7 +519,11 @@ Final custom-domain rendering remains the next hosting/routing milestone: custom
 - Business owners can review customer booking history, upcoming/completed/cancelled counts, payment-status context and contact enquiries in `/site-admin/[siteSlug]` under Customer CRM.
 - CRM rows are grouped by tenant plus normalised email where practical. Guest bookings, account customers and contact enquiries with the same tenant/email are shown together; cross-tenant data is never merged.
 - Internal CRM notes can be saved for account customers. Business admins can mark an opted-in customer as do-not-contact/suppressed, but the CRM does not provide silent admin opt-in.
-- Special offers are placeholder/foundation only. Lapsed-customer follow-up is a visible 90-day insight only; no automated campaigns, birthday automation, bulk marketing sends or payment-provider APIs are active in this milestone.
+- Special offers now support controlled one-off subscriber customer campaigns from Customer CRM. Business admins can draft a subject/body, choose all opted-in, selected opted-in, possible lapsed customers or customers with booking history, preview the email and send only to eligible opted-in tenant customers.
+- Customer campaign sends are tenant-scoped and separate from platform prospect campaigns in `/admin/sales`. Server-side checks skip customers without consent, invalid/missing emails, inactive customers, duplicate recipients and already-sent recipients for the same campaign.
+- Subscriber customer marketing unsubscribe links use `/sites/[siteSlug]/unsubscribe/customer-marketing?token=...` and update that tenant customer's marketing consent only. Transactional booking emails are not affected.
+- Customer account Special offers display remains a placeholder; active/targeted in-account offer rendering is future work.
+- Lapsed-customer follow-up remains manually selected/sent only. No automated campaigns, birthday automation, SMS/WhatsApp sends or payment-provider APIs are active in this milestone.
 
 ## Custom-domain runtime rendering
 

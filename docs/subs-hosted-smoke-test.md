@@ -1370,7 +1370,27 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
 17. Return to `/site-admin/[siteSlug]` > Customer CRM and confirm the contact enquiry appears both in the enquiry list and under the matching customer detail where the email matches.
 18. For a customer with booking history, no upcoming booking and a last booking older than 90 days, confirm `Possible lapsed customer` appears as an insight only.
 19. Confirm no cross-tenant bookings, customer records or enquiries are visible when using a different site slug/admin login.
-20. Confirm no bulk customer marketing emails, birthday automation or payment-provider actions are sent from this CRM foundation.
+20. Confirm no automated birthday/lapsed campaigns, SMS/WhatsApp messages or payment-provider actions are sent from this CRM foundation. Customer campaign emails require an explicit draft, audience and send confirmation.
+
+## Hosted smoke: subscriber customer campaigns
+1. Open `/site-admin/[siteSlug]` and select `Customer CRM`.
+2. Confirm the Customer campaigns/special offers panel is visible and clearly says this is tenant customer marketing, not the platform sales pipeline.
+3. Confirm email provider status is shown as configured or not configured.
+4. Create or use a tenant customer account with marketing consent opted in and a valid email address.
+5. Create another tenant customer with marketing consent off or use `Mark do not contact`.
+6. Create a campaign draft with title, subject, body, campaign type, audience and optional CTA.
+7. Save the draft and confirm it appears in campaign history.
+8. Choose `Selected opted-in customers`, select only the opted-in test customer and confirm eligible/skipped counts update.
+9. Click `Send campaign` and confirm the browser prompt says customers without marketing consent will be skipped.
+10. If email is configured, confirm the selected opted-in customer receives the email with business name, message, CTA/contact details and unsubscribe footer.
+11. Confirm unselected, no-consent, invalid-email and cross-tenant customers are not emailed.
+12. Confirm campaign history records sent/skipped/failed counts and recent recipient statuses.
+13. Open the unsubscribe link `/sites/[siteSlug]/unsubscribe/customer-marketing?token=...`.
+14. Confirm the page says `You have been unsubscribed from marketing messages from [Business Name].`
+15. Return to `/site-admin/[siteSlug]` and confirm the customer's marketing consent is off.
+16. Try sending another campaign to that customer and confirm the server skips them.
+17. Confirm transactional booking emails still work independently of marketing unsubscribe.
+18. Confirm Customer account Special offers still safely says no offers are available right now; targeted in-account offer display is future work.
 
 ## 2026-06-03 hosted smoke checks: custom-domain tenant routing
 

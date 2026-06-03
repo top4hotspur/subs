@@ -966,13 +966,25 @@ Future payment-provider note: subscriber business payment settings must eventual
 - Logged-in booking flows confirm that the booking has been added to the customer account.
 - Customer account dashboards now show tenant bookings linked to the account plus guest bookings for the same tenant with the same verified/login email address. Matching remains tenant-scoped, and register/login actively links safe matching guest bookings to the account.
 - Customer registration captures optional marketing consent with an unchecked opt-in. Customers can update their profile details and marketing preference from their account dashboard; updates remain tenant-scoped.
-- Customer account includes a Special offers placeholder. No customer marketing automation or bulk sends are enabled yet.
+- Customer account includes a Special offers placeholder. Controlled one-off customer campaign sends are available from business admin for opted-in customers; automated/broad bulk customer marketing remains disabled.
 - Subscriber site contact now uses a structured tenant-scoped form for booking changes, cancellations, payment questions, general enquiries, complaints/problems and other messages.
 - Business admins can view Customer CRM in `/site-admin/[siteSlug]`, including account customers, guest booking customers, booking counts/history, upcoming/completed/cancelled counts, last booking, next booking, contact-enquiry history and marketing consent.
 - CRM v1 deduplicates rows by tenant plus normalised email where practical, so same-tenant guest bookings and later customer accounts are treated as the same customer. It never joins customer data across tenants.
 - Business admins can save internal CRM notes for account customers and can suppress marketing/contact by turning off consent. Admins cannot silently opt customers in from the CRM.
 - A non-automated `Possible lapsed customer` signal appears when a customer has booking history, no upcoming booking and the last booking is older than 90 days. No birthday, win-back or bulk marketing automation is enabled.
 - Payment-provider integration for subscriber businesses remains future work; CRM payment status is read-only booking context only.
+
+## 2026-06-03 subscriber customer campaigns
+- Subscriber business admins can create one-off Customer CRM campaigns/special offers from `/site-admin/[siteSlug]`.
+- This is separate from the platform sales pipeline. Platform prospect campaigns still live under `/admin/sales`; subscriber campaigns are tenant-scoped and use `CustomerSiteCustomer` consent.
+- Campaign drafts store title, subject, body, campaign type, audience type, optional CTA label/link, status and sent timestamp.
+- Recipient history stores customer/email, sent/skipped/failed status, failure reason and sent timestamp per tenant campaign.
+- Supported audiences are all opted-in customers, selected opted-in customers, possible lapsed customers and customers with booking history.
+- Server-side send checks enforce tenant scope, valid email, marketing opt-in, active customer account, duplicate recipient protection and prior-send protection before any email is sent.
+- Customers can unsubscribe from subscriber marketing through `/sites/[siteSlug]/unsubscribe/customer-marketing?token=...`. This updates only that tenant customer's marketing consent and does not affect transactional booking emails.
+- Emails use the subscriber business name/contact details and include an unsubscribe footer. Email sends are fail-soft per recipient, and campaigns are not marked sent when the email provider is not configured.
+- Customer account Special offers remains a safe placeholder for now. Showing active/targeted offers in customer accounts is future work so offers are not accidentally exposed to the wrong audience.
+- There is still no customer marketing automation, SMS/WhatsApp campaign sending, or payment-provider integration in this milestone.
 
 ## 2026-06-03 homepage and sales page visual polish
 - Homepage hero pricing helper now reads only `Only ?149 setup + ?30/month.`

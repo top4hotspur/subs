@@ -31,7 +31,13 @@ import {
   saveSiteAdminVoucherSettings,
   runSiteAdminVoucherAction,
   getSiteAdminCrm,
+  getSiteAdminCustomerCampaigns,
   patchSiteAdminCrmCustomer,
+  createSiteAdminCustomerCampaign,
+  sendSiteAdminCustomerCampaign,
+  updateSiteAdminCustomerCampaign,
+  type SiteAdminCustomerCampaign,
+  type SiteAdminCustomerCampaignInput,
   type SiteAdminCrmCustomer,
   type SiteAdminCrmEnquiry,
 } from "@/lib/sites/site-admin-client";
@@ -130,6 +136,35 @@ const STAFF_PERMISSION_OPTIONS: Array<{
   { key: "viewPaymentStatus", label: "View payment status" },
   { key: "redeemVouchers", label: "Redeem/check gift vouchers", note: "Saved now; voucher redemption action is future work." },
 ];
+
+const CUSTOMER_CAMPAIGN_TYPE_OPTIONS = [
+  { value: "GENERAL_OFFER", label: "General offer" },
+  { value: "LAPSED_CUSTOMER_OFFER", label: "Lapsed customer offer" },
+  { value: "BOOKING_FOLLOW_UP", label: "Booking follow-up" },
+  { value: "SEASONAL_OFFER", label: "Seasonal offer" },
+  { value: "CUSTOM", label: "Custom" },
+];
+
+const CUSTOMER_CAMPAIGN_AUDIENCE_OPTIONS = [
+  { value: "ALL_OPTED_IN", label: "All opted-in customers" },
+  { value: "SELECTED_CUSTOMERS", label: "Selected opted-in customers" },
+  { value: "LAPSED_CUSTOMERS", label: "Possible lapsed customers" },
+  { value: "CUSTOMERS_WITH_BOOKING_HISTORY", label: "Customers with booking history" },
+];
+
+type CustomerCampaignDraft = SiteAdminCustomerCampaignInput;
+
+function defaultCustomerCampaignDraft(): CustomerCampaignDraft {
+  return {
+    title: "Special offer",
+    subject: "A special offer from your local business",
+    body: "Hi,\n\nWe wanted to share a quick update and offer with you.\n\nAdd the offer details here, including any expiry date or booking instructions.\n\nThank you for supporting us.",
+    campaignType: "GENERAL_OFFER",
+    audienceType: "ALL_OPTED_IN",
+    ctaLabel: "Contact us",
+    ctaUrl: "",
+  };
+}
 
 function weekdayLabel(weekday: WeekdayValue): string {
   return weekday.charAt(0).toUpperCase() + weekday.slice(1);
@@ -560,6 +595,15 @@ function toMessage(error: string, status: number, details?: unknown): string {
   if (error === "BOOKING_AMEND_NOT_ALLOWED") {
     return "Completed or cancelled bookings cannot be amended in this pass.";
   }
+  if (error === "EMAIL_NOT_CONFIGURED") {
+    return "Email is not configured for this environment. Campaigns were not sent or marked as sent.";
+  }
+  if (error === "CAMPAIGN_NOT_FOUND") {
+    return "Campaign draft was not found for this subscriber site.";
+  }
+  if (error === "CAMPAIGN_NOT_SENDABLE") {
+    return "This campaign cannot be sent because it has already been sent or cancelled.";
+  }
   return `Request failed: ${error}`;
 }
 
@@ -603,6 +647,26 @@ function formatUkDate(value: string): string {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value || "Date not set";
   const [year, month, day] = value.split("-");
   return `${day}/${month}/${year}`;
+}
+
+function formatCampaignOptionLabel(options: Array<{ value: string; label: string }>, value: string): string {
+  return options.find((option) => option.value === value)?.label ?? value.replaceAll("_", " ").toLowerCase();
+}
+
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function isCustomerEligibleForCampaign(customer: SiteAdminCrmCustomer, audienceType: string, selectedCustomerIds: Set<string>): boolean {
+  if (!customer.id || !customer.accountCreated || !customer.marketingOptIn || !isValidEmail(customer.email)) return false;
+  if (audienceType === "SELECTED_CUSTOMERS") return selectedCustomerIds.has(customer.id);
+  if (audienceType === "LAPSED_CUSTOMERS") return customer.lapsedCandidate;
+  if (audienceType === "CUSTOMERS_WITH_BOOKING_HISTORY") return customer.totalBookings > 0;
+  return true;
+}
+
+function previewCustomerCampaignBody(body: string): string[] {
+  return body.split(/\n{2,}/).map((part) => part.trim()).filter(Boolean);
 }
 
 function formatDateRange(startDate: string, endDate: string): string {
@@ -952,6 +1016,14 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   const [selectedCrmEmail, setSelectedCrmEmail] = useState<string | null>(null);
   const [crmNotesDraft, setCrmNotesDraft] = useState("");
   const [crmSaving, setCrmSaving] = useState(false);
+  const [customerCampaigns, setCustomerCampaigns] = useState<SiteAdminCustomerCampaign[]>([]);
+  const [customerCampaignsLoaded, setCustomerCampaignsLoaded] = useState(false);
+  const [customerCampaignDraft, setCustomerCampaignDraft] = useState<CustomerCampaignDraft>(() => defaultCustomerCampaignDraft());
+  const [selectedCustomerCampaignId, setSelectedCustomerCampaignId] = useState<string | null>(null);
+  const [selectedCampaignCustomerIds, setSelectedCampaignCustomerIds] = useState<string[]>([]);
+  const [customerCampaignEmailConfigured, setCustomerCampaignEmailConfigured] = useState(false);
+  const [customerCampaignBusy, setCustomerCampaignBusy] = useState(false);
+  const [lastCustomerCampaignSendSummary, setLastCustomerCampaignSendSummary] = useState<string | null>(null);
 
   const selectedStaff = useMemo(
     () => staffDraft.find((item) => item.id === selectedSchedulingStaffId) ?? null,
@@ -968,6 +1040,22 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   const selectedCrmCustomer = useMemo(
     () => crmCustomers.find((customer) => customer.email === selectedCrmEmail) ?? crmCustomers[0] ?? null,
     [crmCustomers, selectedCrmEmail],
+  );
+  const selectedCustomerCampaign = useMemo(
+    () => customerCampaigns.find((campaign) => campaign.id === selectedCustomerCampaignId) ?? null,
+    [customerCampaigns, selectedCustomerCampaignId],
+  );
+  const selectedCampaignCustomerIdSet = useMemo(
+    () => new Set(selectedCampaignCustomerIds),
+    [selectedCampaignCustomerIds],
+  );
+  const customerCampaignEligibleCount = useMemo(
+    () => crmCustomers.filter((customer) => isCustomerEligibleForCampaign(customer, customerCampaignDraft.audienceType, selectedCampaignCustomerIdSet)).length,
+    [crmCustomers, customerCampaignDraft.audienceType, selectedCampaignCustomerIdSet],
+  );
+  const customerCampaignSkippedCount = useMemo(
+    () => crmCustomers.length - customerCampaignEligibleCount,
+    [crmCustomers.length, customerCampaignEligibleCount],
   );
 
   useEffect(() => {
@@ -1075,28 +1163,39 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   }, [activeSection, siteSlug, vouchersLoaded]);
 
   useEffect(() => {
-    if (activeSection !== "customerCrm" || crmLoaded) return;
+    if (activeSection !== "customerCrm" || (crmLoaded && customerCampaignsLoaded)) return;
     let active = true;
     async function loadCrm() {
       setMessage("Loading customer CRM...");
-      const result = await getSiteAdminCrm(siteSlug);
+      const [result, campaignsResult] = await Promise.all([
+        getSiteAdminCrm(siteSlug),
+        getSiteAdminCustomerCampaigns(siteSlug),
+      ]);
       if (!active) return;
       if (!result.ok) {
         setMessage(toMessage(result.error, result.status));
+        return;
+      }
+      if (!campaignsResult.ok) {
+        setMessage(toMessage(campaignsResult.error, campaignsResult.status));
         return;
       }
       setCrmCustomers(result.customers);
       setCrmEnquiries(result.enquiries);
       setSelectedCrmEmail(result.customers[0]?.email ?? null);
       setCrmNotesDraft(result.customers[0]?.crmNotes ?? "");
+      setCustomerCampaigns(campaignsResult.campaigns);
+      setSelectedCustomerCampaignId(campaignsResult.campaigns[0]?.id ?? null);
+      setCustomerCampaignEmailConfigured(campaignsResult.emailConfigured);
       setCrmLoaded(true);
+      setCustomerCampaignsLoaded(true);
       setMessage(null);
     }
     void loadCrm();
     return () => {
       active = false;
     };
-  }, [activeSection, crmLoaded, siteSlug]);
+  }, [activeSection, crmLoaded, customerCampaignsLoaded, siteSlug]);
 
   async function saveCrmCustomerNotes() {
     if (!selectedCrmCustomer?.accountCreated) {
@@ -1153,6 +1252,82 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       ),
     );
     setMessage("Customer marketing is now suppressed for this business.");
+  }
+
+  function loadCustomerCampaignIntoDraft(campaign: SiteAdminCustomerCampaign) {
+    setSelectedCustomerCampaignId(campaign.id);
+    setCustomerCampaignDraft({
+      title: campaign.title,
+      subject: campaign.subject,
+      body: campaign.body,
+      campaignType: campaign.campaignType,
+      audienceType: campaign.audienceType,
+      ctaLabel: campaign.ctaLabel ?? "",
+      ctaUrl: campaign.ctaUrl ?? "",
+    });
+    setSelectedCampaignCustomerIds([]);
+    setLastCustomerCampaignSendSummary(null);
+  }
+
+  async function saveCustomerCampaignDraft() {
+    setCustomerCampaignBusy(true);
+    setMessage(selectedCustomerCampaign ? "Updating customer campaign draft..." : "Saving customer campaign draft...");
+    const result = selectedCustomerCampaign
+      ? await updateSiteAdminCustomerCampaign(siteSlug, selectedCustomerCampaign.id, customerCampaignDraft)
+      : await createSiteAdminCustomerCampaign(siteSlug, customerCampaignDraft);
+    setCustomerCampaignBusy(false);
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status, result.details));
+      return;
+    }
+    setCustomerCampaigns(result.campaigns);
+    setCustomerCampaignEmailConfigured(result.emailConfigured);
+    setSelectedCustomerCampaignId(result.campaigns[0]?.id ?? selectedCustomerCampaign?.id ?? null);
+    setMessage("Customer campaign draft saved.");
+  }
+
+  async function sendCustomerCampaign() {
+    const campaign = selectedCustomerCampaign;
+    if (!campaign) {
+      setMessage("Save a customer campaign draft before sending.");
+      return;
+    }
+    if (!customerCampaignEmailConfigured) {
+      setMessage("Email is not configured for this environment. Campaigns cannot be sent yet.");
+      return;
+    }
+    const selectedIds = customerCampaignDraft.audienceType === "SELECTED_CUSTOMERS" ? selectedCampaignCustomerIds : [];
+    const recipientCount = customerCampaignEligibleCount;
+    if (recipientCount <= 0) {
+      setMessage("No eligible opted-in customers are available for this campaign audience.");
+      return;
+    }
+    const confirmed = window.confirm(
+      `Send "${customerCampaignDraft.title}" to ${recipientCount} eligible customer${recipientCount === 1 ? "" : "s"}? Customers without marketing consent will be skipped.`,
+    );
+    if (!confirmed) return;
+
+    setCustomerCampaignBusy(true);
+    setMessage("Sending customer campaign...");
+    const result = await sendSiteAdminCustomerCampaign(siteSlug, campaign.id, selectedIds);
+    setCustomerCampaignBusy(false);
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status, result.details));
+      return;
+    }
+    setCustomerCampaigns(result.campaigns);
+    setCustomerCampaignEmailConfigured(result.emailConfigured);
+    setSelectedCustomerCampaignId(campaign.id);
+    const summary = `Sent ${result.sendResult.sentCount}, skipped ${result.sendResult.skippedCount}, failed ${result.sendResult.failedCount}.`;
+    setLastCustomerCampaignSendSummary(summary);
+    setMessage(`Customer campaign send complete. ${summary}`);
+  }
+
+  function toggleCampaignCustomer(customerId: string, checked: boolean) {
+    setSelectedCampaignCustomerIds((current) => {
+      if (checked) return current.includes(customerId) ? current : [...current, customerId];
+      return current.filter((id) => id !== customerId);
+    });
   }
 
   function updateVoucherSetting<K extends keyof CustomerSiteGiftVoucherSettings>(
@@ -2470,11 +2645,230 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
             </span>
           </div>
           <div className="mt-4 rounded-xl border border-teal-200 bg-teal-50 p-4 text-sm text-teal-950">
-            <p className="font-semibold">Special offers and campaigns</p>
-            <p className="mt-1">
-              Special offers and customer campaigns will allow you to send offers to all customers or selected customers based on booking history, consent and customer patterns.
-            </p>
-            <p className="mt-1 text-xs">No customer marketing automation is enabled yet.</p>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="font-semibold">Customer campaigns and special offers</p>
+                <p className="mt-1">
+                  Create one-off emails for opted-in customers. This is tenant-specific customer marketing, not the platform sales pipeline.
+                </p>
+                <p className="mt-1 text-xs">
+                  Customers without marketing consent, missing emails or previous unsubscribes are skipped server-side. No automation is enabled.
+                </p>
+              </div>
+              <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${customerCampaignEmailConfigured ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-900"}`}>
+                Email {customerCampaignEmailConfigured ? "configured" : "not configured"}
+              </span>
+            </div>
+            <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
+              <div className="rounded-xl border border-teal-200 bg-white p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-semibold text-slate-950">Campaign draft</p>
+                  <button
+                    type="button"
+                    className={`${outlineButtonClass} ${smallButtonClass}`}
+                    onClick={() => {
+                      setSelectedCustomerCampaignId(null);
+                      setCustomerCampaignDraft(defaultCustomerCampaignDraft());
+                      setSelectedCampaignCustomerIds([]);
+                      setLastCustomerCampaignSendSummary(null);
+                    }}
+                  >
+                    New draft
+                  </button>
+                </div>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <label className="text-xs font-semibold text-slate-700">
+                    Campaign title
+                    <input
+                      className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                      value={customerCampaignDraft.title}
+                      onChange={(event) => setCustomerCampaignDraft((current) => ({ ...current, title: event.target.value }))}
+                    />
+                  </label>
+                  <label className="text-xs font-semibold text-slate-700">
+                    Subject
+                    <input
+                      className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                      value={customerCampaignDraft.subject}
+                      onChange={(event) => setCustomerCampaignDraft((current) => ({ ...current, subject: event.target.value }))}
+                    />
+                  </label>
+                  <label className="text-xs font-semibold text-slate-700">
+                    Campaign type
+                    <select
+                      className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                      value={customerCampaignDraft.campaignType}
+                      onChange={(event) => setCustomerCampaignDraft((current) => ({ ...current, campaignType: event.target.value }))}
+                    >
+                      {CUSTOMER_CAMPAIGN_TYPE_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="text-xs font-semibold text-slate-700">
+                    Audience
+                    <select
+                      className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                      value={customerCampaignDraft.audienceType}
+                      onChange={(event) => {
+                        setCustomerCampaignDraft((current) => ({ ...current, audienceType: event.target.value }));
+                        if (event.target.value !== "SELECTED_CUSTOMERS") setSelectedCampaignCustomerIds([]);
+                      }}
+                    >
+                      {CUSTOMER_CAMPAIGN_AUDIENCE_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="text-xs font-semibold text-slate-700">
+                    CTA label
+                    <input
+                      className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                      value={customerCampaignDraft.ctaLabel ?? ""}
+                      onChange={(event) => setCustomerCampaignDraft((current) => ({ ...current, ctaLabel: event.target.value }))}
+                      placeholder="Book now"
+                    />
+                  </label>
+                  <label className="text-xs font-semibold text-slate-700">
+                    CTA link
+                    <input
+                      className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                      value={customerCampaignDraft.ctaUrl ?? ""}
+                      onChange={(event) => setCustomerCampaignDraft((current) => ({ ...current, ctaUrl: event.target.value }))}
+                      placeholder="https://..."
+                    />
+                  </label>
+                </div>
+                <label className="mt-3 block text-xs font-semibold text-slate-700">
+                  Message
+                  <textarea
+                    className="mt-1 min-h-40 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    value={customerCampaignDraft.body}
+                    onChange={(event) => setCustomerCampaignDraft((current) => ({ ...current, body: event.target.value }))}
+                  />
+                </label>
+                <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+                  <p><span className="font-semibold">Eligible:</span> {customerCampaignEligibleCount} opted-in customer{customerCampaignEligibleCount === 1 ? "" : "s"}</p>
+                  <p><span className="font-semibold">Skipped by audience/consent:</span> {customerCampaignSkippedCount}</p>
+                  <p className="mt-1">Customers without marketing consent will be skipped even if selected.</p>
+                </div>
+                {customerCampaignDraft.audienceType === "SELECTED_CUSTOMERS" ? (
+                  <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-xs font-semibold text-slate-800">Select opted-in customers</p>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          className="text-xs font-semibold text-teal-700 underline"
+                          onClick={() => setSelectedCampaignCustomerIds(crmCustomers.filter((customer) => customer.id && customer.accountCreated && customer.marketingOptIn && isValidEmail(customer.email)).map((customer) => customer.id!))}
+                        >
+                          Select eligible
+                        </button>
+                        <button type="button" className="text-xs font-semibold text-slate-700 underline" onClick={() => setSelectedCampaignCustomerIds([])}>
+                          Clear
+                        </button>
+                      </div>
+                    </div>
+                    <div className="mt-2 max-h-48 space-y-2 overflow-auto">
+                      {crmCustomers.filter((customer) => customer.id && customer.accountCreated).length === 0 ? (
+                        <p className="text-xs text-slate-600">No account customers available for selection yet.</p>
+                      ) : crmCustomers.filter((customer) => customer.id && customer.accountCreated).map((customer) => (
+                        <label key={customer.id ?? customer.email} className="flex items-start gap-2 rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-700">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(customer.id && selectedCampaignCustomerIdSet.has(customer.id))}
+                            onChange={(event) => customer.id ? toggleCampaignCustomer(customer.id, event.target.checked) : undefined}
+                            disabled={!customer.marketingOptIn || !isValidEmail(customer.email)}
+                          />
+                          <span>
+                            <span className="font-semibold text-slate-900">{customer.name || customer.email}</span>
+                            <span className="block">{customer.email} · {customer.marketingOptIn ? "Opted in" : "No consent"}</span>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button type="button" className={`${primaryButtonClass} ${smallButtonClass}`} onClick={() => void saveCustomerCampaignDraft()} disabled={customerCampaignBusy}>
+                    Save draft
+                  </button>
+                  <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void sendCustomerCampaign()} disabled={customerCampaignBusy || !selectedCustomerCampaign}>
+                    Send campaign
+                  </button>
+                </div>
+                {lastCustomerCampaignSendSummary ? (
+                  <p className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-xs font-semibold text-emerald-900">{lastCustomerCampaignSendSummary}</p>
+                ) : null}
+              </div>
+              <div className="space-y-3">
+                <div className="rounded-xl border border-slate-200 bg-white p-4">
+                  <p className="text-sm font-semibold text-slate-950">Email preview</p>
+                  <div className="mt-3 overflow-hidden rounded-lg border border-slate-200 bg-white text-sm">
+                    <div className="bg-teal-700 p-4 text-white">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-teal-100">{persistedSettings?.siteDisplayName || persistedSettings?.businessName || "Your business"}</p>
+                      <p className="mt-1 text-lg font-bold">{customerCampaignDraft.title}</p>
+                    </div>
+                    <div className="p-4 text-slate-700">
+                      <p className="mb-3 font-semibold text-slate-950">Subject: {customerCampaignDraft.subject}</p>
+                      {previewCustomerCampaignBody(customerCampaignDraft.body).map((paragraph, index) => (
+                        <p key={`${paragraph}-${index}`} className="mb-3 whitespace-pre-wrap leading-6">{paragraph}</p>
+                      ))}
+                      {customerCampaignDraft.ctaUrl ? (
+                        <a href={customerCampaignDraft.ctaUrl} className="mt-2 inline-flex rounded-full bg-teal-300 px-4 py-2 text-sm font-bold text-teal-950" target="_blank" rel="noreferrer">
+                          {customerCampaignDraft.ctaLabel || "View offer"}
+                        </a>
+                      ) : null}
+                      <p className="mt-5 border-t border-slate-200 pt-3 text-xs text-slate-500">
+                        Unsubscribe link is added automatically to every sent email. Transactional booking emails are not affected.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-white p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-slate-950">Campaign history</p>
+                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-semibold text-slate-700">{customerCampaigns.length}</span>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {customerCampaigns.length === 0 ? (
+                      <p className="text-xs text-slate-600">No customer campaigns have been saved yet.</p>
+                    ) : customerCampaigns.slice(0, 8).map((campaign) => (
+                      <button
+                        key={campaign.id}
+                        type="button"
+                        className={`w-full rounded-lg border p-3 text-left text-xs ${selectedCustomerCampaign?.id === campaign.id ? "border-teal-300 bg-teal-50" : "border-slate-200 bg-slate-50 hover:bg-slate-100"}`}
+                        onClick={() => loadCustomerCampaignIntoDraft(campaign)}
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div>
+                            <p className="font-semibold text-slate-950">{campaign.title}</p>
+                            <p className="text-slate-600">{formatCampaignOptionLabel(CUSTOMER_CAMPAIGN_AUDIENCE_OPTIONS, campaign.audienceType)} · {formatCampaignOptionLabel(CUSTOMER_CAMPAIGN_TYPE_OPTIONS, campaign.campaignType)}</p>
+                          </div>
+                          <span className="rounded-full border border-slate-200 bg-white px-2 py-1 font-semibold text-slate-700">{campaign.status}</span>
+                        </div>
+                        <p className="mt-2 text-slate-600">
+                          Sent {campaign.counts.sent} · skipped {campaign.counts.skipped} · failed {campaign.counts.failed}
+                          {campaign.sentAt ? ` · ${new Date(campaign.sentAt).toLocaleString("en-GB")}` : ""}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                  {selectedCustomerCampaign?.recipients.length ? (
+                    <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                      <p className="text-xs font-semibold text-slate-800">Recent recipients</p>
+                      <div className="mt-2 space-y-1">
+                        {selectedCustomerCampaign.recipients.slice(0, 8).map((recipient) => (
+                          <p key={recipient.id} className="text-xs text-slate-600">
+                            <span className="font-semibold text-slate-800">{recipient.email}</span> · {recipient.status}{recipient.failureReason ? ` · ${recipient.failureReason}` : ""}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </div>
           </div>
           <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
             <div className="space-y-2">

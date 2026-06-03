@@ -84,6 +84,55 @@ export type SiteAdminCrmEnquiry = {
   createdAt: string;
 };
 
+export type SiteAdminCustomerCampaign = {
+  id: string;
+  title: string;
+  subject: string;
+  body: string;
+  campaignType: string;
+  status: string;
+  audienceType: string;
+  ctaLabel: string | null;
+  ctaUrl: string | null;
+  sentAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  counts: {
+    sent: number;
+    failed: number;
+    skipped: number;
+    total: number;
+  };
+  recipients: Array<{
+    id: string;
+    email: string;
+    name: string | null;
+    status: string;
+    sentAt: string | null;
+    failureReason: string | null;
+    createdAt: string;
+  }>;
+};
+
+export type SiteAdminCustomerCampaignInput = {
+  title: string;
+  subject: string;
+  body: string;
+  campaignType: string;
+  audienceType: string;
+  ctaLabel?: string | null;
+  ctaUrl?: string | null;
+};
+
+export type SiteAdminCustomerCampaignSendResult = {
+  ok: boolean;
+  error?: string;
+  sentCount: number;
+  skippedCount: number;
+  failedCount: number;
+  details: Array<{ customerId: string; email: string; outcome: "SENT" | "SKIPPED" | "FAILED"; reason?: string }>;
+};
+
 async function parseJsonSafe(response: Response): Promise<unknown> {
   try {
     return await response.json();
@@ -586,6 +635,145 @@ export async function patchSiteAdminCrmCustomer(
       };
     }
     return { ok: true, customer: body.customer };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function getSiteAdminCustomerCampaigns(
+  siteSlug: string,
+): Promise<ClientResult<{ campaigns: SiteAdminCustomerCampaign[]; emailConfigured: boolean }>> {
+  try {
+    const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/customer-campaigns`);
+    const body = (await parseJsonSafe(response)) as
+      | {
+          ok?: boolean;
+          campaigns?: SiteAdminCustomerCampaign[];
+          emailConfigured?: boolean;
+          error?: string;
+          details?: unknown;
+        }
+      | null;
+    if (!response.ok || !body?.ok || !Array.isArray(body.campaigns)) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_CUSTOMER_CAMPAIGNS_GET_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, campaigns: body.campaigns, emailConfigured: Boolean(body.emailConfigured) };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function createSiteAdminCustomerCampaign(
+  siteSlug: string,
+  input: SiteAdminCustomerCampaignInput,
+): Promise<ClientResult<{ campaigns: SiteAdminCustomerCampaign[]; emailConfigured: boolean }>> {
+  try {
+    const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/customer-campaigns`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    const body = (await parseJsonSafe(response)) as
+      | {
+          ok?: boolean;
+          campaigns?: SiteAdminCustomerCampaign[];
+          emailConfigured?: boolean;
+          error?: string;
+          details?: unknown;
+        }
+      | null;
+    if (!response.ok || !body?.ok || !Array.isArray(body.campaigns)) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_CUSTOMER_CAMPAIGN_CREATE_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, campaigns: body.campaigns, emailConfigured: Boolean(body.emailConfigured) };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function updateSiteAdminCustomerCampaign(
+  siteSlug: string,
+  campaignId: string,
+  input: Partial<SiteAdminCustomerCampaignInput> & { status?: "DRAFT" | "READY" | "CANCELLED" },
+): Promise<ClientResult<{ campaigns: SiteAdminCustomerCampaign[]; emailConfigured: boolean }>> {
+  try {
+    const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/customer-campaigns/${encodeURIComponent(campaignId)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "UPDATE", ...input }),
+    });
+    const body = (await parseJsonSafe(response)) as
+      | {
+          ok?: boolean;
+          campaigns?: SiteAdminCustomerCampaign[];
+          emailConfigured?: boolean;
+          error?: string;
+          details?: unknown;
+        }
+      | null;
+    if (!response.ok || !body?.ok || !Array.isArray(body.campaigns)) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_CUSTOMER_CAMPAIGN_UPDATE_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, campaigns: body.campaigns, emailConfigured: Boolean(body.emailConfigured) };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function sendSiteAdminCustomerCampaign(
+  siteSlug: string,
+  campaignId: string,
+  selectedCustomerIds: string[] = [],
+): Promise<ClientResult<{
+  campaigns: SiteAdminCustomerCampaign[];
+  emailConfigured: boolean;
+  sendResult: SiteAdminCustomerCampaignSendResult;
+}>> {
+  try {
+    const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/customer-campaigns/${encodeURIComponent(campaignId)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "SEND", selectedCustomerIds }),
+    });
+    const body = (await parseJsonSafe(response)) as
+      | {
+          ok?: boolean;
+          campaigns?: SiteAdminCustomerCampaign[];
+          emailConfigured?: boolean;
+          sendResult?: SiteAdminCustomerCampaignSendResult;
+          error?: string;
+          details?: unknown;
+        }
+      | null;
+    if (!response.ok || !body?.ok || !Array.isArray(body.campaigns) || !body.sendResult) {
+      return {
+        ok: false,
+        error: body?.error ?? body?.sendResult?.error ?? "SITE_ADMIN_CUSTOMER_CAMPAIGN_SEND_FAILED",
+        status: response.status,
+        details: body?.details ?? body?.sendResult,
+      };
+    }
+    return {
+      ok: true,
+      campaigns: body.campaigns,
+      emailConfigured: Boolean(body.emailConfigured),
+      sendResult: body.sendResult,
+    };
   } catch {
     return { ok: false, error: "NETWORK_ERROR", status: 0 };
   }
