@@ -839,22 +839,20 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - First payment/prepayment handling is conservative:
   - no card details are collected or stored
   - no subscriber Stripe/Square checkout is created yet
-  - if prepayment is required and card payments are enabled, the booking is confirmed with payment status `PENDING` and the customer is told payment will be arranged directly
+  - if prepayment is required and card payments are enabled but tenant checkout is not connected, public booking is blocked with a contact-business message
   - if cash/manual payment is expected, the booking is confirmed with payment status `PENDING`
   - if no payment is required online, the booking is confirmed with payment status `NOT_REQUIRED`
 - Site-admin Bookings show friendly payment labels and can mark pending manual/cash payment as received. Refund handling remains future work.
 
-## Subscriber Booking Card Checkout Foundation
+## Subscriber Booking Card Checkout Boundary
 
-- Subscriber booking prepayment now uses Stripe Checkout when a tenant site has card payments enabled and requires prepayment.
-- The booking is created tenant-scoped with `status=CONFIRMED`, `paymentStatus=PENDING`, `paymentMethod=CARD_ONLINE`, the fixed service amount, currency, and Stripe session metadata.
-- Stripe Checkout receives metadata for `tenantSiteId`, `siteSlug`, `bookingId`, `serviceId`, optional `staffId`, and customer email so webhooks can reconcile safely.
-- Card details are handled by Stripe Checkout only; the app does not store card details.
-- The Stripe webhook marks booking payments as `PAID` on successful checkout and records Stripe session/payment intent references where available.
-- If checkout expires or payment fails, the booking payment state is marked failed while the booking remains visible for admin follow-up in this first pass.
-- If online payment is not configured, or a service has no fixed price, the public booking flow shows a clear customer message and does not fake a paid booking.
+- Subscriber booking checkout is not live. `getSubscriberCheckoutAvailable()` deliberately returns false so platform Stripe billing is not accidentally reused for tenant customer bookings.
+- A dormant Stripe booking checkout helper and `SUBSCRIBER_BOOKING` webhook branch exist in the codebase, but public booking does not create those sessions in the current safe configuration.
+- Before any subscriber provider checkout goes live, the webhook path should be separated from platform subscription billing and backed by a tenant-scoped provider configuration/credential model.
+- Card details must remain handled only by the selected provider checkout/vault; the app must not store card details.
+- If online payment is not safely connected, public booking shows a clear customer message and does not fake a paid booking.
 - Cash/manual payment remains supported and can still be marked paid manually by the business admin.
-- Refunds, payout/accounting reports, provider onboarding, and manual online-card payment overrides are future work.
+- Refunds, payout/accounting reports, provider onboarding, provider-specific webhooks, and manual online-card payment overrides are future work.
 
 ## Booking Cancellation and Refund Handling
 
@@ -952,6 +950,27 @@ Custom-domain runtime rendering is still not switched on in middleware/routing. 
 When a site is marked live, the platform attempts a fail-soft go-live email. Email failure does not block the status update. Suspended/cancelled sites are excluded from live domain resolution.
 
 Future payment-provider note: subscriber business payment settings must eventually adapt by provider and integration method. Common provider families include Stripe, Square, PayPal, SumUp/Zettle and others on request. Future work must include secure credential handling, no public secret exposure, provider webhook validation, test/live mode distinction, and provider-specific refund/payment-status behaviour.
+
+## 2026-06-03 subscriber payment provider architecture
+
+Subscriber/business payment processing is intentionally separate from MyExperiment.club platform subscription billing. Platform Stripe Checkout/Billing pays for MyExperiment.club subscriptions; it must not be reused as if it were a tenant business's payment provider.
+
+Current safe live behaviour:
+- Business admin captures payment setup intent, provider name, account/reference notes and manual/cash/card-terminal preferences.
+- No provider API secrets, access tokens, webhook secrets or card details are collected.
+- Public booking blocks required online prepayment while tenant checkout is unavailable and tells customers to contact the business.
+- Manual/cash/card-terminal payment recording remains available where the business enables it.
+
+Provider-specific admin guidance now appears in `/site-admin/[siteSlug]` Payments/sales for Stripe, Square, PayPal, SumUp, Zettle, Worldpay and Other. It changes the safe account-reference label, explains what setup data belongs later, and warns not to enter secrets in the current form.
+
+Future provider integration should use a tenant-scoped provider configuration model with provider, mode, account reference, test/live environment, connection status, public enabled flag, last verified timestamp and secure secret-storage reference. Secrets must use provider OAuth/Connect or encrypted-at-rest secret storage such as KMS/Secrets Manager; environment variables alone are not scalable for many subscriber businesses.
+
+Subscriber payment webhooks must be logically separated from platform subscription webhooks. `/api/stripe/webhook` remains the platform subscription webhook. Future tenant payment routes should use provider-specific paths such as `/api/sites/payments/stripe/webhook` and verify provider signatures, tenant/booking mapping and idempotency before updating `CustomerSiteBooking`.
+
+Customer saved cards remain a placeholder. Any future saved card support must use provider-vaulted payment methods, customer consent and tenant/provider customer mapping. MyExperiment.club must not store card details.
+
+FAQ copy:
+`Can I use my existing payment provider? In many cases, yes. We can support common providers such as Stripe, Square, PayPal, SumUp/Zettle and other payment platforms depending on your setup. If you already use a provider, let us know during setup and we'll confirm the best way to connect payments to your site. More providers may be available on request.`
 
 ## 2026-06-02 customer account and booking payment guardrails
 - Public subscriber sites link customer access to `/sites/[siteSlug]/account`, with login and registration at `/sites/[siteSlug]/account/login` and `/sites/[siteSlug]/account/register`.

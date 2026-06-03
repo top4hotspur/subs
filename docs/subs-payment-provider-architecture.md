@@ -1,0 +1,179 @@
+# Subscriber payment provider architecture
+
+Last updated: 2026-06-03
+
+This document covers payment processors used by subscriber businesses to take payments from their own customers. It is separate from MyExperiment.club platform subscription billing.
+
+## Current architecture findings
+
+What exists now:
+- Platform subscription checkout uses Stripe Checkout/Billing for MyExperiment.club setup and subscription purchases.
+- Platform subscription status is stored on `SetupRequest` and `SubscriptionRecord`.
+- Subscriber bookings are stored in `CustomerSiteBooking` with payment fields including `paymentStatus`, `paymentMethod`, `paymentAmountPence`, `paymentCurrency`, `paymentProvider`, `paymentProviderSessionId` and `paymentProviderPaymentIntentId`.
+- Subscriber business payment preferences are stored on `CustomerSiteSettings` with setup intent fields: `paymentProcessorSetupMode`, `paymentProcessorName`, `paymentProcessorAccountRef`, `paymentProcessorNotes`, `acceptCashPayments`, `acceptCardPayments`, `requireBookingPrepayment` and `allowInStorePaymentRecording`.
+- Public booking uses `getCustomerSiteBookingPaymentDecision()` to block online paid booking when tenant checkout is not connected.
+- Staff/business admin can record manual/cash/card-terminal payment status without processing a card online.
+- Customer account has a saved payment methods placeholder only.
+
+Safe to reuse:
+- Tenant-scoped booking records and payment status fields.
+- Tenant-scoped `CustomerSiteSettings` non-secret provider intent/reference fields.
+- Existing manual payment recording and payment-status display.
+- The public booking guardrail that blocks required online prepayment while no tenant provider checkout is connected.
+
+Must not be reused:
+- Platform Stripe subscription credentials must not be treated as a subscriber business payment account.
+- `/api/stripe/webhook` should remain the platform subscription webhook unless a deliberate separated tenant-payment Stripe design is implemented.
+- Customer card details must never be collected or stored by MyExperiment.club.
+- Provider API keys, secret keys, access tokens and webhook secrets must not be entered into plain admin fields or exposed to client-side code.
+
+Current security gaps / risks:
+- The codebase contains a dormant `stripe-booking-checkout` helper and the platform Stripe webhook contains `SUBSCRIBER_BOOKING` handling. Public booking does not currently create those sessions because subscriber checkout is hardcoded unavailable, but this mixed webhook path should be separated before tenant payments go live.
+- There is no tenant-scoped secure provider credential model yet.
+- There is no encrypted-at-rest secret store or provider OAuth/Connect flow for subscriber payment credentials.
+- There is no provider-specific tenant webhook route/idempotency log yet.
+- `paymentProcessorAccountRef` and notes are safe only for public/account references, not secrets.
+
+Tenant isolation risks to avoid:
+- Never use platform Stripe customer/subscription IDs as tenant customer payment records.
+- Never update a booking from a webhook unless the event is signature-verified and maps to both `tenantSiteId` and `bookingId`.
+- Never trust unverified metadata alone.
+- Never expose one tenant's provider connection/account reference to another tenant or to public visitors.
+
+Missing future models:
+- Tenant-scoped payment provider configuration table.
+- Secure credential reference table or external secret-store pointer.
+- Provider webhook event/idempotency table.
+- Provider vaulted customer/payment-method mapping for saved cards.
+
+## Supported integration modes
+
+### 1. Manual / record payments only
+
+Current safe fallback. No online checkout is created. Customers can book when prepayment is not required or when manual/cash/card-terminal handling is allowed. Business/staff admin can record payment status manually.
+
+### 2. Customer pays business directly via connected provider
+
+Future integration mode. The subscriber business connects its own Stripe, Square, PayPal, SumUp/Zettle, Worldpay or other provider account. Customer checkout is created only using that tenant's provider configuration. Provider webhook confirmation updates tenant booking payment state.
+
+This requires secure credential handling or OAuth/Connect, provider signature verification and tenant-specific idempotency.
+
+### 3. Platform-assisted payments / connect model
+
+Future design option. For example, Stripe Connect or another marketplace/connect model where the platform facilitates payments without storing raw card details. This must be intentionally designed before use and should not reuse the current platform subscription billing credentials implicitly.
+
+## Proposed provider configuration model
+
+Use a tenant-scoped model when secure connection work begins:
+
+```prisma
+model CustomerSitePaymentProviderConfig {
+  id                       String   @id @default(cuid())
+  tenantSiteId             String
+  provider                 String   // STRIPE, SQUARE, PAYPAL, SUMUP, ZETTLE, WORLDPAY, OTHER
+  mode                     String   // MANUAL_ONLY, PROVIDER_PENDING_SETUP, PROVIDER_CONNECTED
+  displayName              String?
+  accountReference         String?
+  environment              String   // TEST, LIVE
+  connectionStatus         String   // NOT_STARTED, PENDING, CONNECTED, NEEDS_ATTENTION, DISABLED
+  publicEnabled            Boolean  @default(false)
+  lastVerifiedAt           DateTime?
+  setupNotes               String?
+  secretStorageReference   String?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+}
+```
+
+Secrets must not be stored in plaintext. `secretStorageReference` should point to encrypted credential storage or a provider OAuth/Connect account identifier. If the app uses environment variables only, that is acceptable for platform billing but not scalable or safe for many subscriber businesses.
+
+Recommended future secret handling:
+- Provider OAuth/Connect where possible.
+- KMS/Secrets Manager or equivalent encrypted-at-rest secret store.
+- Separate test/live credentials and explicit mode.
+- Never expose secret values to browser/client code.
+- Never log secrets.
+- Rotate/revoke credentials when business access changes.
+
+## Provider-specific admin guidance
+
+Business admin should show provider-specific instructions when the provider changes:
+- Stripe: Stripe account ID or Connect account ID, test/live mode later, separate tenant webhook later. Do not enter secret keys.
+- Square: merchant/location reference, OAuth/token storage later, Square webhook validation later.
+- PayPal: business email or merchant ID, webhook verification later.
+- SumUp/Zettle: account reference/email and manual/provider-assisted mode until API support is designed.
+- Worldpay/Other: account reference and setup notes; provider-specific hosted checkout/callback validation must be designed before going live.
+
+Warnings:
+- If prepayment is required but provider is not connected, customers cannot complete online paid bookings until setup is complete.
+- If manual/cash is allowed, customers can still book and payment can be recorded manually where settings allow it.
+
+## Booking flow rules
+
+Manual-only:
+- Do not create online checkout.
+- Booking can be confirmed when prepayment is not required or manual/cash handling is allowed.
+
+Prepayment required but no connected provider:
+- Block public booking or show contact-business message.
+- Do not create a confirmed unpaid online booking unless a deliberate manual override setting exists.
+
+Provider connected:
+- Create a payment session only from that tenant's provider config.
+- `paymentStatus=PENDING` until provider webhook confirmation.
+- Never mark paid from client redirect alone.
+- Store provider session/payment intent IDs on the tenant booking.
+
+Quote-required service:
+- Do not create online payment session.
+- Route to quote/contact flow.
+
+## Webhook architecture
+
+Platform and subscriber payment webhooks should be separate:
+- Current platform subscription webhook: `/api/stripe/webhook`.
+- Future subscriber Stripe booking webhook: `/api/sites/payments/stripe/webhook`.
+- Future subscriber Square webhook: `/api/sites/payments/square/webhook`.
+- Similar provider-specific routes for PayPal/Worldpay/etc.
+
+Webhook requirements:
+- Verify provider signature before processing.
+- Identify provider and environment.
+- Map event to `tenantSiteId` and `bookingId`.
+- Confirm the booking belongs to the tenant and expected provider session/payment ID.
+- Use idempotency/event IDs to prevent duplicate updates.
+- Log unknown/unmatched events safely without leaking secrets.
+- Update only matching tenant booking/payment state.
+- Do not break platform subscription webhook behaviour.
+
+## Saved cards future
+
+MyExperiment.club must not store card details. Saved cards can only be provider-backed:
+- Provider vaulted customer/payment method ID.
+- Tenant/provider customer mapping.
+- Customer consent.
+- Available only for connected providers that support vaulted payment methods.
+- Clear test/live separation.
+
+Customer account should keep the saved-payment-method placeholder until provider-backed vaulting exists.
+
+## FAQ/marketing copy
+
+Suggested copy:
+
+> Can I use my existing payment provider?
+>
+> In many cases, yes. We can support common providers such as Stripe, Square, PayPal, SumUp/Zettle and other payment platforms depending on your setup. If you already use a provider, let us know during setup and we'll confirm the best way to connect payments to your site. More providers may be available on request.
+
+Also state:
+- MyExperiment.club does not store card details.
+- Some providers may require additional setup.
+- Manual payment recording remains available.
+
+## Current live boundary
+
+Live subscriber-provider checkout is not enabled in this pass. Current live-safe behaviour is:
+- payment settings capture intent/reference only;
+- no secrets are requested;
+- public booking blocks required online prepayment where tenant checkout is unavailable;
+- manual/cash/card-terminal recording remains the fallback.

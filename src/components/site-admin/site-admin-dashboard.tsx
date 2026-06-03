@@ -71,6 +71,7 @@ import {
 import { formatBookingDateTime, formatUkDateTime } from "@/lib/sites/customer-site-booking-display";
 import { DEFAULT_BOOKING_POLICY_BODY, isCustomPolicyContent } from "@/lib/sites/default-booking-policy";
 import { getBookingRefundGuidance } from "@/lib/sites/booking-cancellation-refund";
+import { getSubscriberPaymentProviderGuidance } from "@/lib/sites/payment-provider-guidance";
 import type { CustomerSiteAvailabilityResult } from "@/lib/sites/customer-site-availability";
 import {
   mapAppearanceToTheme,
@@ -1921,6 +1922,9 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   const hasCustomPolicy = isCustomPolicyContent(settingsDraft);
   const policyNeedsReview = !hasCustomPolicy && !settingsDraft.policyDefaultAccepted;
   const tenantPaymentCheckoutConnected = false;
+  const paymentProviderGuidance = getSubscriberPaymentProviderGuidance(settingsDraft.paymentProcessorName);
+  const manualPaymentFallbackAvailable =
+    settingsDraft.acceptCashPayments || settingsDraft.allowInStorePaymentRecording;
   const prepaymentCheckoutMissing =
     settingsDraft.requireBookingPrepayment &&
     settingsDraft.acceptCardPayments &&
@@ -2072,7 +2076,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
               provider APIs in this phase.
             </p>
             <p className="mt-1 text-xs text-slate-600">
-              Do not enter API keys or passwords here.
+              Do not enter API keys, passwords, access tokens, webhook secrets or private credentials here.
             </p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
@@ -2114,7 +2118,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                 </select>
               </label>
               <label className="text-xs font-semibold text-slate-700">
-                Provider account reference/email
+                {paymentProviderGuidance.accountReferenceLabel}
                 <input
                   className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
                   value={settingsDraft.paymentProcessorAccountRef}
@@ -2126,7 +2130,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                   }
                 />
                 <span className="mt-1 block text-[11px] font-normal text-slate-600">
-                  Do not enter API keys or passwords.
+                  Safe references only. Secrets will need a secure connection flow in a later milestone.
                 </span>
               </label>
               <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
@@ -2142,6 +2146,31 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                   }
                 />
               </label>
+            </div>
+            <div className="mt-3 rounded-lg border border-sky-200 bg-sky-50 p-3 text-xs text-sky-950">
+              <p className="font-semibold">{paymentProviderGuidance.title}</p>
+              <p className="mt-1">{paymentProviderGuidance.statusLine}</p>
+              <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                <div>
+                  <p className="font-semibold">Setup fields to collect later</p>
+                  <ul className="mt-1 list-disc space-y-1 pl-4">
+                    {paymentProviderGuidance.setupFields.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-semibold">Current guidance</p>
+                  <ul className="mt-1 list-disc space-y-1 pl-4">
+                    {paymentProviderGuidance.instructions.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+              <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 font-semibold text-amber-950">
+                {paymentProviderGuidance.warning}
+              </p>
             </div>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
@@ -2227,7 +2256,12 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
             </p>
             {prepaymentCheckoutMissing ? (
               <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-950">
-                Online prepayment is required, but payment checkout is not connected yet. Customers will be told to contact you until payment setup is completed.
+                Customers cannot complete online paid bookings until payment provider setup is complete. They will be told to contact you until a safe tenant provider connection is available.
+              </p>
+            ) : null}
+            {manualPaymentFallbackAvailable ? (
+              <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-950">
+                Customers can still book where your settings allow it, and payment can be recorded manually by the business.
               </p>
             ) : null}
             {noCustomerPaymentMethodAvailable ? (

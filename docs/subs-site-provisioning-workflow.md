@@ -572,6 +572,21 @@ The generated instruction copy is customer-facing and should refer to the custom
 `Send DNS instructions` sends to the setup request contact email using the existing transactional email provider. Email delivery is fail-soft. If sending fails or email is not configured, the status does not advance and platform admin can copy the instructions manually. If sending succeeds, the relevant SiteDomain records a sent status/timestamp/recipient in `dnsInstructions` metadata and the site/domain lifecycle moves to `DNS_INSTRUCTIONS_SENT`.
 
 For customer-owned or customer-managed domains, the next operational state after successful instruction handover is `WAITING_FOR_CUSTOMER_DNS`. For platform-managed domains, admin continues manual registrar/DNS setup and then marks DNS configured/domain ready.
+
+## Subscriber payment-provider readiness
+
+Provisioned tenant sites keep subscriber customer payments separate from platform subscription billing. The platform Stripe flow proves MyExperiment.club subscription payment, but it is not a tenant business payment processor connection.
+
+Current fulfilment handover should explain:
+- payment provider selection in business admin records setup intent only;
+- no API keys, webhook secrets, access tokens or card details should be entered;
+- manual/cash/card-terminal payment recording is available where enabled;
+- if prepayment is required but provider checkout is not connected, public booking is blocked with a contact-business message;
+- saved cards are future provider-vaulted features, not locally stored card details.
+
+Provider-specific setup guidance in `/site-admin/[siteSlug]` covers Stripe, Square, PayPal, SumUp/Zettle, Worldpay and Other. The future go-live checklist for provider checkout must include secure credential storage or OAuth/Connect, test/live mode, provider-specific webhook signature validation, tenant/booking mapping, idempotency and refund/status handling.
+
+Detailed architecture is documented in `docs/subs-payment-provider-architecture.md`.
 Use `Send DNS instructions` only when the customer or their domain contact needs to update DNS. For platform-managed domains, keep the DNS/hosting target values as internal fulfilment notes unless the customer needs them.
 
 The domain resolution tester remains an internal mapping check only. It confirms whether an entered host maps to a `SiteDomain`/`TenantSite` record inside the app. It does not prove public DNS propagation, SSL/certificate readiness, domain purchase, or external DNS provider configuration.

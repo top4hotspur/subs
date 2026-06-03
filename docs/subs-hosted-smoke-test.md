@@ -1350,6 +1350,23 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
 11. Confirm the blocked prepayment flow does not create a fake paid booking and does not redirect to platform Stripe checkout.
 12. Confirm customer account, staff access, business-admin access and platform-admin access remain separate.
 
+## Hosted smoke: subscriber payment provider setup guidance
+1. Open `/site-admin/luna-hair-studio`.
+2. Open `Business settings` > `Payments and policies`.
+3. Select `Stripe` and confirm Stripe-specific guidance appears, including account/Connect ID guidance and a warning not to reuse platform Stripe credentials.
+4. Select `Square` and confirm Square merchant/location guidance appears.
+5. Select `PayPal` and confirm PayPal business email / merchant ID guidance appears.
+6. Select `SumUp`, `Zettle`, `Worldpay` and `Other` and confirm provider-specific reference fields/instructions change.
+7. Confirm no field asks for API keys, secret keys, webhook secrets, access tokens or passwords.
+8. Enable `Accept card payments` and `Require prepayment for online bookings` while no tenant provider is connected.
+9. Confirm admin warning says customers cannot complete online paid bookings until provider setup is complete.
+10. Confirm manual/cash fallback copy appears when `Accept cash payments` or `Allow in-store payment recording` is enabled.
+11. Open `/sites/luna-hair-studio/booking`.
+12. Confirm public booking blocks required online prepayment or explains payment is not connected when no safe tenant provider checkout exists.
+13. Disable prepayment or allow manual/cash payment and confirm booking can proceed where availability allows.
+14. Confirm no platform Stripe subscription checkout is used for subscriber customer bookings.
+15. Confirm customer account saved-payment-method text remains a placeholder and docs state card details are not stored by MyExperiment.club.
+
 ## Hosted smoke: customer CRM account foundation
 1. Create a guest booking on `/sites/[siteSlug]` using a test email address.
 2. Open `Customer login` / `/sites/[siteSlug]/account/register`.
