@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import {
   SiteCustomerLogoutButton,
   SiteCustomerMarketingPreference,
+  SiteCustomerProfileForm,
 } from "@/components/sites/site-customer-account-forms";
 import { getSiteCustomerSessionContext } from "@/lib/auth/site-customer-session";
 import { prisma } from "@/lib/db/prisma";
@@ -152,6 +153,13 @@ export default async function CustomerAccountPage({ params }: AccountPageProps) 
             <Link href={contactHref} className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-100">Contact business</Link>
             <Link href={policyHref} className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-100">Booking policy</Link>
           </div>
+        </section>
+        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
+          <p className="font-semibold text-slate-950">Your account details</p>
+          <p className="mt-1">
+            These details are saved for this business only and can be used to prefill future booking forms.
+          </p>
+          <SiteCustomerProfileForm siteSlug={site.tenantSite.slug} initialCustomer={customer} />
         </section>
         <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
           <p className="font-semibold text-slate-950">Marketing preference</p>

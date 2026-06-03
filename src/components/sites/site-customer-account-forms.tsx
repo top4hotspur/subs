@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { primaryButtonClass } from "@/lib/ui/button-styles";
+import type { CustomerSiteCustomerRecord } from "@/lib/sites/customer-site-customer-types";
 
 type AccountFormProps = {
   siteSlug: string;
@@ -163,6 +164,85 @@ export function SiteCustomerMarketingPreference({
       </p>
       {message ? <p className="mt-1 text-xs font-semibold text-teal-800">{message}</p> : null}
     </div>
+  );
+}
+
+export function SiteCustomerProfileForm({
+  siteSlug,
+  initialCustomer,
+}: {
+  siteSlug: string;
+  initialCustomer: CustomerSiteCustomerRecord;
+}) {
+  const router = useRouter();
+  const [firstName, setFirstName] = useState(initialCustomer.firstName);
+  const [lastName, setLastName] = useState(initialCustomer.lastName ?? "");
+  const [email, setEmail] = useState(initialCustomer.email);
+  const [phone, setPhone] = useState(initialCustomer.phone ?? "");
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true);
+    setMessage(null);
+    const response = await fetch(`/api/sites/${encodeURIComponent(siteSlug)}/account/session`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        profile: {
+          firstName: firstName.trim(),
+          lastName: lastName.trim() || null,
+          email: email.trim(),
+          phone: phone.trim(),
+        },
+      }),
+    }).catch(() => null);
+    setSaving(false);
+    if (!response) {
+      setMessage("Network error. Please try again.");
+      return;
+    }
+    const body = (await response.json().catch(() => null)) as { ok?: boolean; error?: string; customer?: CustomerSiteCustomerRecord } | null;
+    if (!response.ok || !body?.ok || !body.customer) {
+      setMessage(body?.error === "CUSTOMER_EMAIL_ALREADY_IN_USE"
+        ? "That email is already used by another account for this business."
+        : "Could not save your account details right now.");
+      return;
+    }
+    setFirstName(body.customer.firstName);
+    setLastName(body.customer.lastName ?? "");
+    setEmail(body.customer.email);
+    setPhone(body.customer.phone ?? "");
+    setMessage("Account details saved.");
+    router.refresh();
+  }
+
+  return (
+    <form className="mt-3 grid gap-3 sm:grid-cols-2" onSubmit={save}>
+      <label className="text-sm font-semibold text-slate-800">
+        First name
+        <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={firstName} onChange={(event) => setFirstName(event.target.value)} required />
+      </label>
+      <label className="text-sm font-semibold text-slate-800">
+        Last name
+        <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={lastName} onChange={(event) => setLastName(event.target.value)} />
+      </label>
+      <label className="text-sm font-semibold text-slate-800">
+        Email
+        <input type="email" className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={email} onChange={(event) => setEmail(event.target.value)} required />
+      </label>
+      <label className="text-sm font-semibold text-slate-800">
+        Phone
+        <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={phone} onChange={(event) => setPhone(event.target.value)} required />
+      </label>
+      <div className="sm:col-span-2">
+        <button type="submit" className={primaryButtonClass} disabled={saving}>
+          {saving ? "Saving..." : "Save account details"}
+        </button>
+        {message ? <p className="mt-2 text-sm font-semibold text-teal-800">{message}</p> : null}
+      </div>
+    </form>
   );
 }
 

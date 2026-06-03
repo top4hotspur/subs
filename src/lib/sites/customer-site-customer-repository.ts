@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db/prisma";
 import {
   customerAccountLoginSchema,
   customerAccountRegisterSchema,
+  customerProfileUpdateSchema,
 } from "@/lib/sites/customer-site-customer-schema";
 import type { CustomerSiteCustomerRecord } from "@/lib/sites/customer-site-customer-types";
 
@@ -131,5 +132,37 @@ export async function updateCustomerSiteCustomerMarketingPreference(
     where: { id: customerId, tenantSiteId, active: true },
   });
   if (!updated) throw new Error("CUSTOMER_ACCOUNT_NOT_FOUND");
+  return serializeCustomer(updated);
+}
+
+export async function updateCustomerSiteCustomerProfile(
+  tenantSiteId: string,
+  customerId: string,
+  input: z.infer<typeof customerProfileUpdateSchema>,
+): Promise<CustomerSiteCustomerRecord> {
+  const parsed = customerProfileUpdateSchema.parse(input);
+  const email = parsed.email.trim().toLowerCase();
+  const existingWithEmail = await prisma.customerSiteCustomer.findUnique({
+    where: { tenantSiteId_email: { tenantSiteId, email } },
+    select: { id: true },
+  });
+  if (existingWithEmail && existingWithEmail.id !== customerId) {
+    throw new Error("CUSTOMER_EMAIL_ALREADY_IN_USE");
+  }
+  const customer = await prisma.customerSiteCustomer.updateMany({
+    where: { id: customerId, tenantSiteId, active: true },
+    data: {
+      firstName: parsed.firstName.trim(),
+      lastName: parsed.lastName?.trim() || null,
+      email,
+      phone: parsed.phone.trim(),
+    },
+  });
+  if (customer.count === 0) throw new Error("CUSTOMER_ACCOUNT_NOT_FOUND");
+  const updated = await prisma.customerSiteCustomer.findFirst({
+    where: { id: customerId, tenantSiteId, active: true },
+  });
+  if (!updated) throw new Error("CUSTOMER_ACCOUNT_NOT_FOUND");
+  await linkGuestBookingsToCustomerByEmail(tenantSiteId, customerId, email);
   return serializeCustomer(updated);
 }

@@ -84,7 +84,7 @@ const homepageFlowSteps = [
   },
   {
     title: "Your site is built",
-    detail: "We create your clean subscriber site and admin area ready for your real business details.",
+    detail: "We create your clean website and admin area ready for your real business details.",
   },
   {
     title: "Customise and go live",

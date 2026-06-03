@@ -18,3 +18,10 @@ export const customerAccountLoginSchema = z.object({
 export const customerMarketingPreferenceSchema = z.object({
   marketingOptIn: z.boolean(),
 });
+
+export const customerProfileUpdateSchema = z.object({
+  firstName: z.string().trim().min(1).max(80),
+  lastName: z.string().trim().max(100).nullable().optional(),
+  email: z.string().trim().email().max(320),
+  phone: z.string().trim().min(5).max(40),
+});

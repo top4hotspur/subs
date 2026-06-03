@@ -955,8 +955,8 @@ Future payment-provider note: subscriber business payment settings must eventual
 
 ## 2026-06-02 customer account and booking payment guardrails
 - Public subscriber sites link customer access to `/sites/[siteSlug]/account`, with login and registration at `/sites/[siteSlug]/account/login` and `/sites/[siteSlug]/account/register`.
-- Customer account v1 is tenant-scoped and access-code based. Logged-in customers can see upcoming, past and cancelled bookings, booking status, service/staff details, payment status, policy links and business contact actions.
-- Guest booking remains allowed. If a customer is logged in while booking, the public booking form prefills their saved name/email/phone and associates the booking with that tenant-scoped customer account.
+- Customer account v1 is tenant-scoped and access-code based. Logged-in customers can see upcoming, past and cancelled bookings, booking status, service/staff details, payment status, policy links, business contact actions, and a prefilled editable profile form for first name, last name, email and phone.
+- Guest booking remains allowed. If a customer is logged in while booking, the public booking form prefills their saved name/email/phone from the tenant-scoped account and associates the booking with that tenant customer account.
 - Subscriber booking payment behaviour now follows the business payment settings conservatively. Platform Stripe checkout for MyExperiment.club subscriptions is not reused for subscriber businesses taking payments from their own customers.
 - If online prepayment is required but subscriber checkout is not connected, public booking is blocked with a contact-the-business message. No fake payment success is recorded and no card details are collected.
 - If online payment is not required, or cash/manual payment is allowed, bookings can be confirmed with payment marked as not required or pending manual/cash handling for the business admin to reconcile.
@@ -965,7 +965,7 @@ Future payment-provider note: subscriber business payment settings must eventual
 - Public booking confirmation now encourages guest customers to create an account using the same email address, or log in, while still allowing them to continue without an account.
 - Logged-in booking flows confirm that the booking has been added to the customer account.
 - Customer account dashboards now show tenant bookings linked to the account plus guest bookings for the same tenant with the same verified/login email address. Matching remains tenant-scoped, and register/login actively links safe matching guest bookings to the account.
-- Customer registration captures optional marketing consent with an unchecked opt-in. Customers can update their preference from their account dashboard.
+- Customer registration captures optional marketing consent with an unchecked opt-in. Customers can update their profile details and marketing preference from their account dashboard; updates remain tenant-scoped.
 - Customer account includes a Special offers placeholder. No customer marketing automation or bulk sends are enabled yet.
 - Subscriber site contact now uses a structured tenant-scoped form for booking changes, cancellations, payment questions, general enquiries, complaints/problems and other messages.
 - Business admins can view a first-pass Customer CRM in `/site-admin/[siteSlug]`, including account customers, guest booking customers, booking counts/history, marketing consent and customer contact enquiries.

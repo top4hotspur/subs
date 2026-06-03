@@ -624,7 +624,7 @@ olePrice:<role> columns accepted
 4. Confirm selected category state is still obvious and Window Cleaning uses the Muted Sage Home Services treatment.
 5. Confirm homepage `How it works` is a connected flow/timeline rather than plain tile cards.
 6. Confirm Step 3 reads `Place order` and Step 5 reads `Customise and go live`.
-7. Confirm homepage `How it works` shows extra detail on hover/focus, and mobile/touch layout exposes the detail accessibly.
+7. Confirm homepage `How it works` shows extra detail on hover/focus, and mobile/touch layout exposes the detail accessibly. Step 4 must say `We create your clean website and admin area ready for your real business details.`
 8. Confirm the bottom CTA `View example demo` button is readable on the dark CTA panel.
 9. Confirm homepage hero CTAs still route: `Choose your business type` -> `#industries`, `View example demo` -> `#industries`, `Order now` -> `/setup/barbers`.
 10. Open `/barbers` and confirm `What happens after you subscribe?` uses a connected onboarding flow rather than static tiles.
@@ -1244,19 +1244,21 @@ Notes:
 1. Open `/sites/luna-hair-studio` and confirm the top `Customer login` link opens `/sites/luna-hair-studio/account` or redirects to customer login.
 2. Create a customer account at `/sites/luna-hair-studio/account/register` with first name, last name, email, phone, and a private access code.
 3. Log out, then log back in at `/sites/luna-hair-studio/account/login` using the same email and access code.
-4. Start a booking from `/sites/luna-hair-studio` while logged in and confirm the booking form pre-fills the saved customer name, email, and phone.
-5. Complete a booking and return to `/sites/luna-hair-studio/account`.
-6. Confirm the booking appears in the account dashboard under the correct upcoming/past/cancelled section.
-7. Confirm the customer account dashboard shows only bookings linked to that customer account for the current tenant site.
-8. Confirm guest booking still works in a fresh/private browser session with no customer login.
-9. In `/site-admin/luna-hair-studio`, go to Staff setup and confirm each saved staff member can be standard or super-user.
-10. For a standard staff member, generate/enable staff access and log in at `/site-staff/luna-hair-studio`.
-11. Confirm the standard staff view can see appointments but hides customer phone/email and payment status, and does not show `Mark completed`.
-12. In site-admin, make the same staff member a super-user and enable `Mark appointments completed`, `View customer phone and email`, and `View payment status`.
-13. Save staff, log in again or refresh the staff diary, and confirm contact details, payment status, and mark-completed actions appear.
-14. Use `Mark completed` on an active test booking and confirm the API updates the booking only when the permission is enabled.
-15. Turn off `Mark appointments completed`, refresh the staff diary, and confirm the button is hidden. A direct API call should return `STAFF_PERMISSION_DENIED`.
-16. Confirm staff access still cannot open `/site-admin/[siteSlug]`, platform admin, provisioning controls, payment provider settings, or business settings.
+4. Open `/sites/luna-hair-studio/account` and confirm the customer account details form is prefilled with the saved first name, last name, email and phone for that tenant.
+5. Edit the account details, save, reload, and confirm the saved values remain visible.
+6. Start a booking from `/sites/luna-hair-studio` while logged in and confirm the booking form pre-fills the saved customer name, email, and phone.
+7. Complete a booking and return to `/sites/luna-hair-studio/account`.
+8. Confirm the booking appears in the account dashboard under the correct upcoming/past/cancelled section.
+9. Confirm the customer account dashboard shows only bookings linked to that customer account for the current tenant site.
+10. Confirm guest booking still works in a fresh/private browser session with no customer login.
+11. In `/site-admin/luna-hair-studio`, go to Staff setup and confirm each saved staff member can be standard or super-user.
+12. For a standard staff member, generate/enable staff access and log in at `/site-staff/luna-hair-studio`.
+13. Confirm the standard staff view can see appointments but hides customer phone/email and payment status, and does not show `Mark completed`.
+14. In site-admin, make the same staff member a super-user and enable `Mark appointments completed`, `View customer phone and email`, and `View payment status`.
+15. Save staff, log in again or refresh the staff diary, and confirm contact details, payment status, and mark-completed actions appear.
+16. Use `Mark completed` on an active test booking and confirm the API updates the booking only when the permission is enabled.
+17. Turn off `Mark appointments completed`, refresh the staff diary, and confirm the button is hidden. A direct API call should return `STAFF_PERMISSION_DENIED`.
+18. Confirm staff access still cannot open `/site-admin/[siteSlug]`, platform admin, provisioning controls, payment provider settings, or business settings.
 
 ## Hosted Smoke Test - Site Domain Go-Live Workflow Update
 
