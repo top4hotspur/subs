@@ -539,3 +539,22 @@ Manual work still required:
 
 No separate customer app or database is created. All public rendering remains tenant-scoped inside the shared app and central database.
 - Customer-account session cookies are scoped at `/` so account login works on both `/sites/[siteSlug]/account` preview routes and custom-domain `/account` routes.
+
+## DNS instruction handover
+
+The Domain panel in `/admin/sites` now supports platform-admin editable DNS/hosting target values per `SiteDomain`. Use this field for exact nameservers, CNAME records, A records, TXT verification records or Amplify/hosting verification values once they are known. Do not invent values; if the target field is blank, admin should see a warning and customer email sending is blocked.
+
+The generated instruction copy is customer-facing and should refer to the customer's business/site, not a "new MyExperiment.club website". It includes:
+- business/site name
+- final domain
+- domain option
+- saved DNS/hosting target values
+- `/sites/[siteSlug]` preview route
+- `/site-admin/[siteSlug]` subscriber admin route
+- support wording for customers who are unsure how to update DNS
+
+`Email DNS instructions to customer` sends to the setup request contact email using the existing transactional email provider. Email delivery is fail-soft. If sending fails or email is not configured, the status does not advance and platform admin can copy the instructions manually. If sending succeeds, the relevant SiteDomain records a sent status/timestamp/recipient in `dnsInstructions` metadata and the site/domain lifecycle moves to `DNS_INSTRUCTIONS_SENT`.
+
+For customer-owned or customer-managed domains, the next operational state after successful instruction handover is `WAITING_FOR_CUSTOMER_DNS`. For platform-managed domains, admin continues manual registrar/DNS setup and then marks DNS configured/domain ready.
+
+The domain resolution tester remains an internal mapping check only. It confirms whether an entered host maps to a `SiteDomain`/`TenantSite` record inside the app. It does not prove public DNS propagation, SSL/certificate readiness, domain purchase, or external DNS provider configuration.

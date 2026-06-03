@@ -906,7 +906,7 @@ CSV import/export setup tools moved out of demo customisation and into business 
 
 - Platform admin domain/go-live tracking uses existing `TenantSite`, `SiteDomain`, `SubscriptionRecord`, provisioning task, and status-event records. No per-customer app or database is introduced.
 - `/admin/sites` now includes copyable DNS instruction text for the selected subscriber site. The copy distinguishes customer-owned domains from platform-managed domains.
-- DNS instruction copy deliberately uses `PENDING_HOSTING_TARGET` unless `NEXT_PUBLIC_CUSTOM_DOMAIN_DNS_TARGET` is configured. The app does not invent final Amplify/custom-domain targets.
+- DNS instruction copy uses DNS/hosting target values saved on the selected `SiteDomain`. Admin must paste real nameserver/CNAME/A/TXT/hosting verification values once known; the app does not invent final Amplify/custom-domain targets.
 - Lifecycle actions now include `REACTIVATE_SITE` alongside DNS instructions sent, domain ready, site live, and suspend.
 - Marking a site live attempts a fail-soft customer email with subject `Your website is live`, including the public URL and business-admin URL. Email failure does not block the lifecycle update.
 - `resolveTenantSiteByHost()` is the prepared host/domain resolver. It normalises hosts, strips protocol/path/port, handles root/www candidates, resolves `SiteDomain` to `TenantSite`, and excludes suspended/cancelled sites.
@@ -983,6 +983,16 @@ Key behaviour:
 - Unknown custom hosts do not leak tenant data.
 
 DNS purchase, registrar updates, DNS provider changes and certificate/custom-domain attachment remain manual operational work. The app now prepares the runtime mapping once the customer domain reaches the shared app and the host header is preserved.
+
+## 2026-06-03 DNS instruction handover polish
+
+Platform admin `/admin/sites` now stores DNS/hosting target values on the relevant `SiteDomain.dnsInstructions` JSON rather than relying on a global placeholder. Admins can paste exact nameserver, CNAME, A, TXT or hosting verification values when they are known. The system deliberately warns when these values are missing and must not invent DNS targets.
+
+The DNS instruction copy now uses customer/business wording rather than "new MyExperiment.club website". It includes business name, final domain, platform preview route, subscriber admin route, saved DNS/hosting target values and support wording.
+
+Admins can email DNS instructions to the setup request contact email from the Domain panel. The email is fail-soft: failed/skipped email delivery is shown in admin and saved on the SiteDomain metadata, while status only advances to `DNS_INSTRUCTIONS_SENT` when the email provider reports success. For customer-owned/customer-managed domains the next operational state is `WAITING_FOR_CUSTOMER_DNS`; platform-managed domains continue through manual DNS configuration.
+
+Domain type guidance is visible in admin: Primary is the normal main customer-facing domain, `www` alias points the `www` version to the same site, Apex/root is the bare domain, and Other alias is for additional mapped domains.
 
 ## 2026-06-03 demo/live customer-site alignment
 

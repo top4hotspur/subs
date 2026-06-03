@@ -39,6 +39,16 @@ export type AdminTenantSiteSummary = {
   } | null;
 };
 
+export type AdminSiteDomainSummary = {
+  id: string;
+  domain: string;
+  domainType: string;
+  status: string;
+  registrarNotes?: string | null;
+  dnsInstructions?: unknown;
+  createdAt: string;
+};
+
 export type AdminSiteLifecycleAction =
   | "MARK_DOMAIN_SEARCH_STARTED"
   | "MARK_DOMAIN_PURCHASED_MANUALLY"
@@ -128,6 +138,7 @@ export async function getAdminTenantSiteDetail(
       domainType: string;
       status: string;
       registrarNotes?: string | null;
+      dnsInstructions?: unknown;
       createdAt: string;
     }>;
     tasks: Array<{
@@ -260,10 +271,11 @@ export async function saveAdminSiteDomain(
     domainType: "PRIMARY" | "APEX" | "WWW" | "ALIAS";
     status: string;
     registrarNotes?: string | null;
+    dnsInstructions?: unknown;
   },
 ): Promise<ClientResult<{
-  domain: { id: string; domain: string; domainType: string; status: string; registrarNotes?: string | null; createdAt: string };
-  domains: Array<{ id: string; domain: string; domainType: string; status: string; registrarNotes?: string | null; createdAt: string }>;
+  domain: AdminSiteDomainSummary;
+  domains: AdminSiteDomainSummary[];
 }>> {
   try {
     const response = await fetch(`/api/admin/sites/${encodeURIComponent(siteId)}/domains`, {
@@ -274,8 +286,8 @@ export async function saveAdminSiteDomain(
     const body = (await parseJsonSafe(response)) as
       | {
           ok?: boolean;
-          domain?: { id: string; domain: string; domainType: string; status: string; registrarNotes?: string | null; createdAt: string };
-          domains?: Array<{ id: string; domain: string; domainType: string; status: string; registrarNotes?: string | null; createdAt: string }>;
+          domain?: AdminSiteDomainSummary;
+          domains?: AdminSiteDomainSummary[];
           error?: string;
           details?: unknown;
         }
@@ -289,6 +301,54 @@ export async function saveAdminSiteDomain(
       };
     }
     return { ok: true, domain: body.domain, domains: body.domains };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function emailAdminSiteDnsInstructions(
+  siteId: string,
+  siteDomainId?: string,
+): Promise<
+  ClientResult<{
+    emailSent: boolean;
+    emailStatus: string;
+    recommendedNextStatus?: string | null;
+    domain?: AdminSiteDomainSummary;
+  }>
+> {
+  try {
+    const response = await fetch(`/api/admin/sites/${encodeURIComponent(siteId)}/dns-instructions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ siteDomainId }),
+    });
+    const body = (await parseJsonSafe(response)) as
+      | {
+          ok?: boolean;
+          emailSent?: boolean;
+          emailStatus?: string;
+          recommendedNextStatus?: string | null;
+          domain?: AdminSiteDomainSummary;
+          error?: string;
+          details?: unknown;
+        }
+      | null;
+    if (!response.ok || !body?.ok) {
+      return {
+        ok: false,
+        error: body?.error ?? "DNS_INSTRUCTIONS_EMAIL_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return {
+      ok: true,
+      emailSent: Boolean(body.emailSent),
+      emailStatus: body.emailStatus ?? "UNKNOWN",
+      recommendedNextStatus: body.recommendedNextStatus ?? null,
+      domain: body.domain,
+    };
   } catch {
     return { ok: false, error: "NETWORK_ERROR", status: 0 };
   }

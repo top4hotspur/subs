@@ -1249,16 +1249,19 @@ Notes:
 4. Confirm business name, site slug, lifecycle status, provisioning status, domain status, requested domain/domain option, SiteDomain records, preview link, subscriber admin link, subscription/payment references, and status events are visible where available.
 5. In the domain panel, review the DNS instruction copy.
 6. Click `Copy DNS instructions` and confirm the text copies, or manually select/copy it if browser clipboard access is blocked.
-7. Confirm the DNS copy uses a placeholder target unless `NEXT_PUBLIC_CUSTOM_DOMAIN_DNS_TARGET` is configured.
-8. Click `Mark DNS instructions sent` and confirm the lifecycle/domain status updates without claiming DNS was automated.
-9. Click `Mark domain configured/ready` and confirm domain/SiteDomain status updates.
-10. Click `Mark site live` and confirm the go-live email is attempted. Admin messaging should show `Go-live email: SENT`, `EMAIL_NOT_CONFIGURED`, `EMAIL_SEND_FAILED`, or `NO_CONTACT_EMAIL`.
-11. Confirm `/sites/[siteSlug]` still works as the preview route.
-12. Use the domain resolution tester with the stored domain and confirm it resolves to the expected tenant where a SiteDomain record exists.
-13. Click `Suspend site` on a test tenant and confirm suspended/cancelled sites are not returned by live domain resolution.
-14. Confirm the public preview route does not show a normal active booking site for a suspended/cancelled tenant.
-15. If safe, click `Reactivate site` and confirm the site returns to active lifecycle tracking.
-16. Confirm no DNS purchase, DNS provider update, separate Amplify app, custom database, or demo-data copy is performed in this pass.
+7. Confirm the DNS target warning appears until platform admin saves exact DNS/hosting target values on the SiteDomain.
+8. Save DNS/hosting target values such as real nameserver/CNAME/A/TXT/hosting verification values supplied by the hosting/domain provider. Do not invent values for the test.
+9. Click `Email DNS instructions to customer` and confirm admin shows `SENT`, `EMAIL_NOT_CONFIGURED`, or `EMAIL_SEND_FAILED`.
+10. Confirm successful sending moves the site/domain workflow to `DNS_INSTRUCTIONS_SENT`; for customer-owned domains the next expected state is `WAITING_FOR_CUSTOMER_DNS`.
+11. Click `Mark waiting for customer DNS` for customer-owned domains, or continue manual managed-domain setup for platform-managed domains.
+12. Click `Mark domain configured/ready` and confirm domain/SiteDomain status updates.
+13. Click `Mark site live` and confirm the go-live email is attempted. Admin messaging should show `Go-live email: SENT`, `EMAIL_NOT_CONFIGURED`, `EMAIL_SEND_FAILED`, or `NO_CONTACT_EMAIL`.
+14. Confirm `/sites/[siteSlug]` still works as the preview route.
+15. Use the domain resolution tester with the stored domain and confirm it resolves to the expected tenant where a SiteDomain record exists. This is an internal mapping check only; it is not proof of public DNS propagation, SSL/certificate readiness or domain purchase.
+16. Click `Suspend site` on a test tenant and confirm suspended/cancelled sites are not returned by live domain resolution.
+17. Confirm the public preview route does not show a normal active booking site for a suspended/cancelled tenant.
+18. If safe, click `Reactivate site` and confirm the site returns to active lifecycle tracking.
+19. Confirm no DNS purchase, DNS provider update, separate Amplify app, custom database, or demo-data copy is performed in this pass.
 
 ## Subscriber gift vouchers v1 smoke test
 
@@ -1291,15 +1294,28 @@ Known v1 limitation: subscriber voucher payments are manual. The page does not c
 5. Save a SiteDomain using a messy value such as `https://WWW.Example-Test.co.uk/path` and confirm it normalises to a lower-case host without protocol/path.
 6. Try saving the same active domain against another tenant and confirm it is rejected.
 7. For platform-managed domains, mark domain search started, mark domain purchased manually, and record registrar/domain notes.
-8. For customer-owned domains, copy DNS instructions and mark DNS instructions sent or waiting for customer DNS.
-9. Mark DNS configured, then mark domain ready.
-10. Use the domain resolution tester to confirm the saved SiteDomain resolves to the expected tenant.
-11. Mark site live and confirm the go-live email is attempted with status shown.
-12. Confirm `/sites/[siteSlug]` still works as the preview route.
-13. Suspend the site and confirm resolver/live behaviour is safe.
-14. Reactivate if appropriate.
+8. For customer-owned domains, save exact DNS/hosting target values, email DNS instructions to the customer, then mark waiting for customer DNS.
+9. For platform-managed domains, save the DNS/hosting target values internally and proceed through manual registrar/DNS setup.
+10. Mark DNS configured, then mark domain ready.
+11. Use the domain resolution tester to confirm the saved SiteDomain resolves to the expected tenant. This tests only internal platform mapping, not public DNS/SSL/domain-provider state.
+12. Mark site live and confirm the go-live email is attempted with status shown.
+13. Confirm `/sites/[siteSlug]` still works as the preview route.
+14. Suspend the site and confirm resolver/live behaviour is safe.
+15. Reactivate if appropriate.
 
-Current limitation: final custom-domain host rendering is resolver-prepared but not wired into request routing. DNS purchase and DNS provider changes remain manual.
+Current limitation: custom-domain host rendering is wired for hosts that reach the shared app, but DNS purchase, DNS provider changes, hosting custom-domain attachment and certificate checks remain manual.
+
+## Hosted smoke: DNS instruction email handover
+1. Open `/admin/sites` and select a provisioned subscriber site with a setup request contact email.
+2. In the Domain panel, confirm the Domain type helper explains Primary, www alias, Apex/root and Other alias.
+3. Confirm `Email DNS instructions to customer` is disabled or blocked while DNS/hosting target values are blank.
+4. Paste exact DNS/hosting target values into the SiteDomain field and save.
+5. Confirm the DNS instruction copy includes business name, final domain, preview route, subscriber admin route, support wording and the saved DNS/hosting target values.
+6. Click `Email DNS instructions to customer`.
+7. Confirm admin shows sent/failed/skipped delivery status and records last email metadata on the SiteDomain display.
+8. If sent, confirm the customer email subject is `DNS instructions for your [Business Name] website`.
+9. If email fails or is not configured, copy the instructions manually and confirm status did not advance as if email succeeded.
+10. Use `Mark waiting for customer DNS` after successful instructions for customer-owned/customer-managed domains.
 
 ## Hosted smoke: customer login and payment requirement flow
 1. Open `/sites/[siteSlug]` and confirm `Customer login` opens `/sites/[siteSlug]/account` or redirects to `/sites/[siteSlug]/account/login`.

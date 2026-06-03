@@ -4,9 +4,11 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   applyAdminSiteLifecycleAction,
+  AdminSiteDomainSummary,
   AdminTenantSiteSummary,
   type AdminSiteLifecycleAction,
   createAdminTenantSiteFromSetupRequest,
+  emailAdminSiteDnsInstructions,
   getAdminTenantSiteDetail,
   listAdminTenantSites,
   saveAdminSiteDomain,
@@ -80,6 +82,43 @@ function getDomainOptionSummary(value?: string | null): string {
   return value;
 }
 
+type DnsInstructionMetadata = {
+  targetInstructions?: string;
+  lastEmailStatus?: string;
+  lastEmailSentAt?: string;
+  lastEmailError?: string | null;
+  lastEmailRecipient?: string;
+};
+
+function getDnsInstructionMetadata(value: unknown): DnsInstructionMetadata {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const record = value as Record<string, unknown>;
+  return {
+    targetInstructions: typeof record.targetInstructions === "string" ? record.targetInstructions : undefined,
+    lastEmailStatus: typeof record.lastEmailStatus === "string" ? record.lastEmailStatus : undefined,
+    lastEmailSentAt: typeof record.lastEmailSentAt === "string" ? record.lastEmailSentAt : undefined,
+    lastEmailError: typeof record.lastEmailError === "string" ? record.lastEmailError : null,
+    lastEmailRecipient: typeof record.lastEmailRecipient === "string" ? record.lastEmailRecipient : undefined,
+  };
+}
+
+function getDomainTypeHelper(value: string): string {
+  if (value === "PRIMARY") return "Primary: main customer-facing website domain. For most customers, use Primary for their final website domain.";
+  if (value === "WWW") return "www alias: www version that should point to the same site.";
+  if (value === "APEX") return "Apex/root: bare domain without www.";
+  return "Other alias: extra domain that should also point here.";
+}
+
+function getDomainWorkflowNote(value?: string | null): string {
+  if (value === "WE_REGISTER_DOMAIN") {
+    return "Platform-managed domain: we handle manual registrar/DNS setup, then mark DNS configured and domain ready.";
+  }
+  if (value === "EXISTING_DOMAIN" || value === "CUSTOMER_BUYS_DOMAIN") {
+    return "Customer-owned domain: email DNS instructions, then mark waiting for customer DNS while they update their domain provider.";
+  }
+  return "Domain route still needs confirmation before go-live.";
+}
+
 function lifecycleActionLabel(action: AdminSiteLifecycleAction): string {
   if (action === "MARK_DOMAIN_SEARCH_STARTED") return "Mark domain search started";
   if (action === "MARK_DOMAIN_PURCHASED_MANUALLY") return "Mark domain purchased manually";
@@ -105,14 +144,7 @@ export default function AdminSitesPage() {
   const [selectedSiteId, setSelectedSiteId] = useState("");
   const [detail, setDetail] = useState<{
     site: AdminTenantSiteSummary;
-    domains: Array<{
-      id: string;
-      domain: string;
-      domainType: string;
-      status: string;
-      registrarNotes?: string | null;
-      createdAt: string;
-    }>;
+    domains: AdminSiteDomainSummary[];
     tasks: SiteTask[];
     statusEvents: Array<{
       id: string;
@@ -133,11 +165,13 @@ export default function AdminSitesPage() {
   const [domainTestHost, setDomainTestHost] = useState("");
   const [domainTestResult, setDomainTestResult] = useState<string | null>(null);
   const [dnsCopyStatus, setDnsCopyStatus] = useState<string | null>(null);
+  const [dnsEmailStatus, setDnsEmailStatus] = useState<string | null>(null);
   const [domainDraft, setDomainDraft] = useState({
     domain: "",
     domainType: "PRIMARY" as "PRIMARY" | "APEX" | "WWW" | "ALIAS",
     status: "DOMAIN_PENDING",
     registrarNotes: "",
+    dnsTargetInstructions: "",
   });
 
   const selectedSite = useMemo(
@@ -204,12 +238,15 @@ export default function AdminSitesPage() {
     setSelectedSiteId(siteId);
     setDetail(result);
     const primaryDomain = result.domains.find((domain) => domain.domainType === "PRIMARY") ?? result.domains[0] ?? null;
+    const dnsMetadata = getDnsInstructionMetadata(primaryDomain?.dnsInstructions);
     setDomainDraft({
       domain: primaryDomain?.domain ?? result.site.domainPrimary ?? result.site.setupRequest?.existingDomain ?? result.site.setupRequest?.desiredDomain ?? "",
       domainType: (primaryDomain?.domainType as "PRIMARY" | "APEX" | "WWW" | "ALIAS" | undefined) ?? "PRIMARY",
       status: primaryDomain?.status ?? result.site.domainStatus ?? "DOMAIN_PENDING",
       registrarNotes: primaryDomain?.registrarNotes ?? "",
+      dnsTargetInstructions: dnsMetadata.targetInstructions ?? "",
     });
+    setDnsEmailStatus(null);
     setTaskDrafts((current) => {
       const next = { ...current };
       result.tasks.forEach((task) => {
@@ -292,6 +329,16 @@ export default function AdminSitesPage() {
       domainType: domainDraft.domainType,
       status: domainDraft.status,
       registrarNotes: domainDraft.registrarNotes.trim() || null,
+      dnsInstructions: {
+        ...getDnsInstructionMetadata(
+          detail?.domains.find(
+            (domain) =>
+              domain.domain === domainDraft.domain.trim().toLowerCase() &&
+              domain.domainType === domainDraft.domainType,
+          )?.dnsInstructions,
+        ),
+        targetInstructions: domainDraft.dnsTargetInstructions.trim() || undefined,
+      },
     });
     if (!result.ok) {
       if (result.error === "SITE_DOMAIN_INVALID") {
@@ -310,9 +357,50 @@ export default function AdminSitesPage() {
     await loadSiteDetail(selectedSiteId);
   }
 
+  async function emailDnsInstructions(): Promise<void> {
+    if (!selectedSiteId || !detail) return;
+    const selectedDomain = detail.domains.find(
+      (domain) => domain.domain === domainDraft.domain.trim().toLowerCase() && domain.domainType === domainDraft.domainType,
+    ) ?? detail.domains.find((domain) => domain.domainType === "PRIMARY") ?? detail.domains[0];
+    if (!selectedDomain) {
+      setMessage("Save a SiteDomain record before emailing DNS instructions.");
+      return;
+    }
+    if (!domainDraft.dnsTargetInstructions.trim()) {
+      setMessage("Add DNS/hosting target values before emailing customer instructions.");
+      return;
+    }
+    if (!window.confirm(`Email DNS instructions to the customer for ${selectedDomain.domain}?`)) return;
+
+    const result = await emailAdminSiteDnsInstructions(selectedSiteId, selectedDomain.id);
+    if (!result.ok) {
+      if (result.error === "DNS_TARGET_MISSING") {
+        setMessage("Add DNS/hosting target values before emailing customer instructions.");
+        return;
+      }
+      if (result.error === "CONTACT_EMAIL_MISSING") {
+        setMessage("No customer contact email is available for this setup request.");
+        return;
+      }
+      setMessage(toMessage(result.error, result.status));
+      return;
+    }
+
+    if (result.emailSent) {
+      setDnsEmailStatus(`Email sent. Recommended next status: ${lifecycleStatusLabel(result.recommendedNextStatus)}.`);
+      setMessage(`DNS instructions emailed to customer. Email status: ${result.emailStatus}.`);
+    } else {
+      setDnsEmailStatus(`Email failed/skipped: ${result.emailStatus}. Copy the DNS instructions manually for now.`);
+      setMessage(`DNS instructions were not emailed. Email status: ${result.emailStatus}.`);
+    }
+    await loadSites();
+    await loadSiteDetail(selectedSiteId);
+  }
+
   async function copyDnsInstructions(): Promise<void> {
     if (!selectedSite || !detail) return;
     const requestedDomain =
+      domainDraft.domain.trim() ||
       selectedSite.domainPrimary ||
       detail.domains[0]?.domain ||
       detail.site.setupRequest?.existingDomain ||
@@ -324,7 +412,7 @@ export default function AdminSitesPage() {
       requestedDomain,
       previewUrl: `/sites/${selectedSite.slug}`,
       adminUrl: `/site-admin/${selectedSite.slug}`,
-      dnsTarget: process.env.NEXT_PUBLIC_CUSTOM_DOMAIN_DNS_TARGET ?? null,
+      dnsTargetInstructions: domainDraft.dnsTargetInstructions,
     });
     try {
       await navigator.clipboard.writeText(text);
@@ -571,6 +659,9 @@ export default function AdminSitesPage() {
                   <p className="mt-1 text-xs text-slate-600">
                     Save the final customer-facing domain here. Protocols, paths and uppercase text are normalised before saving.
                   </p>
+                  <p className="mt-1 text-xs text-slate-600">
+                    {getDomainWorkflowNote(detail.site.setupRequest?.domainOption)}
+                  </p>
                   <div className="mt-2 grid gap-2 sm:grid-cols-2">
                     <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
                       Domain / host
@@ -598,6 +689,9 @@ export default function AdminSitesPage() {
                         <option value="APEX">Apex/root</option>
                         <option value="ALIAS">Other alias</option>
                       </select>
+                      <span className="mt-1 block text-[11px] font-normal text-slate-500">
+                        {getDomainTypeHelper(domainDraft.domainType)}
+                      </span>
                     </label>
                     <label className="text-xs font-semibold text-slate-700">
                       Domain status
@@ -628,6 +722,23 @@ export default function AdminSitesPage() {
                       </select>
                     </label>
                     <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
+                      DNS / hosting target values
+                      <textarea
+                        className="mt-1 min-h-[110px] w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
+                        value={domainDraft.dnsTargetInstructions}
+                        onChange={(event) =>
+                          setDomainDraft((current) => ({
+                            ...current,
+                            dnsTargetInstructions: event.target.value,
+                          }))
+                        }
+                        placeholder={"Paste exact nameserver, CNAME, A, TXT or hosting verification values here. Do not invent values."}
+                      />
+                      <span className="mt-1 block text-[11px] font-normal text-slate-500">
+                        These values are included in customer DNS emails. Leave blank until Amplify/hosting/domain verification values are known.
+                      </span>
+                    </label>
+                    <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
                       Registrar/domain notes
                       <textarea
                         className="mt-1 min-h-[70px] w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
@@ -649,12 +760,27 @@ export default function AdminSitesPage() {
                   <p className="mt-2 text-xs text-slate-600">No SiteDomain records yet.</p>
                 ) : (
                   <div className="mt-2 space-y-1 text-xs text-slate-700">
-                    {detail.domains.map((domain) => (
-                      <p key={domain.id}>
-                        {domain.domain} ({domain.domainType}) - {lifecycleStatusLabel(domain.status)}
-                        {domain.registrarNotes ? ` | ${domain.registrarNotes}` : ""}
-                      </p>
-                    ))}
+                    {detail.domains.map((domain) => {
+                      const dnsMetadata = getDnsInstructionMetadata(domain.dnsInstructions);
+                      return (
+                        <div key={domain.id} className="rounded-md border border-slate-200 bg-white p-2">
+                          <p>
+                            {domain.domain} ({domain.domainType}) - {lifecycleStatusLabel(domain.status)}
+                            {domain.registrarNotes ? ` | ${domain.registrarNotes}` : ""}
+                          </p>
+                          <p className={dnsMetadata.targetInstructions ? "text-emerald-700" : "text-amber-700"}>
+                            DNS target values: {dnsMetadata.targetInstructions ? "Saved" : "Missing"}
+                          </p>
+                          {dnsMetadata.lastEmailStatus ? (
+                            <p>
+                              Last DNS email: {dnsMetadata.lastEmailStatus}
+                              {dnsMetadata.lastEmailSentAt ? ` at ${formatUkDateTime(dnsMetadata.lastEmailSentAt)}` : ""}
+                              {dnsMetadata.lastEmailRecipient ? ` to ${dnsMetadata.lastEmailRecipient}` : ""}
+                            </p>
+                          ) : null}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
                 <p className="mt-2 text-xs text-slate-600">
@@ -665,22 +791,39 @@ export default function AdminSitesPage() {
                     <div>
                       <p className="text-xs font-semibold text-slate-900">DNS instruction copy</p>
                       <p className="mt-1 text-xs text-slate-600">
-                        Copy this text to send to the customer or use internally for managed domains. The hosting target remains a placeholder until final Amplify/custom-domain configuration is confirmed.
+                        Copy this text manually or email it to the customer once real DNS/hosting target values are saved.
+                        Customer-owned domains should then move to waiting for customer DNS.
                       </p>
+                      {!domainDraft.dnsTargetInstructions.trim() ? (
+                        <p className="mt-1 text-xs font-semibold text-amber-700">
+                          DNS target values are missing. Email sending is blocked until real values are saved.
+                        </p>
+                      ) : null}
                     </div>
-                    <button
-                      type="button"
-                      className={`${outlineButtonClass} ${smallButtonClass}`}
-                      onClick={() => void copyDnsInstructions()}
-                    >
-                      Copy DNS instructions
-                    </button>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className={`${outlineButtonClass} ${smallButtonClass}`}
+                        onClick={() => void copyDnsInstructions()}
+                      >
+                        Copy DNS instructions
+                      </button>
+                      <button
+                        type="button"
+                        className={`${primaryButtonClass} ${smallButtonClass}`}
+                        onClick={() => void emailDnsInstructions()}
+                        disabled={!domainDraft.dnsTargetInstructions.trim()}
+                      >
+                        Email DNS instructions to customer
+                      </button>
+                    </div>
                   </div>
                   <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap rounded-md bg-slate-50 p-2 text-[11px] text-slate-700">
                     {buildDnsInstructionsText({
                       businessName: selectedSite.displayName,
                       domainOption: detail.site.setupRequest?.domainOption,
                       requestedDomain:
+                        domainDraft.domain.trim() ||
                         selectedSite.domainPrimary ||
                         detail.domains[0]?.domain ||
                         detail.site.setupRequest?.existingDomain ||
@@ -688,13 +831,18 @@ export default function AdminSitesPage() {
                         null,
                       previewUrl: `/sites/${selectedSite.slug}`,
                       adminUrl: `/site-admin/${selectedSite.slug}`,
-                      dnsTarget: process.env.NEXT_PUBLIC_CUSTOM_DOMAIN_DNS_TARGET ?? null,
+                      dnsTargetInstructions: domainDraft.dnsTargetInstructions,
                     })}
                   </pre>
                   {dnsCopyStatus ? <p className="mt-2 text-xs text-slate-600">{dnsCopyStatus}</p> : null}
+                  {dnsEmailStatus ? <p className="mt-2 text-xs text-slate-600">{dnsEmailStatus}</p> : null}
                 </div>
                 <div className="mt-3 rounded-md border border-slate-200 bg-white p-2">
                   <p className="text-xs font-semibold text-slate-900">Test domain resolution</p>
+                  <p className="mt-1 text-xs text-slate-600">
+                    This only checks the internal platform mapping from a host name to a SiteDomain/TenantSite record.
+                    It does not prove public DNS propagation, SSL/certificate readiness, domain purchase, or external DNS configuration.
+                  </p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     <input
                       type="text"

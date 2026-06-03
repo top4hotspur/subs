@@ -38,6 +38,14 @@ type SiteGoLiveEmailInput = {
   adminUrl: string;
 };
 
+type SiteDnsInstructionsEmailInput = {
+  businessName: string;
+  domain: string;
+  previewUrl: string;
+  adminUrl: string;
+  dnsInstructionsText: string;
+};
+
 type VoucherSiteSummaryForEmail = SiteSummaryForEmail & {
   voucherUrl?: string | null;
 };
@@ -353,6 +361,37 @@ export function siteGoLiveCustomerEmail(input: SiteGoLiveEmailInput) {
 <p>You can continue updating your services, prices, staff, opening hours, policies and page content from your business admin area.</p>
 <p>If you need help with domain steps, setup questions, or going live checks, MyExperiment.club support is available.</p>
 <p>MyExperiment.club</p>`;
+  return { subject, text, html };
+}
+
+export function siteDnsInstructionsCustomerEmail(input: SiteDnsInstructionsEmailInput) {
+  const subject = `DNS instructions for your ${input.businessName} website`;
+  const text = [
+    "Hi,",
+    "",
+    `Here are the DNS/domain instructions for ${input.businessName}.`,
+    "",
+    input.dnsInstructionsText,
+    "",
+    "Please keep these details handy while your domain is being linked to your site.",
+    "If you need help, reply to this email and MyExperiment.club support will help you through the next step.",
+    "",
+    "MyExperiment.club",
+  ].join("\n");
+
+  const escapedInstructions = escapeHtml(input.dnsInstructionsText).replace(/\n/g, "<br/>");
+  const html = `<p>Hi,</p>
+<p>Here are the DNS/domain instructions for <strong>${escapeHtml(input.businessName)}</strong>.</p>
+<p><strong>Domain:</strong> ${escapeHtml(input.domain)}</p>
+<p><strong>Preview your site:</strong> <a href="${escapeHtml(input.previewUrl)}">${escapeHtml(input.previewUrl)}</a><br/>
+<strong>Business admin area:</strong> <a href="${escapeHtml(input.adminUrl)}">${escapeHtml(input.adminUrl)}</a></p>
+<div style="border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc;padding:14px;margin:16px 0;font-family:Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5;color:#334155;">
+${escapedInstructions}
+</div>
+<p>Please keep these details handy while your domain is being linked to your site.</p>
+<p>If you need help, reply to this email and MyExperiment.club support will help you through the next step.</p>
+<p>MyExperiment.club</p>`;
+
   return { subject, text, html };
 }
 
