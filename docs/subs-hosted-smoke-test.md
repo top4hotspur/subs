@@ -1397,3 +1397,12 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
 14. Open `/demo/window-cleaning`.
 15. Confirm Window Cleaning demo has realistic priced services and quote-required examples.
 16. Confirm `/sites/luna-hair-studio` still uses real tenant data and is unaffected.
+
+## 2026-06-03 hosted smoke checks: service category management
+1. Open `/demo/barbers/admin` or `/demo/hairdressers/admin` and select Services and prices.
+2. Confirm a Service categories area appears above the service list.
+3. Confirm default categories are sensible for the industry.
+4. Add a category, rename it, assign a service using the Category dropdown, then save.
+5. Refresh and confirm the category list and service assignment persist.
+6. Confirm old/free-text category values from existing browser-local settings appear in the managed category list instead of being lost.
+7. Expand a service and confirm Base price, Duration and Buffer after service fields align on the same row on desktop and stack cleanly on mobile.

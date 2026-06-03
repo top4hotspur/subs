@@ -325,3 +325,9 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - Both `/admin/setup-requests` and `/admin/sites` route creation through the paid-order provisioner, which rejects unpaid, cancelled or archived setup requests.
 - Provisioning remains clean: no demo services, staff, rota, bookings, vouchers or localStorage data are copied into paid tenant records.
 - New tenant records link `SetupRequest`, `TenantSite`, `SiteDomain`, `SubscriptionRecord`, `CustomerSiteSettings`, provisioning tasks and status events where applicable.
+
+## 2026-06-03 Service Category Admin Audit Note
+- Demo/business admin no longer exposes a free-text Category field inside each service card.
+- Service categories are managed separately, then assigned via dropdown.
+- Existing demo-local category strings are normalised into the managed category list to avoid data loss.
+- Expanded service card numeric fields have been aligned so buffer duration is visually consistent with base price and service duration.

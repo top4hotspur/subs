@@ -1,4 +1,4 @@
-import { buildDefaultCustomerSiteSettings, getDemoServiceDefault } from "@/lib/sites/default-site-settings";
+import { buildDefaultCustomerSiteSettings, getDefaultServiceCategories, getDemoServiceDefault } from "@/lib/sites/default-site-settings";
 import {
   getSiteColourSchemesForTheme,
   normalizeSiteColourSchemeId,
@@ -12,6 +12,24 @@ import { WebsiteTemplate, WebsiteTemplateSlug } from "@/lib/sites/types";
 // This is intentionally local/mock and should move to DB + API later.
 function siteSettingsKey(industrySlug: WebsiteTemplateSlug): string {
   return `subs-site-settings:${industrySlug}`;
+}
+
+function normalizeCategoryName(value?: string | null): string | null {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
+function uniqueCategories(values: Array<string | null | undefined>): string[] {
+  const seen = new Set<string>();
+  return values
+    .map(normalizeCategoryName)
+    .filter((value): value is string => Boolean(value))
+    .filter((value) => {
+      const key = value.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 }
 
 export function getLocalCustomerSiteSettingsStorageKey(
@@ -34,6 +52,31 @@ function normalizeSettings(settings: CustomerSiteSettings): CustomerSiteSettings
   const normalizedPaletteId = mappedAppearance.colourPaletteId;
   const allowedPalettes = getSiteColourSchemesForTheme(normalizedThemeId);
   const paletteForTheme = allowedPalettes[0]?.id ?? normalizedPaletteId;
+
+  const normalizedServices = settings.services.map((service) => {
+    const defaults = getDemoServiceDefault(templateSlug, service.id);
+    if (!defaults) {
+      return {
+        ...service,
+        category: normalizeCategoryName(service.category) ?? undefined,
+      };
+    }
+    const requiresQuote = service.requiresQuote || defaults.requiresQuote === true;
+    return {
+      ...service,
+      description: service.description || defaults.description || `Professional ${service.name.toLowerCase()} service.`,
+      basePriceGbp: requiresQuote ? undefined : service.basePriceGbp ?? defaults.basePriceGbp,
+      durationMinutes: service.durationMinutes ?? defaults.durationMinutes,
+      priceLabel: requiresQuote ? "Quote required" : service.priceLabel,
+      requiresQuote,
+      category: normalizeCategoryName(service.category) ?? defaults.category,
+    };
+  });
+  const serviceCategories = uniqueCategories([
+    ...(settings.serviceCategories ?? []),
+    ...getDefaultServiceCategories(templateSlug),
+    ...normalizedServices.map((service) => service.category),
+  ]);
 
   return {
     ...settings,
@@ -76,20 +119,8 @@ function normalizeSettings(settings: CustomerSiteSettings): CustomerSiteSettings
       ...settings.businessDetails,
       socialLinks: settings.businessDetails?.socialLinks ?? {},
     },
-    services: settings.services.map((service) => {
-      const defaults = getDemoServiceDefault(templateSlug, service.id);
-      if (!defaults) return service;
-      const requiresQuote = service.requiresQuote || defaults.requiresQuote === true;
-      return {
-        ...service,
-        description: service.description || defaults.description || `Professional ${service.name.toLowerCase()} service.`,
-        basePriceGbp: requiresQuote ? undefined : service.basePriceGbp ?? defaults.basePriceGbp,
-        durationMinutes: service.durationMinutes ?? defaults.durationMinutes,
-        priceLabel: requiresQuote ? "Quote required" : service.priceLabel,
-        requiresQuote,
-        category: service.category ?? defaults.category,
-      };
-    }),
+    serviceCategories,
+    services: normalizedServices,
     pageVisibility: {
       ...settings.pageVisibility,
       contact: {

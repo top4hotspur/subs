@@ -107,6 +107,8 @@ type DemoServiceDefault = {
   category?: string;
 };
 
+const GENERIC_SERVICE_CATEGORIES = ["Services", "Packages", "Extras"];
+
 const DEMO_SERVICE_DEFAULTS: Record<string, Record<string, DemoServiceDefault>> = {
   taxi: {
     "local-private-hire": { basePriceGbp: 12, durationMinutes: 30, description: "Local pickup and private-hire journeys." },
@@ -209,6 +211,33 @@ export function getDemoServiceDefault(templateSlug: string, serviceId: string): 
   return DEMO_SERVICE_DEFAULTS[templateSlug]?.[serviceId];
 }
 
+function uniqueServiceCategories(values: Array<string | undefined>): string[] {
+  const seen = new Set<string>();
+  return values
+    .map((value) => value?.trim())
+    .filter((value): value is string => Boolean(value))
+    .filter((value) => {
+      const key = value.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
+export function getDefaultServiceCategories(templateSlug: string): string[] {
+  if (templateSlug === "barbers") {
+    return ["Cuts", "Beard & Grooming", "Shaves", "Treatments", "Packages"];
+  }
+  if (templateSlug === "hairdressers") {
+    return ["Cuts", "Colour", "Styling", "Treatments", "Packages"];
+  }
+
+  const defaults = Object.values(DEMO_SERVICE_DEFAULTS[templateSlug] ?? {})
+    .map((service) => service.category);
+  const categories = uniqueServiceCategories(defaults);
+  return categories.length > 0 ? categories : GENERIC_SERVICE_CATEGORIES;
+}
+
 function enrichDemoService(
   templateSlug: string,
   service: WebsiteTemplate["defaultConfig"]["services"][number],
@@ -241,6 +270,8 @@ function enrichDemoService(
 export function buildDefaultCustomerSiteSettings(template: WebsiteTemplate): CustomerSiteSettings {
   const now = new Date().toISOString();
   const domainSlug = slugify(template.defaultConfig.businessName || template.slug);
+  const serviceCategories = getDefaultServiceCategories(template.slug);
+  const defaultServiceCategory = serviceCategories[0] ?? "Services";
 
   return {
     id: `site-settings-${template.slug}`,
@@ -275,7 +306,8 @@ export function buildDefaultCustomerSiteSettings(template: WebsiteTemplate): Cus
     pageVisibility: defaultPageVisibility(),
     pageContent: defaultPageContent(template),
     sectionVisibility: defaultSectionVisibility(),
-    services: template.defaultConfig.services.map((service) => enrichDemoService(template.slug, service, template.category)),
+    serviceCategories,
+    services: template.defaultConfig.services.map((service) => enrichDemoService(template.slug, service, defaultServiceCategory)),
     legal: {
       termsEnabled: true,
       privacyEnabled: true,

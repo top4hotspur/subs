@@ -239,6 +239,7 @@ export type CustomerSiteSettings = {
   pageVisibility: SitePageVisibilitySettings;
   pageContent: SitePageContentSettings;
   sectionVisibility: SiteSectionVisibilitySettings;
+  serviceCategories: string[];
   services: SiteServiceItem[];
   legal: SiteLegalSettings;
   notifications: SiteNotificationSettings;

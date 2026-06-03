@@ -241,3 +241,10 @@ No real provider credentials/API keys are stored or connected in this phase.
 - Future fields must distinguish safe business references from sensitive credentials. API keys, secrets, webhook signing secrets, OAuth tokens, and private credentials require secure handling and must not be displayed publicly or logged.
 - Provider integrations must include clear test/live mode separation, provider-specific webhook validation, payment/refund status reconciliation, and provider-specific operational error states.
 - Until that milestone is built, site-admin should continue to avoid asking businesses for API keys/passwords and should not imply provider automation is live.
+
+## 2026-06-03 Service Categories
+- Standard site settings include a managed `serviceCategories` list for demo/local service grouping.
+- Barber demos default to Cuts, Beard & Grooming, Shaves, Treatments and Packages.
+- Hairdresser demos default to Cuts, Colour, Styling, Treatments and Packages.
+- Other industries default to generic Services, Packages and Extras unless more specific defaults are added later.
+- Existing service-level category strings are normalised into the category list and services are assigned via dropdown in admin.

@@ -334,3 +334,9 @@ Important:
 - The future business-owner experience should provide provider-specific setup guidance, safe onboarding steps, test/live status, webhook verification status, refund handling notes, and payment-status diagnostics.
 - Secure credential handling is a prerequisite. Secrets must not be stored in normal visible settings, returned through public APIs, exposed in UI, or written to logs.
 - Current behaviour remains intentionally conservative: payment settings capture preferences and policy wording, while live provider connection beyond the existing controlled foundations is future work.
+
+## 2026-06-03 Service Category Management
+- Business/demo admin Services and prices now uses managed service categories instead of per-service free-text category entry.
+- Admins create, rename and remove categories in a Service categories area, then assign each service using a Category dropdown.
+- Existing free-text service category values are preserved during local/demo settings normalisation and added to the managed category list instead of being discarded.
+- Services without a category remain valid and display as uncategorised/Services where appropriate.

@@ -133,6 +133,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
   const [newClosureDate, setNewClosureDate] = useState("");
   const [newClosureLabel, setNewClosureLabel] = useState("");
   const [newRoleLabel, setNewRoleLabel] = useState("");
+  const [newServiceCategoryName, setNewServiceCategoryName] = useState("");
   const [expandedServiceIds, setExpandedServiceIds] = useState<string[]>([]);
   const [expandedStaffIds, setExpandedStaffIds] = useState<string[]>([]);
   const [selectedSection, setSelectedSection] = useState<string>("appointments");
@@ -215,11 +216,50 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
 
   function addService(): void {
     const id = makeServiceId();
+    const defaultCategory = settings.serviceCategories[0] ?? "Services";
     setSettings((current) => ({
       ...current,
-      services: [...current.services, { id, name: "New service", description: "", basePriceGbp: 0, durationMinutes: 45, bufferAfterMinutes: 0, bookable: true, requiresQuote: false, active: true, category: "Services" }],
+      services: [...current.services, { id, name: "New service", description: "", basePriceGbp: 0, durationMinutes: 45, bufferAfterMinutes: 0, bookable: true, requiresQuote: false, active: true, category: defaultCategory }],
     }));
     setExpandedServiceIds((current) => [...current, id]);
+  }
+
+  function addServiceCategory(): void {
+    const category = newServiceCategoryName.trim();
+    if (!category) return;
+    setSettings((current) => {
+      const exists = current.serviceCategories.some(
+        (item) => item.trim().toLowerCase() === category.toLowerCase(),
+      );
+      if (exists) return current;
+      return { ...current, serviceCategories: [...current.serviceCategories, category] };
+    });
+    setNewServiceCategoryName("");
+  }
+
+  function renameServiceCategory(index: number, value: string): void {
+    setSettings((current) => {
+      const previous = current.serviceCategories[index];
+      const nextCategories = [...current.serviceCategories];
+      nextCategories[index] = value;
+      return {
+        ...current,
+        serviceCategories: nextCategories,
+        services: current.services.map((service) =>
+          service.category === previous ? { ...service, category: value } : service,
+        ),
+      };
+    });
+  }
+
+  function removeServiceCategory(category: string): void {
+    setSettings((current) => ({
+      ...current,
+      serviceCategories: current.serviceCategories.filter((item) => item !== category),
+      services: current.services.map((service) =>
+        service.category === category ? { ...service, category: undefined } : service,
+      ),
+    }));
   }
 
   function addStaff(): void {
@@ -302,6 +342,17 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
     if (type === "services" && records.length > 0) {
       setSettings((current) => ({
         ...current,
+        serviceCategories: Array.from(
+          new Map(
+            [
+              ...current.serviceCategories,
+              ...records.map((row) => row.category),
+            ]
+              .map((value) => value?.trim())
+              .filter((value): value is string => Boolean(value))
+              .map((value) => [value.toLowerCase(), value]),
+          ).values(),
+        ),
         services: records
           .filter((row) => (row.serviceName || "").trim().length > 0)
           .map((row, index) => ({
@@ -606,6 +657,53 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
 
       {selectedSection === "services-prices" ? (
       <CollapsibleSection title="Services and prices" subtitle="Compact service cards with duration and role pricing." defaultOpen>
+        <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h4 className="text-sm font-semibold text-slate-900">Service categories</h4>
+              <p className="mt-1 text-xs text-slate-600">
+                Create the categories customers will see when browsing your services.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <input
+                className="min-w-[190px] rounded-md border border-slate-300 px-2 py-1 text-sm"
+                placeholder="New category name"
+                value={newServiceCategoryName}
+                onChange={(event) => setNewServiceCategoryName(event.target.value)}
+              />
+              <button
+                type="button"
+                className="rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+                onClick={addServiceCategory}
+              >
+                Add category
+              </button>
+            </div>
+          </div>
+          {settings.serviceCategories.length === 0 ? (
+            <p className="mt-3 text-xs text-slate-600">No categories yet. Services can stay uncategorised.</p>
+          ) : (
+            <div className="mt-3 grid gap-2 md:grid-cols-2">
+              {settings.serviceCategories.map((category, categoryIndex) => (
+                <div key={`${category}-${categoryIndex}`} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2">
+                  <input
+                    className="w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                    value={category}
+                    onChange={(event) => renameServiceCategory(categoryIndex, event.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="shrink-0 text-xs font-semibold text-rose-700"
+                    onClick={() => removeServiceCategory(category)}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="mb-3"><button type="button" className="rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800" onClick={addService}>Add service</button></div>
         <div className="grid gap-3">
           {settings.services.map((service, index) => {
@@ -626,31 +724,43 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                   </div>
                 </div>
                 {expanded ? (
-                  <div className="mt-3 grid gap-2 sm:grid-cols-4">
-                    <label className="text-xs font-semibold text-slate-700 sm:col-span-3">Service name
+                  <div className="mt-3 grid gap-3 md:grid-cols-3">
+                    <label className="text-xs font-semibold text-slate-700 md:col-span-2">Service name
                       <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={service.name} onChange={(event) => setSettings((current) => { const next=[...current.services]; next[index]={...next[index],name:event.target.value}; return {...current,services:next};})} />
                     </label>
                     <label className="text-xs font-semibold text-slate-700">Category
-                      <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="Services" value={service.category ?? ""} onChange={(event) => setSettings((current) => { const next=[...current.services]; next[index]={...next[index],category:event.target.value}; return {...current,services:next};})} />
+                      <select
+                        className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                        value={service.category ?? ""}
+                        onChange={(event) => setSettings((current) => { const next=[...current.services]; next[index]={...next[index],category:event.target.value || undefined}; return {...current,services:next};})}
+                      >
+                        <option value="">Uncategorised</option>
+                        {settings.serviceCategories.map((category) => (
+                          <option key={category} value={category}>
+                            {category}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="mt-1 block text-[11px] font-normal text-slate-600">Assign this service to a category.</span>
                     </label>
                     <label className="text-xs font-semibold text-slate-700">Base price
-                      <input type="number" min={0} step="1" className="mt-1 w-full max-w-32 rounded-md border border-slate-300 px-2 py-1 text-sm" value={service.basePriceGbp ?? ""} onChange={(event) => setSettings((current) => { const next=[...current.services]; const val=event.target.value.trim(); next[index]={...next[index],basePriceGbp:val?Number(val):undefined}; return {...current,services:next};})} />
+                      <input type="number" min={0} step="1" className="mt-1 w-full max-w-36 rounded-md border border-slate-300 px-2 py-1 text-sm" value={service.basePriceGbp ?? ""} onChange={(event) => setSettings((current) => { const next=[...current.services]; const val=event.target.value.trim(); next[index]={...next[index],basePriceGbp:val?Number(val):undefined}; return {...current,services:next};})} />
                     </label>
                     <label className="text-xs font-semibold text-slate-700">Duration (minutes)
-                      <input type="number" min={10} step="5" className="mt-1 w-full max-w-32 rounded-md border border-slate-300 px-2 py-1 text-sm" value={service.durationMinutes ?? 45} onChange={(event) => setSettings((current)=>{const next=[...current.services]; next[index]={...next[index],durationMinutes:Number(event.target.value||45)}; return {...current,services:next};})} />
+                      <input type="number" min={10} step="5" className="mt-1 w-full max-w-36 rounded-md border border-slate-300 px-2 py-1 text-sm" value={service.durationMinutes ?? 45} onChange={(event) => setSettings((current)=>{const next=[...current.services]; next[index]={...next[index],durationMinutes:Number(event.target.value||45)}; return {...current,services:next};})} />
                     </label>
                     <label className="text-xs font-semibold text-slate-700">Buffer after service (minutes)
-                      <input type="number" min={0} step="5" className="mt-1 w-full max-w-32 rounded-md border border-slate-300 px-2 py-1 text-sm" value={service.bufferAfterMinutes ?? 0} onChange={(event) => setSettings((current)=>{const next=[...current.services]; next[index]={...next[index],bufferAfterMinutes:Number(event.target.value||0)}; return {...current,services:next};})} />
+                      <input type="number" min={0} step="5" className="mt-1 w-full max-w-36 rounded-md border border-slate-300 px-2 py-1 text-sm" value={service.bufferAfterMinutes ?? 0} onChange={(event) => setSettings((current)=>{const next=[...current.services]; next[index]={...next[index],bufferAfterMinutes:Number(event.target.value||0)}; return {...current,services:next};})} />
                     </label>
-                    <label className="text-xs font-semibold text-slate-700 sm:col-span-4">Description
+                    <label className="text-xs font-semibold text-slate-700 md:col-span-3">Description
                       <textarea className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={service.description} onChange={(event) => setSettings((current)=>{const next=[...current.services]; next[index]={...next[index],description:event.target.value}; return {...current,services:next};})} />
                     </label>
-                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-4">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 md:col-span-3">
                       <input type="checkbox" checked={Boolean(service.recurringEnabled)} disabled={!settings.paymentSettings.recurringPaymentsEnabled} onChange={(event) => setSettings((current)=>{const next=[...current.services]; next[index]={...next[index],recurringEnabled:event.target.checked}; return {...current,services:next};})} />
                       Allow this service to be sold as recurring
                     </label>
                     {service.recurringEnabled && settings.paymentSettings.recurringPaymentsEnabled ? (
-                      <div className="sm:col-span-4">
+                      <div className="md:col-span-3">
                         <p className="text-xs font-semibold text-slate-700">Recurring intervals</p>
                         <div className="mt-1 flex flex-wrap gap-3">
                           {(["WEEKLY", "MONTHLY", "ANNUALLY"] as const).map((interval) => (
@@ -675,18 +785,18 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                         </div>
                       </div>
                     ) : null}
-                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-4">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 md:col-span-3">
                       <input type="checkbox" checked={Boolean(service.blockBookingEnabled)} disabled={!settings.appointmentSettings.customerBlockBookingsEnabled} onChange={(event) => setSettings((current)=>{const next=[...current.services]; next[index]={...next[index],blockBookingEnabled:event.target.checked}; return {...current,services:next};})} />
                       Allow block bookings for this service
                     </label>
                     {service.blockBookingEnabled && settings.appointmentSettings.customerBlockBookingsEnabled ? (
-                      <label className="text-xs font-semibold text-slate-700 sm:col-span-4">
+                      <label className="text-xs font-semibold text-slate-700 md:col-span-3">
                         Suggested block counts (comma separated)
                         <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={(service.blockBookingSuggestedCounts ?? []).join(", ")} placeholder="5, 10, 12" onChange={(event)=>setSettings((current)=>{const next=[...current.services]; next[index]={...next[index],blockBookingSuggestedCounts:event.target.value.split(',').map((v)=>Number(v.trim())).filter((n)=>Number.isFinite(n)&&n>=2&&n<=52)}; return {...current,services:next};})} />
                       </label>
                     ) : null}
                     {activeRoles.length > 0 ? (
-                      <div className="sm:col-span-4 rounded-md border border-slate-200 bg-slate-50 p-2">
+                      <div className="md:col-span-3 rounded-md border border-slate-200 bg-slate-50 p-2">
                         <p className="text-xs font-semibold text-slate-700">Role price overrides</p>
                         <div className="mt-2 grid gap-2 sm:grid-cols-2">
                           {activeRoles.map((role) => {

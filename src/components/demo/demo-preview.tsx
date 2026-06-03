@@ -33,13 +33,13 @@ function serviceDurationLabel(durationMinutes?: number): string {
 
 function demoServiceCategory(service: { category?: string; description?: string }, fallbackCategory: string): string {
   const category = service.category?.trim();
-  if (category && category !== fallbackCategory) return category;
+  if (category) return category;
   const description = service.description?.trim();
   if (description && /category$/i.test(description)) return description.replace(/\s+category$/i, "");
   if (description && ["Recurring residential round", "One-off cleans", "Specialist extras", "Commercial enquiries"].includes(description)) {
     return description;
   }
-  return fallbackCategory;
+  return fallbackCategory || "Services";
 }
 
 export function DemoPreview({ template, draft, initialServiceId }: DemoPreviewProps) {
@@ -82,7 +82,7 @@ export function DemoPreview({ template, draft, initialServiceId }: DemoPreviewPr
   const activeCategoryNames = Array.from(
     new Set(
       activeServices
-        .map((service) => demoServiceCategory(service, template.category))
+        .map((service) => demoServiceCategory(service, "Services"))
         .filter((category): category is string => Boolean(category)),
     ),
   );
@@ -90,7 +90,7 @@ export function DemoPreview({ template, draft, initialServiceId }: DemoPreviewPr
     ? activeCategoryNames.map((category) => ({
         id: category,
         name: category,
-        services: activeServices.filter((service) => demoServiceCategory(service, template.category) === category),
+        services: activeServices.filter((service) => demoServiceCategory(service, "Services") === category),
       }))
     : [{ id: "services", name: "Services", services: activeServices }];
   const socialEntries = Object.entries(settings.businessDetails.socialLinks ?? {}).filter(

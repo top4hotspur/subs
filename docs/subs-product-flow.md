@@ -1008,3 +1008,9 @@ Current alignment:
 - Paid subscriber sites still start clean and are rendered through `/sites/[siteSlug]` or custom-domain routing.
 
 Window Cleaning is a supported industry offering using slug `window-cleaning`. It appears in Home Services, has a sales route at `/window-cleaning`, a demo route at `/demo/window-cleaning`, and is available anywhere the shared `WEBSITE_TEMPLATE_SLUGS` industry list is used, including sales pipeline dropdowns.
+
+## 2026-06-03 Demo Service Category UX
+- Demo/business admin Services and prices now separates service category management from service editing.
+- Admins manage categories once, then assign services to categories using a dropdown rather than typing category names in each service card.
+- Browser-local legacy category strings are preserved and folded into the managed category list on read.
+- Expanded service cards now align service name/category, then base price, duration and buffer fields in clean rows.
