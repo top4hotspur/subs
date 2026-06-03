@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PublicSiteContactForm } from "@/components/sites/public-site-contact-form";
 import { getCustomerSitePreviewDataBySlug } from "@/lib/sites/customer-site-preview-repository";
 import { normalizePersistedSocialLinks, SOCIAL_PLATFORM_DEFINITIONS } from "@/lib/sites/social-platforms";
 import { formatBusinessOpeningHoursSummary, normalizeBusinessOpeningHours } from "@/lib/sites/customer-site-opening-hours";
@@ -11,10 +12,19 @@ function mapUrlFromAddress(address: string | null): string | null {
 
 export default async function PublicSiteContactPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ siteSlug: string }>;
+  searchParams: Promise<{
+    purpose?: string;
+    name?: string;
+    email?: string;
+    phone?: string;
+    bookingId?: string;
+  }>;
 }) {
   const { siteSlug } = await params;
+  const query = await searchParams;
   const preview = await getCustomerSitePreviewDataBySlug(siteSlug);
   if (!preview) notFound();
 
@@ -93,6 +103,16 @@ export default async function PublicSiteContactPage({
                 );
               })}
             </div>
+          </div>
+          <div className="mt-5">
+            <PublicSiteContactForm
+              siteSlug={preview.tenantSite.slug}
+              initialPurpose={query.purpose}
+              initialName={query.name}
+              initialEmail={query.email}
+              initialPhone={query.phone}
+              bookingId={query.bookingId}
+            />
           </div>
         </div>
       </div>

@@ -958,3 +958,12 @@ Future payment-provider note: subscriber business payment settings must eventual
 - Subscriber booking payment behaviour now follows the business payment settings conservatively. Platform Stripe checkout for MyExperiment.club subscriptions is not reused for subscriber businesses taking payments from their own customers.
 - If online prepayment is required but subscriber checkout is not connected, public booking is blocked with a contact-the-business message. No fake payment success is recorded and no card details are collected.
 - If online payment is not required, or cash/manual payment is allowed, bookings can be confirmed with payment marked as not required or pending manual/cash handling for the business admin to reconcile.
+
+## 2026-06-03 customer CRM account foundation
+- Public booking confirmation now encourages guest customers to create an account using the same email address, or log in, while still allowing them to continue without an account.
+- Logged-in booking flows confirm that the booking has been added to the customer account.
+- Customer account dashboards now show tenant bookings linked to the account plus guest bookings for the same tenant with the same verified/login email address. Matching remains tenant-scoped and does not cross businesses.
+- Customer registration captures optional marketing consent with an unchecked opt-in. Customers can update their preference from their account dashboard.
+- Customer account includes a Special offers placeholder. No customer marketing automation or bulk sends are enabled yet.
+- Subscriber site contact now uses a structured tenant-scoped form for booking changes, cancellations, payment questions, general enquiries, complaints/problems and other messages.
+- Business admins can view a first-pass Customer CRM in `/site-admin/[siteSlug]`, including account customers, guest booking customers, booking counts/history, marketing consent and customer contact enquiries.

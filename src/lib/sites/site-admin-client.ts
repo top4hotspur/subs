@@ -34,6 +34,43 @@ type ClientFailure = {
 type ClientSuccess<T> = { ok: true } & T;
 type ClientResult<T> = ClientSuccess<T> | ClientFailure;
 
+export type SiteAdminCrmCustomer = {
+  id: string | null;
+  name: string;
+  email: string;
+  phone: string | null;
+  marketingOptIn: boolean;
+  marketingOptInAt: string | null;
+  accountCreated: boolean;
+  totalBookings: number;
+  completedBookings: number;
+  lastBookingDate: string | null;
+  nextBookingDate: string | null;
+  bookings: Array<{
+    id: string;
+    serviceName: string | null;
+    staffName: string | null;
+    preferredDate: string | null;
+    preferredTime: string | null;
+    status: string;
+    paymentStatus: string | null;
+    detailHref: string;
+  }>;
+};
+
+export type SiteAdminCrmEnquiry = {
+  id: string;
+  purpose: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  message: string;
+  status: string;
+  bookingId: string | null;
+  emailStatus: string | null;
+  createdAt: string;
+};
+
 async function parseJsonSafe(response: Response): Promise<unknown> {
   try {
     return await response.json();
@@ -472,6 +509,34 @@ export async function listSiteAdminBookings(
       };
     }
     return { ok: true, bookings: body.bookings };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function getSiteAdminCrm(
+  siteSlug: string,
+): Promise<ClientResult<{ customers: SiteAdminCrmCustomer[]; enquiries: SiteAdminCrmEnquiry[] }>> {
+  try {
+    const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/crm`);
+    const body = (await parseJsonSafe(response)) as
+      | {
+          ok?: boolean;
+          customers?: SiteAdminCrmCustomer[];
+          enquiries?: SiteAdminCrmEnquiry[];
+          error?: string;
+          details?: unknown;
+        }
+      | null;
+    if (!response.ok || !body?.ok || !Array.isArray(body.customers) || !Array.isArray(body.enquiries)) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_CRM_GET_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, customers: body.customers, enquiries: body.enquiries };
   } catch {
     return { ok: false, error: "NETWORK_ERROR", status: 0 };
   }

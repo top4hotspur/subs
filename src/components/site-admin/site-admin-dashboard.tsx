@@ -30,6 +30,9 @@ import {
   getSiteAdminVouchers,
   saveSiteAdminVoucherSettings,
   runSiteAdminVoucherAction,
+  getSiteAdminCrm,
+  type SiteAdminCrmCustomer,
+  type SiteAdminCrmEnquiry,
 } from "@/lib/sites/site-admin-client";
 import { outlineButtonClass, primaryButtonClass, smallButtonClass } from "@/lib/ui/button-styles";
 import type {
@@ -88,7 +91,8 @@ type SectionKey =
   | "staffRoles"
   | "rotaBreaks"
   | "closuresHolidays"
-  | "giftVouchers";
+  | "giftVouchers"
+  | "customerCrm";
 
 const SECTION_LIST: Array<{ key: SectionKey; label: string; description: string }> = [
   { key: "bookings", label: "Bookings", description: "Recent live site booking records" },
@@ -99,6 +103,7 @@ const SECTION_LIST: Array<{ key: SectionKey; label: string; description: string 
   { key: "rotaBreaks", label: "Rota & breaks", description: "Weekly rota and break windows" },
   { key: "closuresHolidays", label: "Closures & holidays", description: "Business closures and staff leave" },
   { key: "giftVouchers", label: "Gift vouchers", description: "Voucher settings, payment checks and redemption status" },
+  { key: "customerCrm", label: "Customer CRM", description: "Customer history, consent and enquiries" },
 ];
 
 const weekdayValues: WeekdayValue[] = [
@@ -940,6 +945,10 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   const [voucherPresetValues, setVoucherPresetValues] = useState(DEFAULT_GIFT_VOUCHER_SETTINGS.presetValuesGbp.join(", "));
   const [vouchers, setVouchers] = useState<CustomerSiteGiftVoucherRecord[]>([]);
   const [vouchersLoaded, setVouchersLoaded] = useState(false);
+  const [crmCustomers, setCrmCustomers] = useState<SiteAdminCrmCustomer[]>([]);
+  const [crmEnquiries, setCrmEnquiries] = useState<SiteAdminCrmEnquiry[]>([]);
+  const [crmLoaded, setCrmLoaded] = useState(false);
+  const [selectedCrmEmail, setSelectedCrmEmail] = useState<string | null>(null);
 
   const selectedStaff = useMemo(
     () => staffDraft.find((item) => item.id === selectedSchedulingStaffId) ?? null,
@@ -952,6 +961,10 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   const staffById = useMemo(
     () => new Map(staffDraft.filter((staff) => staff.id).map((staff) => [staff.id!, staff])),
     [staffDraft],
+  );
+  const selectedCrmCustomer = useMemo(
+    () => crmCustomers.find((customer) => customer.email === selectedCrmEmail) ?? crmCustomers[0] ?? null,
+    [crmCustomers, selectedCrmEmail],
   );
 
   useEffect(() => {
@@ -1057,6 +1070,29 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       active = false;
     };
   }, [activeSection, siteSlug, vouchersLoaded]);
+
+  useEffect(() => {
+    if (activeSection !== "customerCrm" || crmLoaded) return;
+    let active = true;
+    async function loadCrm() {
+      setMessage("Loading customer CRM...");
+      const result = await getSiteAdminCrm(siteSlug);
+      if (!active) return;
+      if (!result.ok) {
+        setMessage(toMessage(result.error, result.status));
+        return;
+      }
+      setCrmCustomers(result.customers);
+      setCrmEnquiries(result.enquiries);
+      setSelectedCrmEmail(result.customers[0]?.email ?? null);
+      setCrmLoaded(true);
+      setMessage(null);
+    }
+    void loadCrm();
+    return () => {
+      active = false;
+    };
+  }, [activeSection, crmLoaded, siteSlug]);
 
   function updateVoucherSetting<K extends keyof CustomerSiteGiftVoucherSettings>(
     key: K,
@@ -2350,6 +2386,119 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                 ))}
               </div>
             )}
+          </div>
+        </section>
+      ) : null}
+
+      {activeSection === "customerCrm" ? (
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900">Customer CRM</h3>
+              <p className="mt-1 text-sm text-slate-600">
+                View customer accounts, guest booking history, marketing consent and contact enquiries for this site.
+              </p>
+            </div>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
+              {crmCustomers.length} customer{crmCustomers.length === 1 ? "" : "s"}
+            </span>
+          </div>
+          <div className="mt-4 rounded-xl border border-teal-200 bg-teal-50 p-4 text-sm text-teal-950">
+            <p className="font-semibold">Special offers and campaigns</p>
+            <p className="mt-1">
+              Special offers and customer campaigns will allow you to send offers to all customers or selected customers based on booking history, consent and customer patterns.
+            </p>
+            <p className="mt-1 text-xs">No customer marketing automation is enabled yet.</p>
+          </div>
+          <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+            <div className="space-y-2">
+              {crmCustomers.length === 0 ? (
+                <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
+                  No customer records yet. Customers will appear here after they create accounts or make bookings.
+                </p>
+              ) : crmCustomers.map((customer) => (
+                <button
+                  key={customer.email}
+                  type="button"
+                  className={`w-full rounded-xl border p-3 text-left text-sm ${
+                    selectedCrmCustomer?.email === customer.email
+                      ? "border-teal-300 bg-teal-50"
+                      : "border-slate-200 bg-slate-50 hover:bg-slate-100"
+                  }`}
+                  onClick={() => setSelectedCrmEmail(customer.email)}
+                >
+                  <p className="font-semibold text-slate-950">{customer.name || customer.email}</p>
+                  <p className="text-xs text-slate-600">{customer.email}</p>
+                  <p className="mt-1 text-xs text-slate-600">
+                    {customer.totalBookings} booking{customer.totalBookings === 1 ? "" : "s"} · {customer.marketingOptIn ? "Marketing opted in" : "Marketing opted out"}
+                  </p>
+                </button>
+              ))}
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              {selectedCrmCustomer ? (
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-base font-semibold text-slate-950">{selectedCrmCustomer.name || selectedCrmCustomer.email}</h4>
+                    <div className="mt-2 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
+                      <p><span className="font-semibold">Email:</span> {selectedCrmCustomer.email}</p>
+                      <p><span className="font-semibold">Phone:</span> {selectedCrmCustomer.phone || "Not set"}</p>
+                      <p><span className="font-semibold">Account:</span> {selectedCrmCustomer.accountCreated ? "Created" : "Guest booking only"}</p>
+                      <p><span className="font-semibold">Marketing:</span> {selectedCrmCustomer.marketingOptIn ? "Opted in" : "Opted out"}</p>
+                      <p><span className="font-semibold">Total bookings:</span> {selectedCrmCustomer.totalBookings}</p>
+                      <p><span className="font-semibold">Completed:</span> {selectedCrmCustomer.completedBookings}</p>
+                      <p><span className="font-semibold">Last booking:</span> {selectedCrmCustomer.lastBookingDate ? new Date(selectedCrmCustomer.lastBookingDate).toLocaleString("en-GB") : "Not available"}</p>
+                      <p><span className="font-semibold">Next booking:</span> {selectedCrmCustomer.nextBookingDate ? new Date(selectedCrmCustomer.nextBookingDate).toLocaleString("en-GB") : "None scheduled"}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-950">Booking history</p>
+                    <div className="mt-2 space-y-2">
+                      {selectedCrmCustomer.bookings.length === 0 ? (
+                        <p className="text-sm text-slate-600">No bookings recorded for this customer yet.</p>
+                      ) : selectedCrmCustomer.bookings.slice(0, 10).map((booking) => (
+                        <article key={booking.id} className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700">
+                          <p className="font-semibold text-slate-950">{booking.serviceName || "Service not set"}</p>
+                          <p>{booking.preferredDate || "Date not set"} {booking.preferredTime || ""}</p>
+                          <p>Staff: {booking.staffName || "Assigned by business"}</p>
+                          <p>Status: {booking.status} · Payment: {booking.paymentStatus || "Not set"}</p>
+                          <a href={booking.detailHref} target="_blank" rel="noreferrer" className="mt-2 inline-flex font-semibold text-teal-700 underline">
+                            View booking link
+                          </a>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-slate-600">Select a customer to view details.</p>
+              )}
+            </div>
+          </div>
+          <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-semibold text-slate-950">Contact enquiries</p>
+              <span className="rounded-full border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700">{crmEnquiries.length}</span>
+            </div>
+            <div className="mt-3 space-y-2">
+              {crmEnquiries.length === 0 ? (
+                <p className="text-sm text-slate-600">No customer contact enquiries yet.</p>
+              ) : crmEnquiries.slice(0, 20).map((enquiry) => (
+                <article key={enquiry.id} className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <p className="font-semibold text-slate-950">{enquiry.purpose} · {enquiry.name}</p>
+                      <p>{enquiry.email}{enquiry.phone ? ` · ${enquiry.phone}` : ""}</p>
+                      <p className="mt-1 whitespace-pre-wrap">{enquiry.message}</p>
+                    </div>
+                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 font-semibold text-slate-700">{enquiry.status}</span>
+                  </div>
+                  <p className="mt-2 text-slate-500">
+                    {new Date(enquiry.createdAt).toLocaleString("en-GB")} · Email {enquiry.emailStatus || "not attempted"}{enquiry.bookingId ? ` · Booking ${enquiry.bookingId}` : ""}
+                  </p>
+                </article>
+              ))}
+            </div>
           </div>
         </section>
       ) : null}

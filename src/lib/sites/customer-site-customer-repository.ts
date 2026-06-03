@@ -14,12 +14,16 @@ function serializeCustomer(record: {
   firstName: string;
   lastName: string | null;
   phone: string | null;
+  marketingOptIn: boolean;
+  marketingOptInAt: Date | null;
+  crmNotes: string | null;
   active: boolean;
   createdAt: Date;
   updatedAt: Date;
 }): CustomerSiteCustomerRecord {
   return {
     ...record,
+    marketingOptInAt: record.marketingOptInAt?.toISOString() ?? null,
     createdAt: record.createdAt.toISOString(),
     updatedAt: record.updatedAt.toISOString(),
   };
@@ -43,6 +47,8 @@ export async function registerCustomerSiteCustomer(
     lastName: parsed.lastName?.trim() || null,
     phone: parsed.phone.trim(),
     accessCodeHash: hashAccessCode(parsed.accessCode),
+    marketingOptIn: parsed.marketingOptIn,
+    marketingOptInAt: parsed.marketingOptIn ? new Date() : null,
     active: true,
   };
 
@@ -76,4 +82,24 @@ export async function getCustomerSiteCustomerById(
     where: { id: customerId, tenantSiteId, active: true },
   });
   return customer ? serializeCustomer(customer) : null;
+}
+
+export async function updateCustomerSiteCustomerMarketingPreference(
+  tenantSiteId: string,
+  customerId: string,
+  marketingOptIn: boolean,
+): Promise<CustomerSiteCustomerRecord> {
+  const customer = await prisma.customerSiteCustomer.updateMany({
+    where: { id: customerId, tenantSiteId, active: true },
+    data: {
+      marketingOptIn,
+      marketingOptInAt: marketingOptIn ? new Date() : null,
+    },
+  });
+  if (customer.count === 0) throw new Error("CUSTOMER_ACCOUNT_NOT_FOUND");
+  const updated = await prisma.customerSiteCustomer.findFirst({
+    where: { id: customerId, tenantSiteId, active: true },
+  });
+  if (!updated) throw new Error("CUSTOMER_ACCOUNT_NOT_FOUND");
+  return serializeCustomer(updated);
 }

@@ -1314,3 +1314,21 @@ Current limitation: final custom-domain host rendering is resolver-prepared but 
 10. Return to `/sites/[siteSlug]` and confirm the public booking form says: `This business requires payment before online booking, but online payment is not connected yet. Please contact the business to book.`
 11. Confirm the blocked prepayment flow does not create a fake paid booking and does not redirect to platform Stripe checkout.
 12. Confirm customer account, staff access, business-admin access and platform-admin access remain separate.
+
+## Hosted smoke: customer CRM account foundation
+1. Create a guest booking on `/sites/[siteSlug]` using a test email address.
+2. Open `Customer login` / `/sites/[siteSlug]/account/register`.
+3. Register with the same email address and leave marketing consent unchecked.
+4. Confirm the guest booking appears in the account dashboard under upcoming, past or cancelled bookings as appropriate.
+5. Create another booking while logged in and confirm the success prompt says the booking has been added to the account.
+6. Toggle the account marketing preference on and off, then refresh and confirm it persists.
+7. Confirm the customer account shows the Special offers section with `No offers available right now.`
+8. Open `/site-admin/[siteSlug]` and select Customer CRM.
+9. Confirm the customer appears with email, phone, marketing consent, total bookings, completed booking count, last booking and next booking where data exists.
+10. Select the customer and confirm booking history rows are visible with service, staff, date/time, status, payment status and booking detail link.
+11. From the account or booking detail page, click Contact business.
+12. Submit a structured contact form with purpose, name, email, phone and message.
+13. Confirm the form says the message was sent to the business.
+14. Return to `/site-admin/[siteSlug]` > Customer CRM and confirm the contact enquiry appears.
+15. Confirm no cross-tenant bookings, customer records or enquiries are visible when using a different site slug/admin login.
+16. Confirm no bulk customer marketing emails are sent from this CRM foundation.

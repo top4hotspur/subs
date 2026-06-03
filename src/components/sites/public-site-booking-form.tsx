@@ -86,6 +86,7 @@ export function PublicSiteBookingForm({
   const [notes, setNotes] = useState("");
   const [policyAccepted, setPolicyAccepted] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [usingAccountDetails, setUsingAccountDetails] = useState(false);
   const paymentDecision = useMemo(
@@ -157,6 +158,7 @@ export function PublicSiteBookingForm({
     }
 
     setMessage("Your booking has been confirmed.");
+    setBookingConfirmed(true);
     setCustomerName("");
     setCustomerEmail("");
     setCustomerPhone("");
@@ -309,6 +311,31 @@ export function PublicSiteBookingForm({
         </Link>
       </div>
       {message ? <p className="mt-3 text-sm text-slate-700">{message}</p> : null}
+      {bookingConfirmed ? (
+        <div className="mt-4 rounded-xl border border-teal-200 bg-teal-50 p-4 text-sm text-teal-950">
+          <p className="font-semibold">
+            {usingAccountDetails ? "This booking has been added to your account." : "Want to manage your bookings more easily?"}
+          </p>
+          {!usingAccountDetails ? (
+            <>
+              <p className="mt-1">
+                Create an account using the same email address and you&apos;ll be able to view your bookings, keep your details handy and receive offers from this business if you choose to opt in.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link href={`/sites/${encodeURIComponent(siteSlug)}/account/register`} className="rounded-md bg-slate-950 px-3 py-2 text-xs font-semibold text-white">
+                  Create account
+                </Link>
+                <Link href={`/sites/${encodeURIComponent(siteSlug)}/account/login`} className="rounded-md border border-teal-300 bg-white px-3 py-2 text-xs font-semibold text-teal-950">
+                  Login
+                </Link>
+                <button type="button" className="rounded-md border border-teal-300 bg-white px-3 py-2 text-xs font-semibold text-teal-950" onClick={() => setBookingConfirmed(false)}>
+                  Continue without account
+                </button>
+              </div>
+            </>
+          ) : null}
+        </div>
+      ) : null}
     </section>
   );
 }

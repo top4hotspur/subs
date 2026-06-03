@@ -25,6 +25,7 @@ export function SiteCustomerAccountForm({ siteSlug, mode }: AccountFormProps) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [accessCode, setAccessCode] = useState("");
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -41,6 +42,7 @@ export function SiteCustomerAccountForm({ siteSlug, mode }: AccountFormProps) {
           email: email.trim(),
           phone: phone.trim(),
           accessCode: accessCode.trim(),
+          marketingOptIn,
         };
     const response = await fetch(`/api/sites/${encodeURIComponent(siteSlug)}/account/${endpoint}`, {
       method: "POST",
@@ -93,11 +95,71 @@ export function SiteCustomerAccountForm({ siteSlug, mode }: AccountFormProps) {
       <p className="text-xs text-slate-600">
         Use a private access code for this site account. It is separate from staff and business-admin access.
       </p>
+      {mode === "register" ? (
+        <label className="flex items-start gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+          <input
+            type="checkbox"
+            className="mt-0.5"
+            checked={marketingOptIn}
+            onChange={(event) => setMarketingOptIn(event.target.checked)}
+          />
+          <span>I&apos;d like to receive offers, updates and reminders from this business.</span>
+        </label>
+      ) : null}
       {message ? <p className="text-sm text-rose-700">{message}</p> : null}
       <button type="submit" className={primaryButtonClass} disabled={loading}>
         {loading ? "Working..." : mode === "login" ? "Log in" : "Create account"}
       </button>
     </form>
+  );
+}
+
+export function SiteCustomerMarketingPreference({
+  siteSlug,
+  initialMarketingOptIn,
+}: {
+  siteSlug: string;
+  initialMarketingOptIn: boolean;
+}) {
+  const [marketingOptIn, setMarketingOptIn] = useState(initialMarketingOptIn);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function save(nextValue: boolean) {
+    setMarketingOptIn(nextValue);
+    setSaving(true);
+    setMessage(null);
+    const response = await fetch(`/api/sites/${encodeURIComponent(siteSlug)}/account/session`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ marketingOptIn: nextValue }),
+    }).catch(() => null);
+    setSaving(false);
+    if (!response?.ok) {
+      setMarketingOptIn(!nextValue);
+      setMessage("Could not update your marketing preference right now.");
+      return;
+    }
+    setMessage(nextValue ? "You are opted in to offers and updates." : "You are opted out of offers and updates.");
+  }
+
+  return (
+    <div className="mt-3">
+      <label className="flex items-start gap-2 text-sm text-slate-700">
+        <input
+          type="checkbox"
+          className="mt-1"
+          checked={marketingOptIn}
+          onChange={(event) => void save(event.target.checked)}
+          disabled={saving}
+        />
+        <span>I&apos;d like to receive offers, updates and reminders from this business.</span>
+      </label>
+      <p className="mt-1 text-xs text-slate-600">
+        Current preference: {marketingOptIn ? "Opted in" : "Opted out"}.
+      </p>
+      {message ? <p className="mt-1 text-xs font-semibold text-teal-800">{message}</p> : null}
+    </div>
   );
 }
 

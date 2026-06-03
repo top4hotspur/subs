@@ -86,6 +86,7 @@ export async function POST(
 
     const booking = await createCustomerSiteBooking(site.tenantSite.id, {
       ...parsed,
+      customerEmail: parsed.customerEmail.toLowerCase(),
       staffMemberId: matchingSlot.staffMemberId,
       staffName: matchingSlot.staffName,
       status: "CONFIRMED",

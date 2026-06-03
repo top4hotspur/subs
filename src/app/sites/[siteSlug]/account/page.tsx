@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { SiteCustomerLogoutButton } from "@/components/sites/site-customer-account-forms";
+import {
+  SiteCustomerLogoutButton,
+  SiteCustomerMarketingPreference,
+} from "@/components/sites/site-customer-account-forms";
 import { getSiteCustomerSessionContext } from "@/lib/auth/site-customer-session";
 import { prisma } from "@/lib/db/prisma";
 import { createBookingAccessPath } from "@/lib/sites/booking-access-token";
@@ -43,7 +46,10 @@ export default async function CustomerAccountPage({ params }: AccountPageProps) 
   const bookings = await prisma.customerSiteBooking.findMany({
     where: {
       tenantSiteId: site.tenantSite.id,
-      customerSiteCustomerId: customer.id,
+      OR: [
+        { customerSiteCustomerId: customer.id },
+        { customerEmail: { equals: customer.email, mode: "insensitive" } },
+      ],
     },
     orderBy: [{ preferredDate: "asc" }, { preferredTime: "asc" }, { createdAt: "desc" }],
   });
@@ -61,7 +67,9 @@ export default async function CustomerAccountPage({ params }: AccountPageProps) 
     site.tenantSite.displayName ||
     "This business";
   const policyHref = `/sites/${encodeURIComponent(site.tenantSite.slug)}/policy`;
-  const contactHref = `/sites/${encodeURIComponent(site.tenantSite.slug)}/contact`;
+  const contactHref = `/sites/${encodeURIComponent(site.tenantSite.slug)}/contact?name=${encodeURIComponent(
+    [customer.firstName, customer.lastName].filter(Boolean).join(" "),
+  )}&email=${encodeURIComponent(customer.email)}&phone=${encodeURIComponent(customer.phone ?? "")}`;
   const tenantSiteId = site.tenantSite.id;
   const tenantSiteSlug = site.tenantSite.slug;
 
@@ -141,6 +149,20 @@ export default async function CustomerAccountPage({ params }: AccountPageProps) 
             <Link href={contactHref} className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-100">Contact business</Link>
             <Link href={policyHref} className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-100">Booking policy</Link>
           </div>
+        </section>
+        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
+          <p className="font-semibold text-slate-950">Marketing preference</p>
+          <p className="mt-1">
+            Choose whether this business can send you offers, updates and reminders. This is specific to this business only.
+          </p>
+          <SiteCustomerMarketingPreference
+            siteSlug={site.tenantSite.slug}
+            initialMarketingOptIn={customer.marketingOptIn}
+          />
+        </section>
+        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
+          <p className="font-semibold text-slate-950">Special offers</p>
+          <p className="mt-1">No offers available right now.</p>
         </section>
         <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
           <p className="font-semibold text-slate-950">Payment methods</p>

@@ -444,6 +444,31 @@ export function PublicSiteAvailabilityPreview({
               {successMessage}
             </div>
           ) : null}
+          {successMessage ? (
+            <div className="rounded-lg border border-teal-200 bg-teal-50 p-3 text-xs text-teal-950">
+              <p className="font-semibold">
+                {usingAccountDetails ? "This booking has been added to your account." : "Want to manage your bookings more easily?"}
+              </p>
+              {!usingAccountDetails ? (
+                <>
+                  <p className="mt-1">
+                    Create an account using the same email address and you&apos;ll be able to view your bookings, keep your details handy and receive offers from this business if you choose to opt in.
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <a href={`/sites/${encodeURIComponent(siteSlug)}/account/register`} className={`${primaryButtonClass} ${smallButtonClass}`}>
+                      Create account
+                    </a>
+                    <a href={`/sites/${encodeURIComponent(siteSlug)}/account/login`} className={`${outlineButtonClass} ${smallButtonClass}`}>
+                      Login
+                    </a>
+                    <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setSuccessMessage(null)}>
+                      Continue without account
+                    </button>
+                  </div>
+                </>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

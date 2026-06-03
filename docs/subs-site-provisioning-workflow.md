@@ -503,3 +503,11 @@ Final custom-domain rendering remains the next hosting/routing milestone: custom
   - cash/manual enabled: booking can be confirmed and reconciled manually by the business.
   - prepayment + card required without connected tenant checkout: booking is blocked and the customer is told to contact the business.
 - Subscriber payment-provider integration remains future work. Platform Stripe billing for MyExperiment.club subscriptions must not be treated as tenant checkout for customer bookings.
+
+## Customer CRM foundation after provisioning
+- Provisioned tenant sites now include a customer account/CRM foundation once public bookings are enabled.
+- Guest bookings remain allowed, but when a customer later registers/logs in with the same email, tenant-matched guest bookings are visible in their account dashboard.
+- Marketing consent is stored per `CustomerSiteCustomer` and defaults to opted out. It is not global across MyExperiment.club or other tenant sites.
+- Tenant-scoped customer contact enquiries are stored separately from platform sales/contact enquiries.
+- Business owners can review customer booking history and contact enquiries in `/site-admin/[siteSlug]` under Customer CRM.
+- Special offers and lapsed/frequent-customer follow-up remain future CRM capabilities; no marketing automation is active in this milestone.

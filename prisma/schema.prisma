@@ -41,6 +41,7 @@ model TenantSite {
   customerSiteGiftVouchers      CustomerSiteGiftVoucher[]
   customerSiteAdminUsers        CustomerSiteAdminUser[]
   customerSiteCustomers         CustomerSiteCustomer[]
+  customerSiteContactEnquiries  CustomerSiteContactEnquiry[]
   setupRequest                  SetupRequest?                  @relation("SetupRequestToTenantSite", fields: [setupRequestId], references: [id])
 }
 
@@ -672,6 +673,9 @@ model CustomerSiteCustomer {
   lastName       String?
   phone          String?
   accessCodeHash String?
+  marketingOptIn Boolean               @default(false)
+  marketingOptInAt DateTime?
+  crmNotes       String?
   active         Boolean               @default(true)
   createdAt      DateTime              @default(now())
   updatedAt      DateTime              @updatedAt
@@ -682,6 +686,32 @@ model CustomerSiteCustomer {
   @@index([tenantSiteId])
   @@index([email])
   @@index([tenantSiteId, active])
+  @@index([tenantSiteId, marketingOptIn])
+}
+
+model CustomerSiteContactEnquiry {
+  id             String     @id @default(cuid())
+  tenantSiteId   String
+  customerSiteCustomerId String?
+  bookingId      String?
+  purpose        String
+  name           String
+  email          String
+  phone          String?
+  message        String
+  status         String     @default("NEW")
+  source         String?
+  emailStatus    String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  tenantSite     TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+
+  @@index([tenantSiteId])
+  @@index([tenantSiteId, status])
+  @@index([tenantSiteId, email])
+  @@index([tenantSiteId, createdAt])
+  @@index([customerSiteCustomerId])
+  @@index([bookingId])
 }
 
 model CustomerSiteAdminUser {

@@ -54,7 +54,7 @@ export default async function CustomerBookingPage({ params, searchParams }: Cust
     site.settings?.businessName ||
     site.tenantSite.displayName ||
     "This business";
-  const contactHref = `/sites/${encodeURIComponent(siteSlug)}/contact`;
+  const contactHref = `/sites/${encodeURIComponent(siteSlug)}/contact?purpose=${encodeURIComponent("Change my booking")}&name=${encodeURIComponent(booking.customerName)}&email=${encodeURIComponent(booking.customerEmail ?? "")}&phone=${encodeURIComponent(booking.customerPhone ?? "")}&bookingId=${encodeURIComponent(booking.id)}`;
   const policyHref = `/sites/${encodeURIComponent(siteSlug)}/policy`;
   const allowCancel = canCustomerCancel(booking);
 

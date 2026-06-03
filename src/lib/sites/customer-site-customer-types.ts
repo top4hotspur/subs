@@ -5,6 +5,9 @@ export type CustomerSiteCustomerRecord = {
   firstName: string;
   lastName: string | null;
   phone: string | null;
+  marketingOptIn: boolean;
+  marketingOptInAt: string | null;
+  crmNotes: string | null;
   active: boolean;
   createdAt: string;
   updatedAt: string;
