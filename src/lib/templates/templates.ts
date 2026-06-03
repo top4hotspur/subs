@@ -350,11 +350,11 @@ export const websiteTemplates: Record<WebsiteTemplate["slug"], WebsiteTemplate> 
     name: "Window Cleaning Websites",
     category: "Window Cleaning Website",
     marketingSummary:
-      "Managed window cleaning websites that build trust and support regular residential/commercial bookings.",
+      "Window cleaner websites for regular rounds, one-off cleans, quotes, reminders and customer enquiries.",
     featureBullets: [
-      "Coverage zones and plan clarity",
-      "Residential and commercial service blocks",
-      "Quote request-first conversion sections",
+      "Quote and enquiry flow",
+      "Regular customer round messaging",
+      "Customer reminders and admin bookings",
     ],
     pricing: {
       setupFeeLabel: "From GBP 329 one-off setup",
@@ -371,13 +371,45 @@ export const websiteTemplates: Record<WebsiteTemplate["slug"], WebsiteTemplate> 
       accentColor: "#0f766e",
       heroHeadline: "Sparkling Windows for Homes and Businesses",
       heroSubheading:
-        "Promote your service coverage, reliability, and repeat-clean options.",
+        "Promote regular rounds, one-off cleans, commercial quotes and customer reminders.",
       ctaLabel: "Request a Quote",
       services: [
-        { id: "standard-window", name: "Standard window clean" },
-        { id: "conservatory", name: "Conservatory clean" },
-        { id: "gutter-fascia", name: "Gutter/fascia clean" },
-        { id: "regular-round", name: "Regular round" },
+        {
+          id: "regular-round",
+          name: "Regular window cleaning round",
+          description: "Recurring residential round",
+          priceLabel: "From £18",
+        },
+        {
+          id: "one-off-exterior",
+          name: "One-off exterior window clean",
+          description: "One-off cleans",
+          priceLabel: "From £35",
+        },
+        {
+          id: "conservatory-roof",
+          name: "Conservatory roof clean",
+          description: "Specialist extras",
+          priceLabel: "Quote required",
+        },
+        {
+          id: "gutter-clearing",
+          name: "Gutter clearing",
+          description: "Specialist extras",
+          priceLabel: "Quote required",
+        },
+        {
+          id: "solar-panel-clean",
+          name: "Solar panel clean",
+          description: "Specialist extras",
+          priceLabel: "Quote required",
+        },
+        {
+          id: "commercial-window-quote",
+          name: "Commercial window cleaning quote",
+          description: "Commercial enquiries",
+          priceLabel: "Quote required",
+        },
       ],
       openingHours: { summary: "Mon-Fri: 8:00-18:00, Sat: 8:00-14:00" },
       contact: {

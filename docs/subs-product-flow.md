@@ -983,3 +983,15 @@ Key behaviour:
 - Unknown custom hosts do not leak tenant data.
 
 DNS purchase, registrar updates, DNS provider changes and certificate/custom-domain attachment remain manual operational work. The app now prepares the runtime mapping once the customer domain reaches the shared app and the host header is preserved.
+
+## 2026-06-03 demo/live customer-site alignment
+
+`/sites/[siteSlug]` is the source of truth for the live customer-site shell. `/demo/[industry]` now mirrors that direction more closely instead of using the older demo-only card/navigation layout.
+
+Current alignment:
+- Demo homepage preview uses the same customer-site pattern: public nav, hero, service-led section, grouped service cards, availability-style selector, customer login link, footer-level policy/contact/staff/admin links.
+- Demo booking actions remain safe. Availability slots are illustrative and do not create real tenant bookings or paid subscriber records.
+- Demo data remains industry-specific and separate from paid tenant data.
+- Paid subscriber sites still start clean and are rendered through `/sites/[siteSlug]` or custom-domain routing.
+
+Window Cleaning is a supported industry offering using slug `window-cleaning`. It appears in Home Services, has a sales route at `/window-cleaning`, a demo route at `/demo/window-cleaning`, and is available anywhere the shared `WEBSITE_TEMPLATE_SLUGS` industry list is used, including sales pipeline dropdowns.

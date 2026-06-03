@@ -233,3 +233,9 @@ Before live sending, platform needs:
 - Sales campaign links should direct prospects to the relevant industry sales landing page first (for value explanation and conversion framing), not directly to the demo.
 - For barbers, canonical campaign landing route remains: `https://myexperiment.club/barbers`.
 - Demo links remain a secondary CTA for prospects who want to explore the working preview.
+
+## Demo and campaign landing-page alignment
+
+Campaign landing links should continue sending prospects to the industry sales page first, for example `/window-cleaning`, before the direct demo link. The sales page explains the offer; the demo then mirrors the live customer-site shell with industry-specific demo data.
+
+Window Cleaning is available as `window-cleaning` in the shared industry list and can be used for lead capture, campaign segmentation, campaign landing pages and demo previews. Demo data is separate from paid subscriber tenant data.

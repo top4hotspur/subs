@@ -1346,3 +1346,16 @@ Current limitation: final custom-domain host rendering is resolver-prepared but 
 9. Suspend the site in `/admin/sites` and confirm the custom domain no longer renders the normal booking site. It should show: `This website is currently unavailable. Please contact the business or MyExperiment.club support.`
 10. Reactivate the site and confirm the custom domain renders again.
 11. Confirm DNS purchase, registrar changes, DNS provider changes and certificate attachment remain manual operational steps.
+
+## 2026-06-03 hosted smoke checks: demo/live customer-site alignment
+
+1. Open `/sites/luna-hair-studio` and note the service-led customer-site layout.
+2. Open `/demo/hairdressers` and confirm the demo uses the same customer-site style direction: top public nav, hero, service section, service cards, availability-style picker, account link and footer links.
+3. Open `/demo/barbers` and confirm it no longer shows the stale old demo-only navigation/card layout or dark/premium visual treatment.
+4. Confirm demo services remain industry-specific but render through the shared customer-site-style shell.
+5. Click a demo availability time and confirm it shows a demo-safe message rather than creating a real tenant booking.
+6. Open homepage and confirm Window Cleaning appears under Home Services.
+7. Open `/window-cleaning` and confirm the Window Cleaning sales page loads.
+8. Open `/demo/window-cleaning` and confirm the demo loads with regular rounds, one-off exterior cleans, conservatory roof, gutter clearing, solar panel, and commercial quote services.
+9. Confirm `/sites/luna-hair-studio` still works and does not show demo data.
+10. Confirm sales pipeline industry dropdowns still include Window Cleaning through the shared industry slug list.
