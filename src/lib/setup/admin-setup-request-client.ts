@@ -72,6 +72,13 @@ export type SetupRequestProvisioningResult = {
   publicSiteUrl: string;
   adminSiteUrl: string;
   created: boolean;
+  siteAdminAccess?: {
+    access: SetupRequestSiteAdminAccessInfo;
+    generatedAccessCode: string | null;
+    emailSent: boolean;
+    emailSkipped: boolean;
+    emailStatus: string;
+  } | null;
 };
 
 export type SetupRequestSiteAdminAccessInfo = {
@@ -260,6 +267,7 @@ export async function createSubscriberSiteFromPaidSetupRequest(
       publicSiteUrl: body.publicSiteUrl ?? `/sites/${body.siteSlug}`,
       adminSiteUrl: body.adminSiteUrl ?? `/site-admin/${body.siteSlug}`,
       created: Boolean(body.created),
+      siteAdminAccess: body.siteAdminAccess ?? null,
     };
   } catch {
     return { ok: false, error: "NETWORK_ERROR", status: 0 };

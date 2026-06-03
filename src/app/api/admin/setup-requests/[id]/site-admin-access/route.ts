@@ -1,93 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin";
-import { generateTemporaryAccessCode } from "@/lib/auth/access-code";
-import { getOptionalServerEnv, isBackendPersistenceConfigured } from "@/lib/config/server-env";
-import { prisma } from "@/lib/db/prisma";
-import { sendTransactionalEmail } from "@/lib/email/email-provider";
-import { businessAdminAccessHandoverEmail } from "@/lib/email/email-templates";
+import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
 import {
-  createCustomerSiteAdminUser,
-  updateCustomerSiteAdminUser,
-} from "@/lib/sites/customer-site-admin-user-repository";
+  getSetupRequestSiteAdminAccess,
+  resetAndEmailSetupRequestSiteAdminAccess,
+} from "@/lib/sites/site-admin-access-handover";
 
 function backendNotConfigured() {
   return NextResponse.json(
     { ok: false, error: "BACKEND_PERSISTENCE_NOT_CONFIGURED" },
     { status: 503 },
   );
-}
-
-function toAccessResponse(input: {
-  setupRequestId: string;
-  tenantSiteId: string;
-  siteSlug: string;
-  adminEmail: string | null;
-  siteAdminUserId: string | null;
-  accessCodeExists: boolean;
-  invitationStatus: "INVITED" | "ACTIVE" | "DISABLED" | null;
-  active: boolean | null;
-}) {
-  return input;
-}
-
-async function resolveSetupRequestAndSite(id: string) {
-  const setupRequest = await prisma.setupRequest.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      contactEmail: true,
-      tenantSiteId: true,
-      tenantSite: {
-        select: {
-          id: true,
-          slug: true,
-        },
-      },
-    },
-  });
-
-  if (!setupRequest) {
-    return { error: "SETUP_REQUEST_NOT_FOUND" as const };
-  }
-  if (!setupRequest.tenantSite || !setupRequest.tenantSiteId) {
-    return { error: "SUBSCRIBER_SITE_NOT_PROVISIONED" as const };
-  }
-
-  const settings = await prisma.customerSiteSettings.findUnique({
-    where: { tenantSiteId: setupRequest.tenantSiteId },
-    select: { businessName: true, siteDisplayName: true },
-  });
-
-  return {
-    setupRequest: {
-      id: setupRequest.id,
-      contactEmail: setupRequest.contactEmail,
-      tenantSiteId: setupRequest.tenantSiteId,
-      tenantSite: setupRequest.tenantSite,
-      businessName: settings?.businessName || settings?.siteDisplayName || setupRequest.tenantSite.slug,
-    },
-  };
-}
-
-async function loadPreferredAdminUser(tenantSiteId: string, preferredEmail: string | null) {
-  if (preferredEmail) {
-    const byEmail = await prisma.customerSiteAdminUser.findFirst({
-      where: {
-        tenantSiteId,
-        email: preferredEmail,
-      },
-      orderBy: { createdAt: "asc" },
-    });
-    if (byEmail) return byEmail;
-  }
-
-  return prisma.customerSiteAdminUser.findFirst({
-    where: {
-      tenantSiteId,
-      role: { in: ["OWNER", "ADMIN"] },
-    },
-    orderBy: [{ role: "asc" }, { createdAt: "asc" }],
-  });
 }
 
 export async function GET(
@@ -101,26 +24,14 @@ export async function GET(
 
   try {
     const { id } = await context.params;
-    const resolved = await resolveSetupRequestAndSite(id);
-    if ("error" in resolved) {
-      return NextResponse.json({ ok: false, error: resolved.error }, { status: 404 });
+    const access = await getSetupRequestSiteAdminAccess(id);
+    if ("error" in access) {
+      return NextResponse.json({ ok: false, error: access.error }, { status: 404 });
     }
-
-    const preferredEmail = resolved.setupRequest.contactEmail?.trim().toLowerCase() ?? null;
-    const user = await loadPreferredAdminUser(resolved.setupRequest.tenantSiteId, preferredEmail);
 
     return NextResponse.json({
       ok: true,
-      access: toAccessResponse({
-        setupRequestId: resolved.setupRequest.id,
-        tenantSiteId: resolved.setupRequest.tenantSiteId,
-        siteSlug: resolved.setupRequest.tenantSite.slug,
-        adminEmail: user?.email ?? preferredEmail,
-        siteAdminUserId: user?.id ?? null,
-        accessCodeExists: Boolean(user?.accessCodeHash),
-        invitationStatus: (user?.invitationStatus as "INVITED" | "ACTIVE" | "DISABLED" | undefined) ?? null,
-        active: user?.active ?? null,
-      }),
+      access,
     });
   } catch (error) {
     return NextResponse.json(
@@ -145,87 +56,22 @@ export async function POST(
 
   try {
     const { id } = await context.params;
-    const resolved = await resolveSetupRequestAndSite(id);
-    if ("error" in resolved) {
-      return NextResponse.json({ ok: false, error: resolved.error }, { status: 404 });
-    }
-
     const body = (await request.json().catch(() => ({}))) as { email?: unknown };
     const bodyEmail = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
-    const fallbackEmail = resolved.setupRequest.contactEmail?.trim().toLowerCase() ?? "";
-    const targetEmail = bodyEmail || fallbackEmail;
-
-    if (!targetEmail) {
-      return NextResponse.json({ ok: false, error: "SITE_ADMIN_EMAIL_REQUIRED" }, { status: 400 });
-    }
-
-    const existing = await loadPreferredAdminUser(resolved.setupRequest.tenantSiteId, targetEmail);
-    const generatedAccessCode = generateTemporaryAccessCode(10);
-
-    if (existing) {
-      const nextInvitationStatus: "INVITED" | "ACTIVE" | "DISABLED" =
-        existing.invitationStatus === "DISABLED"
-          ? "INVITED"
-          : existing.invitationStatus === "ACTIVE"
-            ? "ACTIVE"
-            : "INVITED";
-      await updateCustomerSiteAdminUser({
-        tenantSiteId: resolved.setupRequest.tenantSiteId,
-        id: existing.id,
-        accessCode: generatedAccessCode,
-        active: true,
-        invitationStatus: nextInvitationStatus,
-      });
-    } else {
-      await createCustomerSiteAdminUser({
-        tenantSiteId: resolved.setupRequest.tenantSiteId,
-        email: targetEmail,
-        displayName: resolved.setupRequest.contactEmail ? null : null,
-        role: "OWNER",
-        active: true,
-        invitationStatus: "INVITED",
-        accessCode: generatedAccessCode,
-      });
-    }
-
-    const refreshedUser = await loadPreferredAdminUser(resolved.setupRequest.tenantSiteId, targetEmail);
-    const siteSlug = resolved.setupRequest.tenantSite.slug;
-    const loginPath = `/site-admin/${encodeURIComponent(siteSlug)}`;
-    const siteUrlBase = getOptionalServerEnv("NEXT_PUBLIC_SITE_URL");
-    const loginUrl = siteUrlBase ? `${siteUrlBase}${loginPath}` : loginPath;
-
-    const handoverEmail = businessAdminAccessHandoverEmail({
-      businessName: resolved.setupRequest.businessName,
-      siteSlug,
-      loginUrl,
-      adminEmail: refreshedUser?.email ?? targetEmail,
-      accessCode: generatedAccessCode,
+    const result = await resetAndEmailSetupRequestSiteAdminAccess({
+      setupRequestId: id,
+      email: bodyEmail || null,
     });
-    const emailResult = await sendTransactionalEmail({
-      to: refreshedUser?.email ?? targetEmail,
-      subject: handoverEmail.subject,
-      text: handoverEmail.text,
-      html: handoverEmail.html,
-      replyTo: getOptionalServerEnv("PLATFORM_NOTIFICATION_EMAIL"),
-    });
+    if ("error" in result) {
+      return NextResponse.json(
+        { ok: false, error: result.error },
+        { status: result.error === "SITE_ADMIN_EMAIL_REQUIRED" ? 400 : 404 },
+      );
+    }
 
     return NextResponse.json({
       ok: true,
-      access: toAccessResponse({
-        setupRequestId: resolved.setupRequest.id,
-        tenantSiteId: resolved.setupRequest.tenantSiteId,
-        siteSlug,
-        adminEmail: refreshedUser?.email ?? targetEmail,
-        siteAdminUserId: refreshedUser?.id ?? null,
-        accessCodeExists: Boolean(refreshedUser?.accessCodeHash),
-        invitationStatus:
-          (refreshedUser?.invitationStatus as "INVITED" | "ACTIVE" | "DISABLED" | undefined) ?? null,
-        active: refreshedUser?.active ?? null,
-      }),
-      generatedAccessCode,
-      emailSent: emailResult.ok,
-      emailSkipped: emailResult.ok ? false : emailResult.skipped,
-      emailStatus: emailResult.ok ? "SENT" : emailResult.reason,
+      ...result,
     });
   } catch (error) {
     return NextResponse.json(

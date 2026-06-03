@@ -217,6 +217,7 @@ Important:
   - `CustomerSiteAdminUser`
 - Platform admin can bootstrap business-owner access per tenant site from:
   - `/admin/sites/[siteId]/settings` -> `Business owner access`
+- Paid setup-request provisioning also creates the first owner/admin access record for the new tenant site and attempts the onboarding email automatically.
 - Bootstrap fields:
   - email
   - display name
@@ -226,6 +227,7 @@ Important:
 - Temporary access code is generated and shown once in UI; only hashed value is stored.
 - Subscriber business-owner login route:
   - `/site-admin/login`
+  - `/site-admin/[siteSlug]/login`
 - Subscriber business-owner area:
   - `/site-admin/[siteSlug]`
 - First editable scope in this pass:
@@ -233,7 +235,6 @@ Important:
   - persisted services
 - Not included yet:
   - staff/customer auth
-  - invite email sending
   - full tenant business-admin parity with all persisted modules
 
 ## Site-admin staff and scheduling scope (tenant-scoped)
@@ -340,3 +341,4 @@ Important:
 - Admins create, rename and remove categories in a Service categories area, then assign each service using a Category dropdown.
 - Existing free-text service category values are preserved during local/demo settings normalisation and added to the managed category list instead of being discarded.
 - Services without a category remain valid and display as uncategorised/Services where appropriate.
+

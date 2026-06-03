@@ -110,6 +110,7 @@ export default function AdminSetupRequestsPage() {
     publicSiteUrl: string;
     adminSiteUrl: string;
     created: boolean;
+    siteAdminEmailStatus?: string | null;
   } | null>(null);
   const [siteAdminAccess, setSiteAdminAccess] = useState<SetupRequestSiteAdminAccessInfo | null>(null);
   const [siteAdminAccessCode, setSiteAdminAccessCode] = useState<string | null>(null);
@@ -237,10 +238,24 @@ export default function AdminSetupRequestsPage() {
       publicSiteUrl: result.publicSiteUrl,
       adminSiteUrl: result.adminSiteUrl,
       created: result.created,
+      siteAdminEmailStatus: result.siteAdminAccess?.emailStatus ?? null,
     });
-    setMessage(result.created ? "Subscriber site created." : "Subscriber site already provisioned.");
+    if (result.created && result.siteAdminAccess?.emailSent) {
+      setMessage("Subscriber site created and business admin access emailed.");
+    } else if (result.created && result.siteAdminAccess?.emailStatus === "EMAIL_NOT_CONFIGURED") {
+      setMessage("Subscriber site created. Email is not configured, so share the one-time admin code manually.");
+    } else if (result.created && result.siteAdminAccess?.emailStatus === "EMAIL_SEND_FAILED") {
+      setMessage("Subscriber site created. Admin access email failed, so share the one-time code manually for now.");
+    } else {
+      setMessage(result.created ? "Subscriber site created." : "Subscriber site already provisioned.");
+    }
     await loadRequestDetail(requestId);
     await loadRequests(requestId);
+    if (result.siteAdminAccess?.access) {
+      setSiteAdminAccess(result.siteAdminAccess.access);
+      setSiteAdminAccessCode(result.siteAdminAccess.generatedAccessCode);
+      setSiteAdminAccessEmailStatus(result.siteAdminAccess.emailStatus);
+    }
   }
 
   async function resetSiteAdminAccessCode(requestId: string): Promise<void> {
@@ -337,6 +352,12 @@ export default function AdminSetupRequestsPage() {
               {siteSetupResult.created ? "Created site slug" : "Provisioned site slug"}:{" "}
               <span className="font-semibold">{siteSetupResult.siteSlug}</span>
             </p>
+            {siteSetupResult.siteAdminEmailStatus ? (
+              <p className="mt-1 text-xs text-emerald-800">
+                Business admin handover email:{" "}
+                <span className="font-semibold">{siteSetupResult.siteAdminEmailStatus}</span>
+              </p>
+            ) : null}
             <div className="mt-2 flex flex-wrap gap-2">
               <Link
                 href={siteSetupResult.publicSiteUrl}

@@ -331,3 +331,9 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - Service categories are managed separately, then assigned via dropdown.
 - Existing demo-local category strings are normalised into the managed category list to avoid data loss.
 - Expanded service card numeric fields have been aligned so buffer duration is visually consistent with base price and service duration.
+
+## 2026-06-03 Subscriber Admin Onboarding Access
+- Paid setup request provisioning now creates the first tenant-scoped `CustomerSiteAdminUser` owner/admin access record when a clean subscriber site is created.
+- Access codes remain hashed in the database; plaintext codes are only shown once to platform admin during generation/reset and are sent by fail-soft transactional email where configured.
+- `/site-admin/[siteSlug]` remains protected by subscriber site-admin credentials, not platform-admin auth. `/site-admin/[siteSlug]/login` preloads the site slug through the shared site-admin login form.
+- Platform admin can resend/reset access details from `/admin/setup-requests` without creating duplicate tenant sites, domains or subscription records.

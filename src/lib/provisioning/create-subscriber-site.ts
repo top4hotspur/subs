@@ -1,4 +1,8 @@
 import { prisma } from "@/lib/db/prisma";
+import {
+  ensureInitialSetupRequestSiteAdminAccess,
+  type SetupRequestSiteAdminAccessEmailResult,
+} from "@/lib/sites/site-admin-access-handover";
 
 type ProvisioningResult = {
   setupRequestId: string;
@@ -7,6 +11,7 @@ type ProvisioningResult = {
   publicSiteUrl: string;
   adminSiteUrl: string;
   created: boolean;
+  siteAdminAccess?: SetupRequestSiteAdminAccessEmailResult | null;
 };
 
 const PAID_STATUSES = new Set(["PAID", "SUBSCRIPTION_ACTIVE"]);
@@ -83,7 +88,7 @@ function buildCleanProvisioningTasks(setupRequestId: string, tenantSiteId: strin
 export async function createSubscriberSiteFromPaidSetupRequest(
   setupRequestId: string,
 ): Promise<ProvisioningResult> {
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const setupRequest = await tx.setupRequest.findUnique({
       where: { id: setupRequestId },
       include: {
@@ -254,4 +259,13 @@ export async function createSubscriberSiteFromPaidSetupRequest(
       created: true,
     };
   });
+
+  if (!result.created) return result;
+
+  try {
+    const siteAdminAccess = await ensureInitialSetupRequestSiteAdminAccess(setupRequestId);
+    return { ...result, siteAdminAccess };
+  } catch {
+    return { ...result, siteAdminAccess: null };
+  }
 }

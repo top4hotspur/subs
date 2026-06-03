@@ -55,6 +55,10 @@ All site-scoped models above are keyed/scoped by `tenantSiteId`.
 - Security:
   - unique per tenant on (`tenantSiteId`, `email`)
   - used for site-admin auth scope, not platform-admin auth
+- Provisioning behaviour:
+  - paid-order clean site provisioning creates the first owner/admin user for the tenant when an admin email is available
+  - manual reset/resend reuses the same model and replaces only the hashed access-code value
+  - plaintext access codes are never stored and are only shown once to platform admin during generation/reset
 
 ## Domain Resolution Data Path (v1)
 1. read incoming host
@@ -70,6 +74,7 @@ When creating a subscriber site from setup request, system should create baselin
 - Paid-order provisioning currently links `SetupRequest -> TenantSite`, creates or reuses a `SiteDomain` where a requested domain exists, creates/updates a `SubscriptionRecord`, and creates clean fulfilment `SiteProvisioningTask` rows.
 - Stripe checkout/session/subscription identifiers remain on `SetupRequest`; `SubscriptionRecord` currently stores platform subscription amounts/status rather than provider secrets.
 - Paid subscriber sites start with `CustomerSiteSettings` prefilled only from order-safe details such as business name, contact email and contact phone.
+- Paid subscriber sites also get a tenant-scoped `CustomerSiteAdminUser` owner/admin access record so the business owner can reach `/site-admin/[siteSlug]` without platform-admin credentials.
 
 ## Persisted preview query model
 - New tenant-scoped preview aggregation reads:

@@ -1406,3 +1406,22 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
 5. Refresh and confirm the category list and service assignment persist.
 6. Confirm old/free-text category values from existing browser-local settings appear in the managed category list instead of being lost.
 7. Expand a service and confirm Base price, Duration and Buffer after service fields align on the same row on desktop and stack cleanly on mobile.
+
+## 2026-06-03 hosted smoke checks: subscriber admin onboarding access
+1. Open `/admin/setup-requests` as platform admin.
+2. Select a paid setup request that has not yet been provisioned.
+3. Click `Create blank subscriber site`.
+4. Confirm the result shows the subscriber preview link, subscriber admin link and business admin handover email status.
+5. Confirm a one-time generated access code appears only in platform admin when new access is created.
+6. Confirm the customer receives or can be manually given:
+   - site slug
+   - business admin email
+   - one-time access code
+   - `/site-admin/[siteSlug]` or `/site-admin/[siteSlug]/login`
+7. If email is configured, check inbox and junk/spam for the admin access email.
+8. Open `/site-admin/[siteSlug]/login` and confirm the central login form is prefilled with the site slug and returns to `/site-admin/[siteSlug]`.
+9. Log in with the provisioned admin email and latest access code.
+10. Confirm `/site-admin/[siteSlug]` loads the tenant setup dashboard/checklist.
+11. Confirm a different tenant slug is blocked for that same site-admin session.
+12. Click `Reset and email access code` from `/admin/setup-requests` and confirm only the new code works after reset.
+13. Repeat `Create blank subscriber site` for the same paid request and confirm the existing tenant site is reused rather than creating duplicate tenant/domain/subscription rows.

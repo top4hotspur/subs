@@ -28,6 +28,7 @@ type BusinessAdminAccessEmailInput = {
   businessName: string;
   siteSlug: string;
   loginUrl: string;
+  previewUrl?: string | null;
   adminEmail: string;
   accessCode: string;
 };
@@ -311,27 +312,40 @@ export function businessAdminAccessHandoverEmail(input: BusinessAdminAccessEmail
   const text = [
     `Hi,`,
     "",
-    `Your business admin access is ready for ${input.businessName}.`,
+    `Your MyExperiment.club business admin access is ready for ${input.businessName}.`,
     "",
     `Business name: ${input.businessName}`,
     `Site slug: ${input.siteSlug}`,
+    input.previewUrl ? `Preview your website: ${input.previewUrl}` : "",
     `Business admin login URL: ${input.loginUrl}`,
     `Admin email: ${input.adminEmail}`,
     `One-time access code: ${input.accessCode}`,
+    "",
+    "Next steps:",
+    "- Check your business details, logo and contact information.",
+    "- Add services, prices, staff, opening hours, policies and page content.",
+    "- Preview your public site before go-live.",
     "",
     "Keep this access code private. If it is exposed, request a reset immediately.",
     "Please keep an eye on your inbox and check junk/spam if future emails are not seen.",
     "",
     "If you need help, contact MyExperiment.club support.",
-  ].join("\n");
+  ].filter(Boolean).join("\n");
 
   const html = `<p>Hi,</p>
-<p>Your business admin access is ready for <strong>${escapeHtml(input.businessName)}</strong>.</p>
+<p>Your MyExperiment.club business admin access is ready for <strong>${escapeHtml(input.businessName)}</strong>.</p>
 <p><strong>Business name:</strong> ${escapeHtml(input.businessName)}<br/>
 <strong>Site slug:</strong> ${escapeHtml(input.siteSlug)}<br/>
+${input.previewUrl ? `<strong>Preview your website:</strong> <a href="${escapeHtml(input.previewUrl)}">${escapeHtml(input.previewUrl)}</a><br/>` : ""}
 <strong>Business admin login URL:</strong> <a href="${escapeHtml(input.loginUrl)}">${escapeHtml(input.loginUrl)}</a><br/>
 <strong>Admin email:</strong> ${escapeHtml(input.adminEmail)}<br/>
 <strong>One-time access code:</strong> ${escapeHtml(input.accessCode)}</p>
+<p><strong>Next steps:</strong></p>
+<ul>
+<li>Check your business details, logo and contact information.</li>
+<li>Add services, prices, staff, opening hours, policies and page content.</li>
+<li>Preview your public site before go-live.</li>
+</ul>
 <p>Keep this access code private. If it is exposed, request a reset immediately.</p>
 <p>Please keep an eye on your inbox and check junk/spam if future emails are not seen.</p>
 <p>If you need help, contact MyExperiment.club support.</p>`;

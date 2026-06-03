@@ -1014,3 +1014,10 @@ Window Cleaning is a supported industry offering using slug `window-cleaning`. I
 - Admins manage categories once, then assign services to categories using a dropdown rather than typing category names in each service card.
 - Browser-local legacy category strings are preserved and folded into the managed category list on read.
 - Expanded service cards now align service name/category, then base price, duration and buffer fields in clean rows.
+
+## 2026-06-03 Subscriber admin access onboarding
+- Paid-order fulfilment now follows: paid setup request -> platform admin creates clean subscriber site -> first tenant-scoped business-owner/admin access record is created -> onboarding email is attempted -> customer logs in at `/site-admin/[siteSlug]`.
+- Platform admin and subscriber admin remain separate auth scopes. Subscriber owners use `CustomerSiteAdminUser` credentials; they do not use platform-admin credentials.
+- Access codes are hashed in the database. The plaintext one-time code is returned only during generation/reset for temporary platform-admin handover and is also sent by fail-soft transactional email where configured.
+- Platform admin can resend/reset access details from `/admin/setup-requests` if the customer cannot find the email or the code needs rotating.
+- The site-admin onboarding checklist remains the first setup guide after login: business details, services/prices, staff, rota, policies, public preview and go-live readiness.

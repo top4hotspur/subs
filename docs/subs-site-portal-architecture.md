@@ -109,6 +109,7 @@ No per-customer DB or code export is required for this model.
 ## Business-owner access foundation (tenant-scoped)
 - Added first subscriber business-owner auth path using dedicated site-admin login:
   - `/site-admin/login`
+  - `/site-admin/[siteSlug]/login`
   - `/site-admin/[siteSlug]`
 - Session model is separated from platform admin:
   - `roleType=SITE_ADMIN`
@@ -117,6 +118,8 @@ No per-customer DB or code export is required for this model.
   - `/admin/*` requires platform-admin session only
   - `/site-admin/*` requires site-admin session only
 - Site-admin users can access only their own tenant slug/site; cross-tenant access is blocked.
+- Paid-order provisioning now creates the first tenant-scoped owner/admin access record when a clean subscriber site is created.
+- Access codes are hashed in `CustomerSiteAdminUser`; the one-time plaintext code is only returned to platform admin during generation/reset and sent via fail-soft transactional email.
 - Staff/customer auth is not included yet.
 
 ## Site-admin API expansion
