@@ -28,40 +28,40 @@ const GROUP_STYLE_BY_TITLE: Record<
   }
 > = {
   "Hair, Beauty & Wellness": {
-    activeTabClass: "border-cyan-300 bg-cyan-100 text-cyan-950 shadow-sm",
-    inactiveTabHoverClass: "hover:bg-cyan-50/80",
-    activeTabTextSubClass: "text-cyan-800",
-    cardClass: "bg-cyan-50/50",
-    cardBorderClass: "border-cyan-100",
-    cardAccentClass: "bg-cyan-300",
-    bulletClass: "text-cyan-950",
+    activeTabClass: "border-[#D8AEB4] bg-[#FCEAEA] text-[#5F2D35] shadow-sm",
+    inactiveTabHoverClass: "hover:bg-[#FCEAEA]",
+    activeTabTextSubClass: "text-[#7A3E46]",
+    cardClass: "bg-[#FCEAEA]",
+    cardBorderClass: "border-[#E8C8CC]",
+    cardAccentClass: "bg-[#9B5A64]",
+    bulletClass: "text-[#5F2D35]",
   },
   "Home Services": {
-    activeTabClass: "border-emerald-300 bg-emerald-100 text-emerald-950 shadow-sm",
-    inactiveTabHoverClass: "hover:bg-emerald-50/80",
-    activeTabTextSubClass: "text-emerald-800",
-    cardClass: "bg-emerald-50/50",
-    cardBorderClass: "border-emerald-100",
-    cardAccentClass: "bg-emerald-300",
-    bulletClass: "text-emerald-950",
+    activeTabClass: "border-[#B8D5C1] bg-[#E8F4EC] text-[#284B35] shadow-sm",
+    inactiveTabHoverClass: "hover:bg-[#E8F4EC]",
+    activeTabTextSubClass: "text-[#3F6F4E]",
+    cardClass: "bg-[#E8F4EC]",
+    cardBorderClass: "border-[#C7E0CF]",
+    cardAccentClass: "bg-[#5F8A6C]",
+    bulletClass: "text-[#284B35]",
   },
   Transport: {
-    activeTabClass: "border-amber-300 bg-amber-100 text-amber-950 shadow-sm",
-    inactiveTabHoverClass: "hover:bg-amber-50/80",
-    activeTabTextSubClass: "text-amber-800",
-    cardClass: "bg-amber-50/50",
-    cardBorderClass: "border-amber-100",
-    cardAccentClass: "bg-amber-300",
-    bulletClass: "text-amber-950",
+    activeTabClass: "border-[#E5CFA5] bg-[#FDF3E1] text-[#5C4320] shadow-sm",
+    inactiveTabHoverClass: "hover:bg-[#FDF3E1]",
+    activeTabTextSubClass: "text-[#7A5A2B]",
+    cardClass: "bg-[#FDF3E1]",
+    cardBorderClass: "border-[#ECD7B1]",
+    cardAccentClass: "bg-[#A67835]",
+    bulletClass: "text-[#5C4320]",
   },
   Learning: {
-    activeTabClass: "border-indigo-300 bg-indigo-100 text-indigo-950 shadow-sm",
-    inactiveTabHoverClass: "hover:bg-indigo-50/80",
-    activeTabTextSubClass: "text-indigo-800",
-    cardClass: "bg-indigo-50/50",
-    cardBorderClass: "border-indigo-100",
-    cardAccentClass: "bg-indigo-300",
-    bulletClass: "text-indigo-950",
+    activeTabClass: "border-[#C9CEE3] bg-[#ECEEF6] text-[#30384F] shadow-sm",
+    inactiveTabHoverClass: "hover:bg-[#ECEEF6]",
+    activeTabTextSubClass: "text-[#4E5876]",
+    cardClass: "bg-[#ECEEF6]",
+    cardBorderClass: "border-[#D2D7E8]",
+    cardAccentClass: "bg-[#66708F]",
+    bulletClass: "text-[#30384F]",
   },
 };
 
@@ -79,7 +79,7 @@ export function IndustryCategoryBrowser({ groups, templateMap }: IndustryCategor
               key={group.title}
               type="button"
               onClick={() => setActiveGroup(group.title)}
-              className={`rounded-xl border px-4 py-3 text-left transition-colors ${
+              className={`rounded-xl border px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 ${
                 active
                   ? style?.activeTabClass ?? "border-sky-700 bg-sky-700 text-white"
                   : `border-slate-300 bg-white text-slate-900 ${style?.inactiveTabHoverClass ?? "hover:bg-slate-50"}`
@@ -104,7 +104,7 @@ export function IndustryCategoryBrowser({ groups, templateMap }: IndustryCategor
               const style = GROUP_STYLE_BY_TITLE[group.title];
 
               return (
-                <article key={template.slug} className={`rounded-2xl border p-5 shadow-sm ${style?.cardClass ?? "bg-white"} ${style?.cardBorderClass ?? "border-slate-200"}`}>
+                <article key={template.slug} className={`rounded-2xl border p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${style?.cardClass ?? "bg-white"} ${style?.cardBorderClass ?? "border-slate-200"}`}>
                   <span className={`mb-3 block h-1.5 w-16 rounded-full ${style?.cardAccentClass ?? "bg-slate-400"}`} />
                   <h3 className="text-lg font-semibold text-slate-900">{template.name}</h3>
                   <p className="mt-2 text-sm text-slate-700">{template.marketingSummary}</p>

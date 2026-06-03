@@ -618,16 +618,18 @@ olePrice:<role> columns accepted
   - Built around how your business works stakeholder section is present.
 
 ## Homepage and industry sales polish smoke checks (2026-06-03)
-1. Open `/` and confirm the hero pricing helper reads exactly `Only £149 setup + £30/month.`
+1. Open `/` and confirm the hero pricing helper reads exactly `Only ?149 setup + ?30/month.`
 2. Confirm the value section heading reads `Fully managed, feature rich website to help grow your business`.
-3. Confirm business type category tabs/cards keep distinct colour coding but use softer pastel backgrounds, borders and accent bars.
-4. Confirm homepage `How it works` is a connected flow/timeline rather than plain tile cards.
-5. Confirm Step 3 reads `Place order`.
-6. Confirm the bottom CTA `View example demo` button is readable on the dark CTA panel.
-7. Confirm homepage hero CTAs still route: `Choose your business type` -> `#industries`, `View example demo` -> `#industries`, `Order now` -> `/setup/barbers`.
-8. Open `/barbers` and confirm `What happens after you subscribe?` uses a connected onboarding flow rather than static tiles.
-9. Confirm industry page CTA buttons still route to `/setup/barbers` and `/demo/barbers`.
-10. Check mobile widths and confirm the homepage flow and industry onboarding flow stack cleanly with visible connectors.
+3. Confirm business type category tabs/cards use the premium muted palette: Soft Blush for Hair/Beauty, Muted Sage for Home Services, Warm Sand for Transport, and Slate Lavender for Learning.
+4. Confirm selected category state is still obvious and Window Cleaning uses the Muted Sage Home Services treatment.
+5. Confirm homepage `How it works` is a connected flow/timeline rather than plain tile cards.
+6. Confirm Step 3 reads `Place order` and Step 5 reads `Customise and go live`.
+7. Confirm homepage `How it works` shows extra detail on hover/focus, and mobile/touch layout exposes the detail accessibly.
+8. Confirm the bottom CTA `View example demo` button is readable on the dark CTA panel.
+9. Confirm homepage hero CTAs still route: `Choose your business type` -> `#industries`, `View example demo` -> `#industries`, `Order now` -> `/setup/barbers`.
+10. Open `/barbers` and confirm `What happens after you subscribe?` uses a connected onboarding flow rather than static tiles.
+11. Confirm industry page CTA buttons still route to `/setup/barbers` and `/demo/barbers`.
+12. Check mobile widths and confirm the homepage flow and industry onboarding flow stack cleanly with visible connectors.
 
 ## Sales pipeline smoke checks (2026-05-30)
 - /admin/sales shows Download leads CSV template with required column headers.

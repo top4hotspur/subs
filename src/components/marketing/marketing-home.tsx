@@ -70,11 +70,26 @@ const trustPoints = [
 ];
 
 const homepageFlowSteps = [
-  "Choose your business type",
-  "View the demo",
-  "Place order",
-  "Your site is built",
-  "Customise the look and feel of your business and add services, pricing, staff etc",
+  {
+    title: "Choose your business type",
+    detail: "Pick the industry closest to your business so the demo and setup flow match how you work.",
+  },
+  {
+    title: "View the demo",
+    detail: "Explore the customer site, booking journey, staff view and admin controls before you order.",
+  },
+  {
+    title: "Place order",
+    detail: "Choose your setup details, domain option and subscription so we can prepare your site.",
+  },
+  {
+    title: "Your site is built",
+    detail: "We create your clean subscriber site and admin area ready for your real business details.",
+  },
+  {
+    title: "Customise and go live",
+    detail: "Add services, prices, staff, opening hours, policies, vouchers and content from your admin area.",
+  },
 ];
 
 const faqs = [
@@ -254,17 +269,23 @@ export function MarketingHome() {
         <SiteSection id="how-it-works" title="How it works">
           <ol className="relative grid gap-4 md:grid-cols-5 md:gap-0">
             {homepageFlowSteps.map((step, index) => (
-              <li key={step} className="relative flex md:block">
+              <li key={step.title} className="group relative flex md:block">
                 {index > 0 ? (
                   <span className="absolute left-5 top-0 h-full w-px bg-sky-200 md:left-0 md:top-8 md:h-px md:w-full md:-translate-x-1/2" aria-hidden="true" />
                 ) : null}
                 <div className="relative z-10 flex gap-3 md:flex-col md:items-center md:px-2">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-sky-200 bg-white text-sm font-bold text-sky-700 shadow-sm">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-sky-200 bg-white text-sm font-bold text-sky-700 shadow-sm transition-colors group-hover:border-sky-400 group-hover:bg-sky-50 group-focus-within:border-sky-400 group-focus-within:bg-sky-50">
                     {index + 1}
                   </span>
-                  <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm md:min-h-32 md:text-center">
+                  <div
+                    tabIndex={0}
+                    className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-md focus-visible:-translate-y-0.5 focus-visible:border-sky-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200 md:min-h-44 md:text-center"
+                  >
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Step {index + 1}</p>
-                    <p className="mt-2 text-sm font-semibold text-slate-950">{step}</p>
+                    <p className="mt-2 text-sm font-semibold text-slate-950">{step.title}</p>
+                    <p className="mt-2 text-sm text-slate-600 transition-opacity duration-200 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
+                      {step.detail}
+                    </p>
                   </div>
                 </div>
               </li>

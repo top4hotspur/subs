@@ -971,10 +971,10 @@ Future payment-provider note: subscriber business payment settings must eventual
 - Business admins can view a first-pass Customer CRM in `/site-admin/[siteSlug]`, including account customers, guest booking customers, booking counts/history, marketing consent and customer contact enquiries.
 
 ## 2026-06-03 homepage and sales page visual polish
-- Homepage hero pricing helper now reads only `Only £149 setup + £30/month.`
+- Homepage hero pricing helper now reads only `Only ?149 setup + ?30/month.`
 - Homepage value section heading now reads `Fully managed, feature rich website to help grow your business`.
-- Business type category colours remain distinct but use softer pastel selected states, borders, backgrounds and accent bars.
-- Homepage `How it works` now uses a connected stepped flow/timeline. Step 3 is `Place order`.
+- Business type category colours remain distinct but now use a premium muted palette: Soft Blush, Muted Sage, Warm Sand and Slate Lavender.
+- Homepage `How it works` now uses a connected stepped flow/timeline with extra step detail revealed on hover/focus and visible on mobile. Step 3 is `Place order`; Step 5 is `Customise and go live`.
 - Dark CTA panels render the secondary `View example demo` action with the same readable blue treatment as the primary action.
 - Industry sales pages keep `What happens after you subscribe?` and now show the four onboarding steps as a visual process flow instead of static tiles.
 
