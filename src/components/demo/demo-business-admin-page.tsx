@@ -80,21 +80,41 @@ function CollapsibleSection({ title, subtitle, defaultOpen = false, children }: 
 }
 
 export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) {
-  const adminSections = [
-    { id: "appointments", label: "Bookings" },
-    { id: "business-settings", label: "Business settings" },
-    { id: "site-design", label: "Site appearance" },
-    { id: "services-prices", label: "Services and prices" },
-    { id: "staff-positions", label: "Staff positions" },
-    { id: "import-export", label: "Import/export setup data" },
-    { id: "staff", label: "Staff" },
-    { id: "rota-breaks", label: "Rota and breaks" },
-    { id: "closures", label: "Ad hoc closures" },
-    { id: "gift-vouchers", label: "Gift vouchers" },
-    { id: "page-content", label: "Page visibility/content" },
-    { id: "policies", label: "Policies" },
-    { id: "payments", label: "Payments/sales" },
-    { id: "super-user", label: "Super-user permissions" },
+  const adminSectionGroups = [
+    {
+      title: "Website & content",
+      sections: [
+        { id: "site-design", label: "Site appearance" },
+        { id: "page-content", label: "Page visibility/content" },
+        { id: "policies", label: "Policies" },
+        { id: "gift-vouchers", label: "Gift vouchers" },
+      ],
+    },
+    {
+      title: "Business setup",
+      sections: [
+        { id: "business-settings", label: "Business settings" },
+        { id: "services-prices", label: "Services and prices" },
+        { id: "payments", label: "Payments/sales" },
+        { id: "import-export", label: "Import/export setup data" },
+      ],
+    },
+    {
+      title: "Bookings & availability",
+      sections: [
+        { id: "appointments", label: "Bookings" },
+        { id: "rota-breaks", label: "Rota and breaks" },
+        { id: "closures", label: "Ad hoc closures" },
+      ],
+    },
+    {
+      title: "Staff & permissions",
+      sections: [
+        { id: "staff", label: "Staff" },
+        { id: "staff-positions", label: "Staff positions" },
+        { id: "super-user", label: "Super-user permissions" },
+      ],
+    },
   ] as const;
 
   const initialSettings = useMemo(() => getLocalCustomerSiteSettings(template.slug, template), [template]);
@@ -115,9 +135,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
   const [newRoleLabel, setNewRoleLabel] = useState("");
   const [expandedServiceIds, setExpandedServiceIds] = useState<string[]>([]);
   const [expandedStaffIds, setExpandedStaffIds] = useState<string[]>([]);
-  const [selectedSection, setSelectedSection] = useState<
-    (typeof adminSections)[number]["id"]
-  >("appointments");
+  const [selectedSection, setSelectedSection] = useState<string>("appointments");
   const [csvPreview, setCsvPreview] = useState<{
     type: "services" | "staff";
     rows: string[];
@@ -199,7 +217,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
     const id = makeServiceId();
     setSettings((current) => ({
       ...current,
-      services: [...current.services, { id, name: "New service", description: "", basePriceGbp: 0, durationMinutes: 45, bufferAfterMinutes: 0, bookable: true, requiresQuote: false, active: true }],
+      services: [...current.services, { id, name: "New service", description: "", basePriceGbp: 0, durationMinutes: 45, bufferAfterMinutes: 0, bookable: true, requiresQuote: false, active: true, category: "Services" }],
     }));
     setExpandedServiceIds((current) => [...current, id]);
   }
@@ -290,6 +308,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
           id: `csv-service-${index + 1}`,
           name: row.serviceName.trim(),
           description: row.description ?? "",
+          category: (row.category ?? "").trim() || "Services",
           basePriceGbp:
             row.basePrice && Number.isFinite(Number(row.basePrice))
               ? Number(row.basePrice)
@@ -358,24 +377,33 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
         <p className="mt-1 text-xs text-slate-600">
           Select a section tile to open its settings panel.
         </p>
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          {adminSections.map((section) => {
-            const active = selectedSection === section.id;
-            return (
-              <button
-                key={section.id}
-                type="button"
-                className={`rounded-lg border px-3 py-2 text-left text-xs font-semibold transition-colors ${
-                  active
-                    ? "border-slate-900 bg-slate-900 text-white"
-                    : "border-slate-300 bg-white text-slate-900 hover:bg-slate-100"
-                }`}
-                onClick={() => setSelectedSection(section.id)}
-              >
-                {section.label}
-              </button>
-            );
-          })}
+        <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-4">
+          {adminSectionGroups.map((group) => (
+            <div key={group.title} className="rounded-xl border border-slate-200 bg-slate-50 p-2">
+              <p className="px-1 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                {group.title}
+              </p>
+              <div className="mt-2 grid gap-2">
+                {group.sections.map((section) => {
+                  const active = selectedSection === section.id;
+                  return (
+                    <button
+                      key={section.id}
+                      type="button"
+                      className={`rounded-lg border px-3 py-2 text-left text-xs font-semibold transition-colors ${
+                        active
+                          ? "border-slate-900 bg-slate-900 text-white"
+                          : "border-slate-300 bg-white text-slate-900 hover:bg-slate-100"
+                      }`}
+                      onClick={() => setSelectedSection(section.id)}
+                    >
+                      {section.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -516,20 +544,22 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
             <select
               className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
               value={appearanceMode}
-              onChange={(event) =>
+              onChange={(event) => {
+                const appearance = mapAppearanceToTheme(
+                  event.target.value as SiteAppearanceMode,
+                );
                 updateSettingsAndPersist(
                   (current) => ({
                     ...current,
                     branding: {
                       ...current.branding,
-                      ...mapAppearanceToTheme(
-                        event.target.value as SiteAppearanceMode,
-                      ),
+                      visualTemplateId: appearance.visualThemeId,
+                      colourSchemeId: appearance.colourPaletteId,
                     },
                   }),
                   "Site appearance updated for this demo site.",
-                )
-              }
+                );
+              }}
             >
               <option value="LIGHT">Light</option>
               <option value="DARK">Dark</option>
@@ -585,7 +615,10 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="text-sm font-semibold text-slate-900">{service.name}</p>
-                    <p className="text-xs text-slate-600">{getPublicServicePriceLabel(service, currency) || "Quote required"} - {service.durationMinutes ?? 45} min</p>
+                    <p className="text-xs text-slate-600">
+                      {service.category ? `${service.category} - ` : ""}
+                      {getPublicServicePriceLabel(service, currency) || "Quote required"} - {service.durationMinutes ?? 45} min
+                    </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button type="button" className="text-xs font-semibold text-sky-700" onClick={() => toggleServiceExpanded(service.id)}>{expanded ? "Collapse" : "Edit"}</button>
@@ -593,28 +626,31 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                   </div>
                 </div>
                 {expanded ? (
-                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                    <label className="text-xs font-semibold text-slate-700">Service name
+                  <div className="mt-3 grid gap-2 sm:grid-cols-4">
+                    <label className="text-xs font-semibold text-slate-700 sm:col-span-3">Service name
                       <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={service.name} onChange={(event) => setSettings((current) => { const next=[...current.services]; next[index]={...next[index],name:event.target.value}; return {...current,services:next};})} />
                     </label>
+                    <label className="text-xs font-semibold text-slate-700">Category
+                      <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" placeholder="Services" value={service.category ?? ""} onChange={(event) => setSettings((current) => { const next=[...current.services]; next[index]={...next[index],category:event.target.value}; return {...current,services:next};})} />
+                    </label>
                     <label className="text-xs font-semibold text-slate-700">Base price
-                      <input type="number" min={0} step="1" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={service.basePriceGbp ?? ""} onChange={(event) => setSettings((current) => { const next=[...current.services]; const val=event.target.value.trim(); next[index]={...next[index],basePriceGbp:val?Number(val):undefined}; return {...current,services:next};})} />
+                      <input type="number" min={0} step="1" className="mt-1 w-full max-w-32 rounded-md border border-slate-300 px-2 py-1 text-sm" value={service.basePriceGbp ?? ""} onChange={(event) => setSettings((current) => { const next=[...current.services]; const val=event.target.value.trim(); next[index]={...next[index],basePriceGbp:val?Number(val):undefined}; return {...current,services:next};})} />
                     </label>
                     <label className="text-xs font-semibold text-slate-700">Duration (minutes)
-                      <input type="number" min={10} step="5" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={service.durationMinutes ?? 45} onChange={(event) => setSettings((current)=>{const next=[...current.services]; next[index]={...next[index],durationMinutes:Number(event.target.value||45)}; return {...current,services:next};})} />
+                      <input type="number" min={10} step="5" className="mt-1 w-full max-w-32 rounded-md border border-slate-300 px-2 py-1 text-sm" value={service.durationMinutes ?? 45} onChange={(event) => setSettings((current)=>{const next=[...current.services]; next[index]={...next[index],durationMinutes:Number(event.target.value||45)}; return {...current,services:next};})} />
                     </label>
                     <label className="text-xs font-semibold text-slate-700">Buffer after service (minutes)
-                      <input type="number" min={0} step="5" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={service.bufferAfterMinutes ?? 0} onChange={(event) => setSettings((current)=>{const next=[...current.services]; next[index]={...next[index],bufferAfterMinutes:Number(event.target.value||0)}; return {...current,services:next};})} />
+                      <input type="number" min={0} step="5" className="mt-1 w-full max-w-32 rounded-md border border-slate-300 px-2 py-1 text-sm" value={service.bufferAfterMinutes ?? 0} onChange={(event) => setSettings((current)=>{const next=[...current.services]; next[index]={...next[index],bufferAfterMinutes:Number(event.target.value||0)}; return {...current,services:next};})} />
                     </label>
-                    <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Description
+                    <label className="text-xs font-semibold text-slate-700 sm:col-span-4">Description
                       <textarea className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={service.description} onChange={(event) => setSettings((current)=>{const next=[...current.services]; next[index]={...next[index],description:event.target.value}; return {...current,services:next};})} />
                     </label>
-                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-4">
                       <input type="checkbox" checked={Boolean(service.recurringEnabled)} disabled={!settings.paymentSettings.recurringPaymentsEnabled} onChange={(event) => setSettings((current)=>{const next=[...current.services]; next[index]={...next[index],recurringEnabled:event.target.checked}; return {...current,services:next};})} />
                       Allow this service to be sold as recurring
                     </label>
                     {service.recurringEnabled && settings.paymentSettings.recurringPaymentsEnabled ? (
-                      <div className="sm:col-span-2">
+                      <div className="sm:col-span-4">
                         <p className="text-xs font-semibold text-slate-700">Recurring intervals</p>
                         <div className="mt-1 flex flex-wrap gap-3">
                           {(["WEEKLY", "MONTHLY", "ANNUALLY"] as const).map((interval) => (
@@ -639,25 +675,25 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                         </div>
                       </div>
                     ) : null}
-                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-4">
                       <input type="checkbox" checked={Boolean(service.blockBookingEnabled)} disabled={!settings.appointmentSettings.customerBlockBookingsEnabled} onChange={(event) => setSettings((current)=>{const next=[...current.services]; next[index]={...next[index],blockBookingEnabled:event.target.checked}; return {...current,services:next};})} />
                       Allow block bookings for this service
                     </label>
                     {service.blockBookingEnabled && settings.appointmentSettings.customerBlockBookingsEnabled ? (
-                      <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
+                      <label className="text-xs font-semibold text-slate-700 sm:col-span-4">
                         Suggested block counts (comma separated)
                         <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={(service.blockBookingSuggestedCounts ?? []).join(", ")} placeholder="5, 10, 12" onChange={(event)=>setSettings((current)=>{const next=[...current.services]; next[index]={...next[index],blockBookingSuggestedCounts:event.target.value.split(',').map((v)=>Number(v.trim())).filter((n)=>Number.isFinite(n)&&n>=2&&n<=52)}; return {...current,services:next};})} />
                       </label>
                     ) : null}
                     {activeRoles.length > 0 ? (
-                      <div className="sm:col-span-2 rounded-md border border-slate-200 bg-slate-50 p-2">
+                      <div className="sm:col-span-4 rounded-md border border-slate-200 bg-slate-50 p-2">
                         <p className="text-xs font-semibold text-slate-700">Role price overrides</p>
                         <div className="mt-2 grid gap-2 sm:grid-cols-2">
                           {activeRoles.map((role) => {
                             const currentOverride = service.rolePriceOverrides?.find((item) => item.roleLabel === role.label);
                             return (
                               <label key={role.id} className="text-xs text-slate-700">{role.label}
-                                <input type="number" min={0} step="1" className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={currentOverride?.priceGbp ?? ""} placeholder="Use base price" onChange={(event)=>{const value=event.target.value.trim(); setSettings((current)=>{const next=[...current.services]; const overrides=[...(next[index].rolePriceOverrides??[])].filter((item)=>item.roleLabel!==role.label); if(value) overrides.push({roleId:role.id,roleLabel:role.label,priceGbp:Number(value)}); next[index]={...next[index],rolePriceOverrides:overrides.length?overrides:undefined}; return {...current,services:next};});}} />
+                                <input type="number" min={0} step="1" className="mt-1 w-full max-w-32 rounded-md border border-slate-300 px-2 py-1 text-sm" value={currentOverride?.priceGbp ?? ""} placeholder="Use base price" onChange={(event)=>{const value=event.target.value.trim(); setSettings((current)=>{const next=[...current.services]; const overrides=[...(next[index].rolePriceOverrides??[])].filter((item)=>item.roleLabel!==role.label); if(value) overrides.push({roleId:role.id,roleLabel:role.label,priceGbp:Number(value)}); next[index]={...next[index],rolePriceOverrides:overrides.length?overrides:undefined}; return {...current,services:next};});}} />
                               </label>
                             );
                           })}
@@ -690,6 +726,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                       "basePrice",
                       "durationMinutes",
                       "bufferAfterMinutes",
+                      "category",
                       "description",
                       ...roleHeaders,
                     ];
@@ -698,6 +735,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                       "25",
                       "45",
                       "0",
+                      "Services",
                       "Short description",
                       ...roleHeaders.map(() => ""),
                     ];
@@ -765,8 +803,8 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
             {csvPreview.type === "services" ? (
               <p className="mt-2 text-slate-600">
                 Expected service columns: serviceName, basePrice, durationMinutes,
-                bufferAfterMinutes, description, plus optional rolePrice:&lt;role label&gt;
-                columns.
+                bufferAfterMinutes, category, description, plus optional
+                rolePrice:&lt;role label&gt; columns.
               </p>
             ) : null}
           </div>
@@ -1813,21 +1851,34 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
 
         <label className="flex items-center gap-2 text-sm text-slate-700">
           <input type="checkbox" checked={settings.paymentSettings.allowInStorePaymentRecording} onChange={(event) => setSettings((current) => ({ ...current, paymentSettings: { ...current.paymentSettings, allowInStorePaymentRecording: event.target.checked } }))} />
-          Allow in-store payment recording
+          Allow staff to record in-store/manual sales
         </label>
+        <p className="mt-1 text-xs text-slate-600">
+          When enabled, staff can record cash, card-terminal or other manual payments
+          in Staff View and assign the sale to themselves for finance and staff
+          performance reporting. This does not process payments.
+        </p>
         <label className="mt-2 flex items-center gap-2 text-sm text-slate-700">
           <input type="checkbox" checked={Boolean(settings.paymentSettings.recurringPaymentsEnabled)} onChange={(event) => setSettings((current) => ({ ...current, paymentSettings: { ...current.paymentSettings, recurringPaymentsEnabled: event.target.checked } }))} />
           Enable recurring services/payments options
         </label>
         <div className="mt-2 rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-600">
-          Card/cash/manual payment recording preferences can be configured here for local mock
-          setup.
+          Card, cash and manual payment preferences can be configured here for this
+          demo setup. Live provider processing is not connected in this view.
+          <a
+            href={`/demo/${template.slug}/staff`}
+            target="_blank"
+            rel="noreferrer"
+            className="ml-1 font-semibold text-sky-700 underline-offset-2 hover:underline"
+          >
+            Open Staff View
+          </a>
         </div>
         <div className="mt-2 rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-600">
           <p className="font-semibold text-slate-800">Recurring payment issues</p>
           <p className="mt-1">No failed recurring payments to review.</p>
         </div>
-        <p className="mt-2 text-xs text-slate-600">Shows a staff tool for recording cash/card payments taken in store. This does not process payments, but allows for accurate finance reporting.</p>
+        <p className="mt-2 text-xs text-slate-600">Shows a staff tool for recording cash, card-terminal or other manual payments taken in store. This does not process payments, but allows for accurate finance and staff performance reporting.</p>
       </CollapsibleSection>
       ) : null}
 

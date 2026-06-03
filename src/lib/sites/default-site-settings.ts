@@ -104,6 +104,7 @@ type DemoServiceDefault = {
   durationMinutes?: number;
   requiresQuote?: boolean;
   description?: string;
+  category?: string;
 };
 
 const DEMO_SERVICE_DEFAULTS: Record<string, Record<string, DemoServiceDefault>> = {
@@ -123,22 +124,22 @@ const DEMO_SERVICE_DEFAULTS: Record<string, Record<string, DemoServiceDefault>> 
     "day-trip-transport": { requiresQuote: true, durationMinutes: 240, description: "Day trip transport quoted by route and group size." },
   },
   barbers: {
-    "gents-haircut": { basePriceGbp: 18, durationMinutes: 30, description: "Skin fade or classic cut." },
-    "student-cut": { basePriceGbp: 16, durationMinutes: 25, description: "Student cut with valid ID." },
-    "childrens-cut": { basePriceGbp: 12, durationMinutes: 20, description: "Kids cut for younger clients." },
-    "clipper-cut": { basePriceGbp: 14, durationMinutes: 20, description: "Quick clipper cut." },
-    "hot-towel-shave": { basePriceGbp: 20, durationMinutes: 30, description: "Traditional hot towel shave." },
-    "head-wet-shave": { basePriceGbp: 18, durationMinutes: 25, description: "Head wet shave and finish." },
-    "beard-trim-shape": { basePriceGbp: 10, durationMinutes: 15, description: "Beard trim and shaping." },
-    "haircut-beard-trim": { basePriceGbp: 28, durationMinutes: 45, description: "Haircut with beard trim." },
-    "facial-mask-hot-towel": { basePriceGbp: 24, durationMinutes: 30, description: "Face mask and hot towel treatment." },
-    "deluxe-package": { requiresQuote: true, durationMinutes: 60, description: "Wedding or group booking package." },
+    "gents-haircut": { basePriceGbp: 18, durationMinutes: 30, description: "Skin fade or classic cut.", category: "Cuts" },
+    "student-cut": { basePriceGbp: 16, durationMinutes: 25, description: "Student cut with valid ID.", category: "Cuts" },
+    "childrens-cut": { basePriceGbp: 12, durationMinutes: 20, description: "Kids cut for younger clients.", category: "Cuts" },
+    "clipper-cut": { basePriceGbp: 14, durationMinutes: 20, description: "Quick clipper cut.", category: "Cuts" },
+    "hot-towel-shave": { basePriceGbp: 20, durationMinutes: 30, description: "Traditional hot towel shave.", category: "Shaves" },
+    "head-wet-shave": { basePriceGbp: 18, durationMinutes: 25, description: "Head wet shave and finish.", category: "Shaves" },
+    "beard-trim-shape": { basePriceGbp: 10, durationMinutes: 15, description: "Beard trim and shaping.", category: "Beard & Grooming" },
+    "haircut-beard-trim": { basePriceGbp: 28, durationMinutes: 45, description: "Haircut with beard trim.", category: "Beard & Grooming" },
+    "facial-mask-hot-towel": { basePriceGbp: 24, durationMinutes: 30, description: "Face mask and hot towel treatment.", category: "Treatments" },
+    "deluxe-package": { requiresQuote: true, durationMinutes: 60, description: "Wedding or group booking package.", category: "Packages" },
   },
   hairdressers: {
-    cut: { basePriceGbp: 35, durationMinutes: 45, description: "Wash, cut and blow dry." },
-    color: { basePriceGbp: 75, durationMinutes: 120, description: "Full colour and highlights appointment." },
-    balayage: { basePriceGbp: 95, durationMinutes: 150, description: "Balayage, toning and finish." },
-    event: { requiresQuote: true, durationMinutes: 90, description: "Bridal and event styling consultation." },
+    cut: { basePriceGbp: 35, durationMinutes: 45, description: "Wash, cut and blow dry.", category: "Cuts" },
+    color: { basePriceGbp: 75, durationMinutes: 120, description: "Full colour and highlights appointment.", category: "Colour" },
+    balayage: { basePriceGbp: 95, durationMinutes: 150, description: "Balayage, toning and finish.", category: "Colour" },
+    event: { requiresQuote: true, durationMinutes: 90, description: "Bridal and event styling consultation.", category: "Styling" },
   },
   beauticians: {
     "facial-treatment": { basePriceGbp: 45, durationMinutes: 60, description: "Relaxing facial treatment." },
@@ -230,7 +231,7 @@ function enrichDemoService(
     blockBookingEnabled: false,
     blockBookingSuggestedCounts: [5, 10],
     staffPriceOverrides: [],
-    category,
+    category: defaults?.category ?? category,
     bookable: true,
     requiresQuote,
     active: true,

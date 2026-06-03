@@ -87,6 +87,7 @@ function normalizeSettings(settings: CustomerSiteSettings): CustomerSiteSettings
         durationMinutes: service.durationMinutes ?? defaults.durationMinutes,
         priceLabel: requiresQuote ? "Quote required" : service.priceLabel,
         requiresQuote,
+        category: service.category ?? defaults.category,
       };
     }),
     pageVisibility: {

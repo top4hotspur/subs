@@ -1952,8 +1952,13 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     }))
                   }
                 />
-                Allow in-store payment recording
+                Allow staff to record in-store/manual sales
               </label>
+              <p className="mt-1 text-xs text-slate-600">
+                When enabled, staff can record cash, card-terminal or other manual
+                payments in Staff View and assign the sale to themselves for finance
+                and staff performance reporting. This does not process payments.
+              </p>
               <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">
                 <input
                   type="checkbox"
