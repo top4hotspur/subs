@@ -41,6 +41,7 @@ export type SiteAdminCrmCustomer = {
   phone: string | null;
   marketingOptIn: boolean;
   marketingOptInAt: string | null;
+  crmNotes: string | null;
   accountCreated: boolean;
   totalBookings: number;
   completedBookings: number;

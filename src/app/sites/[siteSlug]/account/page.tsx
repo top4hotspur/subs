@@ -50,7 +50,7 @@ export default async function CustomerAccountPage({ params }: AccountPageProps) 
       tenantSiteId: site.tenantSite.id,
       OR: [
         { customerSiteCustomerId: customer.id },
-        { customerEmail: { equals: customer.email, mode: "insensitive" } },
+        { customerEmail: customer.email },
       ],
     },
     orderBy: [{ preferredDate: "asc" }, { preferredTime: "asc" }, { createdAt: "desc" }],

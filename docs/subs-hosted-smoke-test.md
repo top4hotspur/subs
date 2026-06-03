@@ -1,4 +1,4 @@
-﻿# Subs Hosted Smoke Test (Manual)
+# Subs Hosted Smoke Test (Manual)
 
 Run these checks on the hosted environment after deployment.
 
@@ -458,9 +458,9 @@ olePrice:<role> columns accepted
 
 ## Hosted smoke: setup order/payment clarity
 1. Open `/setup/barbers` and confirm order summary includes:
-   - Website setup: Â£149 one-time
-   - Monthly subscription: Â£30/month
-   - Domain service: Â£49 only when we register/manage a new domain
+   - Website setup: £149 one-time
+   - Monthly subscription: £30/month
+   - Domain service: £49 only when we register/manage a new domain
 2. Confirm setup copy states payment/subscription setup is confirmed after request submission during onboarding.
 3. In Domain option section, confirm choices are:
    - I already own a domain
@@ -799,7 +799,7 @@ Notes:
    - service area field is not shown in manual add-lead form
    - industry labels are human-friendly
    - provider pricing table is visible
-8. Confirm `Booksy` exists with estimate `Â£40`.
+8. Confirm `Booksy` exists with estimate `£40`.
 9. Edit a provider row and save; confirm updated value persists after reload.
 10. Add a lead with provider `Booksy` and blank estimate; confirm estimate auto-fills.
 11. Override estimate manually; confirm manual value is retained.
@@ -1339,18 +1339,19 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
 2. Open `Customer login` / `/sites/[siteSlug]/account/register`.
 3. Register with the same email address and leave marketing consent unchecked.
 4. Confirm the guest booking appears in the account dashboard under upcoming, past or cancelled bookings as appropriate.
-5. Create another booking while logged in and confirm the success prompt says the booking has been added to the account.
-6. Toggle the account marketing preference on and off, then refresh and confirm it persists.
-7. Confirm the customer account shows the Special offers section with `No offers available right now.`
-8. Open `/site-admin/[siteSlug]` and select Customer CRM.
-9. Confirm the customer appears with email, phone, marketing consent, total bookings, completed booking count, last booking and next booking where data exists.
-10. Select the customer and confirm booking history rows are visible with service, staff, date/time, status, payment status and booking detail link.
-11. From the account or booking detail page, click Contact business.
-12. Submit a structured contact form with purpose, name, email, phone and message.
-13. Confirm the form says the message was sent to the business.
-14. Return to `/site-admin/[siteSlug]` > Customer CRM and confirm the contact enquiry appears.
-15. Confirm no cross-tenant bookings, customer records or enquiries are visible when using a different site slug/admin login.
-16. Confirm no bulk customer marketing emails are sent from this CRM foundation.
+5. Log out and back in with the same email/access code, then confirm the previously guest booking still appears because it has been linked to the account.
+6. Create another booking while logged in and confirm the success prompt says the booking has been added to the account.
+7. Toggle the account marketing preference on and off, then refresh and confirm it persists.
+8. Confirm the customer account shows the Special offers section with `No offers available right now.`
+9. Open `/site-admin/[siteSlug]` and select Customer CRM.
+10. Confirm the customer appears with email, phone, marketing consent, total bookings, completed booking count, last booking and next booking where data exists.
+11. Select the customer and confirm booking history rows are visible with service, staff, date/time, status, payment status and booking detail link.
+12. From the account, booking detail page or payment return page, click Contact business.
+13. Submit a structured contact form with purpose, name, email, phone and message.
+14. Confirm the form says the message was sent to the business.
+15. Return to `/site-admin/[siteSlug]` > Customer CRM and confirm the contact enquiry appears.
+16. Confirm no cross-tenant bookings, customer records or enquiries are visible when using a different site slug/admin login.
+17. Confirm no bulk customer marketing emails are sent from this CRM foundation.
 
 ## 2026-06-03 hosted smoke checks: custom-domain tenant routing
 

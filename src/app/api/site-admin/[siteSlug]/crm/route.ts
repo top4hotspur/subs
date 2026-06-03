@@ -61,6 +61,7 @@ export async function GET(
       phone: string | null;
       marketingOptIn: boolean;
       marketingOptInAt: string | null;
+      crmNotes: string | null;
       accountCreated: boolean;
       totalBookings: number;
       completedBookings: number;
@@ -87,6 +88,7 @@ export async function GET(
         phone: customer.phone,
         marketingOptIn: customer.marketingOptIn,
         marketingOptInAt: customer.marketingOptInAt?.toISOString() ?? null,
+        crmNotes: customer.crmNotes,
         accountCreated: true,
         totalBookings: 0,
         completedBookings: 0,
@@ -107,6 +109,7 @@ export async function GET(
         phone: booking.customerPhone,
         marketingOptIn: false,
         marketingOptInAt: null,
+        crmNotes: null,
         accountCreated: false,
         totalBookings: 0,
         completedBookings: 0,

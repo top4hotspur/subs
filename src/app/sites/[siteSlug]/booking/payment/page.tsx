@@ -74,6 +74,9 @@ export default async function BookingPaymentReturnPage({
         publicBasePath,
       })
     : null;
+  const contactHref = booking
+    ? `${buildPublicSitePath(publicBasePath, "contact")}?purpose=${encodeURIComponent("Payment question")}&name=${encodeURIComponent(booking.customerName)}&email=${encodeURIComponent(booking.customerEmail ?? "")}&phone=${encodeURIComponent(booking.customerPhone ?? "")}&bookingId=${encodeURIComponent(booking.id)}`
+    : buildPublicSitePath(publicBasePath, "contact");
   const panelClass = copy.tone === "success"
     ? "border-emerald-200 bg-emerald-50 text-emerald-950"
     : copy.tone === "warning"
@@ -114,7 +117,7 @@ export default async function BookingPaymentReturnPage({
             Back to website
           </Link>
           <Link
-            href={buildPublicSitePath(publicBasePath, "contact")}
+            href={contactHref}
             className="inline-flex rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900"
           >
             Contact business

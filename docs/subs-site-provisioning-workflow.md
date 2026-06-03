@@ -451,7 +451,7 @@ Still local/mock in current product:
 
 - Clean provisioned tenant sites can now support first-pass customer accounts without copying demo customers or bookings.
 - Customer records are stored in `CustomerSiteCustomer` and scoped by `tenantSiteId` plus email uniqueness within that tenant.
-- New bookings created while a customer is logged in store `customerSiteCustomerId`; existing guest bookings remain guest bookings unless a later account-linking pass is implemented.
+- New bookings created while a customer is logged in store `customerSiteCustomerId`; when a customer registers/logs in, existing guest bookings for the same tenant and normalised email are linked to that customer account where safe.
 - `/sites/[siteSlug]/account` is the customer dashboard for tenant-linked bookings. It is separate from platform admin, business admin, and staff access.
 - Business owners manage staff access and permissions from `/site-admin/[siteSlug]` in Staff setup.
 - Staff permissions are stored on the staff member record and are enforced by `/site-staff/[siteSlug]` plus staff booking action APIs.
@@ -513,7 +513,7 @@ Final custom-domain rendering remains the next hosting/routing milestone: custom
 
 ## Customer CRM foundation after provisioning
 - Provisioned tenant sites now include a customer account/CRM foundation once public bookings are enabled.
-- Guest bookings remain allowed, but when a customer later registers/logs in with the same email, tenant-matched guest bookings are visible in their account dashboard.
+- Guest bookings remain allowed, but when a customer later registers/logs in with the same email, tenant-matched guest bookings are linked to the account and visible in their account dashboard.
 - Marketing consent is stored per `CustomerSiteCustomer` and defaults to opted out. It is not global across MyExperiment.club or other tenant sites.
 - Tenant-scoped customer contact enquiries are stored separately from platform sales/contact enquiries.
 - Business owners can review customer booking history and contact enquiries in `/site-admin/[siteSlug]` under Customer CRM.

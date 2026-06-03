@@ -893,7 +893,7 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Customers can register with first name, last name, email, phone, and a private access code. The access code is hashed before storage.
 - Customer login is site-specific and uses a signed HTTP-only session cookie scoped to `/sites`.
 - Guest booking remains available. A logged-in customer's booking form is prefilled from their account, and successful bookings are linked to that tenant customer account.
-- Customer account dashboards show only bookings linked to that tenant/customer account, grouped into upcoming, past, and cancelled bookings.
+- Customer account dashboards show bookings linked to that tenant/customer account plus safe same-tenant guest bookings matched by normalised email, grouped into upcoming, past, and cancelled bookings.
 - Secure single-booking lookup links remain available from booking emails and continue to work independently of customer accounts.
 - Registration and login errors are intentionally generic enough to avoid exposing whether an email already has an account on a tenant site.
 - Public customer account links now point to `/sites/[siteSlug]/account` instead of a coming-soon placeholder.
@@ -963,7 +963,7 @@ Future payment-provider note: subscriber business payment settings must eventual
 ## 2026-06-03 customer CRM account foundation
 - Public booking confirmation now encourages guest customers to create an account using the same email address, or log in, while still allowing them to continue without an account.
 - Logged-in booking flows confirm that the booking has been added to the customer account.
-- Customer account dashboards now show tenant bookings linked to the account plus guest bookings for the same tenant with the same verified/login email address. Matching remains tenant-scoped and does not cross businesses.
+- Customer account dashboards now show tenant bookings linked to the account plus guest bookings for the same tenant with the same verified/login email address. Matching remains tenant-scoped, and register/login actively links safe matching guest bookings to the account.
 - Customer registration captures optional marketing consent with an unchecked opt-in. Customers can update their preference from their account dashboard.
 - Customer account includes a Special offers placeholder. No customer marketing automation or bulk sends are enabled yet.
 - Subscriber site contact now uses a structured tenant-scoped form for booking changes, cancellations, payment questions, general enquiries, complaints/problems and other messages.

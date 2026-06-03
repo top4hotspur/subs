@@ -29,6 +29,34 @@ function serializeCustomer(record: {
   };
 }
 
+async function linkGuestBookingsToCustomerByEmail(
+  tenantSiteId: string,
+  customerId: string,
+  email: string,
+): Promise<void> {
+  const normalisedEmail = email.trim().toLowerCase();
+  const guestBookings = await prisma.customerSiteBooking.findMany({
+    where: {
+      tenantSiteId,
+      customerSiteCustomerId: null,
+      customerEmail: { equals: normalisedEmail, mode: "insensitive" },
+    },
+    select: { id: true, customerEmail: true },
+  });
+  const matchingIds = guestBookings
+    .filter((booking) => booking.customerEmail?.trim().toLowerCase() === normalisedEmail)
+    .map((booking) => booking.id);
+  if (matchingIds.length === 0) return;
+  await prisma.customerSiteBooking.updateMany({
+    where: {
+      tenantSiteId,
+      id: { in: matchingIds },
+      customerSiteCustomerId: null,
+    },
+    data: { customerSiteCustomerId: customerId },
+  });
+}
+
 export async function registerCustomerSiteCustomer(
   tenantSiteId: string,
   input: z.infer<typeof customerAccountRegisterSchema>,
@@ -58,6 +86,7 @@ export async function registerCustomerSiteCustomer(
         data,
       })
     : await prisma.customerSiteCustomer.create({ data });
+  await linkGuestBookingsToCustomerByEmail(tenantSiteId, customer.id, email);
   return serializeCustomer(customer);
 }
 
@@ -71,6 +100,7 @@ export async function authenticateCustomerSiteCustomer(
     where: { tenantSiteId_email: { tenantSiteId, email } },
   });
   if (!customer?.active || !verifyAccessCode(parsed.accessCode, customer.accessCodeHash)) return null;
+  await linkGuestBookingsToCustomerByEmail(tenantSiteId, customer.id, email);
   return serializeCustomer(customer);
 }
 

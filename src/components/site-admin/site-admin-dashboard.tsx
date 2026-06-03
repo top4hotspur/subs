@@ -2455,6 +2455,9 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                       <p><span className="font-semibold">Last booking:</span> {selectedCrmCustomer.lastBookingDate ? new Date(selectedCrmCustomer.lastBookingDate).toLocaleString("en-GB") : "Not available"}</p>
                       <p><span className="font-semibold">Next booking:</span> {selectedCrmCustomer.nextBookingDate ? new Date(selectedCrmCustomer.nextBookingDate).toLocaleString("en-GB") : "None scheduled"}</p>
                     </div>
+                    <p className="mt-2 text-sm text-slate-700">
+                      <span className="font-semibold">CRM notes:</span> {selectedCrmCustomer.crmNotes || "No notes added yet."}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-slate-950">Booking history</p>
