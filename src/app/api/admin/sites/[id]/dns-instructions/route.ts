@@ -126,7 +126,11 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       } satisfies DnsInstructionMetadata;
       await prisma.siteDomain.update({
         where: { id: domain.id },
-        data: { dnsInstructions: toJson(failedMetadata) },
+        data: {
+          dnsInstructions: toJson(failedMetadata),
+          dnsStatus: "FAILED",
+          domainStatus: "NEEDS_ATTENTION",
+        },
       });
       return NextResponse.json({
         ok: true,
@@ -149,7 +153,13 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     } satisfies DnsInstructionMetadata;
     const updatedDomain = await prisma.siteDomain.update({
       where: { id: domain.id },
-      data: { dnsInstructions: toJson(sentMetadata), status: "DNS_INSTRUCTIONS_SENT" },
+      data: {
+        dnsInstructions: toJson(sentMetadata),
+        status: "DNS_INSTRUCTIONS_SENT",
+        domainStatus: "DNS_INSTRUCTIONS_SENT",
+        dnsStatus: "INSTRUCTIONS_SENT",
+        nameserverInstructionsSentAt: new Date(),
+      },
     });
 
     return NextResponse.json({

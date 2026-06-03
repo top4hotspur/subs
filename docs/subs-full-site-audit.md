@@ -337,3 +337,9 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - Access codes remain hashed in the database; plaintext codes are only shown once to platform admin during generation/reset and are sent by fail-soft transactional email where configured.
 - `/site-admin/[siteSlug]` remains protected by subscriber site-admin credentials, not platform-admin auth. `/site-admin/[siteSlug]/login` preloads the site slug through the shared site-admin login form.
 - Platform admin can resend/reset access details from `/admin/setup-requests` without creating duplicate tenant sites, domains or subscription records.
+
+## 2026-06-03 Domain/DNS Status Workflow
+- `SiteDomain` now includes explicit manual workflow fields for domain setup mode, DNS status, SSL status, expected DNS target, expected nameservers, manual DNS check result and timestamps.
+- `/admin/sites` exposes the operational Domain and DNS panel for saving target values, copying/sending instructions, recording manual DNS checks and moving the site toward ready/live states.
+- `/site-admin/[siteSlug]` shows a read-only Domain setup card with preview URL, requested domain and customer-friendly next-step copy.
+- Domain purchase, DNS provider changes, Route 53 automation, AWS resource creation, SSL automation and external domain API calls remain out of scope.

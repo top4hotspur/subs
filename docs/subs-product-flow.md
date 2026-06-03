@@ -1021,3 +1021,11 @@ Window Cleaning is a supported industry offering using slug `window-cleaning`. I
 - Access codes are hashed in the database. The plaintext one-time code is returned only during generation/reset for temporary platform-admin handover and is also sent by fail-soft transactional email where configured.
 - Platform admin can resend/reset access details from `/admin/setup-requests` if the customer cannot find the email or the code needs rotating.
 - The site-admin onboarding checklist remains the first setup guide after login: business details, services/prices, staff, rota, policies, public preview and go-live readiness.
+
+## 2026-06-03 Domain/DNS workflow
+- Domain setup remains a manual/admin-tracked fulfilment step.
+- Setup requests capture whether the customer already owns a domain, wants MyExperiment.club to register/manage one, or is unsure.
+- Paid provisioning creates/updates `SiteDomain` with a safe initial setup mode and DNS status.
+- Platform admin manages the domain workflow in `/admin/sites`: expected DNS target, expected nameservers, instructions sent, waiting for customer, propagation/check status, verified/ready/live and notes.
+- DNS instructions can be copied or sent fail-soft by transactional email. The app records send/check metadata but does not change DNS or buy domains.
+- Subscriber admin shows read-only domain status and customer-friendly next-step wording.

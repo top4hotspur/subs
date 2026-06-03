@@ -3,6 +3,10 @@ import {
   ensureInitialSetupRequestSiteAdminAccess,
   type SetupRequestSiteAdminAccessEmailResult,
 } from "@/lib/sites/site-admin-access-handover";
+import {
+  initialDnsStatusForSetupMode,
+  setupRequestDomainOptionToMode,
+} from "@/lib/sites/site-lifecycle";
 
 type ProvisioningResult = {
   setupRequestId: string;
@@ -135,7 +139,15 @@ export async function createSubscriberSiteFromPaidSetupRequest(
     const domainPrimary =
       extractRequestedDomain(setupRequest.existingDomain) ??
       extractRequestedDomain(setupRequest.desiredDomain);
-    const domainStatus = domainPrimary ? "DOMAIN_PENDING" : "NOT_STARTED";
+    const domainSetupMode = setupRequestDomainOptionToMode(setupRequest.domainOption);
+    const domainStatus = domainPrimary
+      ? domainSetupMode === "NEW_DOMAIN_MANAGED"
+        ? "DOMAIN_TO_BUY"
+        : domainSetupMode === "UNSURE"
+          ? "DETAILS_NEEDED"
+          : "DETAILS_NEEDED"
+      : "DETAILS_NEEDED";
+    const dnsStatus = initialDnsStatusForSetupMode(domainSetupMode);
 
     const tenantSite = await tx.tenantSite.create({
       data: {
@@ -170,15 +182,25 @@ export async function createSubscriberSiteFromPaidSetupRequest(
           },
         },
         update: {
-          status: "DOMAIN_PENDING",
           registrarNotes: "Created from paid setup request.",
+          status: domainStatus,
+          domainStatus,
+          domainSetupMode,
+          dnsStatus,
+          sslStatus: "NOT_STARTED",
+          domainNotes: "Initial domain workflow created from paid setup request.",
         },
         create: {
           tenantSiteId: tenantSite.id,
           domain: domainPrimary,
           domainType: "PRIMARY",
-          status: "DOMAIN_PENDING",
+          status: domainStatus,
           registrarNotes: "Created from paid setup request.",
+          domainStatus,
+          domainSetupMode,
+          dnsStatus,
+          sslStatus: "NOT_STARTED",
+          domainNotes: "Initial domain workflow created from paid setup request.",
         },
       });
     }

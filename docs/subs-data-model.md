@@ -76,6 +76,21 @@ When creating a subscriber site from setup request, system should create baselin
 - Paid subscriber sites start with `CustomerSiteSettings` prefilled only from order-safe details such as business name, contact email and contact phone.
 - Paid subscriber sites also get a tenant-scoped `CustomerSiteAdminUser` owner/admin access record so the business owner can reach `/site-admin/[siteSlug]` without platform-admin credentials.
 
+## SiteDomain domain/DNS workflow fields
+- `SiteDomain` remains the central custom-domain mapping record for each tenant site.
+- The manual DNS/go-live workflow now stores explicit tracking fields alongside the existing `status` and `dnsInstructions` JSON:
+  - `domainStatus`
+  - `domainSetupMode`
+  - `dnsStatus`
+  - `sslStatus`
+  - instruction/check/go-live timestamps
+  - `domainNotes`
+  - `expectedDnsTarget`
+  - `expectedNameservers`
+  - `lastDnsCheckResult`
+- These fields are platform-admin operational state only. They do not purchase domains, change DNS, issue SSL, or call external DNS/provider APIs.
+- `dnsInstructions` JSON is still used for email/copy metadata compatibility, including target instructions and last email delivery status.
+
 ## Persisted preview query model
 - New tenant-scoped preview aggregation reads:
   - tenant metadata (`TenantSite`)

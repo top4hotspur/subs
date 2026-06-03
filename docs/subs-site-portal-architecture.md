@@ -105,6 +105,8 @@ No per-customer DB or code export is required for this model.
   5. render tenant-scoped customer site using same data model as slug route
 - Root and `www` hosts are handled through resolver candidate matching.
 - DNS and Amplify domain automation are still manual/out-of-scope in this phase.
+- Platform admin now tracks manual domain/DNS state on `SiteDomain` with setup mode, DNS status, SSL status, expected DNS target/nameservers, manual check result and go-live timestamps.
+- Subscriber admin sees a read-only domain status card; only platform admin can update domain/DNS workflow state.
 
 ## Business-owner access foundation (tenant-scoped)
 - Added first subscriber business-owner auth path using dedicated site-admin login:

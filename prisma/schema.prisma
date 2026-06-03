@@ -131,16 +131,29 @@ model PlatformAdminUser {
 }
 
 model SiteDomain {
-  id              String     @id @default(cuid())
-  tenantSiteId    String
-  domain          String
-  domainType      String
-  status          String
-  registrarNotes  String?
-  dnsInstructions Json?
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-  tenantSite      TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  id                            String     @id @default(cuid())
+  tenantSiteId                  String
+  domain                        String
+  domainType                    String
+  status                        String
+  domainStatus                  String?
+  domainSetupMode               String?
+  dnsStatus                     String?
+  sslStatus                     String?
+  nameserverInstructionsSentAt  DateTime?
+  dnsLastCheckedAt              DateTime?
+  dnsVerifiedAt                 DateTime?
+  goLiveRequestedAt             DateTime?
+  wentLiveAt                    DateTime?
+  domainNotes                   String?
+  expectedDnsTarget             String?
+  expectedNameservers           Json?
+  lastDnsCheckResult            Json?
+  registrarNotes                String?
+  dnsInstructions               Json?
+  createdAt                     DateTime   @default(now())
+  updatedAt                     DateTime   @updatedAt
+  tenantSite                    TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
 
   @@unique([tenantSiteId, domain, domainType])
   @@index([tenantSiteId])

@@ -565,3 +565,25 @@ The generated instruction copy is customer-facing and should refer to the custom
 For customer-owned or customer-managed domains, the next operational state after successful instruction handover is `WAITING_FOR_CUSTOMER_DNS`. For platform-managed domains, admin continues manual registrar/DNS setup and then marks DNS configured/domain ready.
 
 The domain resolution tester remains an internal mapping check only. It confirms whether an entered host maps to a `SiteDomain`/`TenantSite` record inside the app. It does not prove public DNS propagation, SSL/certificate readiness, domain purchase, or external DNS provider configuration.
+
+## Domain/DNS status workflow expansion
+
+`SiteDomain` now has explicit nullable workflow fields for platform-admin tracking: setup mode, domain/DNS/SSL status, instruction/check/go-live timestamps, expected DNS target, expected nameservers, manual DNS check result and notes. The existing `status` field remains the broad lifecycle value used by resolver/admin summaries.
+
+Initial setup from paid provisioning:
+- existing customer domain -> domain details/DNS instructions needed
+- new domain managed by MyExperiment.club -> domain purchase/check workflow needed
+- unsure -> advice/details needed
+
+Admin `/admin/sites` now surfaces a **Domain and DNS** workflow panel with:
+- current site slug and `/sites/[siteSlug]` proof route
+- requested/final domain
+- setup mode
+- domain/DNS/SSL statuses
+- expected DNS target/nameservers
+- notes and manual DNS check recording
+- copy/email DNS instruction flow
+
+Subscriber admin `/site-admin/[siteSlug]` shows a read-only **Domain setup** card with preview URL, requested domain, current status and customer-friendly next-step guidance. It does not expose platform-only lifecycle controls.
+
+Domain/DNS remains manual in this milestone. There is no Route 53 registration, registrar API call, DNS provider write, AWS resource creation, automatic SSL issuance, or external DNS automation.

@@ -1425,3 +1425,16 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
 11. Confirm a different tenant slug is blocked for that same site-admin session.
 12. Click `Reset and email access code` from `/admin/setup-requests` and confirm only the new code works after reset.
 13. Repeat `Create blank subscriber site` for the same paid request and confirm the existing tenant site is reused rather than creating duplicate tenant/domain/subscription rows.
+
+## 2026-06-03 hosted smoke checks: domain/DNS status workflow
+1. Open `/admin/setup-requests` and select a paid/provisioned request.
+2. Confirm the setup request shows domain option/value and links to `/admin/sites`.
+3. Open `/admin/sites` and select the subscriber site.
+4. In **Domain and DNS**, confirm the site slug, proof URL `/sites/[siteSlug]`, requested domain, setup mode, DNS status, SSL status, expected DNS target/nameservers, notes and last check fields are visible.
+5. Save an expected DNS target or nameservers.
+6. Click `Copy DNS instructions` and confirm the generated copy includes the domain and saved target/nameserver details.
+7. If email is configured, click `Email DNS instructions to customer`; confirm `SENT`, `EMAIL_NOT_CONFIGURED`, or `EMAIL_SEND_FAILED` is surfaced and no status is falsely advanced on failure.
+8. Use `Record manual DNS check` with `Verified` and confirm last checked/verified status appears on the SiteDomain row.
+9. Mark waiting/pending/ready/live states using the admin lifecycle controls or the Domain status/DNS status selectors, then save.
+10. Open `/site-admin/[siteSlug]` and confirm the read-only **Domain setup** card shows preview URL, requested domain, status and customer-friendly action text.
+11. Confirm no Route 53 registration, DNS provider write, AWS resource creation, SSL automation or external domain API call occurs.

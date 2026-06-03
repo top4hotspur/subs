@@ -61,7 +61,18 @@ export async function applyTenantSiteLifecycleAction(tenantSiteId: string, actio
       domainStatus?: string;
       subscriptionStatus?: string;
     } = {};
-    const domainData: { status?: string; registrarNotes?: string } = {};
+    const domainData: {
+      status?: string;
+      domainStatus?: string;
+      dnsStatus?: string;
+      sslStatus?: string;
+      nameserverInstructionsSentAt?: Date;
+      dnsLastCheckedAt?: Date;
+      dnsVerifiedAt?: Date;
+      goLiveRequestedAt?: Date;
+      wentLiveAt?: Date;
+      registrarNotes?: string;
+    } = {};
     const setupRequestStatus = action === "MARK_SITE_LIVE" ? "SITE_LIVE" : undefined;
 
     if (action === "MARK_DOMAIN_SEARCH_STARTED") {
@@ -69,6 +80,9 @@ export async function applyTenantSiteLifecycleAction(tenantSiteId: string, actio
       siteData.provisioningStatus = "DOMAIN_PENDING";
       siteData.domainStatus = "DOMAIN_SEARCH_STARTED";
       domainData.status = "DOMAIN_SEARCH_STARTED";
+      domainData.domainStatus = "DOMAIN_SEARCH_STARTED";
+      domainData.dnsStatus = "NOT_STARTED";
+      domainData.sslStatus = "NOT_STARTED";
       domainData.registrarNotes = "Domain search/availability check started. Purchase is still manual.";
     }
 
@@ -77,6 +91,9 @@ export async function applyTenantSiteLifecycleAction(tenantSiteId: string, actio
       siteData.provisioningStatus = "DOMAIN_PENDING";
       siteData.domainStatus = "DOMAIN_PURCHASED";
       domainData.status = "DOMAIN_PURCHASED";
+      domainData.domainStatus = "DOMAIN_PURCHASED";
+      domainData.dnsStatus = "INSTRUCTIONS_NEEDED";
+      domainData.sslStatus = "NOT_STARTED";
       domainData.registrarNotes = "Domain purchased/registered manually by platform admin. DNS configuration still required.";
     }
 
@@ -85,6 +102,9 @@ export async function applyTenantSiteLifecycleAction(tenantSiteId: string, actio
       siteData.provisioningStatus = "DOMAIN_PENDING";
       siteData.domainStatus = "DNS_INSTRUCTIONS_SENT";
       domainData.status = "DNS_INSTRUCTIONS_SENT";
+      domainData.domainStatus = "DNS_INSTRUCTIONS_SENT";
+      domainData.dnsStatus = "INSTRUCTIONS_SENT";
+      domainData.nameserverInstructionsSentAt = new Date();
       domainData.registrarNotes = "DNS instructions sent/prepared. Manual domain configuration still required.";
     }
 
@@ -93,6 +113,8 @@ export async function applyTenantSiteLifecycleAction(tenantSiteId: string, actio
       siteData.provisioningStatus = "DOMAIN_PENDING";
       siteData.domainStatus = "WAITING_FOR_CUSTOMER_DNS";
       domainData.status = "WAITING_FOR_CUSTOMER_DNS";
+      domainData.domainStatus = "WAITING_FOR_CUSTOMER_DNS";
+      domainData.dnsStatus = "WAITING_FOR_CUSTOMER";
       domainData.registrarNotes = "Waiting for customer to update DNS/nameserver records.";
     }
 
@@ -101,6 +123,10 @@ export async function applyTenantSiteLifecycleAction(tenantSiteId: string, actio
       siteData.provisioningStatus = "DOMAIN_PENDING";
       siteData.domainStatus = "DNS_CONFIGURED";
       domainData.status = "DNS_CONFIGURED";
+      domainData.domainStatus = "DNS_CONFIGURED";
+      domainData.dnsStatus = "VERIFIED";
+      domainData.dnsLastCheckedAt = new Date();
+      domainData.dnsVerifiedAt = new Date();
       domainData.registrarNotes = "DNS marked configured by platform admin. Final readiness check still required.";
     }
 
@@ -109,6 +135,9 @@ export async function applyTenantSiteLifecycleAction(tenantSiteId: string, actio
       siteData.provisioningStatus = "DOMAIN_READY";
       siteData.domainStatus = "DOMAIN_READY";
       domainData.status = "DOMAIN_READY";
+      domainData.domainStatus = "DOMAIN_READY";
+      domainData.dnsStatus = "VERIFIED";
+      domainData.sslStatus = "ISSUED";
       domainData.registrarNotes = "Domain marked configured/ready by platform admin.";
     }
 
@@ -118,6 +147,11 @@ export async function applyTenantSiteLifecycleAction(tenantSiteId: string, actio
       siteData.domainStatus = site.domainPrimary ? "DOMAIN_READY" : site.domainStatus ?? "NOT_STARTED";
       siteData.subscriptionStatus = site.subscriptionStatus ?? "ACTIVE";
       domainData.status = "LIVE";
+      domainData.domainStatus = "LIVE";
+      domainData.dnsStatus = "LIVE";
+      domainData.sslStatus = "ISSUED";
+      domainData.goLiveRequestedAt = new Date();
+      domainData.wentLiveAt = new Date();
       domainData.registrarNotes = "Site marked live by platform admin.";
     }
 
@@ -127,6 +161,7 @@ export async function applyTenantSiteLifecycleAction(tenantSiteId: string, actio
       siteData.subscriptionStatus = "SUSPENDED";
       siteData.domainStatus = "SUSPENDED";
       domainData.status = "SUSPENDED";
+      domainData.domainStatus = "SUSPENDED";
       domainData.registrarNotes = "Site suspended by platform admin.";
     }
 
@@ -138,6 +173,9 @@ export async function applyTenantSiteLifecycleAction(tenantSiteId: string, actio
       siteData.domainStatus = hasDomain ? "DOMAIN_READY" : "NOT_STARTED";
       if (hasDomain) {
         domainData.status = "LIVE";
+        domainData.domainStatus = "LIVE";
+        domainData.dnsStatus = "LIVE";
+        domainData.sslStatus = "ISSUED";
         domainData.registrarNotes = "Site reactivated by platform admin.";
       }
     }

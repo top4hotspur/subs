@@ -22,7 +22,16 @@ import {
 import { formatGbp, formatOptional, formatUkDateTime } from "@/lib/ui/display-labels";
 import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
 import { AdminPillNav } from "@/components/admin/admin-pill-nav";
-import { lifecycleStatusLabel } from "@/lib/sites/site-lifecycle";
+import {
+  DOMAIN_SETUP_MODES,
+  DNS_WORKFLOW_STATUSES,
+  SSL_WORKFLOW_STATUSES,
+  dnsWorkflowStatusLabel,
+  domainSetupModeLabel,
+  lifecycleStatusLabel,
+  setupRequestDomainOptionToMode,
+  sslWorkflowStatusLabel,
+} from "@/lib/sites/site-lifecycle";
 import { buildDnsInstructionsText } from "@/lib/sites/domain-go-live";
 
 const TASK_STATUS_OPTIONS = ["TODO", "IN_PROGRESS", "DONE", "BLOCKED", "SKIPPED"];
@@ -98,6 +107,38 @@ type DnsInstructionMetadata = {
   lastEmailError?: string | null;
   lastEmailRecipient?: string;
 };
+
+function csvToJsonArray(value: string): string[] | undefined {
+  const items = value
+    .split(/[,\n\r]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+  return items.length ? items : undefined;
+}
+
+function jsonArrayToText(value: unknown): string {
+  if (!Array.isArray(value)) return "";
+  return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0).join("\n");
+}
+
+function buildTargetInstructions(input: {
+  dnsTargetInstructions: string;
+  expectedDnsTarget: string;
+  expectedNameserversText: string;
+}): string {
+  const explicit = input.dnsTargetInstructions.trim();
+  if (explicit) return explicit;
+  const lines: string[] = [];
+  if (input.expectedDnsTarget.trim()) {
+    lines.push(`DNS target: ${input.expectedDnsTarget.trim()}`);
+  }
+  const nameservers = csvToJsonArray(input.expectedNameserversText);
+  if (nameservers?.length) {
+    lines.push("Nameservers:");
+    nameservers.forEach((nameserver) => lines.push(`- ${nameserver}`));
+  }
+  return lines.join("\n");
+}
 
 function getDnsInstructionMetadata(value: unknown): DnsInstructionMetadata {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
@@ -179,6 +220,14 @@ export default function AdminSitesPage() {
     domain: "",
     domainType: "PRIMARY" as "PRIMARY" | "APEX" | "WWW" | "ALIAS",
     status: "DOMAIN_PENDING",
+    domainSetupMode: "EXISTING_CUSTOMER_DOMAIN",
+    dnsStatus: "INSTRUCTIONS_NEEDED",
+    sslStatus: "NOT_STARTED",
+    domainNotes: "",
+    expectedDnsTarget: "",
+    expectedNameserversText: "",
+    manualDnsCheckResult: "VERIFIED" as "VERIFIED" | "FAILED" | "NEEDS_ATTENTION",
+    manualDnsCheckNotes: "",
     registrarNotes: "",
     dnsTargetInstructions: "",
   });
@@ -248,12 +297,21 @@ export default function AdminSitesPage() {
     setDetail(result);
     const primaryDomain = result.domains.find((domain) => domain.domainType === "PRIMARY") ?? result.domains[0] ?? null;
     const dnsMetadata = getDnsInstructionMetadata(primaryDomain?.dnsInstructions);
+    const setupMode = primaryDomain?.domainSetupMode ?? setupRequestDomainOptionToMode(result.site.setupRequest?.domainOption);
     setDomainDraft({
       domain: primaryDomain?.domain ?? result.site.domainPrimary ?? result.site.setupRequest?.existingDomain ?? result.site.setupRequest?.desiredDomain ?? "",
       domainType: (primaryDomain?.domainType as "PRIMARY" | "APEX" | "WWW" | "ALIAS" | undefined) ?? "PRIMARY",
       status: primaryDomain?.status ?? result.site.domainStatus ?? "DOMAIN_PENDING",
+      domainSetupMode: setupMode,
+      dnsStatus: primaryDomain?.dnsStatus ?? (primaryDomain?.status === "LIVE" ? "LIVE" : "INSTRUCTIONS_NEEDED"),
+      sslStatus: primaryDomain?.sslStatus ?? "NOT_STARTED",
+      domainNotes: primaryDomain?.domainNotes ?? "",
+      expectedDnsTarget: primaryDomain?.expectedDnsTarget ?? "",
+      expectedNameserversText: jsonArrayToText(primaryDomain?.expectedNameservers),
+      manualDnsCheckResult: "VERIFIED",
+      manualDnsCheckNotes: "",
       registrarNotes: primaryDomain?.registrarNotes ?? "",
-      dnsTargetInstructions: dnsMetadata.targetInstructions ?? "",
+      dnsTargetInstructions: dnsMetadata.targetInstructions ?? primaryDomain?.expectedDnsTarget ?? "",
     });
     setDnsEmailStatus(null);
     setTaskDrafts((current) => {
@@ -337,6 +395,13 @@ export default function AdminSitesPage() {
       domain: domainDraft.domain,
       domainType: domainDraft.domainType,
       status: domainDraft.status,
+      domainStatus: domainDraft.status,
+      domainSetupMode: domainDraft.domainSetupMode,
+      dnsStatus: domainDraft.dnsStatus,
+      sslStatus: domainDraft.sslStatus,
+      domainNotes: domainDraft.domainNotes.trim() || null,
+      expectedDnsTarget: domainDraft.expectedDnsTarget.trim() || null,
+      expectedNameservers: csvToJsonArray(domainDraft.expectedNameserversText),
       registrarNotes: domainDraft.registrarNotes.trim() || null,
       dnsInstructions: {
         ...getDnsInstructionMetadata(
@@ -346,7 +411,7 @@ export default function AdminSitesPage() {
               domain.domainType === domainDraft.domainType,
           )?.dnsInstructions,
         ),
-        targetInstructions: domainDraft.dnsTargetInstructions.trim() || undefined,
+        targetInstructions: buildTargetInstructions(domainDraft) || undefined,
       },
     });
     if (!result.ok) {
@@ -366,6 +431,53 @@ export default function AdminSitesPage() {
     await loadSiteDetail(selectedSiteId);
   }
 
+  async function recordManualDnsCheck(): Promise<void> {
+    if (!selectedSiteId) return;
+    if (!domainDraft.domain.trim()) {
+      setMessage("Save the intended live domain before recording a DNS check.");
+      return;
+    }
+    const checkedAt = new Date().toISOString();
+    const verified = domainDraft.manualDnsCheckResult === "VERIFIED";
+    const result = await saveAdminSiteDomain(selectedSiteId, {
+      domain: domainDraft.domain,
+      domainType: domainDraft.domainType,
+      status: verified ? "DNS_CONFIGURED" : "NEEDS_ATTENTION",
+      domainStatus: verified ? "DNS_CONFIGURED" : "NEEDS_ATTENTION",
+      domainSetupMode: domainDraft.domainSetupMode,
+      dnsStatus: verified ? "VERIFIED" : "FAILED",
+      sslStatus: domainDraft.sslStatus,
+      dnsLastCheckedAt: checkedAt,
+      dnsVerifiedAt: verified ? checkedAt : null,
+      domainNotes: domainDraft.domainNotes.trim() || null,
+      expectedDnsTarget: domainDraft.expectedDnsTarget.trim() || null,
+      expectedNameservers: csvToJsonArray(domainDraft.expectedNameserversText),
+      lastDnsCheckResult: {
+        result: domainDraft.manualDnsCheckResult,
+        notes: domainDraft.manualDnsCheckNotes.trim() || null,
+        checkedAt,
+      },
+      registrarNotes: domainDraft.registrarNotes.trim() || null,
+      dnsInstructions: {
+        ...getDnsInstructionMetadata(
+          detail?.domains.find(
+            (domain) =>
+              domain.domain === domainDraft.domain.trim().toLowerCase() &&
+              domain.domainType === domainDraft.domainType,
+          )?.dnsInstructions,
+        ),
+        targetInstructions: buildTargetInstructions(domainDraft) || undefined,
+      },
+    });
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status));
+      return;
+    }
+    setMessage(`Manual DNS check recorded: ${domainDraft.manualDnsCheckResult}.`);
+    await loadSites();
+    await loadSiteDetail(selectedSiteId);
+  }
+
   async function emailDnsInstructions(): Promise<void> {
     if (!selectedSiteId || !detail) return;
     const selectedDomain = detail.domains.find(
@@ -375,7 +487,7 @@ export default function AdminSitesPage() {
       setMessage("Save a SiteDomain record before emailing DNS instructions.");
       return;
     }
-    if (!domainDraft.dnsTargetInstructions.trim()) {
+    if (!buildTargetInstructions(domainDraft)) {
       setMessage("Add DNS/hosting target values before emailing customer instructions.");
       return;
     }
@@ -421,7 +533,7 @@ export default function AdminSitesPage() {
       requestedDomain,
       previewUrl: `/sites/${selectedSite.slug}`,
       adminUrl: `/site-admin/${selectedSite.slug}`,
-      dnsTargetInstructions: domainDraft.dnsTargetInstructions,
+      dnsTargetInstructions: buildTargetInstructions(domainDraft),
     });
     try {
       await navigator.clipboard.writeText(text);
@@ -711,16 +823,19 @@ export default function AdminSitesPage() {
                       >
                         {[
                           "NOT_STARTED",
+                          "INSTRUCTIONS_NEEDED",
                           "DOMAIN_TO_BUY",
                           "DOMAIN_SEARCH_STARTED",
                           "DOMAIN_AVAILABLE",
                           "DOMAIN_PURCHASED",
                           "DNS_INSTRUCTIONS_SENT",
                           "WAITING_FOR_CUSTOMER_DNS",
+                          "PENDING_PROPAGATION",
                           "DNS_CONFIGURED",
                           "DOMAIN_READY",
                           "LIVE",
                           "NEEDS_ATTENTION",
+                          "FAILED",
                           "SUSPENDED",
                           "CANCELLED",
                         ].map((status) => (
@@ -729,6 +844,71 @@ export default function AdminSitesPage() {
                           </option>
                         ))}
                       </select>
+                    </label>
+                    <label className="text-xs font-semibold text-slate-700">
+                      Domain setup mode
+                      <select
+                        className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
+                        value={domainDraft.domainSetupMode}
+                        onChange={(event) =>
+                          setDomainDraft((current) => ({
+                            ...current,
+                            domainSetupMode: event.target.value,
+                          }))
+                        }
+                      >
+                        {DOMAIN_SETUP_MODES.map((mode) => (
+                          <option key={mode} value={mode}>
+                            {domainSetupModeLabel(mode)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="text-xs font-semibold text-slate-700">
+                      DNS status
+                      <select
+                        className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
+                        value={domainDraft.dnsStatus}
+                        onChange={(event) => setDomainDraft((current) => ({ ...current, dnsStatus: event.target.value }))}
+                      >
+                        {DNS_WORKFLOW_STATUSES.map((status) => (
+                          <option key={status} value={status}>
+                            {dnsWorkflowStatusLabel(status)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="text-xs font-semibold text-slate-700">
+                      SSL status
+                      <select
+                        className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
+                        value={domainDraft.sslStatus}
+                        onChange={(event) => setDomainDraft((current) => ({ ...current, sslStatus: event.target.value }))}
+                      >
+                        {SSL_WORKFLOW_STATUSES.map((status) => (
+                          <option key={status} value={status}>
+                            {sslWorkflowStatusLabel(status)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
+                      Expected DNS target
+                      <input
+                        className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
+                        value={domainDraft.expectedDnsTarget}
+                        onChange={(event) => setDomainDraft((current) => ({ ...current, expectedDnsTarget: event.target.value }))}
+                        placeholder="CNAME/A/TXT target or hosting verification value"
+                      />
+                    </label>
+                    <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
+                      Expected nameservers
+                      <textarea
+                        className="mt-1 min-h-[70px] w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
+                        value={domainDraft.expectedNameserversText}
+                        onChange={(event) => setDomainDraft((current) => ({ ...current, expectedNameserversText: event.target.value }))}
+                        placeholder="One nameserver per line, if nameserver handover is used."
+                      />
                     </label>
                     <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
                       DNS / hosting target values
@@ -748,7 +928,16 @@ export default function AdminSitesPage() {
                       </span>
                     </label>
                     <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
-                      Registrar/domain notes
+                      Domain notes
+                      <textarea
+                        className="mt-1 min-h-[70px] w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
+                        value={domainDraft.domainNotes}
+                        onChange={(event) => setDomainDraft((current) => ({ ...current, domainNotes: event.target.value }))}
+                        placeholder="Customer domain route, advice needed, manual DNS check notes..."
+                      />
+                    </label>
+                    <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
+                      Registrar/domain admin notes
                       <textarea
                         className="mt-1 min-h-[70px] w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
                         value={domainDraft.registrarNotes}
@@ -764,6 +953,44 @@ export default function AdminSitesPage() {
                   >
                     Save SiteDomain
                   </button>
+                  <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-2">
+                    <p className="text-xs font-semibold text-slate-900">Record manual DNS check</p>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                      <label className="text-xs font-semibold text-slate-700">
+                        Result
+                        <select
+                          className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
+                          value={domainDraft.manualDnsCheckResult}
+                          onChange={(event) =>
+                            setDomainDraft((current) => ({
+                              ...current,
+                              manualDnsCheckResult: event.target.value as typeof domainDraft.manualDnsCheckResult,
+                            }))
+                          }
+                        >
+                          <option value="VERIFIED">Verified</option>
+                          <option value="FAILED">Not verified</option>
+                          <option value="NEEDS_ATTENTION">Needs attention</option>
+                        </select>
+                      </label>
+                      <label className="text-xs font-semibold text-slate-700">
+                        Check notes
+                        <input
+                          className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
+                          value={domainDraft.manualDnsCheckNotes}
+                          onChange={(event) => setDomainDraft((current) => ({ ...current, manualDnsCheckNotes: event.target.value }))}
+                          placeholder="Manual lookup result or customer DNS note"
+                        />
+                      </label>
+                    </div>
+                    <button
+                      type="button"
+                      className={`mt-2 ${outlineButtonClass} ${smallButtonClass}`}
+                      onClick={() => void recordManualDnsCheck()}
+                    >
+                      Record manual DNS check
+                    </button>
+                  </div>
                 </div>
                 {detail.domains.length === 0 ? (
                   <p className="mt-2 text-xs text-slate-600">No SiteDomain records yet.</p>
@@ -777,6 +1004,18 @@ export default function AdminSitesPage() {
                             {domain.domain} ({domain.domainType}) - {lifecycleStatusLabel(domain.status)}
                             {domain.registrarNotes ? ` | ${domain.registrarNotes}` : ""}
                           </p>
+                          <p>
+                            Mode: {domainSetupModeLabel(domain.domainSetupMode)} | DNS: {dnsWorkflowStatusLabel(domain.dnsStatus)} | SSL: {sslWorkflowStatusLabel(domain.sslStatus)}
+                          </p>
+                          {domain.expectedDnsTarget ? <p>Expected DNS target: {domain.expectedDnsTarget}</p> : null}
+                          {Array.isArray(domain.expectedNameservers) && domain.expectedNameservers.length ? (
+                            <p>Expected nameservers: {domain.expectedNameservers.filter((item) => typeof item === "string").join(", ")}</p>
+                          ) : null}
+                          <p>
+                            Last checked: {domain.dnsLastCheckedAt ? formatUkDateTime(domain.dnsLastCheckedAt) : "Not checked"}
+                            {domain.dnsVerifiedAt ? ` | Verified: ${formatUkDateTime(domain.dnsVerifiedAt)}` : ""}
+                          </p>
+                          {domain.domainNotes ? <p>Domain notes: {domain.domainNotes}</p> : null}
                           <p className={dnsMetadata.targetInstructions ? "text-emerald-700" : "text-amber-700"}>
                             DNS target values: {dnsMetadata.targetInstructions ? "Saved" : "Missing"}
                           </p>
@@ -803,7 +1042,7 @@ export default function AdminSitesPage() {
                         Copy this text manually or email it to the customer once real DNS/hosting target values are saved.
                         Customer-owned domains should then move to waiting for customer DNS.
                       </p>
-                      {!domainDraft.dnsTargetInstructions.trim() ? (
+                      {!buildTargetInstructions(domainDraft) ? (
                         <p className="mt-1 text-xs font-semibold text-amber-700">
                           DNS target values are missing. Email sending is blocked until real values are saved.
                         </p>
@@ -821,7 +1060,7 @@ export default function AdminSitesPage() {
                         type="button"
                         className={`${primaryButtonClass} ${smallButtonClass}`}
                         onClick={() => void emailDnsInstructions()}
-                        disabled={!domainDraft.dnsTargetInstructions.trim()}
+                        disabled={!buildTargetInstructions(domainDraft)}
                       >
                         Email DNS instructions to customer
                       </button>
@@ -840,7 +1079,7 @@ export default function AdminSitesPage() {
                         null,
                       previewUrl: `/sites/${selectedSite.slug}`,
                       adminUrl: `/site-admin/${selectedSite.slug}`,
-                      dnsTargetInstructions: domainDraft.dnsTargetInstructions,
+                      dnsTargetInstructions: buildTargetInstructions(domainDraft),
                     })}
                   </pre>
                   {dnsCopyStatus ? <p className="mt-2 text-xs text-slate-600">{dnsCopyStatus}</p> : null}

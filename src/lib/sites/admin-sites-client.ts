@@ -44,6 +44,19 @@ export type AdminSiteDomainSummary = {
   domain: string;
   domainType: string;
   status: string;
+  domainStatus?: string | null;
+  domainSetupMode?: string | null;
+  dnsStatus?: string | null;
+  sslStatus?: string | null;
+  nameserverInstructionsSentAt?: string | null;
+  dnsLastCheckedAt?: string | null;
+  dnsVerifiedAt?: string | null;
+  goLiveRequestedAt?: string | null;
+  wentLiveAt?: string | null;
+  domainNotes?: string | null;
+  expectedDnsTarget?: string | null;
+  expectedNameservers?: unknown;
+  lastDnsCheckResult?: unknown;
   registrarNotes?: string | null;
   dnsInstructions?: unknown;
   createdAt: string;
@@ -132,15 +145,7 @@ export async function getAdminTenantSiteDetail(
 ): Promise<
   ClientResult<{
     site: AdminTenantSiteSummary;
-    domains: Array<{
-      id: string;
-      domain: string;
-      domainType: string;
-      status: string;
-      registrarNotes?: string | null;
-      dnsInstructions?: unknown;
-      createdAt: string;
-    }>;
+    domains: AdminSiteDomainSummary[];
     tasks: Array<{
       id: string;
       taskType: string;
@@ -270,6 +275,19 @@ export async function saveAdminSiteDomain(
     domain: string;
     domainType: "PRIMARY" | "APEX" | "WWW" | "ALIAS";
     status: string;
+    domainStatus?: string | null;
+    domainSetupMode?: string | null;
+    dnsStatus?: string | null;
+    sslStatus?: string | null;
+    nameserverInstructionsSentAt?: string | null;
+    dnsLastCheckedAt?: string | null;
+    dnsVerifiedAt?: string | null;
+    goLiveRequestedAt?: string | null;
+    wentLiveAt?: string | null;
+    domainNotes?: string | null;
+    expectedDnsTarget?: string | null;
+    expectedNameservers?: unknown;
+    lastDnsCheckResult?: unknown;
     registrarNotes?: string | null;
     dnsInstructions?: unknown;
   },

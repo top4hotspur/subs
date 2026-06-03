@@ -7,6 +7,12 @@ import { getTenantSiteBySlug } from "@/lib/sites/tenant-resolver";
 import { prisma } from "@/lib/db/prisma";
 import { hasValidOpenBusinessDay, normalizeBusinessOpeningHours, timeToMinutes } from "@/lib/sites/customer-site-opening-hours";
 import { isCustomPolicyContent } from "@/lib/sites/default-booking-policy";
+import {
+  dnsWorkflowStatusLabel,
+  domainSetupModeLabel,
+  lifecycleStatusLabel,
+  setupRequestDomainOptionToMode,
+} from "@/lib/sites/site-lifecycle";
 
 type SiteAdminPageProps = {
   params: Promise<{ siteSlug: string }>;
@@ -57,7 +63,7 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
     );
   }
 
-  const [settings, servicesCount, activeStaff, rotaDays, closureCount, staffLeaveCount] = await Promise.all([
+  const [settings, servicesCount, activeStaff, rotaDays, closureCount, staffLeaveCount, siteDomains, setupRequest] = await Promise.all([
     prisma.customerSiteSettings.findUnique({ where: { tenantSiteId: site.id } }),
     prisma.customerSiteService.count({ where: { tenantSiteId: site.id, active: true } }),
     prisma.customerSiteStaffMember.findMany({
@@ -70,7 +76,23 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
     }),
     prisma.customerSiteBusinessClosure.count({ where: { tenantSiteId: site.id, active: true } }),
     prisma.customerSiteStaffHoliday.count({ where: { tenantSiteId: site.id, active: true } }),
+    prisma.siteDomain.findMany({ where: { tenantSiteId: site.id }, orderBy: [{ domainType: "asc" }, { createdAt: "asc" }] }),
+    prisma.setupRequest.findFirst({
+      where: { tenantSiteId: site.id },
+      select: { domainOption: true, existingDomain: true, desiredDomain: true },
+    }),
   ]);
+  const primaryDomain = siteDomains.find((domain) => domain.domainType === "PRIMARY") ?? siteDomains[0] ?? null;
+  const domainSetupMode = primaryDomain?.domainSetupMode ?? setupRequestDomainOptionToMode(setupRequest?.domainOption);
+  const requestedDomain = primaryDomain?.domain ?? siteDomains[0]?.domain ?? setupRequest?.existingDomain ?? setupRequest?.desiredDomain ?? null;
+  const domainActionText =
+    domainSetupMode === "NEW_DOMAIN_MANAGED"
+      ? "We are checking your domain availability and setup."
+      : domainSetupMode === "UNSURE"
+        ? "We will contact you to confirm the best domain option."
+        : primaryDomain?.dnsStatus === "INSTRUCTIONS_SENT" || primaryDomain?.status === "DNS_INSTRUCTIONS_SENT" || primaryDomain?.status === "WAITING_FOR_CUSTOMER_DNS"
+          ? "Please update your DNS/nameservers using the instructions we sent you."
+          : "We will send DNS/nameserver instructions when the domain setup step is ready.";
   const businessOpeningHours = normalizeBusinessOpeningHours(settings?.openingHoursJson ?? null);
   const openingHoursDone = hasValidOpenBusinessDay(businessOpeningHours);
   const activeStaffIds = new Set(activeStaff.map((staff) => staff.id));
@@ -206,6 +228,22 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="mt-6 rounded-2xl border border-sky-200 bg-sky-50 p-5 shadow-sm">
+        <h2 className="text-xl font-semibold text-slate-900">Domain setup</h2>
+        <div className="mt-3 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
+          <p><span className="font-semibold">Current preview URL:</span> /sites/{site.slug}</p>
+          <p><span className="font-semibold">Requested domain:</span> {requestedDomain ?? "Not set yet"}</p>
+          <p><span className="font-semibold">Domain route:</span> {domainSetupModeLabel(domainSetupMode)}</p>
+          <p>
+            <span className="font-semibold">Status:</span>{" "}
+            {primaryDomain?.dnsStatus
+              ? dnsWorkflowStatusLabel(primaryDomain.dnsStatus)
+              : lifecycleStatusLabel(primaryDomain?.status ?? site.domainStatus)}
+          </p>
+        </div>
+        <p className="mt-3 text-sm text-slate-700">{domainActionText}</p>
       </section>
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
