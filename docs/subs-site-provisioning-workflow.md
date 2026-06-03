@@ -1,4 +1,4 @@
-# Subs Site Provisioning Workflow (Persisted v1)
+﻿# Subs Site Provisioning Workflow (Persisted v1)
 
 This workflow turns a persisted setup request into a persisted subscriber site record.
 
@@ -563,9 +563,10 @@ The generated instruction copy is customer-facing and should refer to the custom
 - `/site-admin/[siteSlug]` subscriber admin route
 - support wording for customers who are unsure how to update DNS
 
-`Email DNS instructions to customer` sends to the setup request contact email using the existing transactional email provider. Email delivery is fail-soft. If sending fails or email is not configured, the status does not advance and platform admin can copy the instructions manually. If sending succeeds, the relevant SiteDomain records a sent status/timestamp/recipient in `dnsInstructions` metadata and the site/domain lifecycle moves to `DNS_INSTRUCTIONS_SENT`.
+`Send DNS instructions` sends to the setup request contact email using the existing transactional email provider. Email delivery is fail-soft. If sending fails or email is not configured, the status does not advance and platform admin can copy the instructions manually. If sending succeeds, the relevant SiteDomain records a sent status/timestamp/recipient in `dnsInstructions` metadata and the site/domain lifecycle moves to `DNS_INSTRUCTIONS_SENT`.
 
 For customer-owned or customer-managed domains, the next operational state after successful instruction handover is `WAITING_FOR_CUSTOMER_DNS`. For platform-managed domains, admin continues manual registrar/DNS setup and then marks DNS configured/domain ready.
+Use `Send DNS instructions` only when the customer or their domain contact needs to update DNS. For platform-managed domains, keep the DNS/hosting target values as internal fulfilment notes unless the customer needs them.
 
 The domain resolution tester remains an internal mapping check only. It confirms whether an entered host maps to a `SiteDomain`/`TenantSite` record inside the app. It does not prove public DNS propagation, SSL/certificate readiness, domain purchase, or external DNS provider configuration.
 
@@ -590,3 +591,4 @@ Admin `/admin/sites` now surfaces a **Domain and DNS** workflow panel with:
 Subscriber admin `/site-admin/[siteSlug]` shows a read-only **Domain setup** card with preview URL, requested domain, current status and customer-friendly next-step guidance. It does not expose platform-only lifecycle controls.
 
 Domain/DNS remains manual in this milestone. There is no Route 53 registration, registrar API call, DNS provider write, AWS resource creation, automatic SSL issuance, or external DNS automation.
+

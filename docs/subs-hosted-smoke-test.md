@@ -1,4 +1,4 @@
-# Subs Hosted Smoke Test (Manual)
+﻿# Subs Hosted Smoke Test (Manual)
 
 Run these checks on the hosted environment after deployment.
 
@@ -458,9 +458,9 @@ olePrice:<role> columns accepted
 
 ## Hosted smoke: setup order/payment clarity
 1. Open `/setup/barbers` and confirm order summary includes:
-   - Website setup: £149 one-time
-   - Monthly subscription: £30/month
-   - Domain service: £49 only when we register/manage a new domain
+   - Website setup: Â£149 one-time
+   - Monthly subscription: Â£30/month
+   - Domain service: Â£49 only when we register/manage a new domain
 2. Confirm setup copy states payment/subscription setup is confirmed after request submission during onboarding.
 3. In Domain option section, confirm choices are:
    - I already own a domain
@@ -799,7 +799,7 @@ Notes:
    - service area field is not shown in manual add-lead form
    - industry labels are human-friendly
    - provider pricing table is visible
-8. Confirm `Booksy` exists with estimate `£40`.
+8. Confirm `Booksy` exists with estimate `Â£40`.
 9. Edit a provider row and save; confirm updated value persists after reload.
 10. Add a lead with provider `Booksy` and blank estimate; confirm estimate auto-fills.
 11. Override estimate manually; confirm manual value is retained.
@@ -1254,7 +1254,7 @@ Notes:
 6. Click `Copy DNS instructions` and confirm the text copies, or manually select/copy it if browser clipboard access is blocked.
 7. Confirm the DNS target warning appears until platform admin saves exact DNS/hosting target values on the SiteDomain.
 8. Save DNS/hosting target values such as real nameserver/CNAME/A/TXT/hosting verification values supplied by the hosting/domain provider. Do not invent values for the test.
-9. Click `Email DNS instructions to customer` and confirm admin shows `SENT`, `EMAIL_NOT_CONFIGURED`, or `EMAIL_SEND_FAILED`.
+9. Click `Send DNS instructions` and confirm admin shows `SENT`, `EMAIL_NOT_CONFIGURED`, or `EMAIL_SEND_FAILED`.
 10. Confirm successful sending moves the site/domain workflow to `DNS_INSTRUCTIONS_SENT`; for customer-owned domains the next expected state is `WAITING_FOR_CUSTOMER_DNS`.
 11. Click `Mark waiting for customer DNS` for customer-owned domains, or continue manual managed-domain setup for platform-managed domains.
 12. Click `Mark domain configured/ready` and confirm domain/SiteDomain status updates.
@@ -1297,7 +1297,7 @@ Known v1 limitation: subscriber voucher payments are manual. The page does not c
 5. Save a SiteDomain using a messy value such as `https://WWW.Example-Test.co.uk/path` and confirm it normalises to a lower-case host without protocol/path.
 6. Try saving the same active domain against another tenant and confirm it is rejected.
 7. For platform-managed domains, mark domain search started, mark domain purchased manually, and record registrar/domain notes.
-8. For customer-owned domains, save exact DNS/hosting target values, email DNS instructions to the customer, then mark waiting for customer DNS.
+8. For customer-owned domains, save exact DNS/hosting target values, use `Send DNS instructions`, then mark waiting for customer DNS.
 9. For platform-managed domains, save the DNS/hosting target values internally and proceed through manual registrar/DNS setup.
 10. Mark DNS configured, then mark domain ready.
 11. Use the domain resolution tester to confirm the saved SiteDomain resolves to the expected tenant. This tests only internal platform mapping, not public DNS/SSL/domain-provider state.
@@ -1311,10 +1311,10 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
 ## Hosted smoke: DNS instruction email handover
 1. Open `/admin/sites` and select a provisioned subscriber site with a setup request contact email.
 2. In the Domain panel, confirm the Domain type helper explains Primary, www alias, Apex/root and Other alias.
-3. Confirm `Email DNS instructions to customer` is disabled or blocked while DNS/hosting target values are blank.
+3. Confirm `Send DNS instructions` is disabled or blocked while DNS/hosting target values are blank.
 4. Paste exact DNS/hosting target values into the SiteDomain field and save.
 5. Confirm the DNS instruction copy includes business name, final domain, preview route, subscriber admin route, support wording and the saved DNS/hosting target values.
-6. Click `Email DNS instructions to customer`.
+6. Click `Send DNS instructions`.
 7. Confirm admin shows sent/failed/skipped delivery status and records last email metadata on the SiteDomain display.
 8. If sent, confirm the customer email subject is `DNS instructions for your [Business Name] website`.
 9. If email fails or is not configured, copy the instructions manually and confirm status did not advance as if email succeeded.
@@ -1436,8 +1436,9 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
 4. In **Domain and DNS**, confirm the site slug, proof URL `/sites/[siteSlug]`, requested domain, setup mode, DNS status, SSL status, expected DNS target/nameservers, notes and last check fields are visible.
 5. Save an expected DNS target or nameservers.
 6. Click `Copy DNS instructions` and confirm the generated copy includes the domain and saved target/nameserver details.
-7. If email is configured, click `Email DNS instructions to customer`; confirm `SENT`, `EMAIL_NOT_CONFIGURED`, or `EMAIL_SEND_FAILED` is surfaced and no status is falsely advanced on failure.
+7. If email is configured, click `Send DNS instructions`; confirm `SENT`, `EMAIL_NOT_CONFIGURED`, or `EMAIL_SEND_FAILED` is surfaced and no status is falsely advanced on failure.
 8. Use `Record manual DNS check` with `Verified` and confirm last checked/verified status appears on the SiteDomain row.
 9. Mark waiting/pending/ready/live states using the admin lifecycle controls or the Domain status/DNS status selectors, then save.
 10. Open `/site-admin/[siteSlug]` and confirm the read-only **Domain setup** card shows preview URL, requested domain, status and customer-friendly action text.
 11. Confirm no Route 53 registration, DNS provider write, AWS resource creation, SSL automation or external domain API call occurs.
+

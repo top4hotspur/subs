@@ -379,7 +379,7 @@ export function siteGoLiveCustomerEmail(input: SiteGoLiveEmailInput) {
 }
 
 export function siteDnsInstructionsCustomerEmail(input: SiteDnsInstructionsEmailInput) {
-  const subject = "Your MyExperiment.club domain setup instructions";
+  const subject = `DNS instructions for your ${input.businessName} website`;
   const text = [
     "Hi,",
     "",

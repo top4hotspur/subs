@@ -991,7 +991,7 @@ Platform admin `/admin/sites` now stores DNS/hosting target values on the releva
 
 The DNS instruction copy now uses customer/business wording rather than "new MyExperiment.club website". It includes business name, final domain, platform preview route, subscriber admin route, saved DNS/hosting target values and support wording.
 
-Admins can email DNS instructions to the setup request contact email from the Domain panel. The email is fail-soft: failed/skipped email delivery is shown in admin and saved on the SiteDomain metadata, while status only advances to `DNS_INSTRUCTIONS_SENT` when the email provider reports success. For customer-owned/customer-managed domains the next operational state is `WAITING_FOR_CUSTOMER_DNS`; platform-managed domains continue through manual DNS configuration.
+Admins can use `Send DNS instructions` from the Domain panel for customer-owned/customer-managed domains. The email is fail-soft: failed/skipped email delivery is shown in admin and saved on the SiteDomain metadata, while status only advances to `DNS_INSTRUCTIONS_SENT` when the email provider reports success. For customer-owned/customer-managed domains the next operational state is `WAITING_FOR_CUSTOMER_DNS`; platform-managed domains continue through manual DNS configuration.
 
 Domain type guidance is visible in admin: Primary is the normal main customer-facing domain, `www` alias points the `www` version to the same site, Apex/root is the bare domain, and Other alias is for additional mapped domains.
 

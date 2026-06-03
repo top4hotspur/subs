@@ -20,10 +20,10 @@ function domainOptionGuidance(value?: string | null): string {
     return "We will handle the manual registrar/DNS setup for this domain and update you when the domain is ready.";
   }
   if (value === "CUSTOMER_BUYS_DOMAIN") {
-    return "When you have access to the domain settings, use the DNS/hosting target details below or send them to whoever manages your domain.";
+    return "Please update your domain settings so this domain points to your new website, or send the DNS/hosting target details below to whoever manages your domain.";
   }
   if (value === "EXISTING_DOMAIN") {
-    return "Please update your existing domain settings using the DNS/hosting target details below, or send them to whoever manages your domain.";
+    return "Please update your domain settings so this domain points to your new website, or send the DNS/hosting target details below to whoever manages your domain.";
   }
   return "We will confirm the right domain route with you before go-live.";
 }
@@ -58,6 +58,8 @@ export function buildDnsInstructionsText(input: DomainInstructionInput): string 
     "",
     `Domain option: ${domainOptionLabel(input.domainOption)}`,
     `Domain: ${domain}`,
+    "",
+    `Please update your domain settings so this domain points to your new ${input.businessName} website.`,
     "",
     domainOptionGuidance(input.domainOption),
     "",

@@ -159,12 +159,20 @@ function getDomainTypeHelper(value: string): string {
   return "Other alias: extra domain that should also point here.";
 }
 
+function canSendCustomerDnsInstructions(domainOption?: string | null, setupMode?: string | null): boolean {
+  return (
+    domainOption === "EXISTING_DOMAIN" ||
+    domainOption === "CUSTOMER_BUYS_DOMAIN" ||
+    setupMode === "EXISTING_CUSTOMER_DOMAIN"
+  );
+}
+
 function getDomainWorkflowNote(value?: string | null): string {
   if (value === "WE_REGISTER_DOMAIN") {
     return "Platform-managed domain: we handle manual registrar/DNS setup, then mark DNS configured and domain ready.";
   }
   if (value === "EXISTING_DOMAIN" || value === "CUSTOMER_BUYS_DOMAIN") {
-    return "Customer-owned domain: email DNS instructions, then mark waiting for customer DNS while they update their domain provider.";
+    return "Customer-owned domain: send DNS instructions, then mark waiting for customer DNS while they update their domain provider.";
   }
   return "Domain route still needs confirmation before go-live.";
 }
@@ -491,7 +499,7 @@ export default function AdminSitesPage() {
       setMessage("Add DNS/hosting target values before emailing customer instructions.");
       return;
     }
-    if (!window.confirm(`Email DNS instructions to the customer for ${selectedDomain.domain}?`)) return;
+    if (!window.confirm(`Send DNS instructions to the customer for ${selectedDomain.domain}?`)) return;
 
     const result = await emailAdminSiteDnsInstructions(selectedSiteId, selectedDomain.id);
     if (!result.ok) {
@@ -821,6 +829,7 @@ export default function AdminSitesPage() {
                       </select>
                       <span className="mt-1 block text-[11px] font-normal text-slate-500">
                         {getDomainTypeHelper(domainDraft.domainType)}
+                        {" "}For most customers, use Primary. Add www/apex aliases only when deliberately configuring multiple hostnames.
                       </span>
                     </label>
                     <label className="text-xs font-semibold text-slate-700">
@@ -1051,6 +1060,11 @@ export default function AdminSitesPage() {
                         Copy this text manually or email it to the customer once real DNS/hosting target values are saved.
                         Customer-owned domains should then move to waiting for customer DNS.
                       </p>
+                      {!canSendCustomerDnsInstructions(detail.site.setupRequest?.domainOption, domainDraft.domainSetupMode) ? (
+                        <p className="mt-1 text-xs text-slate-600">
+                          This looks like a platform-managed or unconfirmed domain route, so keep the DNS target values as internal fulfilment notes unless the customer needs to update DNS themselves.
+                        </p>
+                      ) : null}
                       {!buildTargetInstructions(domainDraft) ? (
                         <p className="mt-1 text-xs font-semibold text-amber-700">
                           DNS target values are missing. Email sending is blocked until real values are saved.
@@ -1069,9 +1083,12 @@ export default function AdminSitesPage() {
                         type="button"
                         className={`${primaryButtonClass} ${smallButtonClass}`}
                         onClick={() => void emailDnsInstructions()}
-                        disabled={!buildTargetInstructions(domainDraft)}
+                        disabled={
+                          !buildTargetInstructions(domainDraft) ||
+                          !canSendCustomerDnsInstructions(detail.site.setupRequest?.domainOption, domainDraft.domainSetupMode)
+                        }
                       >
-                        Email DNS instructions to customer
+                        Send DNS instructions
                       </button>
                     </div>
                   </div>
@@ -1097,8 +1114,8 @@ export default function AdminSitesPage() {
                 <div className="mt-3 rounded-md border border-slate-200 bg-white p-2">
                   <p className="text-xs font-semibold text-slate-900">Test domain resolution</p>
                   <p className="mt-1 text-xs text-slate-600">
-                    This only checks the internal platform mapping from a host name to a SiteDomain/TenantSite record.
-                    It does not prove public DNS propagation, SSL/certificate readiness, domain purchase, or external DNS configuration.
+                    Use this to check whether the platform would map a hostname to a subscriber site.
+                    This does not check public DNS propagation or SSL certificates.
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     <input
