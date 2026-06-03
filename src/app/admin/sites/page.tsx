@@ -62,6 +62,15 @@ function toMessage(error: string, status: number): string {
   if (error === "NETWORK_ERROR" || status === 0) {
     return "Network error while contacting backend API.";
   }
+  if (error === "SETUP_REQUEST_NOT_PAID") {
+    return "Payment must be completed before creating the subscriber site.";
+  }
+  if (error === "SETUP_REQUEST_CANCELLED") {
+    return "Cancelled setup requests cannot create subscriber sites.";
+  }
+  if (error === "SETUP_REQUEST_ARCHIVED") {
+    return "Archived setup requests cannot create subscriber sites.";
+  }
   return `Request failed: ${error}`;
 }
 

@@ -319,3 +319,9 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - The implementation should be provider-aware rather than a single generic API configuration: setup fields, webhook checks, credential storage, refunds, payment statuses, and test/live mode controls differ by provider.
 - Marketing/FAQ wording should remain honest: MyExperiment.club can help accommodate common payment providers, but integrations must be confirmed and configured safely.
 - Current product state must not fake provider sync. Sensitive credentials, webhook secrets, live refunds, and provider-specific reconciliation remain future work unless explicitly implemented and validated.
+
+## 2026-06-03 Paid-Order Provisioning Guardrail
+- Paid-order provisioning is now the only supported admin path for creating a clean subscriber site from a setup request.
+- Both `/admin/setup-requests` and `/admin/sites` route creation through the paid-order provisioner, which rejects unpaid, cancelled or archived setup requests.
+- Provisioning remains clean: no demo services, staff, rota, bookings, vouchers or localStorage data are copied into paid tenant records.
+- New tenant records link `SetupRequest`, `TenantSite`, `SiteDomain`, `SubscriptionRecord`, `CustomerSiteSettings`, provisioning tasks and status events where applicable.

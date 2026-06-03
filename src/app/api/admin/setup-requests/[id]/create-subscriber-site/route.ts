@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin";
 import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
-import { createSubscriberSiteFromPaidSetupRequest } from "@/lib/provisioning/create-subscriber-site";
+import { createSubscriberSiteFromSetupRequest } from "@/lib/sites/site-provisioning-service";
 
 const cuid = z.string().cuid();
 
@@ -25,7 +25,7 @@ export async function POST(
   try {
     const { id } = await context.params;
     const setupRequestId = cuid.parse(id);
-    const result = await createSubscriberSiteFromPaidSetupRequest(setupRequestId);
+    const result = await createSubscriberSiteFromSetupRequest(setupRequestId);
 
     return NextResponse.json(
       {
@@ -62,4 +62,3 @@ export async function POST(
     );
   }
 }
-

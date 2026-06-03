@@ -176,9 +176,10 @@ Still local/mock in current product:
 
 ## Current commercial payment step
 - Setup submission captures order intent and provisioning details.
-- Live checkout/payment capture is not automated in this phase.
-- Platform admin confirms payment/subscription onboarding manually after setup request submission.
+- Stripe Checkout/Billing is the current MyExperiment.club subscription checkout foundation.
+- Platform admin creates the clean subscriber site only after Stripe/webhook payment status is paid enough to fulfil (`PAID` or `SUBSCRIPTION_ACTIVE`).
 - Domain confirmation and payment confirmation happen before final go-live status is set.
+- Subscriber-site payment processor integrations remain separate future work.
 
 ## Public funnel wording alignment (2026-05-30)
 - Public CTA language now emphasizes `Order now` for setup start.
@@ -221,6 +222,7 @@ Still local/mock in current product:
   - existing `TenantSite` linked to setup request is reused
   - duplicate `TenantSite`/`SiteDomain`/`SubscriptionRecord` rows are not created
 - New site starts clean (no demo copy of services/staff/rota/bookings/vouchers).
+- Clean provisioning also creates baseline fulfilment task rows for review, business details, domain, subscription linkage, clean site settings, DNS, ready and live checks.
 - Response includes links:
   - public: `/sites/[siteSlug]`
   - subscriber admin: `/site-admin/[siteSlug]`

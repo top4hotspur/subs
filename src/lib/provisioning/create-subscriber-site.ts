@@ -61,6 +61,25 @@ function toUrls(siteSlug: string) {
   };
 }
 
+function buildCleanProvisioningTasks(setupRequestId: string, tenantSiteId: string) {
+  return [
+    { taskType: "REVIEW_SETUP", title: "Review paid setup request" },
+    { taskType: "CONFIRM_BUSINESS", title: "Confirm business details" },
+    { taskType: "CONFIRM_DOMAIN_OPTION", title: "Confirm domain option" },
+    { taskType: "CONFIRM_SUBSCRIPTION", title: "Confirm Stripe subscription linkage" },
+    { taskType: "PREPARE_SITE_SETTINGS", title: "Prepare clean subscriber site settings" },
+    { taskType: "PREPARE_DNS", title: "Prepare domain/DNS instructions" },
+    { taskType: "MARK_READY", title: "Mark site ready for customer setup" },
+    { taskType: "MARK_LIVE", title: "Mark site live" },
+  ].map((task) => ({
+    tenantSiteId,
+    setupRequestId,
+    taskType: task.taskType,
+    title: task.title,
+    status: "TODO",
+  }));
+}
+
 export async function createSubscriberSiteFromPaidSetupRequest(
   setupRequestId: string,
 ): Promise<ProvisioningResult> {
@@ -207,6 +226,10 @@ export async function createSubscriberSiteFromPaidSetupRequest(
         phone: setupRequest.contactPhone ?? undefined,
         email: setupRequest.contactEmail ?? undefined,
       },
+    });
+
+    await tx.siteProvisioningTask.createMany({
+      data: buildCleanProvisioningTasks(setupRequest.id, tenantSite.id),
     });
 
     await tx.siteStatusEvent.create({

@@ -77,7 +77,7 @@ function buildDefaultTasks() {
     { taskType: "CONFIRM_BUSINESS", title: "Confirm business details" },
     { taskType: "CONFIRM_DOMAIN_OPTION", title: "Confirm domain option" },
     { taskType: "CONFIRM_SUBSCRIPTION", title: "Confirm payment/subscription status" },
-    { taskType: "PREPARE_SITE_SETTINGS", title: "Prepare site settings from demo" },
+    { taskType: "PREPARE_SITE_SETTINGS", title: "Prepare clean subscriber site settings" },
     { taskType: "PREPARE_DNS", title: "Prepare domain/DNS instructions" },
     { taskType: "MARK_READY", title: "Mark site ready" },
     { taskType: "MARK_LIVE", title: "Mark site live" },

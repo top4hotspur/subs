@@ -697,6 +697,7 @@ olePrice:<role> columns accepted
 4. Confirm success state with links:
    - `View subscriber site`
    - `Open subscriber admin`
+   - `/admin/sites` / `Manage domain/go-live`
 5. Confirm public route opens at `/sites/[siteSlug]`.
 6. Confirm subscriber admin route opens at `/site-admin/[siteSlug]` (or expected admin shell/login behavior).
 7. Trigger provisioning again for the same request (or refresh and retry path) and confirm reuse/idempotent behavior (no duplicate site created).
@@ -704,6 +705,8 @@ olePrice:<role> columns accepted
 9. Confirm route expectation:
    - `/sites/[siteSlug]` works as platform preview/dev route.
    - final production destination is customer domain host routing once that milestone is implemented.
+10. From `/admin/sites`, try creating from the same paid setup request id and confirm the existing tenant site is reused.
+11. Try an unpaid/cancelled/archived setup request id and confirm the API/UI blocks provisioning with a clear paid-order guardrail message.
 
 ## 2026-06-01 hosted smoke checks: subscriber admin onboarding shell
 1. After provisioning, open `/site-admin/[siteSlug]`.

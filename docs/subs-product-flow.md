@@ -561,6 +561,7 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Fulfilment path is now:
   - paid setup request -> platform admin clicks `Create blank subscriber site` -> clean tenant site is provisioned.
 - Provisioning action is visible only for paid, non-cancelled, non-archived requests.
+- The server-side provisioner enforces the same guardrails from both `/admin/setup-requests` and `/admin/sites`.
 - After provisioning, admin gets direct links to:
   - subscriber public site (`/sites/[siteSlug]`)
   - subscriber admin area (`/site-admin/[siteSlug]`).

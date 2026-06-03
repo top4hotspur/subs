@@ -92,6 +92,10 @@ function parseCommunicationValue(value: string): CommunicationOption {
   return CommunicationOption.EMAIL_ONLY;
 }
 
+function isProvisionablePaymentStatus(status?: string | null): boolean {
+  return status === "PAID" || status === "SUBSCRIPTION_ACTIVE";
+}
+
 export default function AdminSetupRequestsPage() {
   const offer = getWebsiteSubscriptionOffer();
   const [loading, setLoading] = useState(false);
@@ -592,7 +596,7 @@ export default function AdminSetupRequestsPage() {
                   >
                     Mark cancelled
                   </button>
-                  {selectedRequest.paymentStatus === "PAID" &&
+                  {isProvisionablePaymentStatus(selectedRequest.paymentStatus) &&
                   selectedRequest.status !== SubscriptionSetupStatus.CANCELLED &&
                   !selectedRequest.archivedAt &&
                   !selectedRequest.tenantSite?.id ? (
@@ -603,6 +607,14 @@ export default function AdminSetupRequestsPage() {
                     >
                       Create blank subscriber site
                     </button>
+                  ) : null}
+                  {!isProvisionablePaymentStatus(selectedRequest.paymentStatus) &&
+                  selectedRequest.status !== SubscriptionSetupStatus.CANCELLED &&
+                  !selectedRequest.archivedAt &&
+                  !selectedRequest.tenantSite?.id ? (
+                    <p className="w-full text-xs text-slate-600">
+                      Payment must be completed before creating the subscriber site.
+                    </p>
                   ) : null}
                   {selectedRequest.status === SubscriptionSetupStatus.CANCELLED ? (
                     <button

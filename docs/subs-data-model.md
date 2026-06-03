@@ -67,6 +67,9 @@ If no domain match exists, platform routes continue normally.
 
 ## Provisioning Data Behavior
 When creating a subscriber site from setup request, system should create baseline tenant entities and a clean editable subscriber-site structure. Demo data is not copied by default; any draft import should be an explicit future option.
+- Paid-order provisioning currently links `SetupRequest -> TenantSite`, creates or reuses a `SiteDomain` where a requested domain exists, creates/updates a `SubscriptionRecord`, and creates clean fulfilment `SiteProvisioningTask` rows.
+- Stripe checkout/session/subscription identifiers remain on `SetupRequest`; `SubscriptionRecord` currently stores platform subscription amounts/status rather than provider secrets.
+- Paid subscriber sites start with `CustomerSiteSettings` prefilled only from order-safe details such as business name, contact email and contact phone.
 
 ## Persisted preview query model
 - New tenant-scoped preview aggregation reads:
