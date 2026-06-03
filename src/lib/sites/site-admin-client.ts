@@ -133,6 +133,26 @@ export type SiteAdminCustomerCampaignSendResult = {
   details: Array<{ customerId: string; email: string; outcome: "SENT" | "SKIPPED" | "FAILED"; reason?: string }>;
 };
 
+export type SiteAdminPaymentProviderConnection = {
+  id: string;
+  tenantSiteId: string;
+  provider: string;
+  connectionMode: string;
+  environment: string;
+  providerAccountId: string | null;
+  providerAccountName: string | null;
+  providerAccountEmail: string | null;
+  publicEnabled: boolean;
+  connectionStatus: string;
+  connectedAt: string | null;
+  disconnectedAt: string | null;
+  lastVerifiedAt: string | null;
+  setupNotes: string | null;
+  secureSecretRef: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 async function parseJsonSafe(response: Response): Promise<unknown> {
   try {
     return await response.json();
@@ -185,6 +205,80 @@ export async function patchSiteAdminSettings(
       };
     }
     return { ok: true, settings: body.settings };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function getSiteAdminPaymentProviderConnections(
+  siteSlug: string,
+): Promise<ClientResult<{ connections: SiteAdminPaymentProviderConnection[] }>> {
+  try {
+    const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/payments/provider-connections`);
+    const body = (await parseJsonSafe(response)) as
+      | { ok?: boolean; connections?: SiteAdminPaymentProviderConnection[]; error?: string; details?: unknown }
+      | null;
+    if (!response.ok || !body?.ok || !Array.isArray(body.connections)) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_PAYMENT_CONNECTIONS_GET_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, connections: body.connections };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function saveSiteAdminPaymentProviderConnection(
+  siteSlug: string,
+  input: Partial<SiteAdminPaymentProviderConnection> & { provider: string },
+): Promise<ClientResult<{ connections: SiteAdminPaymentProviderConnection[] }>> {
+  try {
+    const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/payments/provider-connections`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    const body = (await parseJsonSafe(response)) as
+      | { ok?: boolean; connections?: SiteAdminPaymentProviderConnection[]; error?: string; details?: unknown }
+      | null;
+    if (!response.ok || !body?.ok || !Array.isArray(body.connections)) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_PAYMENT_CONNECTION_SAVE_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, connections: body.connections };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function startSiteAdminPaymentProviderConnect(
+  siteSlug: string,
+  provider: "stripe" | "square",
+): Promise<ClientResult<{ redirectUrl?: string; message?: string }>> {
+  try {
+    const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/payments/${provider}/connect/start`, {
+      method: "POST",
+    });
+    const body = (await parseJsonSafe(response)) as
+      | { ok?: boolean; redirectUrl?: string; message?: string; error?: string; details?: unknown }
+      | null;
+    if (!response.ok || !body?.ok) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_PAYMENT_CONNECT_START_FAILED",
+        status: response.status,
+        details: body?.message ?? body?.details,
+      };
+    }
+    return { ok: true, redirectUrl: body.redirectUrl, message: body.message };
   } catch {
     return { ok: false, error: "NETWORK_ERROR", status: 0 };
   }

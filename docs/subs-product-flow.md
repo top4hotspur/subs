@@ -969,6 +969,24 @@ Subscriber payment webhooks must be logically separated from platform subscripti
 
 Customer saved cards remain a placeholder. Any future saved card support must use provider-vaulted payment methods, customer consent and tenant/provider customer mapping. MyExperiment.club must not store card details.
 
+## 2026-06-04 OAuth/connect payment foundation
+
+Subscriber payment provider setup now has a tenant-scoped `CustomerSitePaymentProviderConnection` foundation. It stores non-secret metadata only: provider, connection mode, test/live environment, account ID/name/email, public enabled flag, connection status, timestamps, setup notes and a future `secureSecretRef` placeholder. No OAuth tokens or raw credentials are stored in this pass.
+
+Business admin Payments/sales now shows connection status beside provider-specific guidance. Stripe and Square display Connect/OAuth-style actions; missing provider app env/config returns a clear setup-needed message and does not fake a connected account. PayPal, SumUp, Zettle, Worldpay and Other remain assisted setup/manual until a safe provider connection path is designed.
+
+Safe OAuth route foundations:
+- `POST /api/site-admin/[siteSlug]/payments/stripe/connect/start`
+- `GET /api/site-admin/[siteSlug]/payments/stripe/connect/callback`
+- `POST /api/site-admin/[siteSlug]/payments/square/connect/start`
+- `GET /api/site-admin/[siteSlug]/payments/square/connect/callback`
+
+The start routes require the current site-admin session and create signed state bound to tenant/site/admin/provider. The callback routes validate that state. Token exchange/storage is intentionally blocked until encrypted storage or provider Connect/OAuth storage is ready.
+
+Tenant payment webhook stubs now exist at `/api/sites/payments/stripe/webhook` and `/api/sites/payments/square/webhook`; both return `501` until provider signature verification, tenant booking mapping and idempotency are implemented.
+
+Booking guardrails now distinguish a connected provider account from checkout availability. If a provider account is connected but checkout is not implemented, required online prepayment remains blocked with customer-facing copy: `Online payment setup is connected but checkout is not enabled yet. Please contact the business to book.`
+
 FAQ copy:
 `Can I use my existing payment provider? In many cases, yes. We can support common providers such as Stripe, Square, PayPal, SumUp/Zettle and other payment platforms depending on your setup. If you already use a provider, let us know during setup and we'll confirm the best way to connect payments to your site. More providers may be available on request.`
 

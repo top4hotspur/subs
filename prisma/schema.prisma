@@ -43,6 +43,7 @@ model TenantSite {
   customerSiteCustomers         CustomerSiteCustomer[]
   customerSiteContactEnquiries  CustomerSiteContactEnquiry[]
   customerSiteMarketingCampaigns CustomerSiteMarketingCampaign[]
+  customerSitePaymentProviderConnections CustomerSitePaymentProviderConnection[]
   setupRequest                  SetupRequest?                  @relation("SetupRequestToTenantSite", fields: [setupRequestId], references: [id])
 }
 
@@ -415,6 +416,33 @@ model CustomerSiteSettings {
   createdAt                        DateTime   @default(now())
   updatedAt                        DateTime   @updatedAt
   tenantSite                       TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+}
+
+model CustomerSitePaymentProviderConnection {
+  id                   String     @id @default(cuid())
+  tenantSiteId         String
+  provider             String
+  connectionMode       String     @default("MANUAL_ONLY")
+  environment          String     @default("TEST")
+  providerAccountId    String?
+  providerAccountName  String?
+  providerAccountEmail String?
+  publicEnabled        Boolean    @default(false)
+  connectionStatus     String     @default("NOT_STARTED")
+  connectedAt          DateTime?
+  disconnectedAt       DateTime?
+  lastVerifiedAt       DateTime?
+  setupNotes           String?
+  secureSecretRef      String?
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+  tenantSite           TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantSiteId, provider])
+  @@index([tenantSiteId])
+  @@index([provider])
+  @@index([tenantSiteId, connectionStatus])
+  @@index([tenantSiteId, publicEnabled])
 }
 
 model CustomerSiteService {

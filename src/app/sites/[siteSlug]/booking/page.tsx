@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { PublicSiteBookingForm } from "@/components/sites/public-site-booking-form";
 import { getCustomerSitePreviewDataBySlug } from "@/lib/sites/customer-site-preview-repository";
 import { getPublicSiteBasePath } from "@/lib/sites/public-site-url";
+import { hasConnectedProviderCheckout, normalizePaymentProviderKey } from "@/lib/sites/payment-provider-connections";
 
 export default async function PublicSiteSlugBookingPage({
   params,
@@ -26,6 +27,12 @@ export default async function PublicSiteSlugBookingPage({
     customerSelectable: member.customerSelectable,
     active: member.active,
   }));
+  const selectedProvider = normalizePaymentProviderKey(preview.settings?.paymentProcessorName);
+  const selectedConnection = preview.paymentProviderConnections.find((connection) => connection.provider === selectedProvider);
+  const tenantCheckoutAvailable = hasConnectedProviderCheckout({
+    connection: selectedConnection,
+    checkoutImplemented: false,
+  });
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -39,6 +46,8 @@ export default async function PublicSiteSlugBookingPage({
           acceptCardPayments={preview.settings?.acceptCardPayments ?? true}
           requireBookingPrepayment={preview.settings?.requireBookingPrepayment ?? false}
           allowInStorePaymentRecording={preview.settings?.allowInStorePaymentRecording ?? false}
+          paymentProviderConnected={selectedConnection?.connectionStatus === "CONNECTED" && selectedConnection.publicEnabled}
+          paymentProviderCheckoutEnabled={tenantCheckoutAvailable}
         />
       </div>
     </main>

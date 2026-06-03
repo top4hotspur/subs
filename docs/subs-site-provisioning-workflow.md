@@ -584,7 +584,19 @@ Current fulfilment handover should explain:
 - if prepayment is required but provider checkout is not connected, public booking is blocked with a contact-business message;
 - saved cards are future provider-vaulted features, not locally stored card details.
 
-Provider-specific setup guidance in `/site-admin/[siteSlug]` covers Stripe, Square, PayPal, SumUp/Zettle, Worldpay and Other. The future go-live checklist for provider checkout must include secure credential storage or OAuth/Connect, test/live mode, provider-specific webhook signature validation, tenant/booking mapping, idempotency and refund/status handling.
+Provider-specific setup guidance in `/site-admin/[siteSlug]` covers Stripe, Square, PayPal, SumUp/Zettle, Worldpay and Other. The payment-provider foundation now also has a tenant-scoped `CustomerSitePaymentProviderConnection` record for non-secret provider connection metadata: provider, connection mode, test/live environment, account metadata, public enabled flag, status, timestamps, setup notes and a future secure-secret reference. This is separate from `CustomerSiteSettings`, which still stores the business owner's operational payment preferences.
+
+Stripe and Square expose OAuth/Connect-first route foundations:
+- `POST /api/site-admin/[siteSlug]/payments/stripe/connect/start`
+- `GET /api/site-admin/[siteSlug]/payments/stripe/connect/callback`
+- `POST /api/site-admin/[siteSlug]/payments/square/connect/start`
+- `GET /api/site-admin/[siteSlug]/payments/square/connect/callback`
+
+These routes require the current tenant site-admin session and signed tenant/provider state. Missing provider app environment returns a clear setup-needed response. Token exchange and credential storage are intentionally not implemented until encrypted storage or provider-managed Connect/OAuth storage is ready. PayPal, SumUp/Zettle, Worldpay and Other remain assisted setup/manual guidance only.
+
+Future go-live checklist for provider checkout must include secure credential storage or OAuth/Connect, test/live mode, provider-specific webhook signature validation, tenant/booking mapping, idempotency and refund/status handling. Tenant webhook stubs now live at `/api/sites/payments/stripe/webhook` and `/api/sites/payments/square/webhook`, but they return `501` until those safety checks are implemented.
+
+Booking guardrails remain conservative. A connected provider account does not automatically mean checkout is live. If card prepayment is required and a provider is connected but booking checkout has not been implemented, public booking stays blocked with customer-facing copy telling the customer that online payment setup is connected but checkout is not enabled yet.
 
 Detailed architecture is documented in `docs/subs-payment-provider-architecture.md`.
 Use `Send DNS instructions` only when the customer or their domain contact needs to update DNS. For platform-managed domains, keep the DNS/hosting target values as internal fulfilment notes unless the customer needs them.

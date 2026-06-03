@@ -6,6 +6,8 @@ export type CustomerSitePaymentPolicySettings = {
   paymentProcessorSetupMode?: string | null;
   paymentProcessorName?: string | null;
   paymentProcessorAccountRef?: string | null;
+  paymentProviderConnected?: boolean | null;
+  paymentProviderCheckoutEnabled?: boolean | null;
 };
 
 export type CustomerSiteBookingPaymentDecision = {
@@ -20,6 +22,9 @@ export type CustomerSiteBookingPaymentDecision = {
 
 const ONLINE_PAYMENT_NOT_CONNECTED_COPY =
   "This business requires payment before online booking, but online payment is not connected yet. Please contact the business to book.";
+
+const ONLINE_PAYMENT_CONNECTED_CHECKOUT_DISABLED_COPY =
+  "Online payment setup is connected but checkout is not enabled yet. Please contact the business to book.";
 
 const NO_PAYMENT_METHOD_COPY =
   "This business does not currently have a payment method available for online booking. Please contact the business to book.";
@@ -37,8 +42,21 @@ export function getCustomerSiteBookingPaymentDecision(
   const acceptCashPayments = Boolean(settings?.acceptCashPayments);
   const requireBookingPrepayment = Boolean(settings?.requireBookingPrepayment);
   const allowInStorePaymentRecording = Boolean(settings?.allowInStorePaymentRecording);
-  const onlineCheckoutAvailable = getSubscriberCheckoutAvailable();
+  const providerConnected = Boolean(settings?.paymentProviderConnected);
+  const onlineCheckoutAvailable = Boolean(settings?.paymentProviderCheckoutEnabled) && getSubscriberCheckoutAvailable();
   const manualPaymentAllowed = acceptCashPayments || allowInStorePaymentRecording;
+
+  if (requireBookingPrepayment && acceptCardPayments && providerConnected && !onlineCheckoutAvailable) {
+    return {
+      canCreateBooking: false,
+      publicCopy: ONLINE_PAYMENT_CONNECTED_CHECKOUT_DISABLED_COPY,
+      blockedReason: "ONLINE_PAYMENT_NOT_CONNECTED",
+      paymentStatus: "PENDING",
+      paymentMethod: "CARD_ONLINE",
+      requiresOnlinePrepayment: true,
+      onlineCheckoutAvailable,
+    };
+  }
 
   if (requireBookingPrepayment && acceptCardPayments && !onlineCheckoutAvailable) {
     return {

@@ -1499,3 +1499,25 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
 10. Open `/site-admin/[siteSlug]` and confirm the read-only **Domain setup** card shows preview URL, requested domain, status and customer-friendly action text.
 11. Confirm no Route 53 registration, DNS provider write, AWS resource creation, SSL automation or external domain API call occurs.
 
+## 2026-06-04 hosted smoke checks: subscriber payment provider connection foundation
+1. Sign in at `/site-admin/login` for a provisioned tenant and open `/site-admin/[siteSlug]`.
+2. Open `Payments/sales`.
+3. Select `Stripe` as the payment provider and confirm:
+   - provider-specific Connect guidance is visible
+   - no field asks for secret keys, API keys, access tokens, webhook secrets or card details
+   - connection status starts as not connected or pending.
+4. Click the Stripe Connect action. If `STRIPE_CONNECT_CLIENT_ID` is not configured, confirm the UI shows a clear setup-needed message and does not mark the account connected.
+5. Select `Square` and repeat the OAuth setup-needed check. If `SQUARE_APPLICATION_ID` or `SQUARE_OAUTH_REDIRECT_URL` is missing, the UI should explain that Square OAuth is not configured and leave checkout disabled.
+6. Select PayPal, SumUp, Zettle, Worldpay and Other in turn and confirm each uses assisted setup/manual guidance rather than fake OAuth success.
+7. Mark assisted setup pending for a non-OAuth provider and confirm only non-secret account reference/notes are saved.
+8. Enable `Accept card payments` and `Require prepayment for online bookings`.
+9. Open the public booking flow for the same tenant.
+10. Confirm required online prepayment is blocked when tenant checkout is unavailable.
+11. If a provider connection is marked connected in test data but checkout is still disabled, confirm the customer-facing copy says online payment setup is connected but checkout is not enabled yet and asks the customer to contact the business.
+12. Confirm no public booking redirects to the platform Stripe subscription checkout.
+13. Confirm tenant webhook stubs exist and stay safe:
+   - `POST /api/sites/payments/stripe/webhook` returns a verification/not-implemented response until provider signature handling is built.
+   - `POST /api/sites/payments/square/webhook` returns a verification/not-implemented response until provider signature handling is built.
+14. Confirm platform subscription checkout still uses `/api/stripe/webhook`; subscriber payment stubs must not process platform billing events.
+15. Confirm no card details or provider secrets are visible in browser source, network JSON or admin UI.
+

@@ -64,28 +64,31 @@ Future design option. For example, Stripe Connect or another marketplace/connect
 
 ## Proposed provider configuration model
 
-Use a tenant-scoped model when secure connection work begins:
+The OAuth/connect-first foundation now uses a tenant-scoped non-secret connection model:
 
 ```prisma
-model CustomerSitePaymentProviderConfig {
+model CustomerSitePaymentProviderConnection {
   id                       String   @id @default(cuid())
   tenantSiteId             String
   provider                 String   // STRIPE, SQUARE, PAYPAL, SUMUP, ZETTLE, WORLDPAY, OTHER
-  mode                     String   // MANUAL_ONLY, PROVIDER_PENDING_SETUP, PROVIDER_CONNECTED
-  displayName              String?
-  accountReference         String?
+  connectionMode           String   // MANUAL_ONLY, OAUTH_PENDING, OAUTH_CONNECTED, ASSISTED_SETUP, DISCONNECTED
   environment              String   // TEST, LIVE
-  connectionStatus         String   // NOT_STARTED, PENDING, CONNECTED, NEEDS_ATTENTION, DISABLED
-  publicEnabled            Boolean  @default(false)
+  providerAccountId        String?
+  providerAccountName      String?
+  providerAccountEmail     String?
+  connectionStatus         String   // NOT_STARTED, PENDING, CONNECTED, NEEDS_ATTENTION, DISCONNECTED
+  connectedAt              DateTime?
+  disconnectedAt           DateTime?
   lastVerifiedAt           DateTime?
   setupNotes               String?
-  secretStorageReference   String?
+  publicEnabled            Boolean  @default(false)
+  secureSecretRef          String?
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 }
 ```
 
-Secrets must not be stored in plaintext. `secretStorageReference` should point to encrypted credential storage or a provider OAuth/Connect account identifier. If the app uses environment variables only, that is acceptable for platform billing but not scalable or safe for many subscriber businesses.
+Secrets must not be stored in plaintext. `secureSecretRef` is a placeholder for encrypted credential storage or provider OAuth/Connect storage; no access tokens are written in the current foundation. If the app uses environment variables only, that is acceptable for platform billing but not scalable or safe for many subscriber businesses.
 
 Recommended future secret handling:
 - Provider OAuth/Connect where possible.
@@ -107,6 +110,20 @@ Business admin should show provider-specific instructions when the provider chan
 Warnings:
 - If prepayment is required but provider is not connected, customers cannot complete online paid bookings until setup is complete.
 - If manual/cash is allowed, customers can still book and payment can be recorded manually where settings allow it.
+
+Current admin UI:
+- Stripe and Square show Connect-style actions when selected.
+- If provider app credentials are missing, Connect returns a setup-needed message and no fake success.
+- PayPal, SumUp, Zettle, Worldpay and Other show assisted setup guidance.
+- Admin can mark assisted setup pending, which stores non-secret account reference/notes and leaves checkout disabled.
+
+Current route foundation:
+- `POST /api/site-admin/[siteSlug]/payments/stripe/connect/start`
+- `GET /api/site-admin/[siteSlug]/payments/stripe/connect/callback`
+- `POST /api/site-admin/[siteSlug]/payments/square/connect/start`
+- `GET /api/site-admin/[siteSlug]/payments/square/connect/callback`
+
+These routes require a signed-in site admin for the matching tenant. Start routes create a signed tenant-bound state value. Callback routes validate state against tenant/site/admin session. Token exchange and secure token storage are intentionally not enabled yet.
 
 ## Booking flow rules
 
@@ -145,6 +162,12 @@ Webhook requirements:
 - Log unknown/unmatched events safely without leaking secrets.
 - Update only matching tenant booking/payment state.
 - Do not break platform subscription webhook behaviour.
+
+Current route stubs:
+- `POST /api/sites/payments/stripe/webhook`
+- `POST /api/sites/payments/square/webhook`
+
+They return `501` until provider signature verification, tenant booking mapping and idempotency are implemented.
 
 ## Saved cards future
 

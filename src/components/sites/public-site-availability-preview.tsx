@@ -56,6 +56,8 @@ type PublicSiteAvailabilityPreviewProps = {
   acceptCardPayments?: boolean;
   requireBookingPrepayment?: boolean;
   allowInStorePaymentRecording?: boolean;
+  paymentProviderConnected?: boolean;
+  paymentProviderCheckoutEnabled?: boolean;
 };
 
 function todayIso(): string {
@@ -101,6 +103,8 @@ export function PublicSiteAvailabilityPreview({
   acceptCardPayments = true,
   requireBookingPrepayment = false,
   allowInStorePaymentRecording = false,
+  paymentProviderConnected = false,
+  paymentProviderCheckoutEnabled = false,
 }: PublicSiteAvailabilityPreviewProps) {
   const siteBasePath = publicBasePath ?? `/sites/${encodeURIComponent(siteSlug)}`;
   const selectableStaff = useMemo(() => staff.filter((member) => member.customerSelectable), [staff]);
@@ -131,8 +135,10 @@ export function PublicSiteAvailabilityPreview({
       acceptCardPayments,
       requireBookingPrepayment,
       allowInStorePaymentRecording,
+      paymentProviderConnected,
+      paymentProviderCheckoutEnabled,
     }),
-    [acceptCashPayments, acceptCardPayments, requireBookingPrepayment, allowInStorePaymentRecording],
+    [acceptCashPayments, acceptCardPayments, requireBookingPrepayment, allowInStorePaymentRecording, paymentProviderConnected, paymentProviderCheckoutEnabled],
   );
 
   useEffect(() => {

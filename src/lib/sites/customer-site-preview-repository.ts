@@ -57,6 +57,19 @@ export type CustomerSitePreviewData = {
     customerBlockBookingsEnabled: boolean;
     giftVoucherSettingsJson: unknown;
   } | null;
+  paymentProviderConnections: Array<{
+    id: string;
+    provider: string;
+    connectionMode: string;
+    environment: string;
+    publicEnabled: boolean;
+    connectionStatus: string;
+    providerAccountId: string | null;
+    providerAccountName: string | null;
+    providerAccountEmail: string | null;
+    connectedAt: string | null;
+    lastVerifiedAt: string | null;
+  }>;
   services: Array<{
     id: string;
     categoryId: string | null;
@@ -208,6 +221,9 @@ export async function getCustomerSitePreviewData(
         orderBy: [{ createdAt: "desc" }],
         take: 10,
       },
+      customerSitePaymentProviderConnections: {
+        orderBy: [{ provider: "asc" }, { createdAt: "asc" }],
+      },
     },
   });
 
@@ -274,6 +290,19 @@ export async function getCustomerSitePreviewData(
           giftVoucherSettingsJson: site.customerSiteSettings.giftVoucherSettingsJson ?? null,
         }
       : null,
+    paymentProviderConnections: site.customerSitePaymentProviderConnections.map((connection) => ({
+      id: connection.id,
+      provider: connection.provider,
+      connectionMode: connection.connectionMode,
+      environment: connection.environment,
+      publicEnabled: connection.publicEnabled,
+      connectionStatus: connection.connectionStatus,
+      providerAccountId: connection.providerAccountId,
+      providerAccountName: connection.providerAccountName,
+      providerAccountEmail: connection.providerAccountEmail,
+      connectedAt: connection.connectedAt?.toISOString() ?? null,
+      lastVerifiedAt: connection.lastVerifiedAt?.toISOString() ?? null,
+    })),
     services: site.customerSiteServices.map((service) => ({
       id: service.id,
       categoryId: service.categoryId ?? null,

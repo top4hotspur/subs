@@ -25,6 +25,8 @@ type PublicSiteBookingFormProps = {
   acceptCardPayments?: boolean;
   requireBookingPrepayment?: boolean;
   allowInStorePaymentRecording?: boolean;
+  paymentProviderConnected?: boolean;
+  paymentProviderCheckoutEnabled?: boolean;
 };
 
 type CustomerSessionResponse = {
@@ -71,6 +73,8 @@ export function PublicSiteBookingForm({
   acceptCardPayments = true,
   requireBookingPrepayment = false,
   allowInStorePaymentRecording = false,
+  paymentProviderConnected = false,
+  paymentProviderCheckoutEnabled = false,
 }: PublicSiteBookingFormProps) {
   const siteBasePath = publicBasePath ?? `/sites/${encodeURIComponent(siteSlug)}`;
   const activeServices = useMemo(() => services.filter((item) => item.active), [services]);
@@ -98,8 +102,10 @@ export function PublicSiteBookingForm({
       acceptCardPayments,
       requireBookingPrepayment,
       allowInStorePaymentRecording,
+      paymentProviderConnected,
+      paymentProviderCheckoutEnabled,
     }),
-    [acceptCashPayments, acceptCardPayments, requireBookingPrepayment, allowInStorePaymentRecording],
+    [acceptCashPayments, acceptCardPayments, requireBookingPrepayment, allowInStorePaymentRecording, paymentProviderConnected, paymentProviderCheckoutEnabled],
   );
 
   useEffect(() => {

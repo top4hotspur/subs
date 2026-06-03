@@ -32,14 +32,18 @@ import {
   runSiteAdminVoucherAction,
   getSiteAdminCrm,
   getSiteAdminCustomerCampaigns,
+  getSiteAdminPaymentProviderConnections,
   patchSiteAdminCrmCustomer,
   createSiteAdminCustomerCampaign,
   sendSiteAdminCustomerCampaign,
   updateSiteAdminCustomerCampaign,
+  saveSiteAdminPaymentProviderConnection,
+  startSiteAdminPaymentProviderConnect,
   type SiteAdminCustomerCampaign,
   type SiteAdminCustomerCampaignInput,
   type SiteAdminCrmCustomer,
   type SiteAdminCrmEnquiry,
+  type SiteAdminPaymentProviderConnection,
 } from "@/lib/sites/site-admin-client";
 import { outlineButtonClass, primaryButtonClass, smallButtonClass } from "@/lib/ui/button-styles";
 import type {
@@ -569,6 +573,7 @@ function staffingCoverageForWeekday(
 function toMessage(error: string, status: number, details?: unknown): string {
   const validationMessage = validationDetailsToMessage(details);
   if (validationMessage) return validationMessage;
+  if (typeof details === "string" && details.trim()) return details;
   if (error === "BACKEND_PERSISTENCE_NOT_CONFIGURED" || status === 503) {
     return "Backend persistence is not configured for this environment yet.";
   }
@@ -604,6 +609,12 @@ function toMessage(error: string, status: number, details?: unknown): string {
   }
   if (error === "CAMPAIGN_NOT_SENDABLE") {
     return "This campaign cannot be sent because it has already been sent or cancelled.";
+  }
+  if (error === "STRIPE_CONNECT_NOT_CONFIGURED") {
+    return "Stripe Connect is not configured yet. No account was connected.";
+  }
+  if (error === "SQUARE_OAUTH_NOT_CONFIGURED") {
+    return "Square OAuth is not configured yet. No account was connected.";
   }
   return `Request failed: ${error}`;
 }
@@ -985,6 +996,8 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
 
   const [settingsDraft, setSettingsDraft] = useState<SettingsDraft>(() => toSettingsDraft(null));
   const [persistedSettings, setPersistedSettings] = useState<PersistedCustomerSiteSettings | null>(null);
+  const [paymentProviderConnections, setPaymentProviderConnections] = useState<SiteAdminPaymentProviderConnection[]>([]);
+  const [paymentConnectionBusy, setPaymentConnectionBusy] = useState(false);
   const [serviceCategoriesDraft, setServiceCategoriesDraft] = useState<ServiceCategoryDraft[]>([]);
   const [servicesDraft, setServicesDraft] = useState<ServiceDraft[]>([]);
   const [rolesDraft, setRolesDraft] = useState<StaffRoleDraft[]>([]);
@@ -1066,6 +1079,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       setMessage(null);
       const [
         settingsResult,
+        paymentConnectionsResult,
         servicesResult,
         rolesResult,
         staffResult,
@@ -1073,6 +1087,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
         bookingsResult,
       ] = await Promise.all([
         getSiteAdminSettings(siteSlug),
+        getSiteAdminPaymentProviderConnections(siteSlug),
         getSiteAdminServices(siteSlug),
         listSiteAdminStaffRoles(siteSlug),
         listSiteAdminStaff(siteSlug),
@@ -1083,6 +1098,11 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
 
       if (!settingsResult.ok) {
         setMessage(toMessage(settingsResult.error, settingsResult.status));
+        setLoading(false);
+        return;
+      }
+      if (!paymentConnectionsResult.ok) {
+        setMessage(toMessage(paymentConnectionsResult.error, paymentConnectionsResult.status, paymentConnectionsResult.details));
         setLoading(false);
         return;
       }
@@ -1114,6 +1134,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
 
       setSettingsDraft(toSettingsDraft(settingsResult.settings));
       setPersistedSettings(settingsResult.settings);
+      setPaymentProviderConnections(paymentConnectionsResult.connections);
       setServiceCategoriesDraft(servicesResult.categories.map(toServiceCategoryDraft));
       setServicesDraft(servicesResult.services.map(toServiceDraft));
       setRolesDraft(rolesResult.roles.map(toRoleDraft));
@@ -1329,6 +1350,54 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       if (checked) return current.includes(customerId) ? current : [...current, customerId];
       return current.filter((id) => id !== customerId);
     });
+  }
+
+  async function startPaymentProviderConnect() {
+    if (paymentProviderGuidance.providerKey !== "STRIPE" && paymentProviderGuidance.providerKey !== "SQUARE") {
+      setMessage("This provider is assisted setup for now. No OAuth connection is available yet.");
+      return;
+    }
+    setPaymentConnectionBusy(true);
+    setMessage(`Starting ${paymentProviderGuidance.provider} connection...`);
+    const result = await startSiteAdminPaymentProviderConnect(
+      siteSlug,
+      paymentProviderGuidance.providerKey === "STRIPE" ? "stripe" : "square",
+    );
+    const refreshed = await getSiteAdminPaymentProviderConnections(siteSlug);
+    if (refreshed.ok) setPaymentProviderConnections(refreshed.connections);
+    setPaymentConnectionBusy(false);
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status, result.details));
+      return;
+    }
+    setMessage(result.message ?? `${paymentProviderGuidance.provider} connection can start.`);
+    if (result.redirectUrl) {
+      window.location.assign(result.redirectUrl);
+    }
+  }
+
+  async function markPaymentProviderAssistedSetup() {
+    setPaymentConnectionBusy(true);
+    setMessage(`Saving ${paymentProviderGuidance.provider} assisted setup status...`);
+    const result = await saveSiteAdminPaymentProviderConnection(siteSlug, {
+      provider: paymentProviderGuidance.providerKey,
+      connectionMode: paymentProviderGuidance.connectionApproach === "ASSISTED_SETUP" ? "ASSISTED_SETUP" : "OAUTH_PENDING",
+      connectionStatus: "PENDING",
+      environment: selectedPaymentConnection?.environment ?? "TEST",
+      providerAccountId: settingsDraft.paymentProcessorAccountRef.trim() || null,
+      providerAccountEmail: settingsDraft.paymentProcessorAccountRef.includes("@")
+        ? settingsDraft.paymentProcessorAccountRef.trim()
+        : null,
+      publicEnabled: false,
+      setupNotes: settingsDraft.paymentProcessorNotes.trim() || null,
+    });
+    setPaymentConnectionBusy(false);
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status, result.details));
+      return;
+    }
+    setPaymentProviderConnections(result.connections);
+    setMessage(`${paymentProviderGuidance.provider} setup is marked pending. Online checkout is still disabled.`);
   }
 
   function updateVoucherSetting<K extends keyof CustomerSiteGiftVoucherSettings>(
@@ -1923,6 +1992,12 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   const policyNeedsReview = !hasCustomPolicy && !settingsDraft.policyDefaultAccepted;
   const tenantPaymentCheckoutConnected = false;
   const paymentProviderGuidance = getSubscriberPaymentProviderGuidance(settingsDraft.paymentProcessorName);
+  const selectedPaymentConnection =
+    paymentProviderConnections.find((connection) => connection.provider === paymentProviderGuidance.providerKey) ?? null;
+  const paymentProviderConnected =
+    selectedPaymentConnection?.connectionStatus === "CONNECTED" &&
+    selectedPaymentConnection.connectionMode === "OAUTH_CONNECTED" &&
+    selectedPaymentConnection.publicEnabled;
   const manualPaymentFallbackAvailable =
     settingsDraft.acceptCashPayments || settingsDraft.allowInStorePaymentRecording;
   const prepaymentCheckoutMissing =
@@ -2171,6 +2246,54 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
               <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 font-semibold text-amber-950">
                 {paymentProviderGuidance.warning}
               </p>
+            </div>
+            <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-slate-950">Provider connection status</p>
+                  <div className="mt-2 grid gap-1 sm:grid-cols-2">
+                    <p><span className="font-semibold">Provider:</span> {paymentProviderGuidance.provider}</p>
+                    <p><span className="font-semibold">Connection mode:</span> {selectedPaymentConnection?.connectionMode ?? (paymentProviderGuidance.connectionApproach === "OAUTH_CONNECT" ? "OAUTH_PENDING" : "ASSISTED_SETUP")}</p>
+                    <p><span className="font-semibold">Status:</span> {selectedPaymentConnection?.connectionStatus ?? "NOT_STARTED"}</p>
+                    <p><span className="font-semibold">Environment:</span> {selectedPaymentConnection?.environment ?? "TEST"}</p>
+                    <p><span className="font-semibold">Public checkout enabled:</span> {tenantPaymentCheckoutConnected ? "Yes" : "No"}</p>
+                    <p><span className="font-semibold">Account:</span> {selectedPaymentConnection?.providerAccountName || selectedPaymentConnection?.providerAccountId || selectedPaymentConnection?.providerAccountEmail || settingsDraft.paymentProcessorAccountRef || "Not connected"}</p>
+                  </div>
+                  <p className="mt-2 text-[11px] text-slate-600">
+                    A connected provider account alone does not enable online checkout. Provider-specific checkout and webhook verification must be implemented first.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {paymentProviderGuidance.connectActionLabel ? (
+                    <button
+                      type="button"
+                      className={`${primaryButtonClass} ${smallButtonClass}`}
+                      onClick={() => void startPaymentProviderConnect()}
+                      disabled={paymentConnectionBusy}
+                    >
+                      {paymentProviderGuidance.connectActionLabel}
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    className={`${outlineButtonClass} ${smallButtonClass}`}
+                    onClick={() => void markPaymentProviderAssistedSetup()}
+                    disabled={paymentConnectionBusy}
+                  >
+                    Mark assisted setup pending
+                  </button>
+                </div>
+              </div>
+              {!selectedPaymentConnection ? (
+                <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 font-semibold text-amber-950">
+                  Provider selected but not connected.
+                </p>
+              ) : null}
+              {paymentProviderConnected && !tenantPaymentCheckoutConnected ? (
+                <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 font-semibold text-amber-950">
+                  Connected account found, but checkout is not enabled yet.
+                </p>
+              ) : null}
             </div>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">

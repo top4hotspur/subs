@@ -14,6 +14,7 @@ import { formatBusinessOpeningHoursSummary, normalizeBusinessOpeningHours } from
 import { PublicSiteAvailabilityPreview } from "@/components/sites/public-site-availability-preview";
 import { vouchersArePublic } from "@/lib/sites/customer-site-voucher-types";
 import { buildPublicSitePath, getPublicSiteBasePath } from "@/lib/sites/public-site-url";
+import { hasConnectedProviderCheckout, normalizePaymentProviderKey } from "@/lib/sites/payment-provider-connections";
 
 function formatMoney(amount: number | null, currencyCode: string): string {
   if (amount === null) return "Quote required";
@@ -148,6 +149,12 @@ export default async function PublicSiteSlugPage({
   const publicStaff = preview.staffMembers.filter((member) => member.active);
   const socialLinks = normalizePersistedSocialLinks(settings?.socialLinks);
   const socialEntries = getEnabledSocialEntries(socialLinks);
+  const selectedPaymentProvider = normalizePaymentProviderKey(settings?.paymentProcessorName);
+  const selectedPaymentConnection = preview.paymentProviderConnections.find((connection) => connection.provider === selectedPaymentProvider);
+  const tenantCheckoutAvailable = hasConnectedProviderCheckout({
+    connection: selectedPaymentConnection,
+    checkoutImplemented: false,
+  });
   const mapsUrl = settings?.contactMapEnabled ? mapUrlFromAddress(settings?.address ?? null) : null;
   const openingHoursSummary =
     formatBusinessOpeningHoursSummary(normalizeBusinessOpeningHours(settings?.openingHoursJson)) ||
@@ -270,6 +277,8 @@ export default async function PublicSiteSlugPage({
                                 acceptCardPayments={settings?.acceptCardPayments ?? true}
                                 requireBookingPrepayment={settings?.requireBookingPrepayment ?? false}
                                 allowInStorePaymentRecording={settings?.allowInStorePaymentRecording ?? false}
+                                paymentProviderConnected={selectedPaymentConnection?.connectionStatus === "CONNECTED" && selectedPaymentConnection.publicEnabled}
+                                paymentProviderCheckoutEnabled={tenantCheckoutAvailable}
                                 staff={publicStaff.map((member) => ({
                                   id: member.id,
                                   displayName: member.displayName,

@@ -16,6 +16,7 @@ import {
   customerSitePaymentBlockMessage,
   getCustomerSiteBookingPaymentDecision,
 } from "@/lib/sites/customer-site-payment-policy";
+import { hasConnectedProviderCheckout, normalizePaymentProviderKey } from "@/lib/sites/payment-provider-connections";
 
 function backendNotConfigured() {
   return NextResponse.json(
@@ -67,7 +68,17 @@ export async function POST(
     if (!matchingSlot) {
       return NextResponse.json({ ok: false, error: "BOOKING_SLOT_UNAVAILABLE" }, { status: 409 });
     }
-    const paymentDecision = getCustomerSiteBookingPaymentDecision(site.settings);
+    const selectedProvider = normalizePaymentProviderKey(site.settings?.paymentProcessorName);
+    const selectedConnection = site.paymentProviderConnections.find((connection) => connection.provider === selectedProvider);
+    const tenantCheckoutAvailable = hasConnectedProviderCheckout({
+      connection: selectedConnection,
+      checkoutImplemented: false,
+    });
+    const paymentDecision = getCustomerSiteBookingPaymentDecision({
+      ...site.settings,
+      paymentProviderConnected: selectedConnection?.connectionStatus === "CONNECTED" && selectedConnection.publicEnabled,
+      paymentProviderCheckoutEnabled: tenantCheckoutAvailable,
+    });
     const paymentCurrency = (site.settings?.currency ?? "GBP").toUpperCase();
 
     if (!paymentDecision.canCreateBooking) {
@@ -78,7 +89,7 @@ export async function POST(
             paymentDecision.blockedReason === "ONLINE_PAYMENT_NOT_CONNECTED"
               ? "ONLINE_PAYMENT_NOT_CONFIGURED"
               : "BOOKING_PAYMENT_METHOD_UNAVAILABLE",
-          message: customerSitePaymentBlockMessage(paymentDecision.blockedReason),
+          message: paymentDecision.publicCopy || customerSitePaymentBlockMessage(paymentDecision.blockedReason),
         },
         { status: 400 },
       );
