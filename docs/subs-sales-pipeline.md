@@ -238,4 +238,6 @@ Before live sending, platform needs:
 
 Campaign landing links should continue sending prospects to the industry sales page first, for example `/window-cleaning`, before the direct demo link. The sales page explains the offer; the demo then mirrors the live customer-site shell with industry-specific demo data.
 
-Window Cleaning is available as `window-cleaning` in the shared industry list and can be used for lead capture, campaign segmentation, campaign landing pages and demo previews. Demo data is separate from paid subscriber tenant data.
+The direct demo link remains useful as a secondary CTA because `/demo/[industry]` and `/demo/[industry]/booking` now mirror the live customer-site booking journey with service cards, compact availability chips, policy acceptance and demo-safe confirmation. The demo route must never create real tenant bookings.
+
+Window Cleaning is available as `window-cleaning` in the shared industry list and can be used for lead capture, campaign segmentation, campaign landing pages and demo previews. Demo data is separate from paid subscriber tenant data and includes realistic sample prices plus quote-required examples.

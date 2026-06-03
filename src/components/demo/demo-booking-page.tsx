@@ -1,51 +1,52 @@
 "use client";
 
-import { useMemo } from "react";
-import { DemoSitePageShell } from "@/components/demo/demo-site-page-shell";
-import { CustomerRequestForm } from "@/components/requests/customer-request-form";
-import { SiteCard } from "@/components/site-ui/site-card";
-import { getLocalCustomerSiteSettings } from "@/lib/sites/local-site-settings";
-import { WebsiteTemplate, WebsiteTemplateSlug } from "@/lib/sites/types";
-import { listLocalStaff } from "@/lib/staff/local-staff";
+import { useState } from "react";
+import { DemoPreview } from "@/components/demo/demo-preview";
+import { DemoSiteIntroBanner } from "@/components/demo/demo-site-intro-banner";
+import {
+  getActiveLocalDemoDraftId,
+  getLocalDemoDraft,
+} from "@/lib/demo/local-demo-drafts";
+import { DemoCustomisationDraft, WebsiteTemplate } from "@/lib/sites/types";
 
 type DemoBookingPageProps = {
   template: WebsiteTemplate;
+  defaultDraft: DemoCustomisationDraft;
   initialServiceId?: string;
 };
 
-export function DemoBookingPage({ template, initialServiceId }: DemoBookingPageProps) {
-  const settings = useMemo(
-    () => getLocalCustomerSiteSettings(template.slug, template),
-    [template],
-  );
-  const services = settings.services
-    .filter((service) => service.active)
-    .map((service) => ({
-      id: service.id,
-      name: service.name,
-      description: service.description,
-      priceLabel: service.priceLabel,
-    }));
-  const staffMembers = useMemo(() => listLocalStaff(template.slug), [template.slug]);
-  const anyCustomerSelectableStaff = staffMembers.some(
-    (member) => member.active && member.customerSelectable,
-  );
+export function DemoBookingPage({
+  template,
+  defaultDraft,
+  initialServiceId,
+}: DemoBookingPageProps) {
+  const [activeDraft] = useState<DemoCustomisationDraft | null>(() => {
+    if (typeof window === "undefined") return null;
+    const activeId = getActiveLocalDemoDraftId(template.slug);
+    return activeId ? getLocalDemoDraft(activeId) : null;
+  });
+  const previewDraft = activeDraft ?? defaultDraft;
 
   return (
-    <DemoSitePageShell template={template} settings={settings}>
-      <SiteCard title="Book your service" subtitle="Select a service tile, then choose date, time, and your details.">
-        <CustomerRequestForm
-          templateSlug={template.slug as WebsiteTemplateSlug}
-          services={services}
-          staffMembers={staffMembers}
-          initialServiceId={initialServiceId}
-        />
-        <p className="mt-3 text-xs text-slate-600">
-          {anyCustomerSelectableStaff
-            ? "Preferred staff selection is available for this site."
-            : "This site currently auto-allocates staff after booking review."}
+    <main className="mx-auto max-w-6xl space-y-6 px-4 py-10 sm:px-6 lg:px-8">
+      <DemoSiteIntroBanner template={template} />
+      <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 shadow-sm">
+        <p className="font-semibold">Demo booking preview</p>
+        <p className="mt-1">
+          This mirrors the live customer booking journey, but it is demo-safe: no real tenant booking,
+          payment or customer record is created.
         </p>
-      </SiteCard>
-    </DemoSitePageShell>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-slate-300" />
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Website preview starts here</p>
+        <div className="h-px flex-1 bg-slate-300" />
+      </div>
+      <DemoPreview
+        template={template}
+        draft={previewDraft}
+        initialServiceId={initialServiceId}
+      />
+    </main>
   );
 }

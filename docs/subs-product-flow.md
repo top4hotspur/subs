@@ -1000,7 +1000,9 @@ Domain type guidance is visible in admin: Primary is the normal main customer-fa
 
 Current alignment:
 - Demo homepage preview uses the same customer-site pattern: public nav, hero, service-led section, grouped service cards, availability-style selector, customer login link, footer-level policy/contact/staff/admin links.
-- Demo booking actions remain safe. Availability slots are illustrative and do not create real tenant bookings or paid subscriber records.
+- `/demo/[industry]/booking` now renders the same service-card and availability-led demo shell instead of the old request-form layout. Query strings such as `/demo/hairdressers/booking?service=cut` open the matching service availability panel.
+- Demo booking actions remain safe. Availability slots are illustrative, selected slots show the same green summary pattern as the live site, and submit confirms `Demo only - no booking has been created.` No real tenant bookings, customer records, payment records or paid subscriber data are created.
+- Demo services now carry realistic sample prices and durations plus quote-required examples where appropriate, so demos feel complete without affecting clean paid tenant data.
 - Demo data remains industry-specific and separate from paid tenant data.
 - Paid subscriber sites still start clean and are rendered through `/sites/[siteSlug]` or custom-domain routing.
 

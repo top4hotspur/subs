@@ -1375,3 +1375,22 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
 8. Open `/demo/window-cleaning` and confirm the demo loads with regular rounds, one-off exterior cleans, conservatory roof, gutter clearing, solar panel, and commercial quote services.
 9. Confirm `/sites/luna-hair-studio` still works and does not show demo data.
 10. Confirm sales pipeline industry dropdowns still include Window Cleaning through the shared industry slug list.
+
+## 2026-06-03 hosted smoke checks: demo booking/live-flow alignment
+
+1. Open `/sites/luna-hair-studio`.
+2. Open service availability and note the live booking flow: service cards, compact time chips, selected slot summary, policy acceptance and booking/payment-aware wording.
+3. Open `/demo/hairdressers`.
+4. Confirm the demo shell matches the live customer-site style.
+5. Open `/demo/hairdressers/booking?service=cut`.
+6. Confirm the booking flow no longer uses the old orange `Choose a day` card UI.
+7. Confirm demo availability uses compact Morning/Afternoon/Evening time chips.
+8. Select a time and confirm the selected chip highlights green and shows a selected summary.
+9. Submit the demo form with policy accepted and confirm it says `Demo only - no booking has been created.`
+10. Confirm no tenant booking appears in `/site-admin/luna-hair-studio`.
+11. Confirm Hairdresser demo services include realistic prices and at least one quote-required service.
+12. Open `/demo/barbers/booking`.
+13. Confirm the same live-like booking flow and realistic barber service pricing.
+14. Open `/demo/window-cleaning`.
+15. Confirm Window Cleaning demo has realistic priced services and quote-required examples.
+16. Confirm `/sites/luna-hair-studio` still uses real tenant data and is unaffected.

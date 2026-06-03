@@ -1,4 +1,4 @@
-import { buildDefaultCustomerSiteSettings } from "@/lib/sites/default-site-settings";
+import { buildDefaultCustomerSiteSettings, getDemoServiceDefault } from "@/lib/sites/default-site-settings";
 import {
   getSiteColourSchemesForTheme,
   normalizeSiteColourSchemeId,
@@ -76,6 +76,19 @@ function normalizeSettings(settings: CustomerSiteSettings): CustomerSiteSettings
       ...settings.businessDetails,
       socialLinks: settings.businessDetails?.socialLinks ?? {},
     },
+    services: settings.services.map((service) => {
+      const defaults = getDemoServiceDefault(templateSlug, service.id);
+      if (!defaults) return service;
+      const requiresQuote = service.requiresQuote || defaults.requiresQuote === true;
+      return {
+        ...service,
+        description: service.description || defaults.description || `Professional ${service.name.toLowerCase()} service.`,
+        basePriceGbp: requiresQuote ? undefined : service.basePriceGbp ?? defaults.basePriceGbp,
+        durationMinutes: service.durationMinutes ?? defaults.durationMinutes,
+        priceLabel: requiresQuote ? "Quote required" : service.priceLabel,
+        requiresQuote,
+      };
+    }),
     pageVisibility: {
       ...settings.pageVisibility,
       contact: {

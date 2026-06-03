@@ -19,6 +19,7 @@ import { vouchersArePublic } from "@/lib/sites/customer-site-voucher-types";
 type DemoPreviewProps = {
   template: WebsiteTemplate;
   draft: DemoCustomisationDraft;
+  initialServiceId?: string;
 };
 
 function serviceDurationLabel(durationMinutes?: number): string {
@@ -41,7 +42,7 @@ function demoServiceCategory(service: { category?: string; description?: string 
   return fallbackCategory;
 }
 
-export function DemoPreview({ template, draft }: DemoPreviewProps) {
+export function DemoPreview({ template, draft, initialServiceId }: DemoPreviewProps) {
   const { config } = draft;
   const appointmentStyle = isAppointmentStyleIndustry(template.slug);
   const [settings, setSettings] = useState(() =>
@@ -206,6 +207,7 @@ export function DemoPreview({ template, draft }: DemoPreviewProps) {
                           templateSlug={template.slug}
                           serviceName={service.name}
                           durationMinutes={service.durationMinutes}
+                          initialOpen={initialServiceId === service.id}
                         />
                       </article>
                     ))}

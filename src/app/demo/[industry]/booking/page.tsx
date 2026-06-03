@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { DemoBookingPage } from "@/components/demo/demo-booking-page";
-import { getWebsiteTemplate } from "@/lib/sites/mock-repository";
+import { createDemoDraft, getWebsiteTemplate } from "@/lib/sites/mock-repository";
 import { isWebsiteTemplateSlug, WEBSITE_TEMPLATE_SLUGS } from "@/lib/sites/types";
 
 type DemoIndustryBookingPageProps = {
@@ -24,9 +24,10 @@ export default async function DemoIndustryBookingPage({
   }
 
   const template = getWebsiteTemplate(industry);
-  if (!template) {
+  const draft = createDemoDraft(industry);
+  if (!template || !draft) {
     notFound();
   }
 
-  return <DemoBookingPage template={template} initialServiceId={service} />;
+  return <DemoBookingPage template={template} defaultDraft={draft} initialServiceId={service} />;
 }
