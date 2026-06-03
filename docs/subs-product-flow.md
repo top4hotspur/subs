@@ -967,3 +967,19 @@ Future payment-provider note: subscriber business payment settings must eventual
 - Customer account includes a Special offers placeholder. No customer marketing automation or bulk sends are enabled yet.
 - Subscriber site contact now uses a structured tenant-scoped form for booking changes, cancellations, payment questions, general enquiries, complaints/problems and other messages.
 - Business admins can view a first-pass Customer CRM in `/site-admin/[siteSlug]`, including account customers, guest booking customers, booking counts/history, marketing consent and customer contact enquiries.
+
+## 2026-06-03 custom-domain tenant routing
+
+Custom-domain runtime rendering is now wired through a safe shared-app route. Requests on recognised customer domains are rewritten by `src/middleware.ts` to the internal `/tenant-domain-runtime/[[...tenantPath]]` route. That route resolves the incoming host with `SiteDomain -> TenantSite` and renders the same tenant-scoped public site used by `/sites/[siteSlug]`.
+
+Key behaviour:
+- `/sites/[siteSlug]` remains the platform preview route.
+- Customer domains render the tenant site only when the mapped `SiteDomain` and `TenantSite` are live/active enough for public traffic.
+- Platform hosts such as `myexperiment.club`, `www.myexperiment.club`, localhost and Amplify app hosts keep normal platform routing.
+- Platform/admin/demo/setup routes are not taken over on platform hosts.
+- Customer-domain public links prefer customer-domain-relative routes such as `/contact`, `/policy`, `/account`, `/booking/...` instead of bouncing visitors to `/sites/[siteSlug]`.
+- APIs remain tenant-scoped through `/api/sites/[siteSlug]/...` and continue to validate site slug/tenant data server-side.
+- Suspended or cancelled matched sites show a polite unavailable page rather than the normal booking site.
+- Unknown custom hosts do not leak tenant data.
+
+DNS purchase, registrar updates, DNS provider changes and certificate/custom-domain attachment remain manual operational work. The app now prepares the runtime mapping once the customer domain reaches the shared app and the host header is preserved.

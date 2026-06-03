@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { PublicSiteBookingForm } from "@/components/sites/public-site-booking-form";
 import { getCustomerSitePreviewDataBySlug } from "@/lib/sites/customer-site-preview-repository";
+import { getPublicSiteBasePath } from "@/lib/sites/public-site-url";
 
 export default async function PublicSiteSlugBookingPage({
   params,
@@ -10,6 +11,7 @@ export default async function PublicSiteSlugBookingPage({
   const { siteSlug } = await params;
   const preview = await getCustomerSitePreviewDataBySlug(siteSlug);
   if (!preview) notFound();
+  const publicBasePath = await getPublicSiteBasePath(preview.tenantSite.slug);
 
   const services = preview.services.map((service) => ({
     id: service.id,
@@ -30,6 +32,7 @@ export default async function PublicSiteSlugBookingPage({
       <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
         <PublicSiteBookingForm
           siteSlug={preview.tenantSite.slug}
+          publicBasePath={publicBasePath}
           services={services}
           staff={staff}
           acceptCashPayments={preview.settings?.acceptCashPayments ?? false}

@@ -7,6 +7,7 @@ import { primaryButtonClass } from "@/lib/ui/button-styles";
 type AccountFormProps = {
   siteSlug: string;
   mode: "login" | "register";
+  publicBasePath?: string;
 };
 
 function friendlyError(error: string | undefined, mode: "login" | "register"): string {
@@ -16,10 +17,11 @@ function friendlyError(error: string | undefined, mode: "login" | "register"): s
   return mode === "login" ? "Could not log in right now." : "Could not create account right now.";
 }
 
-export function SiteCustomerAccountForm({ siteSlug, mode }: AccountFormProps) {
+export function SiteCustomerAccountForm({ siteSlug, mode, publicBasePath }: AccountFormProps) {
   const router = useRouter();
   const search = useSearchParams();
-  const callbackUrl = search.get("callbackUrl") || `/sites/${encodeURIComponent(siteSlug)}/account`;
+  const siteBasePath = publicBasePath ?? `/sites/${encodeURIComponent(siteSlug)}`;
+  const callbackUrl = search.get("callbackUrl") || `${siteBasePath}/account`;
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -60,7 +62,8 @@ export function SiteCustomerAccountForm({ siteSlug, mode }: AccountFormProps) {
       setMessage(friendlyError(body?.error, mode));
       return;
     }
-    router.push(body.redirectUrl || `/sites/${encodeURIComponent(siteSlug)}/account`);
+    const fallbackRedirect = `${siteBasePath}/account`;
+    router.push(publicBasePath !== undefined ? fallbackRedirect : body.redirectUrl || fallbackRedirect);
     router.refresh();
   }
 
@@ -163,13 +166,14 @@ export function SiteCustomerMarketingPreference({
   );
 }
 
-export function SiteCustomerLogoutButton({ siteSlug }: { siteSlug: string }) {
+export function SiteCustomerLogoutButton({ siteSlug, publicBasePath }: { siteSlug: string; publicBasePath?: string }) {
   const router = useRouter();
+  const siteBasePath = publicBasePath ?? `/sites/${encodeURIComponent(siteSlug)}`;
   const [loading, setLoading] = useState(false);
   async function logout() {
     setLoading(true);
     await fetch(`/api/sites/${encodeURIComponent(siteSlug)}/account/logout`, { method: "POST" }).catch(() => null);
-    router.push(`/sites/${encodeURIComponent(siteSlug)}/account/login`);
+    router.push(`${siteBasePath}/account/login`);
     router.refresh();
     setLoading(false);
   }

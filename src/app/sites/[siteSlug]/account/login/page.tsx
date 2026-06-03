@@ -3,11 +3,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteCustomerAccountForm } from "@/components/sites/site-customer-account-forms";
 import { getTenantSiteBySlug } from "@/lib/sites/tenant-resolver";
+import { buildPublicSitePath, getPublicSiteBasePath } from "@/lib/sites/public-site-url";
 
 export default async function CustomerAccountLoginPage({ params }: { params: Promise<{ siteSlug: string }> }) {
   const { siteSlug } = await params;
   const site = await getTenantSiteBySlug(siteSlug);
   if (!site) notFound();
+  const publicBasePath = await getPublicSiteBasePath(site.slug);
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10">
       <section className="mx-auto max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -18,12 +20,12 @@ export default async function CustomerAccountLoginPage({ params }: { params: Pro
         </p>
         <div className="mt-5">
           <Suspense fallback={<p className="text-sm text-slate-600">Loading login...</p>}>
-            <SiteCustomerAccountForm siteSlug={site.slug} mode="login" />
+            <SiteCustomerAccountForm siteSlug={site.slug} mode="login" publicBasePath={publicBasePath} />
           </Suspense>
         </div>
         <p className="mt-4 text-sm text-slate-600">
           No account yet?{" "}
-          <Link className="font-semibold text-teal-700 underline" href={`/sites/${encodeURIComponent(site.slug)}/account/register`}>
+          <Link className="font-semibold text-teal-700 underline" href={buildPublicSitePath(publicBasePath, "account/register")}>
             Create one here
           </Link>.
         </p>

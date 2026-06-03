@@ -48,6 +48,7 @@ const INITIAL_SLOTS_PER_GROUP = 16;
 
 type PublicSiteAvailabilityPreviewProps = {
   siteSlug: string;
+  publicBasePath?: string;
   serviceId: string;
   serviceName: string;
   staff: PublicAvailabilityStaff[];
@@ -92,6 +93,7 @@ function slotGroupName(startTime: string): SlotGroupName {
 
 export function PublicSiteAvailabilityPreview({
   siteSlug,
+  publicBasePath,
   serviceId,
   serviceName,
   staff,
@@ -100,6 +102,7 @@ export function PublicSiteAvailabilityPreview({
   requireBookingPrepayment = false,
   allowInStorePaymentRecording = false,
 }: PublicSiteAvailabilityPreviewProps) {
+  const siteBasePath = publicBasePath ?? `/sites/${encodeURIComponent(siteSlug)}`;
   const selectableStaff = useMemo(() => staff.filter((member) => member.customerSelectable), [staff]);
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState(todayIso());
@@ -424,7 +427,7 @@ export function PublicSiteAvailabilityPreview({
                 <input type="checkbox" className="mt-0.5" checked={policyAccepted} onChange={(event) => setPolicyAccepted(event.target.checked)} />
                 <span>
                   I have read and accept the{" "}
-                  <a href={`/sites/${encodeURIComponent(siteSlug)}/policy`} target="_blank" rel="noreferrer" className="font-semibold text-teal-700 underline">
+                  <a href={`${siteBasePath}/policy`} target="_blank" rel="noreferrer" className="font-semibold text-teal-700 underline">
                     booking and cancellation policy
                   </a>.
                 </span>
@@ -455,10 +458,10 @@ export function PublicSiteAvailabilityPreview({
                     Create an account using the same email address and you&apos;ll be able to view your bookings, keep your details handy and receive offers from this business if you choose to opt in.
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    <a href={`/sites/${encodeURIComponent(siteSlug)}/account/register`} className={`${primaryButtonClass} ${smallButtonClass}`}>
+                    <a href={`${siteBasePath}/account/register`} className={`${primaryButtonClass} ${smallButtonClass}`}>
                       Create account
                     </a>
-                    <a href={`/sites/${encodeURIComponent(siteSlug)}/account/login`} className={`${outlineButtonClass} ${smallButtonClass}`}>
+                    <a href={`${siteBasePath}/account/login`} className={`${outlineButtonClass} ${smallButtonClass}`}>
                       Login
                     </a>
                     <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setSuccessMessage(null)}>

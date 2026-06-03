@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
-export function SiteCookieNotice({ siteSlug }: { siteSlug: string }) {
+export function SiteCookieNotice({ siteSlug, publicBasePath }: { siteSlug: string; publicBasePath?: string }) {
   const key = `subs-site-cookie-accepted:${siteSlug}`;
   const [visible, setVisible] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -30,7 +30,7 @@ export function SiteCookieNotice({ siteSlug }: { siteSlug: string }) {
           Accept
         </button>
         <Link
-          href={`/sites/${encodeURIComponent(siteSlug)}/cookies`}
+          href={`${publicBasePath ?? `/sites/${encodeURIComponent(siteSlug)}`}/cookies`}
           className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-900 hover:bg-slate-100"
         >
           Cookie Policy

@@ -77,9 +77,11 @@ export function createBookingAccessPath(input: {
   siteSlug: string;
   tenantSiteId: string;
   bookingId: string;
+  publicBasePath?: string;
 }): string {
   const token = createBookingAccessToken(input);
-  return `/sites/${encodeURIComponent(input.siteSlug)}/booking/${encodeURIComponent(token)}`;
+  const basePath = input.publicBasePath ?? `/sites/${encodeURIComponent(input.siteSlug)}`;
+  return `${basePath}/booking/${encodeURIComponent(token)}`;
 }
 
 export function createBookingAccessUrl(input: {

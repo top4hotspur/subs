@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCustomerSitePreviewDataBySlug } from "@/lib/sites/customer-site-preview-repository";
+import { getPublicSiteBasePath } from "@/lib/sites/public-site-url";
 
 export default async function PublicSiteCookiePolicyPage({
   params,
@@ -10,6 +11,7 @@ export default async function PublicSiteCookiePolicyPage({
   const { siteSlug } = await params;
   const preview = await getCustomerSitePreviewDataBySlug(siteSlug);
   if (!preview) notFound();
+  const publicBasePath = await getPublicSiteBasePath(preview.tenantSite.slug);
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -18,7 +20,7 @@ export default async function PublicSiteCookiePolicyPage({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h1 className="text-3xl font-bold text-slate-900">Cookie Policy</h1>
             <Link
-              href={`/sites/${encodeURIComponent(preview.tenantSite.slug)}`}
+              href={publicBasePath || "/"}
               className="rounded-md border border-slate-300 bg-white px-3 py-1 text-sm font-semibold text-slate-900 hover:bg-slate-100"
             >
               Back to home
@@ -38,4 +40,3 @@ export default async function PublicSiteCookiePolicyPage({
     </main>
   );
 }
-

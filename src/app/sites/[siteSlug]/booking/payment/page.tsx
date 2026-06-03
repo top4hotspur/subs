@@ -3,6 +3,7 @@ import { getCustomerSiteBookingById } from "@/lib/sites/customer-site-booking-re
 import { getCustomerSitePreviewDataBySlug } from "@/lib/sites/customer-site-preview-repository";
 import { formatBookingDateTime } from "@/lib/sites/customer-site-booking-display";
 import { createBookingAccessPath } from "@/lib/sites/booking-access-token";
+import { buildPublicSitePath, getPublicSiteBasePath } from "@/lib/sites/public-site-url";
 
 type BookingPaymentReturnPageProps = {
   params: Promise<{ siteSlug: string }>;
@@ -58,6 +59,7 @@ export default async function BookingPaymentReturnPage({
   const query = await searchParams;
   const site = await getCustomerSitePreviewDataBySlug(siteSlug);
   const booking = site ? await loadBookingSafely(site.tenantSite.id, query.bookingId) : null;
+  const publicBasePath = site ? await getPublicSiteBasePath(site.tenantSite.slug) : `/sites/${encodeURIComponent(siteSlug)}`;
   const siteName =
     site?.settings?.siteDisplayName ||
     site?.settings?.businessName ||
@@ -69,6 +71,7 @@ export default async function BookingPaymentReturnPage({
         siteSlug: site.tenantSite.slug,
         tenantSiteId: site.tenantSite.id,
         bookingId: booking.id,
+        publicBasePath,
       })
     : null;
   const panelClass = copy.tone === "success"
@@ -105,13 +108,13 @@ export default async function BookingPaymentReturnPage({
 
         <div className="mt-6 flex flex-wrap gap-3">
           <Link
-            href={`/sites/${encodeURIComponent(siteSlug)}`}
+            href={publicBasePath || "/"}
             className="inline-flex rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
           >
             Back to website
           </Link>
           <Link
-            href={`/sites/${encodeURIComponent(siteSlug)}/contact`}
+            href={buildPublicSitePath(publicBasePath, "contact")}
             className="inline-flex rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900"
           >
             Contact business

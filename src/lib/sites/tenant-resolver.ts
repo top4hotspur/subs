@@ -76,7 +76,7 @@ const LIVE_DOMAIN_STATUSES = ["DNS_CONFIGURED", "DOMAIN_READY", "READY", "LIVE"]
 
 export async function getTenantSiteByDomainHost(
   host: string,
-  options: { requireLive?: boolean } = {},
+  options: { requireLive?: boolean; includeUnavailable?: boolean } = {},
 ): Promise<ResolvedTenantSite | null> {
   const normalized = normalizeHost(host);
   if (!normalized || isLocalDevHost(normalized)) return null;
@@ -85,9 +85,11 @@ export async function getTenantSiteByDomainHost(
   const domainMatch = await prisma.siteDomain.findFirst({
     where: {
       domain: { in: candidates },
-      status: options.requireLive
-        ? { in: LIVE_DOMAIN_STATUSES }
-        : { in: ACTIVE_DOMAIN_STATUSES },
+      status: options.includeUnavailable
+        ? undefined
+        : options.requireLive
+          ? { in: LIVE_DOMAIN_STATUSES }
+          : { in: ACTIVE_DOMAIN_STATUSES },
     },
     orderBy: [{ domainType: "asc" }, { createdAt: "asc" }],
     select: {
@@ -107,8 +109,10 @@ export async function getTenantSiteByDomainHost(
   });
 
   if (!domainMatch) return null;
-  if (domainMatch.tenantSite.status === "SUSPENDED" || domainMatch.tenantSite.status === "CANCELLED") return null;
-  if (domainMatch.tenantSite.provisioningStatus === "SUSPENDED" || domainMatch.tenantSite.provisioningStatus === "CANCELLED") return null;
+  if (!options.includeUnavailable) {
+    if (domainMatch.tenantSite.status === "SUSPENDED" || domainMatch.tenantSite.status === "CANCELLED") return null;
+    if (domainMatch.tenantSite.provisioningStatus === "SUSPENDED" || domainMatch.tenantSite.provisioningStatus === "CANCELLED") return null;
+  }
 
   return {
     tenantSiteId: domainMatch.tenantSite.id,
@@ -124,7 +128,7 @@ export async function getTenantSiteByDomainHost(
 
 export async function resolveTenantSiteByHost(
   host: string,
-  options: { requireLive?: boolean } = {},
+  options: { requireLive?: boolean; includeUnavailable?: boolean } = {},
 ): Promise<ResolvedTenantSite | null> {
   return getTenantSiteByDomainHost(host, options);
 }

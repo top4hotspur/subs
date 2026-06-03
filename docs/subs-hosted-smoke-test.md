@@ -1332,3 +1332,17 @@ Current limitation: final custom-domain host rendering is resolver-prepared but 
 14. Return to `/site-admin/[siteSlug]` > Customer CRM and confirm the contact enquiry appears.
 15. Confirm no cross-tenant bookings, customer records or enquiries are visible when using a different site slug/admin login.
 16. Confirm no bulk customer marketing emails are sent from this CRM foundation.
+
+## 2026-06-03 hosted smoke checks: custom-domain tenant routing
+
+1. In `/admin/sites`, confirm the tenant has a `SiteDomain` record for the test hostname.
+2. Mark DNS/domain state ready, then mark the site live so the SiteDomain status is `LIVE` or live-ready and the tenant lifecycle/provisioning state is `LIVE`.
+3. Confirm `/sites/[siteSlug]` still opens as the platform preview route.
+4. Use `/api/site-resolve-debug` with `x-test-site-host` set to the mapped host and confirm it resolves to the expected tenant.
+5. If a real/temporary test domain is attached to the shared app, open the custom host and confirm it renders the same tenant public site.
+6. Confirm customer-domain navigation stays on the customer host for `/contact`, `/policy`, `/cookies`, `/privacy`, `/account`, `/account/login`, `/account/register`, `/booking`, `/booking/[token]`, `/booking/payment`, and `/vouchers` where enabled.
+7. Confirm public APIs still work through tenant-scoped `/api/sites/[siteSlug]/...` calls.
+8. Confirm `https://myexperiment.club`, `/admin`, `/admin/sites`, `/site-admin/[siteSlug]`, `/sites/[siteSlug]`, `/demo/[industry]`, `/setup/[industry]`, and industry sales pages still behave normally on the platform host.
+9. Suspend the site in `/admin/sites` and confirm the custom domain no longer renders the normal booking site. It should show: `This website is currently unavailable. Please contact the business or MyExperiment.club support.`
+10. Reactivate the site and confirm the custom domain renders again.
+11. Confirm DNS purchase, registrar changes, DNS provider changes and certificate attachment remain manual operational steps.

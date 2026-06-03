@@ -91,9 +91,10 @@ export function setSiteCustomerSessionCookie(response: NextResponse, token: stri
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
-    path: "/sites",
+    path: "/",
     maxAge: SESSION_TTL_SECONDS,
   });
+  clearLegacySiteCustomerSessionCookie(response);
 }
 
 export function clearSiteCustomerSessionCookie(response: NextResponse): void {
@@ -101,7 +102,16 @@ export function clearSiteCustomerSessionCookie(response: NextResponse): void {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
-    path: "/sites",
+    path: "/",
     maxAge: 0,
   });
+  clearLegacySiteCustomerSessionCookie(response);
+}
+
+function clearLegacySiteCustomerSessionCookie(response: NextResponse): void {
+  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  response.headers.append(
+    "Set-Cookie",
+    `${SITE_CUSTOMER_SESSION_COOKIE}=; Path=/sites; Max-Age=0; HttpOnly; SameSite=Lax${secure}`,
+  );
 }

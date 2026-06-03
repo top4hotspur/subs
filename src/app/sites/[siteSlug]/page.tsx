@@ -13,6 +13,7 @@ import { SiteCookieNotice } from "@/components/site-ui/site-cookie-notice";
 import { formatBusinessOpeningHoursSummary, normalizeBusinessOpeningHours } from "@/lib/sites/customer-site-opening-hours";
 import { PublicSiteAvailabilityPreview } from "@/components/sites/public-site-availability-preview";
 import { vouchersArePublic } from "@/lib/sites/customer-site-voucher-types";
+import { buildPublicSitePath, getPublicSiteBasePath } from "@/lib/sites/public-site-url";
 
 function formatMoney(amount: number | null, currencyCode: string): string {
   if (amount === null) return "Quote required";
@@ -166,15 +167,16 @@ export default async function PublicSiteSlugPage({
     : `${scheme.heroBackgroundClass} rounded-2xl border ${scheme.borderClass} p-8`;
   const cardClass = `${scheme.cardClass} p-5`;
   const bookingHref = "#services";
-  const aboutHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/about`;
-  const contactHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/contact`;
-  const policyHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/policy`;
-  const cookiesHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/cookies`;
-  const privacyHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/privacy`;
+  const publicBasePath = await getPublicSiteBasePath(preview.tenantSite.slug);
+  const aboutHref = buildPublicSitePath(publicBasePath, "about");
+  const contactHref = buildPublicSitePath(publicBasePath, "contact");
+  const policyHref = buildPublicSitePath(publicBasePath, "policy");
+  const cookiesHref = buildPublicSitePath(publicBasePath, "cookies");
+  const privacyHref = buildPublicSitePath(publicBasePath, "privacy");
   const siteAdminHref = `/site-admin/${encodeURIComponent(preview.tenantSite.slug)}`;
   const staffLoginHref = `/site-staff/${encodeURIComponent(preview.tenantSite.slug)}`;
-  const customerAccountHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/account`;
-  const vouchersHref = `/sites/${encodeURIComponent(preview.tenantSite.slug)}/vouchers`;
+  const customerAccountHref = buildPublicSitePath(publicBasePath, "account");
+  const vouchersHref = buildPublicSitePath(publicBasePath, "vouchers");
   const giftVouchersVisible = vouchersArePublic(settings?.giftVoucherSettingsJson);
 
   return (
@@ -261,6 +263,7 @@ export default async function PublicSiteSlugPage({
                               </div>
                               <PublicSiteAvailabilityPreview
                                 siteSlug={preview.tenantSite.slug}
+                                publicBasePath={publicBasePath}
                                 serviceId={service.id}
                                 serviceName={service.name}
                                 acceptCashPayments={settings?.acceptCashPayments ?? false}
@@ -339,7 +342,7 @@ export default async function PublicSiteSlugPage({
           </div>
         </section>
       </div>
-      <SiteCookieNotice siteSlug={preview.tenantSite.slug} />
+      <SiteCookieNotice siteSlug={preview.tenantSite.slug} publicBasePath={publicBasePath} />
     </main>
   );
 }

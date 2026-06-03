@@ -5,6 +5,7 @@ import { getCustomerSitePreviewDataBySlug } from "@/lib/sites/customer-site-prev
 import { formatBookingDateTime, formatUkDateTime } from "@/lib/sites/customer-site-booking-display";
 import { verifyBookingAccessToken } from "@/lib/sites/booking-access-token";
 import { cancellationRefundEmailLine } from "@/lib/sites/booking-cancellation-refund";
+import { buildPublicSitePath, getPublicSiteBasePath } from "@/lib/sites/public-site-url";
 
 type CustomerBookingPageProps = {
   params: Promise<{ siteSlug: string; token: string }>;
@@ -45,6 +46,7 @@ export default async function CustomerBookingPage({ params, searchParams }: Cust
 
   const site = await getCustomerSitePreviewDataBySlug(siteSlug);
   if (!site || site.tenantSite.id !== verified.tenantSiteId) notFound();
+  const publicBasePath = await getPublicSiteBasePath(site.tenantSite.slug);
 
   const booking = await getCustomerSiteBookingById(site.tenantSite.id, verified.bookingId);
   if (!booking) notFound();
@@ -54,8 +56,8 @@ export default async function CustomerBookingPage({ params, searchParams }: Cust
     site.settings?.businessName ||
     site.tenantSite.displayName ||
     "This business";
-  const contactHref = `/sites/${encodeURIComponent(siteSlug)}/contact?purpose=${encodeURIComponent("Change my booking")}&name=${encodeURIComponent(booking.customerName)}&email=${encodeURIComponent(booking.customerEmail ?? "")}&phone=${encodeURIComponent(booking.customerPhone ?? "")}&bookingId=${encodeURIComponent(booking.id)}`;
-  const policyHref = `/sites/${encodeURIComponent(siteSlug)}/policy`;
+  const contactHref = `${buildPublicSitePath(publicBasePath, "contact")}?purpose=${encodeURIComponent("Change my booking")}&name=${encodeURIComponent(booking.customerName)}&email=${encodeURIComponent(booking.customerEmail ?? "")}&phone=${encodeURIComponent(booking.customerPhone ?? "")}&bookingId=${encodeURIComponent(booking.id)}`;
+  const policyHref = buildPublicSitePath(publicBasePath, "policy");
   const allowCancel = canCustomerCancel(booking);
 
   return (

@@ -9,6 +9,7 @@ type PublicGiftVoucherFormProps = {
   siteSlug: string;
   siteName: string;
   settings: CustomerSiteGiftVoucherSettings;
+  publicBasePath?: string;
 };
 
 type SuccessState = {
@@ -20,7 +21,8 @@ function toPence(gbp: number): number {
   return Math.round(gbp * 100);
 }
 
-export function PublicGiftVoucherForm({ siteSlug, siteName, settings }: PublicGiftVoucherFormProps) {
+export function PublicGiftVoucherForm({ siteSlug, siteName, settings, publicBasePath }: PublicGiftVoucherFormProps) {
+  const siteBasePath = publicBasePath ?? `/sites/${encodeURIComponent(siteSlug)}`;
   const [amountMode, setAmountMode] = useState<string>(String(settings.presetValuesGbp[0] ?? 25));
   const [customAmount, setCustomAmount] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState<VoucherDeliveryMethod>(settings.deliveryMethods[0] ?? "DIGITAL_EMAIL");
@@ -173,7 +175,7 @@ export function PublicGiftVoucherForm({ siteSlug, siteName, settings }: PublicGi
       {statusMessage ? <p className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">{statusMessage}</p> : null}
       <div className="mt-4 flex flex-wrap gap-2">
         <button type="button" className={primaryButtonClass} onClick={() => void submit()} disabled={loading}>{loading ? "Submitting..." : "Request gift voucher"}</button>
-        <a href={`/sites/${encodeURIComponent(siteSlug)}`} className={outlineButtonClass}>Back to site</a>
+        <a href={siteBasePath || "/"} className={outlineButtonClass}>Back to site</a>
       </div>
     </div>
   );

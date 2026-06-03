@@ -511,3 +511,31 @@ Final custom-domain rendering remains the next hosting/routing milestone: custom
 - Tenant-scoped customer contact enquiries are stored separately from platform sales/contact enquiries.
 - Business owners can review customer booking history and contact enquiries in `/site-admin/[siteSlug]` under Customer CRM.
 - Special offers and lapsed/frequent-customer follow-up remain future CRM capabilities; no marketing automation is active in this milestone.
+
+## Custom-domain runtime rendering
+
+The production domain path is now:
+
+1. Customer domain/subdomain points to the shared MyExperiment.club app/hosting target.
+2. The app receives the original `Host` / `x-forwarded-host` header.
+3. Middleware recognises non-platform hosts and rewrites them internally to `/tenant-domain-runtime/[[...tenantPath]]`.
+4. The runtime route uses `getLiveTenantSiteByDomainHost()` to resolve `SiteDomain.domain` to `TenantSite`.
+5. The existing tenant public site pages render using the matched tenant slug.
+
+`/sites/[siteSlug]` remains the preview/support route for platform admins. Subscriber admin remains `/site-admin/[siteSlug]` on the platform host for now.
+
+Host/domain rules:
+- Hosts are normalised by lower-casing, removing protocol/path/port and trimming trailing dots.
+- Apex and `www.` candidates are considered.
+- Live rendering requires a live-ready SiteDomain and a `LIVE` tenant status/provisioning status.
+- Suspended/cancelled tenant matches render a generic unavailable page.
+- Unknown custom hosts return no tenant content.
+
+Manual work still required:
+- Domain purchase/registration.
+- DNS or nameserver updates.
+- Hosting/custom-domain attachment and certificate checks.
+- Any registrar/provider-specific automation.
+
+No separate customer app or database is created. All public rendering remains tenant-scoped inside the shared app and central database.
+- Customer-account session cookies are scoped at `/` so account login works on both `/sites/[siteSlug]/account` preview routes and custom-domain `/account` routes.

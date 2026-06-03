@@ -7,6 +7,7 @@ import { getCustomerSiteBookingPaymentDecision } from "@/lib/sites/customer-site
 
 type PublicSiteBookingFormProps = {
   siteSlug: string;
+  publicBasePath?: string;
   services: Array<{
     id: string;
     name: string;
@@ -63,6 +64,7 @@ function toErrorMessage(error: string, status: number): string {
 
 export function PublicSiteBookingForm({
   siteSlug,
+  publicBasePath,
   services,
   staff,
   acceptCashPayments = false,
@@ -70,6 +72,7 @@ export function PublicSiteBookingForm({
   requireBookingPrepayment = false,
   allowInStorePaymentRecording = false,
 }: PublicSiteBookingFormProps) {
+  const siteBasePath = publicBasePath ?? `/sites/${encodeURIComponent(siteSlug)}`;
   const activeServices = useMemo(() => services.filter((item) => item.active), [services]);
   const selectableStaff = useMemo(
     () => staff.filter((item) => item.active && item.customerSelectable),
@@ -288,7 +291,7 @@ export function PublicSiteBookingForm({
           <input type="checkbox" className="mt-1" checked={policyAccepted} onChange={(event) => setPolicyAccepted(event.target.checked)} />
           <span>
             I have read and accept the{" "}
-            <Link href={`/sites/${encodeURIComponent(siteSlug)}/policy`} target="_blank" rel="noreferrer" className="font-semibold text-teal-700 underline">
+            <Link href={`${siteBasePath}/policy`} target="_blank" rel="noreferrer" className="font-semibold text-teal-700 underline">
               booking and cancellation policy
             </Link>.
           </span>
@@ -304,7 +307,7 @@ export function PublicSiteBookingForm({
           {saving ? "Confirming..." : "Confirm booking"}
         </button>
         <Link
-          href={`/sites/${encodeURIComponent(siteSlug)}`}
+          href={siteBasePath || "/"}
           className="inline-flex rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900"
         >
           Back to site
@@ -322,10 +325,10 @@ export function PublicSiteBookingForm({
                 Create an account using the same email address and you&apos;ll be able to view your bookings, keep your details handy and receive offers from this business if you choose to opt in.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <Link href={`/sites/${encodeURIComponent(siteSlug)}/account/register`} className="rounded-md bg-slate-950 px-3 py-2 text-xs font-semibold text-white">
+                <Link href={`${siteBasePath}/account/register`} className="rounded-md bg-slate-950 px-3 py-2 text-xs font-semibold text-white">
                   Create account
                 </Link>
-                <Link href={`/sites/${encodeURIComponent(siteSlug)}/account/login`} className="rounded-md border border-teal-300 bg-white px-3 py-2 text-xs font-semibold text-teal-950">
+                <Link href={`${siteBasePath}/account/login`} className="rounded-md border border-teal-300 bg-white px-3 py-2 text-xs font-semibold text-teal-950">
                   Login
                 </Link>
                 <button type="button" className="rounded-md border border-teal-300 bg-white px-3 py-2 text-xs font-semibold text-teal-950" onClick={() => setBookingConfirmed(false)}>

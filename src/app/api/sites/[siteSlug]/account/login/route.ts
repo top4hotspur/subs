@@ -10,6 +10,7 @@ import { authenticateCustomerSiteCustomer } from "@/lib/sites/customer-site-cust
 import { getTenantSiteBySlug } from "@/lib/sites/tenant-resolver";
 
 function safeCallbackUrl(value: string | undefined, siteSlug: string): string {
+  if (value?.startsWith("/account")) return value;
   if (!value || !value.startsWith(`/sites/${siteSlug}/account`)) {
     return `/sites/${encodeURIComponent(siteSlug)}/account`;
   }
