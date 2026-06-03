@@ -225,6 +225,7 @@ Before live sending, platform needs:
   - `-` / `*` lines render as bullet lists
   - plain URL-only lines are replaced by CTA actions in the visual flow
 - Plain-text fallback is still sent for accessibility/deliverability and always includes landing/demo/unsubscribe links.
+- Campaign landing links should continue to point prospects to the relevant industry sales page first. Those pages now explain value and onboarding with a visual process flow before the visitor opens the demo.
 - Suppression and selected-only controls remain enforced server-side.
 - Live unrestricted bulk blast sending remains disabled.
 - Inbox placement still depends on SPF/DKIM/DMARC and sender reputation.

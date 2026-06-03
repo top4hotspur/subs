@@ -29,7 +29,11 @@ export function SiteCtaPanel({
       {subtitle ? <p className={`mt-2 ${dark ? "text-slate-300" : "text-slate-600"}`}>{subtitle}</p> : null}
       <div className="mt-5 flex flex-wrap gap-3">
         <Link href={primaryHref} className={primaryButtonClass}>{primaryLabel}</Link>
-        {secondaryHref && secondaryLabel ? <Link href={secondaryHref} className={secondaryButtonClass}>{secondaryLabel}</Link> : null}
+        {secondaryHref && secondaryLabel ? (
+          <Link href={secondaryHref} className={dark ? primaryButtonClass : secondaryButtonClass}>
+            {secondaryLabel}
+          </Link>
+        ) : null}
       </div>
       {extra ? <div className="mt-3 text-sm">{extra}</div> : null}
     </section>

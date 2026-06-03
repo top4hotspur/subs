@@ -534,7 +534,7 @@ olePrice:<role> columns accepted
 ## 2026-05-30 hosted smoke additions (order flow CTA cleanup)
 - Homepage hero CTA row:
   - `Choose your business type` -> `#industries`
-  - `View example demo` -> `/demo/barbers`
+  - `View example demo` -> `#industries`
   - `Order now` -> `/setup/barbers`
 - `/setup/[industry]`:
   - no `Your site can support this type of workflow` section
@@ -616,6 +616,18 @@ olePrice:<role> columns accepted
   - Get your site now styling matches View demo site`n  - no repeated One simple website subscription / No confusing packages block
   - no Default services in demo block
   - Built around how your business works stakeholder section is present.
+
+## Homepage and industry sales polish smoke checks (2026-06-03)
+1. Open `/` and confirm the hero pricing helper reads exactly `Only £149 setup + £30/month.`
+2. Confirm the value section heading reads `Fully managed, feature rich website to help grow your business`.
+3. Confirm business type category tabs/cards keep distinct colour coding but use softer pastel backgrounds, borders and accent bars.
+4. Confirm homepage `How it works` is a connected flow/timeline rather than plain tile cards.
+5. Confirm Step 3 reads `Place order`.
+6. Confirm the bottom CTA `View example demo` button is readable on the dark CTA panel.
+7. Confirm homepage hero CTAs still route: `Choose your business type` -> `#industries`, `View example demo` -> `#industries`, `Order now` -> `/setup/barbers`.
+8. Open `/barbers` and confirm `What happens after you subscribe?` uses a connected onboarding flow rather than static tiles.
+9. Confirm industry page CTA buttons still route to `/setup/barbers` and `/demo/barbers`.
+10. Check mobile widths and confirm the homepage flow and industry onboarding flow stack cleanly with visible connectors.
 
 ## Sales pipeline smoke checks (2026-05-30)
 - /admin/sales shows Download leads CSV template with required column headers.
@@ -838,7 +850,7 @@ Notes:
 3. Confirm three stakeholder cards render: `For your customers`, `For your staff`, `For you as the owner`.
 4. Confirm no duplicate overlapping operations summary section appears.
 5. Confirm `View standard policy page` link is removed from the onboarding/setup section.
-6. Confirm onboarding section heading is `What happens after you subscribe?` with clear 4-step card flow.
+6. Confirm onboarding section heading is `What happens after you subscribe?` with a clear 4-step visual flow.
 7. Confirm bottom CTA heading is `Ready to get your business online properly?`.
 8. Confirm CTA buttons route to `/setup/barbers` and `/demo/barbers`.
 

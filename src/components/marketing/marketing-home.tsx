@@ -69,6 +69,14 @@ const trustPoints = [
   },
 ];
 
+const homepageFlowSteps = [
+  "Choose your business type",
+  "View the demo",
+  "Place order",
+  "Your site is built",
+  "Customise the look and feel of your business and add services, pricing, staff etc",
+];
+
 const faqs = [
   {
     q: "Do I have to pay extra to unlock more features?",
@@ -143,7 +151,7 @@ export function MarketingHome() {
         <SiteHero
           title="Managed websites and booking tools for local service businesses"
           subtitle="Full feature rich, professional website all in one simple monthly package."
-          helperText="Only £149 setup + £30/month. Full managed website included. Live-site within a day when you select your domain name!"
+          helperText="Only £149 setup + £30/month."
           actions={(
             <>
               <Link href="#industries" className={primaryButtonClass}>
@@ -159,7 +167,7 @@ export function MarketingHome() {
           )}
         />
 
-        <SiteSection title="Everything you need, one simple monthly price">
+        <SiteSection title="Fully managed, feature rich website to help grow your business">
           <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="grid gap-6 xl:grid-cols-[1.35fr_1fr]">
               <div>
@@ -200,7 +208,7 @@ export function MarketingHome() {
                   No confusing packages
                 </h3>
                 <p className="mt-2 text-sm text-slate-600">
-                  Only £149 setup + £30/month. Full managed website included. Live-site within a day when you select your domain name!
+                  Only £149 setup + £30/month.
                 </p>
 
                 <div className="mt-4 grid gap-3">
@@ -244,17 +252,21 @@ export function MarketingHome() {
         </SiteSection>
 
         <SiteSection id="how-it-works" title="How it works">
-          <ol className="grid gap-4 md:grid-cols-5">
-            {[
-              "Choose your business type",
-              "View the demo",
-              "Place order (with domain details)",
-              "Your site is built",
-              "Customise the look and feel of your business and add services, pricing, staff etc",
-            ].map((step, index) => (
-              <li key={step} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Step {index + 1}</p>
-                <p className="mt-2 text-sm font-medium text-slate-900">{step}</p>
+          <ol className="relative grid gap-4 md:grid-cols-5 md:gap-0">
+            {homepageFlowSteps.map((step, index) => (
+              <li key={step} className="relative flex md:block">
+                {index > 0 ? (
+                  <span className="absolute left-5 top-0 h-full w-px bg-sky-200 md:left-0 md:top-8 md:h-px md:w-full md:-translate-x-1/2" aria-hidden="true" />
+                ) : null}
+                <div className="relative z-10 flex gap-3 md:flex-col md:items-center md:px-2">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-sky-200 bg-white text-sm font-bold text-sky-700 shadow-sm">
+                    {index + 1}
+                  </span>
+                  <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm md:min-h-32 md:text-center">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Step {index + 1}</p>
+                    <p className="mt-2 text-sm font-semibold text-slate-950">{step}</p>
+                  </div>
+                </div>
               </li>
             ))}
           </ol>

@@ -278,9 +278,10 @@ Still mock for infrastructure:
 - How-it-works steps now follow:
   1. Choose your business type
   2. View the demo
-  3. Place order (with domain details)
+  3. Place order
   4. Your site is built
   5. Customise look/feel, services, pricing, and staff
+- The homepage How it works section now uses a connected flow/timeline treatment rather than another plain card grid.
 - New FAQ entries:
   - `What if I get stuck?`
   - `How do payment processors work?`
@@ -968,6 +969,14 @@ Future payment-provider note: subscriber business payment settings must eventual
 - Customer account includes a Special offers placeholder. No customer marketing automation or bulk sends are enabled yet.
 - Subscriber site contact now uses a structured tenant-scoped form for booking changes, cancellations, payment questions, general enquiries, complaints/problems and other messages.
 - Business admins can view a first-pass Customer CRM in `/site-admin/[siteSlug]`, including account customers, guest booking customers, booking counts/history, marketing consent and customer contact enquiries.
+
+## 2026-06-03 homepage and sales page visual polish
+- Homepage hero pricing helper now reads only `Only £149 setup + £30/month.`
+- Homepage value section heading now reads `Fully managed, feature rich website to help grow your business`.
+- Business type category colours remain distinct but use softer pastel selected states, borders, backgrounds and accent bars.
+- Homepage `How it works` now uses a connected stepped flow/timeline. Step 3 is `Place order`.
+- Dark CTA panels render the secondary `View example demo` action with the same readable blue treatment as the primary action.
+- Industry sales pages keep `What happens after you subscribe?` and now show the four onboarding steps as a visual process flow instead of static tiles.
 
 ## 2026-06-03 custom-domain tenant routing
 

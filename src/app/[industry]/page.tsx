@@ -160,6 +160,25 @@ function getStakeholderHighlights(industry: string) {
   };
 }
 
+const onboardingSteps = [
+  {
+    title: "Choose your domain option",
+    copy: "Tell us whether you own a domain, want to point one to your new site, or would like us to register/manage one for you.",
+  },
+  {
+    title: "We prepare your website",
+    copy: "We create your clean subscriber site and admin area, ready for your real business details rather than copied demo content.",
+  },
+  {
+    title: "You get your admin access",
+    copy: "We send your login details so you can add services, prices, staff, opening hours, policies, vouchers and page content.",
+  },
+  {
+    title: "You stay in control",
+    copy: "Manage bookings, customers, staff, rotas, services, vouchers, payment setup and business content from one place.",
+  },
+];
+
 export default async function IndustryPage({ params }: IndustryPageProps) {
   const { industry } = await params;
 
@@ -229,28 +248,24 @@ export default async function IndustryPage({ params }: IndustryPageProps) {
         <p className="text-slate-600">
           We keep the setup simple. Once your order is placed, we prepare your clean website, help with your domain route, and give you access to your business admin area so you can start setting up your services, staff, prices and content.
         </p>
-        <div className="mt-5 grid gap-6 lg:grid-cols-2">
-          <SiteCard title="Choose your domain option">
-            <p className="text-sm text-slate-600">
-              Tell us whether you already own a domain, want to point an existing domain to your new site, or would like us to register/manage a new domain for you. We will guide you through the right option.
-            </p>
-          </SiteCard>
-          <SiteCard title="We prepare your website">
-            <p className="text-sm text-slate-600">
-              We create your clean subscriber site and business admin area. Your site starts ready for your real business details, not copied demo content.
-            </p>
-          </SiteCard>
-          <SiteCard title="You get your admin access">
-            <p className="text-sm text-slate-600">
-              We send your login details by email so you can access your business admin area. From there, you can add services, prices, staff, opening hours, policies, vouchers and page content.
-            </p>
-          </SiteCard>
-          <SiteCard title="You stay in control">
-            <p className="text-sm text-slate-600">
-              Your admin area is where the value really shows. Manage bookings, customers, staff, rotas, services, vouchers, payments setup and business content from one place, with support available when you need it.
-            </p>
-          </SiteCard>
-        </div>
+        <ol className="mt-6 grid gap-4 lg:grid-cols-4 lg:gap-0">
+          {onboardingSteps.map((step, index) => (
+            <li key={step.title} className="relative flex lg:block">
+              {index > 0 ? (
+                <span className="absolute left-5 top-0 h-full w-px bg-teal-200 lg:left-0 lg:top-7 lg:h-px lg:w-full lg:-translate-x-1/2" aria-hidden="true" />
+              ) : null}
+              <div className="relative z-10 flex gap-3 lg:flex-col lg:items-center lg:px-2">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-teal-200 bg-white text-sm font-bold text-teal-700 shadow-sm">
+                  {index + 1}
+                </span>
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:min-h-44 lg:text-center">
+                  <p className="text-sm font-semibold text-slate-950">{step.title}</p>
+                  <p className="mt-2 text-sm text-slate-600">{step.copy}</p>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ol>
         <p className="mt-4 text-sm font-medium text-slate-700">
           You are not left to figure it out alone. We are on hand to help with setup questions, domain steps and ongoing support.
         </p>
