@@ -44,9 +44,14 @@ export type SiteAdminCrmCustomer = {
   crmNotes: string | null;
   accountCreated: boolean;
   totalBookings: number;
+  upcomingBookings: number;
   completedBookings: number;
+  cancelledBookings: number;
   lastBookingDate: string | null;
   nextBookingDate: string | null;
+  lastContactEnquiryDate: string | null;
+  lapsedCandidate: boolean;
+  statusLabel: string;
   bookings: Array<{
     id: string;
     serviceName: string | null;
@@ -56,6 +61,13 @@ export type SiteAdminCrmCustomer = {
     status: string;
     paymentStatus: string | null;
     detailHref: string;
+  }>;
+  enquiries: Array<{
+    id: string;
+    purpose: string;
+    message: string;
+    status: string;
+    createdAt: string;
   }>;
 };
 
@@ -538,6 +550,42 @@ export async function getSiteAdminCrm(
       };
     }
     return { ok: true, customers: body.customers, enquiries: body.enquiries };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function patchSiteAdminCrmCustomer(
+  siteSlug: string,
+  input: {
+    email: string;
+    crmNotes?: string | null;
+    suppressMarketing?: boolean;
+  },
+): Promise<ClientResult<{ customer: Pick<SiteAdminCrmCustomer, "id" | "email" | "marketingOptIn" | "marketingOptInAt" | "crmNotes"> }>> {
+  try {
+    const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/crm`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    const body = (await parseJsonSafe(response)) as
+      | {
+          ok?: boolean;
+          customer?: Pick<SiteAdminCrmCustomer, "id" | "email" | "marketingOptIn" | "marketingOptInAt" | "crmNotes">;
+          error?: string;
+          details?: unknown;
+        }
+      | null;
+    if (!response.ok || !body?.ok || !body.customer) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_CRM_UPDATE_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return { ok: true, customer: body.customer };
   } catch {
     return { ok: false, error: "NETWORK_ERROR", status: 0 };
   }

@@ -31,6 +31,7 @@ import {
   saveSiteAdminVoucherSettings,
   runSiteAdminVoucherAction,
   getSiteAdminCrm,
+  patchSiteAdminCrmCustomer,
   type SiteAdminCrmCustomer,
   type SiteAdminCrmEnquiry,
 } from "@/lib/sites/site-admin-client";
@@ -949,6 +950,8 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   const [crmEnquiries, setCrmEnquiries] = useState<SiteAdminCrmEnquiry[]>([]);
   const [crmLoaded, setCrmLoaded] = useState(false);
   const [selectedCrmEmail, setSelectedCrmEmail] = useState<string | null>(null);
+  const [crmNotesDraft, setCrmNotesDraft] = useState("");
+  const [crmSaving, setCrmSaving] = useState(false);
 
   const selectedStaff = useMemo(
     () => staffDraft.find((item) => item.id === selectedSchedulingStaffId) ?? null,
@@ -1085,6 +1088,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       setCrmCustomers(result.customers);
       setCrmEnquiries(result.enquiries);
       setSelectedCrmEmail(result.customers[0]?.email ?? null);
+      setCrmNotesDraft(result.customers[0]?.crmNotes ?? "");
       setCrmLoaded(true);
       setMessage(null);
     }
@@ -1093,6 +1097,63 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       active = false;
     };
   }, [activeSection, crmLoaded, siteSlug]);
+
+  async function saveCrmCustomerNotes() {
+    if (!selectedCrmCustomer?.accountCreated) {
+      setMessage("CRM notes can be saved after the customer creates an account.");
+      return;
+    }
+    setCrmSaving(true);
+    setMessage("Saving CRM notes...");
+    const result = await patchSiteAdminCrmCustomer(siteSlug, {
+      email: selectedCrmCustomer.email,
+      crmNotes: crmNotesDraft.trim() || null,
+    });
+    setCrmSaving(false);
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status, result.details));
+      return;
+    }
+    setCrmCustomers((current) =>
+      current.map((customer) =>
+        customer.email === selectedCrmCustomer.email
+          ? { ...customer, crmNotes: result.customer.crmNotes }
+          : customer,
+      ),
+    );
+    setCrmNotesDraft(result.customer.crmNotes ?? "");
+    setMessage("CRM notes saved.");
+  }
+
+  async function suppressCrmCustomerMarketing() {
+    if (!selectedCrmCustomer?.accountCreated) {
+      setMessage("Marketing suppression can be saved after the customer creates an account.");
+      return;
+    }
+    setCrmSaving(true);
+    setMessage("Suppressing marketing for this customer...");
+    const result = await patchSiteAdminCrmCustomer(siteSlug, {
+      email: selectedCrmCustomer.email,
+      suppressMarketing: true,
+    });
+    setCrmSaving(false);
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status, result.details));
+      return;
+    }
+    setCrmCustomers((current) =>
+      current.map((customer) =>
+        customer.email === selectedCrmCustomer.email
+          ? {
+              ...customer,
+              marketingOptIn: result.customer.marketingOptIn,
+              marketingOptInAt: result.customer.marketingOptInAt,
+            }
+          : customer,
+      ),
+    );
+    setMessage("Customer marketing is now suppressed for this business.");
+  }
 
   function updateVoucherSetting<K extends keyof CustomerSiteGiftVoucherSettings>(
     key: K,
@@ -2430,12 +2491,20 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                       ? "border-teal-300 bg-teal-50"
                       : "border-slate-200 bg-slate-50 hover:bg-slate-100"
                   }`}
-                  onClick={() => setSelectedCrmEmail(customer.email)}
+                  onClick={() => {
+                    setSelectedCrmEmail(customer.email);
+                    setCrmNotesDraft(customer.crmNotes ?? "");
+                  }}
                 >
                   <p className="font-semibold text-slate-950">{customer.name || customer.email}</p>
                   <p className="text-xs text-slate-600">{customer.email}</p>
                   <p className="mt-1 text-xs text-slate-600">
                     {customer.totalBookings} booking{customer.totalBookings === 1 ? "" : "s"} · {customer.marketingOptIn ? "Marketing opted in" : "Marketing opted out"}
+                  </p>
+                  <p className={`mt-2 inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                    customer.lapsedCandidate ? "bg-amber-100 text-amber-900" : "bg-white text-slate-700"
+                  }`}>
+                    {customer.statusLabel}
                   </p>
                 </button>
               ))}
@@ -2451,13 +2520,42 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                       <p><span className="font-semibold">Account:</span> {selectedCrmCustomer.accountCreated ? "Created" : "Guest booking only"}</p>
                       <p><span className="font-semibold">Marketing:</span> {selectedCrmCustomer.marketingOptIn ? "Opted in" : "Opted out"}</p>
                       <p><span className="font-semibold">Total bookings:</span> {selectedCrmCustomer.totalBookings}</p>
+                      <p><span className="font-semibold">Upcoming:</span> {selectedCrmCustomer.upcomingBookings}</p>
                       <p><span className="font-semibold">Completed:</span> {selectedCrmCustomer.completedBookings}</p>
+                      <p><span className="font-semibold">Cancelled:</span> {selectedCrmCustomer.cancelledBookings}</p>
                       <p><span className="font-semibold">Last booking:</span> {selectedCrmCustomer.lastBookingDate ? new Date(selectedCrmCustomer.lastBookingDate).toLocaleString("en-GB") : "Not available"}</p>
                       <p><span className="font-semibold">Next booking:</span> {selectedCrmCustomer.nextBookingDate ? new Date(selectedCrmCustomer.nextBookingDate).toLocaleString("en-GB") : "None scheduled"}</p>
+                      <p><span className="font-semibold">Last enquiry:</span> {selectedCrmCustomer.lastContactEnquiryDate ? new Date(selectedCrmCustomer.lastContactEnquiryDate).toLocaleString("en-GB") : "None recorded"}</p>
+                      <p><span className="font-semibold">Status:</span> {selectedCrmCustomer.statusLabel}</p>
                     </div>
-                    <p className="mt-2 text-sm text-slate-700">
-                      <span className="font-semibold">CRM notes:</span> {selectedCrmCustomer.crmNotes || "No notes added yet."}
-                    </p>
+                    {selectedCrmCustomer.lapsedCandidate ? (
+                      <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">
+                        Possible lapsed customer: this customer has booking history but no upcoming booking in the last 90 days. No automatic messages are sent.
+                      </p>
+                    ) : null}
+                    <div className="mt-3">
+                      <label className="text-sm font-semibold text-slate-800">
+                        Internal CRM notes
+                        <textarea
+                          className="mt-1 min-h-24 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                          value={crmNotesDraft}
+                          onChange={(event) => setCrmNotesDraft(event.target.value)}
+                          placeholder={selectedCrmCustomer.accountCreated ? "Add notes for this customer..." : "Guest-only rows need an account before notes can be saved."}
+                          disabled={!selectedCrmCustomer.accountCreated || crmSaving}
+                        />
+                      </label>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <button type="button" className={`${primaryButtonClass} ${smallButtonClass}`} onClick={() => void saveCrmCustomerNotes()} disabled={!selectedCrmCustomer.accountCreated || crmSaving}>
+                          Save notes
+                        </button>
+                        <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void suppressCrmCustomerMarketing()} disabled={!selectedCrmCustomer.accountCreated || !selectedCrmCustomer.marketingOptIn || crmSaving}>
+                          Mark do not contact
+                        </button>
+                      </div>
+                      <p className="mt-2 text-xs text-slate-600">
+                        Admins can suppress marketing, but should not opt customers in unless the customer explicitly asks. Marketing remains tenant-specific.
+                      </p>
+                    </div>
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-slate-950">Booking history</p>
@@ -2473,6 +2571,23 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                           <a href={booking.detailHref} target="_blank" rel="noreferrer" className="mt-2 inline-flex font-semibold text-teal-700 underline">
                             View booking link
                           </a>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-950">Contact enquiry history</p>
+                    <div className="mt-2 space-y-2">
+                      {selectedCrmCustomer.enquiries.length === 0 ? (
+                        <p className="text-sm text-slate-600">No contact enquiries recorded for this customer yet.</p>
+                      ) : selectedCrmCustomer.enquiries.slice(0, 10).map((enquiry) => (
+                        <article key={enquiry.id} className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <p className="font-semibold text-slate-950">{enquiry.purpose}</p>
+                            <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 font-semibold text-slate-700">{enquiry.status}</span>
+                          </div>
+                          <p className="mt-1 text-slate-500">{new Date(enquiry.createdAt).toLocaleString("en-GB")}</p>
+                          <p className="mt-1 whitespace-pre-wrap">{enquiry.message}</p>
                         </article>
                       ))}
                     </div>

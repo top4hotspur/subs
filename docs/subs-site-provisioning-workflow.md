@@ -516,8 +516,10 @@ Final custom-domain rendering remains the next hosting/routing milestone: custom
 - Guest bookings remain allowed, but when a customer later registers/logs in with the same email, tenant-matched guest bookings are linked to the account and visible in their account dashboard.
 - Marketing consent is stored per `CustomerSiteCustomer` and defaults to opted out. It is not global across MyExperiment.club or other tenant sites.
 - Tenant-scoped customer contact enquiries are stored separately from platform sales/contact enquiries.
-- Business owners can review customer booking history and contact enquiries in `/site-admin/[siteSlug]` under Customer CRM.
-- Special offers and lapsed/frequent-customer follow-up remain future CRM capabilities; no marketing automation is active in this milestone.
+- Business owners can review customer booking history, upcoming/completed/cancelled counts, payment-status context and contact enquiries in `/site-admin/[siteSlug]` under Customer CRM.
+- CRM rows are grouped by tenant plus normalised email where practical. Guest bookings, account customers and contact enquiries with the same tenant/email are shown together; cross-tenant data is never merged.
+- Internal CRM notes can be saved for account customers. Business admins can mark an opted-in customer as do-not-contact/suppressed, but the CRM does not provide silent admin opt-in.
+- Special offers are placeholder/foundation only. Lapsed-customer follow-up is a visible 90-day insight only; no automated campaigns, birthday automation, bulk marketing sends or payment-provider APIs are active in this milestone.
 
 ## Custom-domain runtime rendering
 

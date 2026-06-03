@@ -1360,14 +1360,17 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
 7. Toggle the account marketing preference on and off, then refresh and confirm it persists.
 8. Confirm the customer account shows the Special offers section with `No offers available right now.`
 9. Open `/site-admin/[siteSlug]` and select Customer CRM.
-10. Confirm the customer appears with email, phone, marketing consent, total bookings, completed booking count, last booking and next booking where data exists.
+10. Confirm the customer appears with name, email, phone, marketing consent, total bookings, upcoming count, completed count, cancelled count, last booking and next booking where data exists.
 11. Select the customer and confirm booking history rows are visible with service, staff, date/time, status, payment status and booking detail link.
-12. From the account, booking detail page or payment return page, click Contact business.
-13. Submit a structured contact form with purpose, name, email, phone and message.
-14. Confirm the form says the message was sent to the business.
-15. Return to `/site-admin/[siteSlug]` > Customer CRM and confirm the contact enquiry appears.
-16. Confirm no cross-tenant bookings, customer records or enquiries are visible when using a different site slug/admin login.
-17. Confirm no bulk customer marketing emails are sent from this CRM foundation.
+12. Add an internal CRM note for an account customer, save it, switch away/back or reload CRM, and confirm the note persists.
+13. If the customer is opted in, click `Mark do not contact` and confirm marketing becomes opted out/suppressed. Do not add any admin silent opt-in.
+14. From the account, booking detail page or payment return page, click Contact business.
+15. Submit a structured contact form with purpose, name, email, phone and message.
+16. Confirm the form says the message was sent to the business.
+17. Return to `/site-admin/[siteSlug]` > Customer CRM and confirm the contact enquiry appears both in the enquiry list and under the matching customer detail where the email matches.
+18. For a customer with booking history, no upcoming booking and a last booking older than 90 days, confirm `Possible lapsed customer` appears as an insight only.
+19. Confirm no cross-tenant bookings, customer records or enquiries are visible when using a different site slug/admin login.
+20. Confirm no bulk customer marketing emails, birthday automation or payment-provider actions are sent from this CRM foundation.
 
 ## 2026-06-03 hosted smoke checks: custom-domain tenant routing
 

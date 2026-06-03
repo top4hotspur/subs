@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z, ZodError } from "zod";
 import { getSiteAdminSessionContext } from "@/lib/auth/site-admin";
 import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
 import { prisma } from "@/lib/db/prisma";
@@ -25,6 +26,12 @@ function bookingDateValue(booking: { preferredDate: string | null; startDateTime
   if (booking.preferredDate) return new Date(`${booking.preferredDate}T00:00:00.000Z`).getTime();
   return booking.createdAt.getTime();
 }
+
+const updateCrmCustomerSchema = z.object({
+  email: z.string().trim().email().max(320),
+  crmNotes: z.string().trim().max(4000).nullable().optional(),
+  suppressMarketing: z.boolean().optional(),
+});
 
 export async function GET(
   _request: Request,
@@ -64,9 +71,14 @@ export async function GET(
       crmNotes: string | null;
       accountCreated: boolean;
       totalBookings: number;
+      upcomingBookings: number;
       completedBookings: number;
+      cancelledBookings: number;
       lastBookingDate: string | null;
       nextBookingDate: string | null;
+      lastContactEnquiryDate: string | null;
+      lapsedCandidate: boolean;
+      statusLabel: string;
       bookings: Array<{
         id: string;
         serviceName: string | null;
@@ -77,11 +89,44 @@ export async function GET(
         paymentStatus: string | null;
         detailHref: string;
       }>;
+      enquiries: Array<{
+        id: string;
+        purpose: string;
+        message: string;
+        status: string;
+        createdAt: string;
+      }>;
     }>();
+
+    function emptyRow(input: {
+      id: string | null;
+      name: string;
+      email: string;
+      phone: string | null;
+      marketingOptIn: boolean;
+      marketingOptInAt: string | null;
+      crmNotes: string | null;
+      accountCreated: boolean;
+    }) {
+      return {
+        ...input,
+        totalBookings: 0,
+        upcomingBookings: 0,
+        completedBookings: 0,
+        cancelledBookings: 0,
+        lastBookingDate: null,
+        nextBookingDate: null,
+        lastContactEnquiryDate: null,
+        lapsedCandidate: false,
+        statusLabel: "New",
+        bookings: [],
+        enquiries: [],
+      };
+    }
 
     for (const customer of customers) {
       const email = customer.email.toLowerCase();
-      rows.set(email, {
+      rows.set(email, emptyRow({
         id: customer.id,
         name: [customer.firstName, customer.lastName].filter(Boolean).join(" "),
         email,
@@ -90,19 +135,14 @@ export async function GET(
         marketingOptInAt: customer.marketingOptInAt?.toISOString() ?? null,
         crmNotes: customer.crmNotes,
         accountCreated: true,
-        totalBookings: 0,
-        completedBookings: 0,
-        lastBookingDate: null,
-        nextBookingDate: null,
-        bookings: [],
-      });
+      }));
     }
 
     const now = Date.now();
     for (const booking of bookings) {
       const email = booking.customerEmail?.trim().toLowerCase();
       if (!email) continue;
-      const existing = rows.get(email) ?? {
+      const existing = rows.get(email) ?? emptyRow({
         id: null,
         name: booking.customerName,
         email,
@@ -111,20 +151,19 @@ export async function GET(
         marketingOptInAt: null,
         crmNotes: null,
         accountCreated: false,
-        totalBookings: 0,
-        completedBookings: 0,
-        lastBookingDate: null,
-        nextBookingDate: null,
-        bookings: [],
-      };
+      });
       existing.totalBookings += 1;
       if (booking.status === "COMPLETED") existing.completedBookings += 1;
+      if (booking.status === "CANCELLED") existing.cancelledBookings += 1;
       if (!existing.phone && booking.customerPhone) existing.phone = booking.customerPhone;
       const timestamp = bookingDateValue(booking);
       if (timestamp < now && (!existing.lastBookingDate || timestamp > new Date(existing.lastBookingDate).getTime())) {
         existing.lastBookingDate = new Date(timestamp).toISOString();
       }
-      if (timestamp >= now && (!existing.nextBookingDate || timestamp < new Date(existing.nextBookingDate).getTime())) {
+      if (timestamp >= now && booking.status !== "CANCELLED" && booking.status !== "COMPLETED") {
+        existing.upcomingBookings += 1;
+      }
+      if (timestamp >= now && booking.status !== "CANCELLED" && booking.status !== "COMPLETED" && (!existing.nextBookingDate || timestamp < new Date(existing.nextBookingDate).getTime())) {
         existing.nextBookingDate = new Date(timestamp).toISOString();
       }
       existing.bookings.push({
@@ -142,6 +181,47 @@ export async function GET(
         }),
       });
       rows.set(email, existing);
+    }
+
+    for (const enquiry of enquiries) {
+      const email = enquiry.email.trim().toLowerCase();
+      if (!email) continue;
+      const existing = rows.get(email) ?? emptyRow({
+        id: null,
+        name: enquiry.name,
+        email,
+        phone: enquiry.phone,
+        marketingOptIn: false,
+        marketingOptInAt: null,
+        crmNotes: null,
+        accountCreated: false,
+      });
+      if (!existing.phone && enquiry.phone) existing.phone = enquiry.phone;
+      existing.enquiries.push({
+        id: enquiry.id,
+        purpose: enquiry.purpose,
+        message: enquiry.message,
+        status: enquiry.status,
+        createdAt: enquiry.createdAt.toISOString(),
+      });
+      existing.lastContactEnquiryDate = enquiry.createdAt.toISOString();
+      rows.set(email, existing);
+    }
+
+    const lapsedThresholdMs = 90 * 24 * 60 * 60 * 1000;
+    for (const row of rows.values()) {
+      row.lapsedCandidate =
+        row.totalBookings > 0 &&
+        row.upcomingBookings === 0 &&
+        row.lastBookingDate !== null &&
+        new Date(row.lastBookingDate).getTime() <= now - lapsedThresholdMs;
+      row.statusLabel = row.lapsedCandidate
+        ? "Possible lapsed customer"
+        : row.upcomingBookings > 0
+          ? "Active"
+          : row.totalBookings > 0
+            ? "No upcoming bookings"
+            : "No bookings yet";
     }
 
     return NextResponse.json({
@@ -163,6 +243,62 @@ export async function GET(
   } catch (error) {
     return NextResponse.json(
       { ok: false, error: "SITE_ADMIN_CRM_GET_FAILED", message: error instanceof Error ? error.message : "Unknown error" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PATCH(
+  request: Request,
+  context: { params: Promise<{ siteSlug: string }> },
+) {
+  if (!isBackendPersistenceConfigured()) return backendNotConfigured();
+  try {
+    const { siteSlug } = await context.params;
+    const resolved = await resolveAuthorizedTenant(siteSlug);
+    if ("error" in resolved) {
+      return NextResponse.json({ ok: false, error: resolved.error }, { status: resolved.status });
+    }
+    const parsed = updateCrmCustomerSchema.parse(await request.json());
+    const customer = await prisma.customerSiteCustomer.findUnique({
+      where: {
+        tenantSiteId_email: {
+          tenantSiteId: resolved.tenantSiteId,
+          email: parsed.email.trim().toLowerCase(),
+        },
+      },
+    });
+    if (!customer?.active) {
+      return NextResponse.json({ ok: false, error: "CUSTOMER_ACCOUNT_NOT_FOUND" }, { status: 404 });
+    }
+    const updated = await prisma.customerSiteCustomer.update({
+      where: { id: customer.id },
+      data: {
+        crmNotes: parsed.crmNotes ?? customer.crmNotes,
+        ...(parsed.suppressMarketing
+          ? {
+              marketingOptIn: false,
+              marketingOptInAt: null,
+            }
+          : {}),
+      },
+    });
+    return NextResponse.json({
+      ok: true,
+      customer: {
+        id: updated.id,
+        email: updated.email,
+        marketingOptIn: updated.marketingOptIn,
+        marketingOptInAt: updated.marketingOptInAt?.toISOString() ?? null,
+        crmNotes: updated.crmNotes,
+      },
+    });
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json({ ok: false, error: "VALIDATION_ERROR", details: error.issues }, { status: 400 });
+    }
+    return NextResponse.json(
+      { ok: false, error: "SITE_ADMIN_CRM_UPDATE_FAILED", message: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 },
     );
   }
