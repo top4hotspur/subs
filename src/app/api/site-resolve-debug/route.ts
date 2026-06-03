@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { isPlatformAdminSession } from "@/lib/auth/platform-admin";
 import { getTenantSiteByDomainHost, normalizeHost } from "@/lib/sites/tenant-resolver";
 
+function routeWouldRewriteTo(tenantSlug: string | null | undefined): string | null {
+  return tenantSlug ? `/tenant-domain-runtime -> /sites/${tenantSlug}` : null;
+}
+
 export async function GET(request: NextRequest) {
   if (!(await isPlatformAdminSession())) {
     return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
@@ -22,8 +26,10 @@ export async function GET(request: NextRequest) {
     tenantSiteId: match?.tenantSiteId ?? null,
     tenantSlug: match?.tenantSlug ?? null,
     domainStatus: match?.domainStatus ?? null,
+    dnsStatus: match?.dnsStatus ?? null,
+    sslStatus: match?.sslStatus ?? null,
     matchedDomain: match?.domain ?? null,
     matchedDomainType: match?.domainType ?? null,
+    routeWouldRewriteTo: routeWouldRewriteTo(match?.tenantSlug),
   });
 }
-

@@ -343,3 +343,10 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - `/admin/sites` exposes the operational Domain and DNS panel for saving target values, copying/sending instructions, recording manual DNS checks and moving the site toward ready/live states.
 - `/site-admin/[siteSlug]` shows a read-only Domain setup card with preview URL, requested domain and customer-friendly next-step copy.
 - Domain purchase, DNS provider changes, Route 53 automation, AWS resource creation, SSL automation and external domain API calls remain out of scope.
+
+## 2026-06-03 Custom Domain Host Routing Proof
+- Non-platform hosts are rewritten by middleware to `/tenant-domain-runtime`, where the app resolves `SiteDomain -> TenantSite` and renders the same tenant public site used by `/sites/[siteSlug]`.
+- Platform hosts, static assets, `/_next/*`, public files and `/api/*` are bypassed; `/api/admin` returns 404 on customer-domain hosts.
+- Supported customer-domain paths include `/`, `/booking`, `/contact`, `/policy`, `/account`, `/my-account`, `/account/login`, `/account/register`, `/booking/[token]`, `/booking/payment`, `/cookies`, `/privacy` and `/vouchers` where enabled.
+- `/api/site-resolve-debug` remains platform-admin protected and now reports matched tenant/domain plus domain/DNS/SSL status and rewrite target.
+- Domain purchase, DNS provider changes, Amplify/domain attachment and certificate checks remain manual.

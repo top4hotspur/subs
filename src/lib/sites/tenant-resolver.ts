@@ -7,6 +7,8 @@ type ResolvedTenantSite = {
   domain: string;
   domainType: string;
   domainStatus: string;
+  dnsStatus?: string | null;
+  sslStatus?: string | null;
   siteStatus?: string | null;
   provisioningStatus?: string | null;
 };
@@ -96,6 +98,8 @@ export async function getTenantSiteByDomainHost(
       domain: true,
       domainType: true,
       status: true,
+      dnsStatus: true,
+      sslStatus: true,
       tenantSite: {
         select: {
           id: true,
@@ -121,6 +125,8 @@ export async function getTenantSiteByDomainHost(
     domain: domainMatch.domain,
     domainType: domainMatch.domainType,
     domainStatus: domainMatch.status,
+    dnsStatus: domainMatch.dnsStatus,
+    sslStatus: domainMatch.sslStatus,
     siteStatus: domainMatch.tenantSite.status,
     provisioningStatus: domainMatch.tenantSite.provisioningStatus,
   };

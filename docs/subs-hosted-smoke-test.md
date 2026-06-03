@@ -1358,13 +1358,16 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
 2. Mark DNS/domain state ready, then mark the site live so the SiteDomain status is `LIVE` or live-ready and the tenant lifecycle/provisioning state is `LIVE`.
 3. Confirm `/sites/[siteSlug]` still opens as the platform preview route.
 4. Use `/api/site-resolve-debug` with `x-test-site-host` set to the mapped host and confirm it resolves to the expected tenant.
+   - Confirm response includes `matched`, `tenantSlug`, `matchedDomain`, `domainStatus`, `dnsStatus`, `sslStatus`, and `routeWouldRewriteTo`.
 5. If a real/temporary test domain is attached to the shared app, open the custom host and confirm it renders the same tenant public site.
-6. Confirm customer-domain navigation stays on the customer host for `/contact`, `/policy`, `/cookies`, `/privacy`, `/account`, `/account/login`, `/account/register`, `/booking`, `/booking/[token]`, `/booking/payment`, and `/vouchers` where enabled.
+6. Confirm customer-domain navigation stays on the customer host for `/contact`, `/policy`, `/cookies`, `/privacy`, `/account`, `/my-account`, `/account/login`, `/account/register`, `/booking`, `/booking/[token]`, `/booking/payment`, and `/vouchers` where enabled.
 7. Confirm public APIs still work through tenant-scoped `/api/sites/[siteSlug]/...` calls.
 8. Confirm `https://myexperiment.club`, `/admin`, `/admin/sites`, `/site-admin/[siteSlug]`, `/sites/[siteSlug]`, `/demo/[industry]`, `/setup/[industry]`, and industry sales pages still behave normally on the platform host.
-9. Suspend the site in `/admin/sites` and confirm the custom domain no longer renders the normal booking site. It should show: `This website is currently unavailable. Please contact the business or MyExperiment.club support.`
-10. Reactivate the site and confirm the custom domain renders again.
-11. Confirm DNS purchase, registrar changes, DNS provider changes and certificate attachment remain manual operational steps.
+9. Confirm customer-domain `/api/admin` returns 404 and does not expose platform admin APIs.
+10. If testing locally, run `curl -H "Host: examplecustomer.com" http://localhost:3000/` with a matching live SiteDomain and confirm it renders the tenant site.
+11. Suspend the site in `/admin/sites` and confirm the custom domain no longer renders the normal booking site. It should show: `This website is currently unavailable. Please contact the business or MyExperiment.club support.`
+12. Reactivate the site and confirm the custom domain renders again.
+13. Confirm DNS purchase, registrar changes, DNS provider changes and certificate attachment remain manual operational steps.
 
 ## 2026-06-03 hosted smoke checks: demo/live customer-site alignment
 

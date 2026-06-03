@@ -546,6 +546,9 @@ Manual work still required:
 
 No separate customer app or database is created. All public rendering remains tenant-scoped inside the shared app and central database.
 - Customer-account session cookies are scoped at `/` so account login works on both `/sites/[siteSlug]/account` preview routes and custom-domain `/account` routes.
+- `/my-account` is accepted as a customer-friendly alias for `/account` on custom-domain hosts.
+- `/api/site-resolve-debug` is platform-admin protected and returns safe proof fields including received/normalised host, matched tenant, matched domain, domain/DNS/SSL status and the internal rewrite target.
+- `/admin` and `/api/admin` are not exposed through customer-domain routing. Platform admin remains on the platform host.
 
 ## DNS instruction handover
 

@@ -83,11 +83,13 @@ Per-customer isolated deployments/databases can be considered later only for exc
 - Customer-site public booking still relies on demo/local flows in this phase.
 - Tenant-scoped persisted bookings now exist for platform-admin testing and provisioning support.
 
-## Public tenant route before custom domains
+## Public tenant route and custom-domain proof
 - New public route `/sites/[siteSlug]` proves shared-app tenant rendering without domain middleware.
 - Rendering path is the same conceptual flow as future domain routing:
   - host/slug -> tenant lookup -> tenant-scoped query -> customer-site render
-- Future custom-domain runtime will swap slug lookup for `SiteDomain.domain` host lookup while keeping tenant-scoped rendering logic.
+- Custom-domain runtime proof now uses middleware on non-platform hosts to rewrite internally to `/tenant-domain-runtime`.
+- The runtime route resolves `SiteDomain.domain -> TenantSite` and reuses the same tenant public pages as `/sites/[siteSlug]`.
+- `/sites/[siteSlug]` remains the fallback/proof route on the platform host.
 
 ## Domain setup approaches (later automation)
 1. Customer keeps DNS provider and adds target records.
@@ -95,16 +97,19 @@ Per-customer isolated deployments/databases can be considered later only for exc
 
 No per-customer DB or code export is required for this model.
 
-## Host/domain resolver preparation
-- Shared app is now prepared with central host resolver logic (no middleware routing switch yet).
-- Planned custom-domain flow:
+## Host/domain resolver and route safety
+- Shared app now has central host resolver logic plus a middleware rewrite proof.
+- Current custom-domain flow:
   1. read request host
   2. normalize host
   3. resolve `SiteDomain.domain`
   4. resolve `TenantSite`
   5. render tenant-scoped customer site using same data model as slug route
 - Root and `www` hosts are handled through resolver candidate matching.
-- DNS and Amplify domain automation are still manual/out-of-scope in this phase.
+- Supported customer-domain paths include `/`, `/booking`, `/contact`, `/policy`, `/account`, `/my-account`, `/account/login`, `/account/register`, `/booking/[token]`, `/booking/payment`, `/cookies`, `/privacy`, and `/vouchers`.
+- Platform hosts (`myexperiment.club`, `www.myexperiment.club`, localhost and Amplify preview hosts) are not rewritten.
+- Static assets, `/_next/*`, `/api/*` and known files are bypassed. `/api/admin` returns 404 on customer-domain hosts so platform admin APIs are not exposed there.
+- DNS, SSL, Amplify custom-domain attachment and Route 53/domain automation remain manual/out-of-scope in this phase.
 - Platform admin now tracks manual domain/DNS state on `SiteDomain` with setup mode, DNS status, SSL status, expected DNS target/nameservers, manual check result and go-live timestamps.
 - Subscriber admin sees a read-only domain status card; only platform admin can update domain/DNS workflow state.
 

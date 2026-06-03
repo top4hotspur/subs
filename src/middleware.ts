@@ -66,6 +66,10 @@ export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const host = extractHost(req.headers.get("x-forwarded-host") ?? req.headers.get("host"));
 
+  if (!isPlatformHost(host) && pathname.startsWith("/api/admin")) {
+    return NextResponse.json({ ok: false, error: "NOT_FOUND" }, { status: 404 });
+  }
+
   if (!isPlatformHost(host) && !shouldBypassTenantRewrite(pathname)) {
     const url = req.nextUrl.clone();
     url.pathname = `/tenant-domain-runtime${pathname === "/" ? "" : pathname}`;

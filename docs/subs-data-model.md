@@ -145,11 +145,12 @@ Conflict behavior (v1):
   - `getTenantSiteByDomainHost(host)`
   - `getTenantSiteBySlug(slug)`
   - `resolveTenantFromRequestHost(headers)`
-- SiteDomain lookup now has a reusable path for future custom-domain runtime routing.
+- SiteDomain lookup now powers the custom-domain runtime proof path (`host -> SiteDomain -> TenantSite`) while `/sites/[siteSlug]` remains the platform fallback/proof route.
 
 ## Diagnostic endpoint
 - Added `GET /api/site-resolve-debug` (platform-admin guarded).
 - Supports temporary test header `x-test-site-host` for pre-domain-attachment validation.
+- Returns safe proof fields: received host, normalised host, matched tenant/site slug, matched domain, domain/DNS/SSL status and route rewrite target.
 
 ## Site-admin scope update
 - Business-owner site-admin now has persisted edit access (tenant-scoped) for:

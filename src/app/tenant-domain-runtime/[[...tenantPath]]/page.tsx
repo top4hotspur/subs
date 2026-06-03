@@ -67,7 +67,9 @@ export default async function TenantDomainPage({ params, searchParams }: TenantD
 
   if (path.length === 0) return <PublicSiteSlugPage params={siteParams} />;
   if (path.length === 1 && path[0] === "about") return <PublicSiteAboutPage params={siteParams} />;
-  if (path.length === 1 && path[0] === "account") return <CustomerAccountPage params={siteParams} />;
+  if (path.length === 1 && (path[0] === "account" || path[0] === "my-account")) {
+    return <CustomerAccountPage params={siteParams} />;
+  }
   if (path.length === 2 && path[0] === "account" && path[1] === "login") {
     return <CustomerAccountLoginPage params={siteParams} />;
   }

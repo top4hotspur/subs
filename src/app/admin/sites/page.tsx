@@ -566,7 +566,10 @@ export default function AdminSitesPage() {
             tenantSiteId?: string | null;
             tenantSlug?: string | null;
             domainStatus?: string | null;
+            dnsStatus?: string | null;
+            sslStatus?: string | null;
             matchedDomain?: string | null;
+            routeWouldRewriteTo?: string | null;
           }
         | null;
 
@@ -581,7 +584,13 @@ export default function AdminSitesPage() {
       }
 
       setDomainTestResult(
-        `Matched tenant ${body.tenantSlug ?? "(unknown)"} (${body.tenantSiteId ?? "n/a"}) via ${body.matchedDomain ?? candidate} [${body.domainStatus ?? "status unknown"}].`,
+        [
+          `Matched tenant ${body.tenantSlug ?? "(unknown)"} (${body.tenantSiteId ?? "n/a"}) via ${body.matchedDomain ?? candidate}.`,
+          `Domain: ${body.domainStatus ?? "status unknown"}.`,
+          `DNS: ${body.dnsStatus ?? "not set"}.`,
+          `SSL: ${body.sslStatus ?? "not set"}.`,
+          `Would render: ${body.routeWouldRewriteTo ?? "no rewrite target"}.`,
+        ].join(" "),
       );
     } catch {
       setDomainTestResult("Network error while testing domain resolution.");
@@ -1106,7 +1115,7 @@ export default function AdminSitesPage() {
                         void runDomainResolutionTest();
                       }}
                     >
-                      Test
+                      Test custom domain routing
                     </button>
                   </div>
                   {domainTestResult ? (
