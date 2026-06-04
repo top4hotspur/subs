@@ -22,7 +22,7 @@ export type PersistedCustomerSiteSettings = {
   faviconContentType: string | null;
   faviconFileName: string | null;
   paymentProcessorSetupMode: "EXISTING_PROCESSOR" | "NEED_HELP_SETUP" | "MANUAL_RECORDING_ONLY" | null;
-  paymentProcessorName: "Stripe" | "Square" | "SumUp" | "PayPal" | "Worldpay" | "Zettle" | "Other" | null;
+  paymentProcessorName: "None" | "Stripe" | "Square" | "SumUp" | "PayPal" | "Worldpay" | "Zettle" | "Other" | null;
   paymentProcessorAccountRef: string | null;
   paymentProcessorNotes: string | null;
   acceptCashPayments: boolean;

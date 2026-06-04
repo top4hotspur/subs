@@ -192,6 +192,7 @@ export type SitePaymentSettings = {
     | "NEED_HELP_SETUP"
     | "MANUAL_RECORDING_ONLY";
   processorProvider?:
+    | "NONE"
     | "STRIPE"
     | "SQUARE"
     | "SUMUP"

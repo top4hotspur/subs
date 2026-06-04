@@ -112,14 +112,18 @@ Warnings:
 - If manual/cash is allowed, customers can still book and payment can be recorded manually where settings allow it.
 
 Current admin UI:
-- `/site-admin/[siteSlug]` separates business-owner payment controls into `Payment processor setup`, `Booking payment options`, and `Booking and cancellation policy`.
+- `/site-admin/[siteSlug]` exposes a top-level `Payment settings` tile, separate from `Business settings`.
+- `Business settings` stays focused on identity/content basics such as display name, contact details, hero copy and branding.
+- `Payment settings` separates business-owner payment controls into `Payment processor setup`, `Booking payment options`, and `Booking and cancellation policy`.
 - Normal business-owner copy explains provider choice, setup status, online card-payment readiness, booking payment choices, and cancellation/refund policy without asking for technical credentials.
+- The provider dropdown includes `None / no online payment provider` for cash-only/manual-only businesses or businesses not ready for online card payments.
 - Stripe shows a `Connect Stripe` action that uses Stripe-hosted Account Links onboarding when selected.
 - If the platform Stripe secret is missing, Stripe Account Links returns a setup-needed message and no fake success.
 - The editable Stripe connected account ID field is not exposed in the normal UI. Any stored account reference is shown only as a masked `Stripe account reference` inside collapsed `Technical diagnostics`.
 - Square still has an OAuth-style placeholder route, but Square checkout is not live and the business-owner UI treats non-Stripe providers as assisted setup.
 - PayPal, SumUp, Zettle, Worldpay and Other show assisted setup guidance.
 - Admin can request help setting up payments, which stores non-secret support notes/status and leaves checkout disabled.
+- If setup mode is `I would like help setting one up`, the UI recommends Square first with the affiliate link `https://squareup.com/i/DC9E585AB0`, then Stripe with `https://www.stripe.com`.
 
 Current route foundation:
 - `POST /api/site-admin/[siteSlug]/payments/stripe/connect/start`

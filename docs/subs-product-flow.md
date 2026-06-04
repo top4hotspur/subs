@@ -342,7 +342,7 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Booking confirmation continues to link to site-scoped customer account (/demo/[industry]/account?tab=bookings).
 - Services CSV template now matches service editor fields: serviceName, basePrice, durationMinutes, bufferAfterMinutes, description (+ optional rolePrice columns).
 - Contact page is now standard and always visible; About/Policy remain optional buildable pages.
-- Payments/sales section now captures payment setup intent with provider selection/instructions (no real processor integration).
+- Payment settings now captures payment setup intent with provider selection/instructions (no real processor integration).
 
 ## Demo nav and account tidy (local/mock)
 - Demo nav now uses: Home, My Account, Staff View, Admin View, About us, Contact, Policy.
@@ -956,14 +956,17 @@ Future payment-provider note: subscriber business payment settings must eventual
 Subscriber/business payment processing is intentionally separate from MyExperiment.club platform subscription billing. Platform Stripe Checkout/Billing pays for MyExperiment.club subscriptions; it must not be reused as if it were a tenant business's payment provider.
 
 Current safe live behaviour:
-- Business admin captures payment setup intent through clearer sections: `Payment processor setup`, `Booking payment options`, and `Booking and cancellation policy`.
+- Business admin captures payment setup intent through a separate top-level `Payment settings` tile, not inside `Business settings`.
+- `Payment settings` is split into clearer sections: `Payment processor setup`, `Booking payment options`, and `Booking and cancellation policy`.
 - The normal UI shows provider choice, setup status, support notes, card/cash/manual recording choices, recurring/block-booking toggles, and cancellation/refund policy wording.
+- The provider dropdown supports `None / no online payment provider` for cash-only/manual-only businesses. This never makes public checkout look ready.
+- When setup mode is `I would like help setting one up`, the UI shows Square first (`https://squareup.com/i/DC9E585AB0`) and Stripe second (`https://www.stripe.com`) as guidance links.
 - Stripe account references and setup diagnostics are hidden in a collapsed `Technical diagnostics` area and are masked/read-only for business owners.
 - No provider API secrets, access tokens, webhook secrets or card details are collected.
 - Public booking blocks required online prepayment while tenant checkout is unavailable and tells customers to contact the business.
 - Manual/cash/card-terminal payment recording remains available where the business enables it.
 
-Provider-specific admin guidance now appears in `/site-admin/[siteSlug]` Payments/sales for Stripe, Square, PayPal, SumUp, Zettle, Worldpay and Other. It changes the safe account-reference label, explains what setup data belongs later, and warns not to enter secrets in the current form.
+Provider-specific admin guidance now appears in `/site-admin/[siteSlug]` `Payment settings` for Stripe, Square, PayPal, SumUp, Zettle, Worldpay, Other and None/no online provider. It changes the safe account-reference label, explains what setup data belongs later, and warns not to enter secrets in the current form.
 
 Future provider integration should use a tenant-scoped provider configuration model with provider, mode, account reference, test/live environment, connection status, public enabled flag, last verified timestamp and secure secret-storage reference. Secrets must use provider OAuth/Connect or encrypted-at-rest secret storage such as KMS/Secrets Manager; environment variables alone are not scalable for many subscriber businesses.
 
@@ -975,7 +978,7 @@ Customer saved cards remain a placeholder. Any future saved card support must us
 
 Subscriber payment provider setup now has a tenant-scoped `CustomerSitePaymentProviderConnection` foundation. It stores non-secret metadata only: provider, connection mode, test/live environment, account ID/name/email, public enabled flag, connection status, timestamps, setup notes and a future `secureSecretRef` placeholder. No OAuth tokens, raw credentials, card details or business-owner secret keys are stored.
 
-Business admin Payments/sales now shows a simplified payment setup status beside provider choice. Stripe uses Stripe-hosted Accounts v2 / Account Links onboarding behind the `Connect Stripe` action. Square remains non-live in the business-owner UI, while PayPal, SumUp, Zettle, Worldpay and Other remain assisted setup/manual until safe provider-specific connection paths are designed.
+Business admin `Payment settings` now shows a simplified payment setup status beside provider choice. Stripe uses Stripe-hosted Accounts v2 / Account Links onboarding behind the `Connect Stripe` action. If Account Links returns an onboarding URL, the browser redirects to Stripe-hosted onboarding; if configuration is missing or Stripe returns an error, the UI shows a clear message and does not mark setup complete. Square remains non-live in the business-owner UI, while PayPal, SumUp, Zettle, Worldpay and Other remain assisted setup/manual until safe provider-specific connection paths are designed.
 
 Safe provider route foundations:
 - `POST /api/site-admin/[siteSlug]/payments/stripe/connect/start`
@@ -998,7 +1001,7 @@ Stripe Connect is now the first real subscriber online-payment path. It is still
 - subscriber customer booking payments use tenant Stripe Connect metadata and `/api/sites/payments/stripe/webhook`.
 
 Connection flow:
-- Site admins start Stripe Connect from `/site-admin/[siteSlug]` Payments/sales.
+- Site admins start Stripe Connect from `/site-admin/[siteSlug]` `Payment settings`.
 - The start route requires the matching site-admin session, creates/reuses a Stripe Accounts v2 connected account and returns a Stripe-hosted Account Link.
 - The Stripe Account Link return callback retrieves the connected account and stores only non-secret account metadata.
 - The connection is marked connected/public only when Stripe reports the account can take charges and tenant webhook config is present.

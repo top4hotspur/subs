@@ -1,4 +1,5 @@
 export type SubscriberPaymentProvider =
+  | "None"
   | "Stripe"
   | "Square"
   | "SumUp"
@@ -9,7 +10,7 @@ export type SubscriberPaymentProvider =
 
 export type SubscriberPaymentProviderGuidance = {
   provider: SubscriberPaymentProvider;
-  providerKey: "STRIPE" | "SQUARE" | "PAYPAL" | "SUMUP" | "ZETTLE" | "WORLDPAY" | "OTHER";
+  providerKey: "NONE" | "STRIPE" | "SQUARE" | "PAYPAL" | "SUMUP" | "ZETTLE" | "WORLDPAY" | "OTHER";
   title: string;
   accountReferenceLabel: string;
   connectActionLabel: string | null;
@@ -27,6 +28,22 @@ export function getSubscriberPaymentProviderGuidance(
   provider: SubscriberPaymentProvider | null | undefined,
 ): SubscriberPaymentProviderGuidance {
   switch (provider) {
+    case "None":
+      return {
+        provider: "None",
+        providerKey: "NONE",
+        title: "No online payment provider selected",
+        accountReferenceLabel: "No payment provider reference",
+        connectActionLabel: null,
+        connectionApproach: "ASSISTED_SETUP",
+        statusLine: "Online card payments are not connected. Cash/manual payment settings can still be used where enabled.",
+        setupFields: ["Cash/manual payment options", "Business payment preference", "Future provider choice if needed"],
+        instructions: [
+          "Use this when the business is cash-only, records payments manually, or is not ready for online card payments.",
+          "Customers cannot complete required online prepayment until a payment provider is connected or manual/cash payment is allowed.",
+        ],
+        warning: "No online card payment provider is selected. Do not enter payment provider credentials here.",
+      };
     case "Square":
       return {
         provider: "Square",

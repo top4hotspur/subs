@@ -99,6 +99,7 @@ import {
 type SectionKey =
   | "bookings"
   | "settings"
+  | "payments"
   | "appearance"
   | "services"
   | "staffRoles"
@@ -110,6 +111,7 @@ type SectionKey =
 const SECTION_LIST: Array<{ key: SectionKey; label: string; description: string }> = [
   { key: "bookings", label: "Bookings", description: "Recent live site booking records" },
   { key: "settings", label: "Business settings", description: "Business contact and hero basics" },
+  { key: "payments", label: "Payment settings", description: "Payment providers, booking payments and refund policy" },
   { key: "appearance", label: "Site appearance", description: "Light or dark appearance and branding assets" },
   { key: "services", label: "Services and prices", description: "Service list, prices and durations" },
   { key: "staffRoles", label: "Staff setup", description: "Team members, roles and public visibility" },
@@ -193,7 +195,7 @@ type SettingsDraft = {
   colourPaletteId: string;
   currency: "GBP" | "EUR" | "USD";
   paymentProcessorSetupMode: "EXISTING_PROCESSOR" | "NEED_HELP_SETUP" | "MANUAL_RECORDING_ONLY";
-  paymentProcessorName: "Stripe" | "Square" | "SumUp" | "PayPal" | "Worldpay" | "Zettle" | "Other";
+  paymentProcessorName: "None" | "Stripe" | "Square" | "SumUp" | "PayPal" | "Worldpay" | "Zettle" | "Other";
   paymentProcessorAccountRef: string;
   paymentProcessorNotes: string;
   acceptCashPayments: boolean;
@@ -670,7 +672,9 @@ function formatBusinessPaymentSetupStatus(
   connected: boolean,
   checkoutReady: boolean,
   status?: string | null,
+  providerKey?: string | null,
 ): string {
+  if (providerKey === "NONE") return "No online payment provider selected";
   if (checkoutReady) return "Ready for online booking payments";
   if (connected) return "Connected - final payment checks still needed";
   if (status === "PENDING") return "Setup requested";
@@ -1438,6 +1442,10 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   }
 
   async function startPaymentProviderConnect() {
+    if (paymentProviderGuidance.providerKey === "NONE") {
+      setMessage("Choose Stripe before starting Stripe onboarding, or use Request help setting up payments.");
+      return;
+    }
     if (paymentProviderGuidance.providerKey !== "STRIPE" && paymentProviderGuidance.providerKey !== "SQUARE") {
       setMessage("This provider is assisted setup for now. Request help and we will confirm the safest setup path.");
       return;
@@ -1461,10 +1469,16 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
     setMessage(result.message ?? `${paymentProviderGuidance.provider} connection can start.`);
     if (result.redirectUrl) {
       window.location.assign(result.redirectUrl);
+      return;
     }
+    setMessage("Stripe setup responded, but no onboarding link was returned. Please try again or request help.");
   }
 
   async function markPaymentProviderAssistedSetup() {
+    if (paymentProviderGuidance.providerKey === "NONE") {
+      setMessage("No online payment provider selected. Use cash/manual options, or choose Square or Stripe if you want help setting one up.");
+      return;
+    }
     setPaymentConnectionBusy(true);
     setMessage(`Requesting help with ${paymentProviderGuidance.provider} payments...`);
     const result = await saveSiteAdminPaymentProviderConnection(siteSlug, {
@@ -2107,8 +2121,10 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
     Boolean(selectedPaymentConnection),
     tenantPaymentCheckoutConnected,
     selectedPaymentConnection?.connectionStatus,
+    paymentProviderGuidance.providerKey,
   );
   const canUseHostedPaymentOnboarding = paymentProviderGuidance.providerKey === "STRIPE";
+  const noOnlineProviderSelected = paymentProviderGuidance.providerKey === "NONE";
 
   return (
     <div className="space-y-6">
@@ -2244,321 +2260,6 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
               </div>
             </div>
           </div>
-          <div className="mt-5 space-y-4">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <h4 className="text-sm font-semibold text-slate-900">Payment processor setup</h4>
-              <p className="mt-1 text-xs text-slate-600">
-                Choose the payment provider your business wants to use for online card payments. We will never ask you
-                to enter passwords, private keys or secret codes in this screen.
-              </p>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <label className="text-xs font-semibold text-slate-700">
-                  How would you like to handle payment setup?
-                  <select
-                    className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
-                    value={settingsDraft.paymentProcessorSetupMode}
-                    onChange={(event) =>
-                      setSettingsDraft((current) => ({
-                        ...current,
-                        paymentProcessorSetupMode: event.target.value as SettingsDraft["paymentProcessorSetupMode"],
-                      }))
-                    }
-                  >
-                    <option value="EXISTING_PROCESSOR">I already have a payment provider</option>
-                    <option value="NEED_HELP_SETUP">I would like help setting one up</option>
-                    <option value="MANUAL_RECORDING_ONLY">I only want to record payments manually for now</option>
-                  </select>
-                </label>
-                <label className="text-xs font-semibold text-slate-700">
-                  Payment provider
-                  <select
-                    className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
-                    value={settingsDraft.paymentProcessorName}
-                    onChange={(event) =>
-                      setSettingsDraft((current) => ({
-                        ...current,
-                        paymentProcessorName: event.target.value as SettingsDraft["paymentProcessorName"],
-                      }))
-                    }
-                  >
-                    <option value="Stripe">Stripe</option>
-                    <option value="Square">Square</option>
-                    <option value="SumUp">SumUp</option>
-                    <option value="PayPal">PayPal</option>
-                    <option value="Worldpay">Worldpay</option>
-                    <option value="Zettle">Zettle</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </label>
-                <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
-                  Notes for MyExperiment.club support
-                  <textarea
-                    className="mt-1 min-h-[72px] w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
-                    value={settingsDraft.paymentProcessorNotes}
-                    onChange={(event) =>
-                      setSettingsDraft((current) => ({
-                        ...current,
-                        paymentProcessorNotes: event.target.value,
-                      }))
-                    }
-                    placeholder="Optional - tell us anything useful about your current payment setup. Do not enter passwords or private codes."
-                  />
-                  <span className="mt-1 block text-[11px] font-normal text-slate-600">
-                    Optional support notes only. Keep private credentials out of this form.
-                  </span>
-                </label>
-              </div>
-
-              <div className="mt-3 rounded-lg border border-white bg-white p-3 text-xs text-slate-700 shadow-sm">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-slate-950">Payment setup status</p>
-                    <div className="mt-2 grid gap-1 sm:grid-cols-2">
-                      <p><span className="font-semibold">Provider:</span> {paymentProviderGuidance.provider}</p>
-                      <p><span className="font-semibold">Status:</span> {businessPaymentSetupStatus}</p>
-                      <p><span className="font-semibold">Online card payments:</span> {tenantPaymentCheckoutConnected ? "Ready" : "Not ready yet"}</p>
-                      <p><span className="font-semibold">Support notes:</span> {settingsDraft.paymentProcessorNotes.trim() ? "Added" : "None added"}</p>
-                    </div>
-                    <p className="mt-2 text-[11px] text-slate-600">
-                      {paymentProviderGuidance.providerKey === "STRIPE"
-                        ? "Stripe uses a secure Stripe-hosted setup page. Card payments only go live when the setup checks are complete."
-                        : "This provider is handled with MyExperiment.club support for now. We will confirm the safest setup path before online payments go live."}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {canUseHostedPaymentOnboarding ? (
-                      <button
-                        type="button"
-                        className={`${primaryButtonClass} ${smallButtonClass}`}
-                        onClick={() => void startPaymentProviderConnect()}
-                        disabled={paymentConnectionBusy}
-                      >
-                        Connect Stripe
-                      </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      className={`${outlineButtonClass} ${smallButtonClass}`}
-                      onClick={() => void markPaymentProviderAssistedSetup()}
-                      disabled={paymentConnectionBusy}
-                    >
-                      Request help setting up payments
-                    </button>
-                  </div>
-                </div>
-                {!selectedPaymentConnection ? (
-                  <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 font-semibold text-amber-950">
-                    Payment setup has not been completed yet.
-                  </p>
-                ) : null}
-                {paymentProviderConnected && !tenantPaymentCheckoutConnected ? (
-                  <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 font-semibold text-amber-950">
-                    A provider account is connected, but online booking payments are not ready yet.
-                  </p>
-                ) : null}
-                {paymentProviderGuidance.providerKey !== "STRIPE" ? (
-                  <p className="mt-3 rounded-md border border-sky-200 bg-sky-50 px-2 py-1 font-semibold text-sky-950">
-                    {paymentProviderGuidance.provider} payments are assisted setup only in this phase. Do not enter provider passwords or private codes.
-                  </p>
-                ) : null}
-
-                <details className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-700">
-                  <summary className="cursor-pointer font-semibold text-slate-900">Technical diagnostics</summary>
-                  <div className="mt-3 grid gap-1 sm:grid-cols-2">
-                    <p><span className="font-semibold">Connection mode:</span> {formatPaymentConnectionMode(selectedPaymentConnection?.connectionMode ?? (paymentProviderGuidance.connectionApproach === "OAUTH_CONNECT" ? "OAUTH_PENDING" : "ASSISTED_SETUP"))}</p>
-                    <p><span className="font-semibold">Provider status:</span> {selectedPaymentConnection?.connectionStatus ?? "NOT_STARTED"}</p>
-                    <p><span className="font-semibold">Environment:</span> {selectedPaymentConnection?.environment ?? "TEST"}</p>
-                    <p><span className="font-semibold">Stripe account reference:</span> {maskProviderAccountReference(providerAccountReference)}</p>
-                    <p><span className="font-semibold">Public checkout enabled:</span> {tenantPaymentCheckoutConnected ? "Yes" : "No"}</p>
-                    <p><span className="font-semibold">Stored account label:</span> {selectedPaymentConnection?.providerAccountName || selectedPaymentConnection?.providerAccountEmail || "Not available"}</p>
-                  </div>
-                  {paymentProviderGuidance.providerKey === "STRIPE" && stripeDiagnostics ? (
-                    <div className="mt-3 rounded-md border border-sky-200 bg-sky-50 p-3 text-sky-950">
-                      <p className="font-semibold">Stripe diagnostics</p>
-                      <div className="mt-2 grid gap-1 sm:grid-cols-2">
-                        <p>Stripe secret configured: {formatYesNo(stripeDiagnostics.stripeSecretKeyConfigured)}</p>
-                        <p>Account Links configured: {formatYesNo(stripeDiagnostics.stripeAccountLinksConfigured)}</p>
-                        <p>Tenant webhook secret configured: {formatYesNo(stripeDiagnostics.stripeTenantWebhookSecretConfigured)}</p>
-                        <p>Site URL configured: {formatYesNo(stripeDiagnostics.nextPublicSiteUrlConfigured)}</p>
-                        <p>Connected account: {maskProviderAccountReference(stripeDiagnostics.connectedAccountId)}</p>
-                        <p>Charges enabled: {formatYesNo(stripeDiagnostics.chargesEnabled)}</p>
-                        <p>Public checkout enabled: {formatYesNo(stripeDiagnostics.publicEnabled)}</p>
-                        <p>Checkout ready: {formatYesNo(stripeDiagnostics.checkoutReady)}</p>
-                      </div>
-                      <p className="mt-2 text-sky-900">
-                        Values show presence/status only. Secret values are never shown here.
-                      </p>
-                      {!stripeDiagnostics.stripeTenantWebhookSecretConfigured ? (
-                        <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 font-semibold text-amber-950">
-                          Tenant Stripe booking checkout also needs `STRIPE_TENANT_WEBHOOK_SECRET` configured on the hosted app.
-                        </p>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </details>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <h4 className="text-sm font-semibold text-slate-900">Booking payment options</h4>
-              <p className="mt-1 text-xs text-slate-600">
-                Choose which payment choices customers can use when they book. Card prepayment is recommended for online bookings once your provider setup is ready.
-              </p>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={settingsDraft.acceptCardPayments}
-                    onChange={(event) =>
-                      setSettingsDraft((current) => ({ ...current, acceptCardPayments: event.target.checked }))
-                    }
-                  />
-                  Accept card payments
-                </label>
-                <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={settingsDraft.requireBookingPrepayment}
-                    onChange={(event) =>
-                      setSettingsDraft((current) => ({
-                        ...current,
-                        requireBookingPrepayment: event.target.checked,
-                      }))
-                    }
-                  />
-                  Require prepayment for online bookings
-                </label>
-                <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={settingsDraft.acceptCashPayments}
-                    onChange={(event) =>
-                      setSettingsDraft((current) => ({ ...current, acceptCashPayments: event.target.checked }))
-                    }
-                  />
-                  Accept cash payments
-                </label>
-                <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={settingsDraft.allowInStorePaymentRecording}
-                    onChange={(event) =>
-                      setSettingsDraft((current) => ({
-                        ...current,
-                        allowInStorePaymentRecording: event.target.checked,
-                      }))
-                    }
-                  />
-                  Allow in-store payment recording
-                </label>
-                <p className="text-xs text-slate-600 sm:col-span-2">
-                  Staff can record cash, card-terminal or other manual payments in Staff View when manual recording is enabled. This records a payment; it does not process a card.
-                </p>
-                <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">
-                  <input
-                    type="checkbox"
-                    checked={settingsDraft.recurringPaymentsEnabled}
-                    onChange={(event) =>
-                      setSettingsDraft((current) => ({
-                        ...current,
-                        recurringPaymentsEnabled: event.target.checked,
-                      }))
-                    }
-                  />
-                  Enable recurring services/payment options
-                </label>
-                <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">
-                  <input
-                    type="checkbox"
-                    checked={settingsDraft.customerBlockBookingsEnabled}
-                    onChange={(event) =>
-                      setSettingsDraft((current) => ({
-                        ...current,
-                        customerBlockBookingsEnabled: event.target.checked,
-                      }))
-                    }
-                  />
-                  Allow customer block bookings
-                </label>
-              </div>
-              <p className="mt-2 text-[11px] text-slate-600">
-                Recommended: use card prepayment for online bookings when available. Cash payments are optional, but they can increase no-show risk.
-              </p>
-              {prepaymentCheckoutMissing ? (
-                <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-950">
-                  Customers cannot complete paid online bookings until payment setup is ready. They will be asked to contact you or use another available payment option.
-                </p>
-              ) : null}
-              {manualPaymentFallbackAvailable ? (
-                <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-950">
-                  Customers can still book where your settings allow it, and payment can be recorded manually by the business.
-                </p>
-              ) : null}
-              {noCustomerPaymentMethodAvailable ? (
-                <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-950">
-                  Customers cannot complete online bookings until a payment method is available or prepayment is disabled.
-                </p>
-              ) : null}
-              <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3">
-                <p className="text-xs font-semibold text-slate-900">Recurring payment issues</p>
-                <p className="mt-1 text-xs text-slate-600">No failed recurring payments to review.</p>
-                <p className="mt-1 text-[11px] text-slate-500">
-                  Provider-synced issue tracking will be connected in a later phase.
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <h4 className="text-sm font-semibold text-slate-900">Booking and cancellation policy</h4>
-              <p className="mt-1 text-xs text-slate-600">
-                Set the refund windows and policy wording customers must accept before completing a booking.
-              </p>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <label className="text-xs font-semibold text-slate-700">
-                  Full refund notice period (days)
-                  <input
-                    className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
-                    value={settingsDraft.cancellationFullRefundNoticeDays}
-                    onChange={(event) =>
-                      setSettingsDraft((current) => ({
-                        ...current,
-                        cancellationFullRefundNoticeDays: event.target.value,
-                      }))
-                    }
-                  />
-                </label>
-                <label className="text-xs font-semibold text-slate-700">
-                  No refund within (days)
-                  <input
-                    className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
-                    value={settingsDraft.cancellationNoRefundWithinDays}
-                    onChange={(event) =>
-                      setSettingsDraft((current) => ({
-                        ...current,
-                        cancellationNoRefundWithinDays: event.target.value,
-                      }))
-                    }
-                  />
-                </label>
-                <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
-                  Cancellation policy note
-                  <textarea
-                    className="mt-1 min-h-[72px] w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
-                    value={settingsDraft.cancellationPolicyNote}
-                    onChange={(event) =>
-                      setSettingsDraft((current) => ({
-                        ...current,
-                        cancellationPolicyNote: event.target.value,
-                      }))
-                    }
-                  />
-                </label>
-              </div>
-              <p className="mt-2 text-[11px] text-slate-600">
-                Public booking will require customers to confirm they have read and accepted this cancellation/refund policy before completing bookings.
-              </p>
-            </div>
-          </div>
           <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
             <h4 className="text-sm font-semibold text-slate-900">Pages & content</h4>
             <p className="mt-1 text-xs text-slate-600">
@@ -2668,6 +2369,401 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
 
           <button type="button" className={`mt-4 ${primaryButtonClass} ${smallButtonClass}`} onClick={() => void saveSettings()}>
             Save site settings
+          </button>
+        </section>
+      ) : null}
+
+      {activeSection === "payments" ? (
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900">Payment settings</h3>
+              <p className="mt-1 text-sm text-slate-600">
+                Manage payment providers, booking payment options and refund policy for this business.
+              </p>
+            </div>
+          </div>
+          <div className="mt-5 space-y-4">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <h4 className="text-sm font-semibold text-slate-900">Payment processor setup</h4>
+              <p className="mt-1 text-xs text-slate-600">
+                Choose the payment provider your business wants to use for online card payments. We will never ask you
+                to enter passwords, private keys or secret codes in this screen.
+              </p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <label className="text-xs font-semibold text-slate-700">
+                  How would you like to handle payment setup?
+                  <select
+                    className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                    value={settingsDraft.paymentProcessorSetupMode}
+                    onChange={(event) =>
+                      setSettingsDraft((current) => ({
+                        ...current,
+                        paymentProcessorSetupMode: event.target.value as SettingsDraft["paymentProcessorSetupMode"],
+                      }))
+                    }
+                  >
+                    <option value="EXISTING_PROCESSOR">I already have a payment provider</option>
+                    <option value="NEED_HELP_SETUP">I would like help setting one up</option>
+                    <option value="MANUAL_RECORDING_ONLY">I only want to record payments manually for now</option>
+                  </select>
+                </label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Payment provider
+                  <select
+                    className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                    value={settingsDraft.paymentProcessorName}
+                    onChange={(event) =>
+                      setSettingsDraft((current) => ({
+                        ...current,
+                        paymentProcessorName: event.target.value as SettingsDraft["paymentProcessorName"],
+                      }))
+                    }
+                  >
+                    <option value="None">None / no online payment provider</option>
+                    <option value="Stripe">Stripe</option>
+                    <option value="Square">Square</option>
+                    <option value="SumUp">SumUp</option>
+                    <option value="PayPal">PayPal</option>
+                    <option value="Worldpay">Worldpay</option>
+                    <option value="Zettle">Zettle</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </label>
+                {settingsDraft.paymentProcessorSetupMode === "NEED_HELP_SETUP" ? (
+                  <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-950 sm:col-span-2">
+                    <p className="font-semibold text-emerald-950">Need help choosing a payment provider?</p>
+                    <p className="mt-1">
+                      Most businesses can start with either Square or Stripe. Square is often a good option if you want
+                      simple in-person and online payments. Stripe is a strong option for online card payments and
+                      future website checkout features.
+                    </p>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-md border border-emerald-200 bg-white p-3">
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Recommended first option</p>
+                        <a
+                          href="https://squareup.com/i/DC9E585AB0"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-1 inline-block font-semibold text-emerald-950 underline"
+                        >
+                          Square
+                        </a>
+                        <p className="mt-1 text-emerald-900">
+                          Good for businesses that want card readers, in-person payments and straightforward online payment options.
+                        </p>
+                      </div>
+                      <div className="rounded-md border border-emerald-200 bg-white p-3">
+                        <a
+                          href="https://www.stripe.com"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block font-semibold text-emerald-950 underline"
+                        >
+                          Stripe
+                        </a>
+                        <p className="mt-1 text-emerald-900">
+                          Good for online card payments and website checkout. Stripe setup can be connected securely through this admin area when ready.
+                        </p>
+                      </div>
+                    </div>
+                    <p className="mt-3 font-semibold">
+                      If you are unsure, request help and we can advise which setup suits your business.
+                    </p>
+                  </div>
+                ) : null}
+                <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
+                  Notes for MyExperiment.club support
+                  <textarea
+                    className="mt-1 min-h-[72px] w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                    value={settingsDraft.paymentProcessorNotes}
+                    onChange={(event) =>
+                      setSettingsDraft((current) => ({
+                        ...current,
+                        paymentProcessorNotes: event.target.value,
+                      }))
+                    }
+                    placeholder="Optional - tell us anything useful about your current payment setup. Do not enter passwords or private codes."
+                  />
+                  <span className="mt-1 block text-[11px] font-normal text-slate-600">
+                    Optional support notes only. Keep private credentials out of this form.
+                  </span>
+                </label>
+              </div>
+
+              <div className="mt-3 rounded-lg border border-white bg-white p-3 text-xs text-slate-700 shadow-sm">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-slate-950">Payment setup status</p>
+                    <div className="mt-2 grid gap-1 sm:grid-cols-2">
+                      <p><span className="font-semibold">Provider:</span> {paymentProviderGuidance.provider}</p>
+                      <p><span className="font-semibold">Status:</span> {businessPaymentSetupStatus}</p>
+                      <p>
+                        <span className="font-semibold">Online card payments:</span>{" "}
+                        {noOnlineProviderSelected
+                          ? "No online payment provider selected"
+                          : tenantPaymentCheckoutConnected
+                            ? "Ready"
+                            : "Not ready yet"}
+                      </p>
+                      <p><span className="font-semibold">Support notes:</span> {settingsDraft.paymentProcessorNotes.trim() ? "Added" : "None added"}</p>
+                    </div>
+                    <p className="mt-2 text-[11px] text-slate-600">
+                      {noOnlineProviderSelected
+                        ? "No online payment provider is selected. Cash/manual payment options can still be used where enabled."
+                        : paymentProviderGuidance.providerKey === "STRIPE"
+                        ? "Stripe uses a secure Stripe-hosted setup page. Card payments only go live when the setup checks are complete."
+                        : "This provider is handled with MyExperiment.club support for now. We will confirm the safest setup path before online payments go live."}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {canUseHostedPaymentOnboarding ? (
+                      <button
+                        type="button"
+                        className={`${primaryButtonClass} ${smallButtonClass}`}
+                        onClick={() => void startPaymentProviderConnect()}
+                        disabled={paymentConnectionBusy}
+                      >
+                        {paymentConnectionBusy ? "Starting Stripe..." : "Connect Stripe"}
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className={`${outlineButtonClass} ${smallButtonClass}`}
+                      onClick={() => void markPaymentProviderAssistedSetup()}
+                      disabled={paymentConnectionBusy}
+                    >
+                      Request help setting up payments
+                    </button>
+                  </div>
+                </div>
+                {!selectedPaymentConnection ? (
+                  <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 font-semibold text-amber-950">
+                    Payment setup has not been completed yet.
+                  </p>
+                ) : null}
+                {paymentProviderConnected && !tenantPaymentCheckoutConnected ? (
+                  <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 font-semibold text-amber-950">
+                    A provider account is connected, but online booking payments are not ready yet.
+                  </p>
+                ) : null}
+                {noOnlineProviderSelected ? (
+                  <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 font-semibold text-amber-950">
+                    No online payment provider selected. Use cash/manual options, or choose a provider when you are ready for online card payments.
+                  </p>
+                ) : null}
+                {paymentProviderGuidance.providerKey !== "STRIPE" && !noOnlineProviderSelected ? (
+                  <p className="mt-3 rounded-md border border-sky-200 bg-sky-50 px-2 py-1 font-semibold text-sky-950">
+                    {paymentProviderGuidance.provider} payments are assisted setup only in this phase. Do not enter provider passwords or private codes.
+                  </p>
+                ) : null}
+
+                {!noOnlineProviderSelected ? (
+                  <details className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-700">
+                    <summary className="cursor-pointer font-semibold text-slate-900">Technical diagnostics</summary>
+                    <div className="mt-3 grid gap-1 sm:grid-cols-2">
+                      <p><span className="font-semibold">Connection mode:</span> {formatPaymentConnectionMode(selectedPaymentConnection?.connectionMode ?? (paymentProviderGuidance.connectionApproach === "OAUTH_CONNECT" ? "OAUTH_PENDING" : "ASSISTED_SETUP"))}</p>
+                      <p><span className="font-semibold">Provider status:</span> {selectedPaymentConnection?.connectionStatus ?? "NOT_STARTED"}</p>
+                      <p><span className="font-semibold">Environment:</span> {selectedPaymentConnection?.environment ?? "TEST"}</p>
+                      <p><span className="font-semibold">Stripe account reference:</span> {maskProviderAccountReference(providerAccountReference)}</p>
+                      <p><span className="font-semibold">Public checkout enabled:</span> {tenantPaymentCheckoutConnected ? "Yes" : "No"}</p>
+                      <p><span className="font-semibold">Stored account label:</span> {selectedPaymentConnection?.providerAccountName || selectedPaymentConnection?.providerAccountEmail || "Not available"}</p>
+                    </div>
+                    {paymentProviderGuidance.providerKey === "STRIPE" && stripeDiagnostics ? (
+                      <div className="mt-3 rounded-md border border-sky-200 bg-sky-50 p-3 text-sky-950">
+                        <p className="font-semibold">Stripe diagnostics</p>
+                        <div className="mt-2 grid gap-1 sm:grid-cols-2">
+                          <p>Stripe secret configured: {formatYesNo(stripeDiagnostics.stripeSecretKeyConfigured)}</p>
+                          <p>Account Links configured: {formatYesNo(stripeDiagnostics.stripeAccountLinksConfigured)}</p>
+                          <p>Tenant webhook secret configured: {formatYesNo(stripeDiagnostics.stripeTenantWebhookSecretConfigured)}</p>
+                          <p>Site URL configured: {formatYesNo(stripeDiagnostics.nextPublicSiteUrlConfigured)}</p>
+                          <p>Connected account: {maskProviderAccountReference(stripeDiagnostics.connectedAccountId)}</p>
+                          <p>Charges enabled: {formatYesNo(stripeDiagnostics.chargesEnabled)}</p>
+                          <p>Public checkout enabled: {formatYesNo(stripeDiagnostics.publicEnabled)}</p>
+                          <p>Checkout ready: {formatYesNo(stripeDiagnostics.checkoutReady)}</p>
+                        </div>
+                        <p className="mt-2 text-sky-900">
+                          Values show presence/status only. Secret values are never shown here.
+                        </p>
+                        {!stripeDiagnostics.stripeTenantWebhookSecretConfigured ? (
+                          <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 font-semibold text-amber-950">
+                            Tenant Stripe booking checkout also needs `STRIPE_TENANT_WEBHOOK_SECRET` configured on the hosted app.
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </details>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <h4 className="text-sm font-semibold text-slate-900">Booking payment options</h4>
+              <p className="mt-1 text-xs text-slate-600">
+                Choose which payment choices customers can use when they book. Card prepayment is recommended for online bookings once your provider setup is ready.
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={settingsDraft.acceptCardPayments}
+                    onChange={(event) =>
+                      setSettingsDraft((current) => ({ ...current, acceptCardPayments: event.target.checked }))
+                    }
+                  />
+                  Accept card payments
+                </label>
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={settingsDraft.requireBookingPrepayment}
+                    onChange={(event) =>
+                      setSettingsDraft((current) => ({
+                        ...current,
+                        requireBookingPrepayment: event.target.checked,
+                      }))
+                    }
+                  />
+                  Require prepayment for online bookings
+                </label>
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={settingsDraft.acceptCashPayments}
+                    onChange={(event) =>
+                      setSettingsDraft((current) => ({ ...current, acceptCashPayments: event.target.checked }))
+                    }
+                  />
+                  Accept cash payments
+                </label>
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={settingsDraft.allowInStorePaymentRecording}
+                    onChange={(event) =>
+                      setSettingsDraft((current) => ({
+                        ...current,
+                        allowInStorePaymentRecording: event.target.checked,
+                      }))
+                    }
+                  />
+                  Allow in-store payment recording
+                </label>
+                <p className="text-xs text-slate-600 sm:col-span-2">
+                  Staff can record cash, card-terminal or other manual payments in Staff View when manual recording is enabled. This records a payment; it does not process a card.
+                </p>
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">
+                  <input
+                    type="checkbox"
+                    checked={settingsDraft.recurringPaymentsEnabled}
+                    onChange={(event) =>
+                      setSettingsDraft((current) => ({
+                        ...current,
+                        recurringPaymentsEnabled: event.target.checked,
+                      }))
+                    }
+                  />
+                  Enable recurring services/payment options
+                </label>
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 sm:col-span-2">
+                  <input
+                    type="checkbox"
+                    checked={settingsDraft.customerBlockBookingsEnabled}
+                    onChange={(event) =>
+                      setSettingsDraft((current) => ({
+                        ...current,
+                        customerBlockBookingsEnabled: event.target.checked,
+                      }))
+                    }
+                  />
+                  Allow customer block bookings
+                </label>
+              </div>
+              <p className="mt-2 text-[11px] text-slate-600">
+                Recommended: use card prepayment for online bookings when available. Cash payments are optional, but they can increase no-show risk.
+              </p>
+              {prepaymentCheckoutMissing ? (
+                <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-950">
+                  {noOnlineProviderSelected
+                    ? "Customers cannot complete online paid bookings until you connect a payment provider, allow manual/cash payment, or turn off required prepayment."
+                    : "Customers cannot complete paid online bookings until payment setup is ready. They will be asked to contact you or use another available payment option."}
+                </p>
+              ) : null}
+              {manualPaymentFallbackAvailable ? (
+                <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-950">
+                  Customers can still book where your settings allow it, and payment can be recorded manually by the business.
+                </p>
+              ) : null}
+              {noCustomerPaymentMethodAvailable ? (
+                <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-950">
+                  {noOnlineProviderSelected
+                    ? "Customers cannot complete online paid bookings until you connect a payment provider, allow manual/cash payment, or turn off required prepayment."
+                    : "Customers cannot complete online bookings until a payment method is available or prepayment is disabled."}
+                </p>
+              ) : null}
+              <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3">
+                <p className="text-xs font-semibold text-slate-900">Recurring payment issues</p>
+                <p className="mt-1 text-xs text-slate-600">No failed recurring payments to review.</p>
+                <p className="mt-1 text-[11px] text-slate-500">
+                  Provider-synced issue tracking will be connected in a later phase.
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <h4 className="text-sm font-semibold text-slate-900">Booking and cancellation policy</h4>
+              <p className="mt-1 text-xs text-slate-600">
+                Set the refund windows and policy wording customers must accept before completing a booking.
+              </p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <label className="text-xs font-semibold text-slate-700">
+                  Full refund notice period (days)
+                  <input
+                    className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                    value={settingsDraft.cancellationFullRefundNoticeDays}
+                    onChange={(event) =>
+                      setSettingsDraft((current) => ({
+                        ...current,
+                        cancellationFullRefundNoticeDays: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label className="text-xs font-semibold text-slate-700">
+                  No refund within (days)
+                  <input
+                    className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                    value={settingsDraft.cancellationNoRefundWithinDays}
+                    onChange={(event) =>
+                      setSettingsDraft((current) => ({
+                        ...current,
+                        cancellationNoRefundWithinDays: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
+                  Cancellation policy note
+                  <textarea
+                    className="mt-1 min-h-[72px] w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                    value={settingsDraft.cancellationPolicyNote}
+                    onChange={(event) =>
+                      setSettingsDraft((current) => ({
+                        ...current,
+                        cancellationPolicyNote: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+              </div>
+              <p className="mt-2 text-[11px] text-slate-600">
+                Public booking will require customers to confirm they have read and accepted this cancellation/refund policy before completing bookings.
+              </p>
+            </div>
+          </div>
+
+          <button type="button" className={`mt-4 ${primaryButtonClass} ${smallButtonClass}`} onClick={() => void saveSettings()}>
+            Save payment settings
           </button>
         </section>
       ) : null}

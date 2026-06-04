@@ -727,7 +727,7 @@ olePrice:<role> columns accepted
 2. Confirm business-owner admin shell loads for the tenant and does not show platform admin controls.
 3. Confirm `Get your site ready` checklist is visible and uses real tenant empty states (`Not set yet`) when data is missing.
 4. Confirm onboarding section cards are visible:
-   - Business details, Services/prices, Staff setup, Opening hours/rota, Breaks/closures, Booking settings, Gift vouchers, Policies, Page content/visibility, Payments/sales, Customer CRM, Preview public site.
+   - Business details, Services/prices, Staff setup, Opening hours/rota, Breaks/closures, Booking settings, Gift vouchers, Policies, Page content/visibility, Payment settings, Customer CRM, Preview public site.
 5. Confirm `Preview public site` action links to `/sites/[siteSlug]`.
 6. Confirm no demo services/staff/bookings are auto-created in the tenant admin shell.
 
@@ -1352,20 +1352,26 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
 
 ## Hosted smoke: subscriber payment provider setup guidance
 1. Open `/site-admin/luna-hair-studio`.
-2. Open `Business settings` > Payments/sales and confirm the old single `Payments and policies` panel is now split into `Payment processor setup`, `Booking payment options`, and `Booking and cancellation policy`.
-3. Select `Stripe` and confirm the normal UI shows provider choice, setup status, `Connect Stripe`, `Request help setting up payments`, and support notes without showing an editable Stripe connected account ID.
-4. Confirm `Technical diagnostics` is collapsed by default. Expand it and confirm account references are masked/read-only and secret values are not shown.
-5. Select `Square`, `PayPal`, `SumUp`, `Zettle`, `Worldpay` and `Other` and confirm they show assisted setup wording rather than fake checkout readiness.
-6. Confirm no normal field asks for API keys, secret keys, webhook secrets, access tokens, passwords or provider API credentials.
-7. Enable `Accept card payments` and `Require prepayment for online bookings` in `Booking payment options` while no tenant provider is connected.
-8. Confirm admin warning says customers cannot complete online paid bookings until provider setup is ready.
-9. Confirm manual/cash fallback copy appears when `Accept cash payments` or `Allow in-store payment recording` is enabled.
-10. Confirm `Booking and cancellation policy` contains refund windows and cancellation policy note.
-11. Open `/sites/luna-hair-studio/booking`.
-12. Confirm public booking blocks required online prepayment or explains payment is not connected when no safe tenant provider checkout exists.
-13. Disable prepayment or allow manual/cash payment and confirm booking can proceed where availability allows.
-14. Confirm no platform Stripe subscription checkout is used for subscriber customer bookings.
-15. Confirm customer account saved-payment-method text remains a placeholder and docs state card details are not stored by MyExperiment.club.
+2. Confirm top-level tiles include `Payment settings` and that `Business settings` no longer contains payment processor setup.
+3. Open `Payment settings` and confirm it contains `Payment processor setup`, `Booking payment options`, and `Booking and cancellation policy`.
+4. Select provider `None / no online payment provider` and confirm `Connect Stripe` disappears, online card-payment readiness says no provider is selected, and diagnostics do not dominate the page.
+5. Select setup mode `I would like help setting one up` and confirm the recommendation block appears.
+6. Confirm Square appears first, is marked as the recommended first option, and links to `https://squareup.com/i/DC9E585AB0`.
+7. Confirm Stripe links to `https://www.stripe.com`.
+8. Select `Stripe` and confirm the normal UI shows provider choice, setup status, `Connect Stripe`, `Request help setting up payments`, and support notes without showing an editable Stripe connected account ID.
+9. Click `Connect Stripe` and confirm it either redirects to Stripe Account Link onboarding or shows a clear error/setup message. Confirm no silent failure.
+10. Confirm `Technical diagnostics` is collapsed by default. Expand it and confirm account references are masked/read-only and secret values are not shown.
+11. Select `Square`, `PayPal`, `SumUp`, `Zettle`, `Worldpay` and `Other` and confirm they show assisted setup wording rather than fake checkout readiness.
+12. Confirm no normal field asks for API keys, secret keys, webhook secrets, access tokens, passwords or provider API credentials.
+13. Enable `Accept card payments` and `Require prepayment for online bookings` in `Booking payment options` while no tenant provider is connected.
+14. Confirm admin warning says customers cannot complete online paid bookings until provider setup is ready.
+15. Confirm manual/cash fallback copy appears when `Accept cash payments` or `Allow in-store payment recording` is enabled.
+16. Confirm `Booking and cancellation policy` contains refund windows and cancellation policy note.
+17. Open `/sites/luna-hair-studio/booking`.
+18. Confirm public booking blocks required online prepayment or explains payment is not connected when no safe tenant provider checkout exists.
+19. Disable prepayment or allow manual/cash payment and confirm booking can proceed where availability allows.
+20. Confirm no platform Stripe subscription checkout is used for subscriber customer bookings.
+21. Confirm customer account saved-payment-method text remains a placeholder and docs state card details are not stored by MyExperiment.club.
 
 ## Hosted smoke: customer CRM account foundation
 1. Create a guest booking on `/sites/[siteSlug]` using a test email address.
@@ -1501,7 +1507,7 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
 
 ## 2026-06-04 hosted smoke checks: subscriber payment provider connection foundation
 1. Sign in at `/site-admin/login` for a provisioned tenant and open `/site-admin/[siteSlug]`.
-2. Open `Payments/sales`.
+2. Open `Payment settings`.
 3. Select `Stripe` as the payment provider and confirm:
    - `Payment processor setup`, `Booking payment options`, and `Booking and cancellation policy` are distinct sections.
    - the normal UI shows `Connect Stripe`, payment setup status, support notes and online card-payment readiness.
@@ -1571,7 +1577,7 @@ Tenant Stripe webhook event-mode check:
 9. Confirm no tenant booking was created and no subscriber site was provisioned.
 10. Confirm `/api/stripe/webhook` remains the platform webhook and only marks setup requests paid when checkout metadata includes a real `setupRequestId`.
 11. Confirm `/api/sites/payments/stripe/webhook` remains the tenant booking webhook and ignores platform test checkout sessions because they are not `TENANT_BOOKING` events.
-12. Open `/site-admin/[siteSlug]` Payments/sales and confirm Stripe setup still uses Account Links, not `STRIPE_CONNECT_CLIENT_ID`.
+12. Open `/site-admin/[siteSlug]` `Payment settings` and confirm Stripe setup still uses Account Links, not `STRIPE_CONNECT_CLIENT_ID`.
 13. Confirm tenant booking checkout still requires a connected/onboarded `acct_...` account and `STRIPE_TENANT_WEBHOOK_SECRET` before online card prepayment can be offered publicly.
 
 If `/admin/billing-test` says the price/product env vars are missing after Amplify env is set:

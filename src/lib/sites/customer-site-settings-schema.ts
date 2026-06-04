@@ -7,6 +7,7 @@ const paymentSetupModeEnum = z.enum([
   "MANUAL_RECORDING_ONLY",
 ]);
 const paymentProcessorNameEnum = z.enum([
+  "None",
   "Stripe",
   "Square",
   "SumUp",

@@ -584,7 +584,7 @@ Current fulfilment handover should explain:
 - if prepayment is required but provider checkout is not connected, public booking is blocked with a contact-business message;
 - saved cards are future provider-vaulted features, not locally stored card details.
 
-Provider-specific setup in `/site-admin/[siteSlug]` is now presented as business-owner friendly payment setup. The UI is split into `Payment processor setup`, `Booking payment options`, and `Booking and cancellation policy`. Technical connection values such as Account Link state, masked Stripe account reference, webhook readiness and checkout readiness sit behind collapsed `Technical diagnostics`, not in the normal setup form. The payment-provider foundation still has a tenant-scoped `CustomerSitePaymentProviderConnection` record for non-secret provider connection metadata: provider, connection mode, test/live environment, account metadata, public enabled flag, status, timestamps, setup notes and a future secure-secret reference. This is separate from `CustomerSiteSettings`, which still stores the business owner's operational payment preferences.
+Provider-specific setup in `/site-admin/[siteSlug]` is now presented as a top-level `Payment settings` tile, separate from `Business settings`. The UI is split into `Payment processor setup`, `Booking payment options`, and `Booking and cancellation policy`. `None / no online payment provider` supports cash-only/manual-only businesses, while `I would like help setting one up` shows Square first (`https://squareup.com/i/DC9E585AB0`) and Stripe second (`https://www.stripe.com`) as guidance links. Technical connection values such as Account Link state, masked Stripe account reference, webhook readiness and checkout readiness sit behind collapsed `Technical diagnostics`, not in the normal setup form. The payment-provider foundation still has a tenant-scoped `CustomerSitePaymentProviderConnection` record for non-secret provider connection metadata: provider, connection mode, test/live environment, account metadata, public enabled flag, status, timestamps, setup notes and a future secure-secret reference. This is separate from `CustomerSiteSettings`, which still stores the business owner's operational payment preferences.
 
 Stripe and Square expose provider connection route foundations:
 - `POST /api/site-admin/[siteSlug]/payments/stripe/connect/start`
@@ -609,7 +609,7 @@ The tenant Stripe handler reads the full snapshot object metadata from `event.da
 Booking guardrails remain conservative. A connected provider account does not automatically mean checkout is live. If card prepayment is required and a provider is connected but booking checkout has not been implemented, public booking stays blocked with customer-facing copy telling the customer that online payment setup is connected but checkout is not enabled yet.
 
 Stripe Connect is now the first provider-specific checkout path. Provisioning/support should verify:
-- the subscriber admin has connected Stripe from `/site-admin/[siteSlug]` Payments/sales;
+- the subscriber admin has connected Stripe from `/site-admin/[siteSlug]` `Payment settings`;
 - `CustomerSitePaymentProviderConnection.provider=STRIPE` has a connected account ID and `connectionStatus=CONNECTED`;
 - `STRIPE_TENANT_WEBHOOK_SECRET` is configured for `/api/sites/payments/stripe/webhook`;
 - public checkout is enabled only for fixed-price services, not quote-required services;

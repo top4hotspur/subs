@@ -65,7 +65,7 @@ type PersistedSettingsDraft = {
   colourPaletteId: string;
   currency: "GBP" | "EUR" | "USD";
   paymentProcessorSetupMode: "EXISTING_PROCESSOR" | "NEED_HELP_SETUP" | "MANUAL_RECORDING_ONLY";
-  paymentProcessorName: "Stripe" | "Square" | "SumUp" | "PayPal" | "Worldpay" | "Zettle" | "Other";
+  paymentProcessorName: "None" | "Stripe" | "Square" | "SumUp" | "PayPal" | "Worldpay" | "Zettle" | "Other";
   paymentProcessorAccountRef: string;
   paymentProcessorNotes: string;
   acceptCashPayments: boolean;
@@ -904,6 +904,7 @@ export default function AdminSiteSettingsPage() {
                 <label className="text-xs font-semibold text-slate-700">
                   Provider
                   <select className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.paymentProcessorName} onChange={(event) => setSettingsDraft((current) => ({ ...current, paymentProcessorName: event.target.value as PersistedSettingsDraft["paymentProcessorName"] }))}>
+                    <option value="None">None / no online payment provider</option>
                     <option value="Stripe">Stripe</option>
                     <option value="Square">Square</option>
                     <option value="SumUp">SumUp</option>

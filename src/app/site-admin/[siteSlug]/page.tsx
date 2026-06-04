@@ -186,7 +186,7 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
     { title: "Gift vouchers", summary: "Future voucher setup area" },
     { title: "Policies", summary: "Edit cancellation and customer policy wording below" },
     { title: "Page content / visibility", summary: "Edit public page content below" },
-    { title: "Payments/sales", summary: "Record payment preferences below" },
+    { title: "Payment settings", summary: "Payment providers, booking payments and refund policy" },
     { title: "Customer CRM", summary: "Future tenant CRM tooling" },
     { title: "Preview public site", summary: "Open the tenant preview route in a new tab" },
   ];
