@@ -17,9 +17,12 @@ frontend:
         - echo "RESEND_WEBHOOK_SECRET=$RESEND_WEBHOOK_SECRET" >> .env.production
         - echo "STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY" >> .env.production
         - echo "STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET" >> .env.production
+        - echo "STRIPE_TENANT_WEBHOOK_SECRET=$STRIPE_TENANT_WEBHOOK_SECRET" >> .env.production
         - echo "STRIPE_PRICE_MONTHLY_SUBSCRIPTION=$STRIPE_PRICE_MONTHLY_SUBSCRIPTION" >> .env.production
         - echo "STRIPE_PRICE_SETUP_FEE=$STRIPE_PRICE_SETUP_FEE" >> .env.production
         - echo "STRIPE_PRICE_DOMAIN_SERVICE=$STRIPE_PRICE_DOMAIN_SERVICE" >> .env.production
+        - echo "STRIPE_PLATFORM_TEST_PRICE_ID=$STRIPE_PLATFORM_TEST_PRICE_ID" >> .env.production
+        - echo "STRIPE_PLATFORM_TEST_PRODUCT_ID=$STRIPE_PLATFORM_TEST_PRODUCT_ID" >> .env.production
         - echo "NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL" >> .env.production
         - npm ci
     build:

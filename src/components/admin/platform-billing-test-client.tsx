@@ -18,6 +18,17 @@ type Health = {
   expectedEnvKeys: string[];
   checkedAt: string;
   nodeEnv: string | null;
+  runtimeEnvProbe: Array<{
+    key: string;
+    present: boolean;
+    length: number;
+    startsWith?: string | null;
+    looksLikeStripeSecret?: boolean;
+    looksLikeStripeWebhookSecret?: boolean;
+    looksLikeStripePriceId?: boolean;
+    looksLikeStripeProductId?: boolean;
+    masked?: string | null;
+  }>;
   warnings: string[];
 };
 
@@ -189,6 +200,44 @@ export function PlatformBillingTestClient({
                 {health.warnings.map((warning) => <p key={warning}>{warning}</p>)}
               </div>
             ) : null}
+            <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <p className="font-semibold text-slate-900">Runtime env probe</p>
+              <p className="mt-1 text-xs text-slate-600">
+                Admin-only presence check. Secrets show presence and length only; product/price IDs are masked.
+              </p>
+              <div className="mt-2 overflow-x-auto">
+                <table className="min-w-full text-left text-xs">
+                  <thead className="text-slate-500">
+                    <tr>
+                      <th className="py-1 pr-3">Key</th>
+                      <th className="py-1 pr-3">Present</th>
+                      <th className="py-1 pr-3">Length</th>
+                      <th className="py-1 pr-3">Safe check</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {health.runtimeEnvProbe.map((entry) => {
+                      const safeChecks = [
+                        entry.masked ? `masked ${entry.masked}` : null,
+                        entry.startsWith && !entry.masked ? `starts ${entry.startsWith}` : null,
+                        entry.looksLikeStripeSecret !== undefined ? `sk_: ${yesNo(entry.looksLikeStripeSecret)}` : null,
+                        entry.looksLikeStripeWebhookSecret !== undefined ? `whsec_: ${yesNo(entry.looksLikeStripeWebhookSecret)}` : null,
+                        entry.looksLikeStripePriceId !== undefined ? `price_: ${yesNo(entry.looksLikeStripePriceId)}` : null,
+                        entry.looksLikeStripeProductId !== undefined ? `prod_: ${yesNo(entry.looksLikeStripeProductId)}` : null,
+                      ].filter(Boolean).join(", ");
+                      return (
+                        <tr key={entry.key} className="border-t border-slate-200">
+                          <td className="py-1 pr-3 font-mono text-[11px]">{entry.key}</td>
+                          <td className="py-1 pr-3">{yesNo(entry.present)}</td>
+                          <td className="py-1 pr-3">{entry.length}</td>
+                          <td className="py-1 pr-3">{safeChecks || "-"}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         ) : (
           <p className="mt-3 text-sm text-slate-600">Loading diagnostics...</p>

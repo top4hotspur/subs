@@ -654,3 +654,5 @@ Platform fulfilment can use `/admin/billing-test` to smoke-test MyExperiment.clu
 The billing test route uses the platform Stripe account and either `STRIPE_PLATFORM_TEST_PRICE_ID` or a price resolved from `STRIPE_PLATFORM_TEST_PRODUCT_ID`. It does not create a `TenantSite`, `SiteDomain`, `SubscriptionRecord`, booking, or Stripe connected-account charge. A successful return confirms the platform Checkout Session can be created and returned; real setup request payment state is still updated only by `/api/stripe/webhook` events that carry a real `setupRequestId`.
 
 The billing test diagnostics are runtime server checks with no-store caching. If Amplify env vars were added but hosted still reports them missing, confirm the correct app/branch env, redeploy after the env change, and check the runtime diagnostic timestamp on `/admin/billing-test`.
+
+Amplify builds generate `.env.production` explicitly in `amplify.yml`. New server-side env vars must be added to that preBuild list or hosted SSR/API routes will not see them even when the Amplify UI shows them configured. The platform billing test vars and tenant webhook secret are now included there.

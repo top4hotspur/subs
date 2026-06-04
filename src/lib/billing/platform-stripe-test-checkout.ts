@@ -7,6 +7,18 @@ export type PlatformStripeTestCheckoutConfig = {
   priceId: string | null;
 };
 
+export type RuntimeEnvProbeEntry = {
+  key: string;
+  present: boolean;
+  length: number;
+  startsWith?: string | null;
+  looksLikeStripeSecret?: boolean;
+  looksLikeStripeWebhookSecret?: boolean;
+  looksLikeStripePriceId?: boolean;
+  looksLikeStripeProductId?: boolean;
+  masked?: string | null;
+};
+
 export type PlatformStripeTestPriceSelection = {
   priceId: string;
   productId: string | null;
@@ -22,6 +34,10 @@ function looksLikeStripeSecret(value: string | null | undefined): boolean {
   return Boolean(value && (value.startsWith("sk_test_") || value.startsWith("sk_live_")));
 }
 
+function looksLikeStripeWebhookSecret(value: string | null | undefined): boolean {
+  return Boolean(value && value.startsWith("whsec_"));
+}
+
 function looksLikeStripePriceId(value: string | null | undefined): boolean {
   return Boolean(value && value.startsWith("price_"));
 }
@@ -34,6 +50,62 @@ function maskStripeId(value: string): string | null {
   if (!value) return null;
   if (value.length <= 10) return `${value.slice(0, 4)}...`;
   return `${value.slice(0, 8)}...${value.slice(-4)}`;
+}
+
+function safeEnvProbeEntry(key: string): RuntimeEnvProbeEntry {
+  const value = getOptionalServerEnv(key) ?? "";
+  const secretLike =
+    key.includes("SECRET") ||
+    key.includes("WEBHOOK") ||
+    key === "STRIPE_SECRET_KEY";
+  const stripeIdLike =
+    key.includes("PRICE") ||
+    key.includes("PRODUCT") ||
+    key === "NEXT_PUBLIC_SITE_URL" ||
+    key === "NEXTAUTH_URL" ||
+    key.startsWith("AWS") ||
+    key.startsWith("AMPLIFY") ||
+    key === "VERCEL" ||
+    key === "NODE_ENV";
+  return {
+    key,
+    present: Boolean(value),
+    length: value.length,
+    ...(secretLike
+      ? {
+          looksLikeStripeSecret: key === "STRIPE_SECRET_KEY" ? looksLikeStripeSecret(value) : undefined,
+          looksLikeStripeWebhookSecret: key.includes("WEBHOOK") ? looksLikeStripeWebhookSecret(value) : undefined,
+        }
+      : {}),
+    ...(!secretLike && stripeIdLike
+      ? {
+          startsWith: value ? value.slice(0, Math.min(value.length, 12)) : null,
+          looksLikeStripePriceId: key.includes("PRICE") ? looksLikeStripePriceId(value) : undefined,
+          looksLikeStripeProductId: key.includes("PRODUCT") ? looksLikeStripeProductId(value) : undefined,
+          masked: value.startsWith("price_") || value.startsWith("prod_") ? maskStripeId(value) : null,
+        }
+      : {}),
+  };
+}
+
+function runtimeEnvProbe(): RuntimeEnvProbeEntry[] {
+  return [
+    "STRIPE_SECRET_KEY",
+    "STRIPE_WEBHOOK_SECRET",
+    "STRIPE_TENANT_WEBHOOK_SECRET",
+    "STRIPE_PLATFORM_TEST_PRICE_ID",
+    "STRIPE_PLATFORM_TEST_PRODUCT_ID",
+    "STRIPE_PRICE_MONTHLY_SUBSCRIPTION",
+    "STRIPE_PRICE_DOMAIN_SERVICE",
+    "NEXT_PUBLIC_SITE_URL",
+    "NEXTAUTH_URL",
+    "NODE_ENV",
+    "VERCEL",
+    "AWS_REGION",
+    "AWS_EXECUTION_ENV",
+    "AWS_BRANCH",
+    "AMPLIFY_APP_ID",
+  ].map(safeEnvProbeEntry);
 }
 
 export function getPlatformStripeTestCheckoutConfig(): PlatformStripeTestCheckoutConfig | null {
@@ -161,6 +233,7 @@ export function platformStripeTestConfigHealth() {
     ],
     checkedAt: new Date().toISOString(),
     nodeEnv: process.env.NODE_ENV ?? null,
+    runtimeEnvProbe: runtimeEnvProbe(),
     warnings,
   };
 }

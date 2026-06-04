@@ -1575,12 +1575,24 @@ Tenant Stripe webhook event-mode check:
 
 If `/admin/billing-test` says the price/product env vars are missing after Amplify env is set:
 1. Confirm the env vars are set on the correct Amplify app and branch.
-2. Redeploy after changing env vars so the runtime receives them.
-3. Reload `/admin/billing-test` and confirm the server-side diagnostics `Runtime checked` timestamp updates.
-4. Confirm `STRIPE_PLATFORM_TEST_PRICE_ID` starts with `price_`.
-5. Confirm `STRIPE_PLATFORM_TEST_PRODUCT_ID` starts with `prod_`.
+2. Confirm `amplify.yml` writes those exact env vars into `.env.production` during `preBuild`. Amplify-hosted Next.js SSR/API routes in this project rely on that generated file.
+3. Redeploy after changing env vars or `amplify.yml` so the runtime receives them.
+4. Reload `/admin/billing-test` and confirm the server-side diagnostics `Runtime checked` timestamp updates.
+5. Use the admin-only runtime env probe to compare:
+   - `STRIPE_PLATFORM_TEST_PRICE_ID`
+   - `STRIPE_PLATFORM_TEST_PRODUCT_ID`
+   - older known-working values such as `STRIPE_PRICE_MONTHLY_SUBSCRIPTION` and `STRIPE_PRICE_DOMAIN_SERVICE`
+6. Confirm `STRIPE_PLATFORM_TEST_PRICE_ID` starts with `price_`.
+7. Confirm `STRIPE_PLATFORM_TEST_PRODUCT_ID` starts with `prod_`.
+
+Known root cause fixed in the app config: `amplify.yml` previously wrote older Stripe vars into `.env.production` but did not write `STRIPE_PLATFORM_TEST_PRICE_ID`, `STRIPE_PLATFORM_TEST_PRODUCT_ID` or `STRIPE_TENANT_WEBHOOK_SECRET`. Hosted runtime could therefore see `STRIPE_SECRET_KEY` and older checkout prices but not the new platform billing test vars. Keep new server-side env vars in the Amplify `.env.production` generation list.
 
 If checkout fails because only a Product ID is configured, open the Stripe test product and copy the active `price_...` value into `STRIPE_PLATFORM_TEST_PRICE_ID`. Product IDs (`prod_...`) identify products; Checkout line items need prices.
+
+Sandbox/live mode warning:
+- Test/sandbox prices such as `price_...` created in Stripe test mode must be used with `sk_test_...`.
+- Live prices must be used with `sk_live_...`.
+- Do not mix live Price IDs with a test secret key or test Price IDs with a live secret key.
 
 Stripe Accounts v2 troubleshooting:
 - If `/site-admin/[siteSlug]` Stripe Account Links onboarding fails on `POST /v2/core/accounts` with `invalid_fields`, check the account creation payload includes `defaults.responsibilities.fees_collector` and `defaults.responsibilities.losses_collector`.

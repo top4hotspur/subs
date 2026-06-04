@@ -274,3 +274,8 @@ Subscriber booking checkout remains tenant-scoped:
 - `/api/stripe/webhook` remains platform setup/subscription billing only.
 
 A Stripe Product ID such as `prod_...` is not a Checkout line item by itself. Hosted smoke tests should prefer `STRIPE_PLATFORM_TEST_PRICE_ID=price_...` and use the product ID only to help find or validate the intended Stripe product. If hosted diagnostics still show missing env vars after Amplify configuration, verify the correct app/branch env, redeploy, and confirm the runtime diagnostic timestamp updates.
+
+Amplify runtime note: server-side Stripe vars used by Next.js SSR/API routes must be written into `.env.production` by `amplify.yml`. The platform billing test vars and tenant webhook secret are included in that preBuild whitelist:
+- `STRIPE_PLATFORM_TEST_PRICE_ID`
+- `STRIPE_PLATFORM_TEST_PRODUCT_ID`
+- `STRIPE_TENANT_WEBHOOK_SECRET`
