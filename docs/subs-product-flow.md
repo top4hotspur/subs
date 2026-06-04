@@ -956,7 +956,9 @@ Future payment-provider note: subscriber business payment settings must eventual
 Subscriber/business payment processing is intentionally separate from MyExperiment.club platform subscription billing. Platform Stripe Checkout/Billing pays for MyExperiment.club subscriptions; it must not be reused as if it were a tenant business's payment provider.
 
 Current safe live behaviour:
-- Business admin captures payment setup intent, provider name, account/reference notes and manual/cash/card-terminal preferences.
+- Business admin captures payment setup intent through clearer sections: `Payment processor setup`, `Booking payment options`, and `Booking and cancellation policy`.
+- The normal UI shows provider choice, setup status, support notes, card/cash/manual recording choices, recurring/block-booking toggles, and cancellation/refund policy wording.
+- Stripe account references and setup diagnostics are hidden in a collapsed `Technical diagnostics` area and are masked/read-only for business owners.
 - No provider API secrets, access tokens, webhook secrets or card details are collected.
 - Public booking blocks required online prepayment while tenant checkout is unavailable and tells customers to contact the business.
 - Manual/cash/card-terminal payment recording remains available where the business enables it.
@@ -973,7 +975,7 @@ Customer saved cards remain a placeholder. Any future saved card support must us
 
 Subscriber payment provider setup now has a tenant-scoped `CustomerSitePaymentProviderConnection` foundation. It stores non-secret metadata only: provider, connection mode, test/live environment, account ID/name/email, public enabled flag, connection status, timestamps, setup notes and a future `secureSecretRef` placeholder. No OAuth tokens, raw credentials, card details or business-owner secret keys are stored.
 
-Business admin Payments/sales now shows connection status beside provider-specific guidance. Stripe uses Stripe-hosted Accounts v2 / Account Links onboarding. Square still has an OAuth-style placeholder route, while PayPal, SumUp, Zettle, Worldpay and Other remain assisted setup/manual until safe provider-specific connection paths are designed.
+Business admin Payments/sales now shows a simplified payment setup status beside provider choice. Stripe uses Stripe-hosted Accounts v2 / Account Links onboarding behind the `Connect Stripe` action. Square remains non-live in the business-owner UI, while PayPal, SumUp, Zettle, Worldpay and Other remain assisted setup/manual until safe provider-specific connection paths are designed.
 
 Safe provider route foundations:
 - `POST /api/site-admin/[siteSlug]/payments/stripe/connect/start`

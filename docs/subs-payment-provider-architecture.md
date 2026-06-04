@@ -112,11 +112,14 @@ Warnings:
 - If manual/cash is allowed, customers can still book and payment can be recorded manually where settings allow it.
 
 Current admin UI:
-- Stripe shows Stripe-hosted Account Links onboarding when selected.
+- `/site-admin/[siteSlug]` separates business-owner payment controls into `Payment processor setup`, `Booking payment options`, and `Booking and cancellation policy`.
+- Normal business-owner copy explains provider choice, setup status, online card-payment readiness, booking payment choices, and cancellation/refund policy without asking for technical credentials.
+- Stripe shows a `Connect Stripe` action that uses Stripe-hosted Account Links onboarding when selected.
 - If the platform Stripe secret is missing, Stripe Account Links returns a setup-needed message and no fake success.
-- Square still has an OAuth-style placeholder route, but Square checkout is not live.
+- The editable Stripe connected account ID field is not exposed in the normal UI. Any stored account reference is shown only as a masked `Stripe account reference` inside collapsed `Technical diagnostics`.
+- Square still has an OAuth-style placeholder route, but Square checkout is not live and the business-owner UI treats non-Stripe providers as assisted setup.
 - PayPal, SumUp, Zettle, Worldpay and Other show assisted setup guidance.
-- Admin can mark assisted setup pending, which stores non-secret account reference/notes and leaves checkout disabled.
+- Admin can request help setting up payments, which stores non-secret support notes/status and leaves checkout disabled.
 
 Current route foundation:
 - `POST /api/site-admin/[siteSlug]/payments/stripe/connect/start`

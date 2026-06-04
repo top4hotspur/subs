@@ -135,11 +135,11 @@ export function getSubscriberPaymentProviderGuidance(
         provider: "Stripe",
         providerKey: "STRIPE",
         title: "Stripe setup guidance",
-        accountReferenceLabel: "Stripe connected account ID",
+        accountReferenceLabel: "Stripe account reference",
         connectActionLabel: "Onboard Stripe",
         connectionApproach: "OAUTH_CONNECT",
         statusLine: "Stripe checkout for subscriber bookings uses Stripe-hosted Account Links onboarding. Platform subscription billing is separate.",
-        setupFields: ["Stripe connected account ID", "Stripe-hosted onboarding status", "Tenant webhook signing secret configured by the platform"],
+        setupFields: ["Stripe account reference", "Stripe-hosted setup status", "Tenant payment event checking configured by the platform"],
         instructions: [
           "Use this to onboard or verify the Stripe connected account that should receive this business's customer booking payments.",
           "Do not reuse MyExperiment.club subscription Stripe credentials for tenant booking payments.",

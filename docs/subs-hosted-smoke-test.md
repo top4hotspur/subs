@@ -390,7 +390,7 @@ olePrice:<role> columns accepted
 ## Hosted smoke checks: persisted payment setup
 1. Sign in as site-admin at `/site-admin/login`.
 2. Open `/site-admin/[siteSlug]` -> `Site settings`.
-3. In `Payments and policies`, set each setup mode and save.
+3. In `Payment processor setup`, set each setup mode and save.
 4. Set provider, account reference and notes (non-secret) and save.
 5. Toggle card/cash/prepayment/in-store recording settings and save.
 6. Set cancellation windows and custom policy note and save.
@@ -555,7 +555,7 @@ olePrice:<role> columns accepted
   - pricing card contains pricing details only
   - Choose your business type and View example demo CTAs sit under value content
 - Site-admin /site-admin/[siteSlug]:
-  - in Payments and policies, verify toggles for recurring services/payments and customer block bookings
+  - in `Booking payment options`, verify toggles for recurring services/payments and customer block bookings
   - verify Recurring payment issues placeholder appears
 - Services editor:
   - verify per-service recurring enable toggle
@@ -832,7 +832,7 @@ Notes:
 8. Login with site slug, admin email, and latest generated code.
 9. Confirm redirect into tenant-scoped subscriber admin.
 10. Open `/setup/confirmation` and confirm `Next Steps` includes admin-login-email + junk/spam guidance.
-11. In `/site-admin/[siteSlug]`, confirm Payments and policies copy clearly states provider API integration is not live yet.
+11. In `/site-admin/[siteSlug]`, confirm `Payment processor setup` copy clearly states provider setup is conservative and private credentials are not collected.
 
 ## 2026-06-01 hosted smoke checks: branded campaign email rendering
 1. Open `/admin/sales` and select `Email 1 / Introduction`.
@@ -1179,7 +1179,7 @@ Notes:
 ## Hosted Smoke Test - Subscriber Booking Card Checkout
 
 1. Open `/site-admin/luna-hair-studio`.
-2. In Payments and policies, enable `Accept card payments` and `Require prepayment for online bookings`.
+2. In `Booking payment options`, enable `Accept card payments` and `Require prepayment for online bookings`.
 3. Ensure at least one active service has a fixed price greater than zero.
 4. Open `/sites/luna-hair-studio`.
 5. Choose a paid service, check availability, enter customer details, accept the booking/cancellation policy, and confirm the booking.
@@ -1352,15 +1352,15 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
 
 ## Hosted smoke: subscriber payment provider setup guidance
 1. Open `/site-admin/luna-hair-studio`.
-2. Open `Business settings` > `Payments and policies`.
-3. Select `Stripe` and confirm Stripe-specific guidance appears, including account/Connect ID guidance and a warning not to reuse platform Stripe credentials.
-4. Select `Square` and confirm Square merchant/location guidance appears.
-5. Select `PayPal` and confirm PayPal business email / merchant ID guidance appears.
-6. Select `SumUp`, `Zettle`, `Worldpay` and `Other` and confirm provider-specific reference fields/instructions change.
-7. Confirm no field asks for API keys, secret keys, webhook secrets, access tokens or passwords.
-8. Enable `Accept card payments` and `Require prepayment for online bookings` while no tenant provider is connected.
-9. Confirm admin warning says customers cannot complete online paid bookings until provider setup is complete.
-10. Confirm manual/cash fallback copy appears when `Accept cash payments` or `Allow in-store payment recording` is enabled.
+2. Open `Business settings` > Payments/sales and confirm the old single `Payments and policies` panel is now split into `Payment processor setup`, `Booking payment options`, and `Booking and cancellation policy`.
+3. Select `Stripe` and confirm the normal UI shows provider choice, setup status, `Connect Stripe`, `Request help setting up payments`, and support notes without showing an editable Stripe connected account ID.
+4. Confirm `Technical diagnostics` is collapsed by default. Expand it and confirm account references are masked/read-only and secret values are not shown.
+5. Select `Square`, `PayPal`, `SumUp`, `Zettle`, `Worldpay` and `Other` and confirm they show assisted setup wording rather than fake checkout readiness.
+6. Confirm no normal field asks for API keys, secret keys, webhook secrets, access tokens, passwords or provider API credentials.
+7. Enable `Accept card payments` and `Require prepayment for online bookings` in `Booking payment options` while no tenant provider is connected.
+8. Confirm admin warning says customers cannot complete online paid bookings until provider setup is ready.
+9. Confirm manual/cash fallback copy appears when `Accept cash payments` or `Allow in-store payment recording` is enabled.
+10. Confirm `Booking and cancellation policy` contains refund windows and cancellation policy note.
 11. Open `/sites/luna-hair-studio/booking`.
 12. Confirm public booking blocks required online prepayment or explains payment is not connected when no safe tenant provider checkout exists.
 13. Disable prepayment or allow manual/cash payment and confirm booking can proceed where availability allows.
@@ -1503,11 +1503,12 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
 1. Sign in at `/site-admin/login` for a provisioned tenant and open `/site-admin/[siteSlug]`.
 2. Open `Payments/sales`.
 3. Select `Stripe` as the payment provider and confirm:
-   - provider-specific Account Links / Connect guidance is visible
-   - no field asks for secret keys, API keys, access tokens, webhook secrets or card details
-   - connection status starts as not connected or pending.
-   - Stripe diagnostics show yes/no for `STRIPE_SECRET_KEY`, Account Links readiness, `STRIPE_TENANT_WEBHOOK_SECRET` and `NEXT_PUBLIC_SITE_URL` without exposing values.
-   - diagnostics show connected account ID, charges enabled, public checkout enabled and checkout ready where applicable.
+   - `Payment processor setup`, `Booking payment options`, and `Booking and cancellation policy` are distinct sections.
+   - the normal UI shows `Connect Stripe`, payment setup status, support notes and online card-payment readiness.
+   - no normal field asks for secret keys, API keys, access tokens, webhook secrets, provider API credentials or card details.
+   - the Stripe account reference is not editable in the normal form.
+   - `Technical diagnostics` is collapsed by default and shows yes/no for `STRIPE_SECRET_KEY`, Account Links readiness, `STRIPE_TENANT_WEBHOOK_SECRET` and `NEXT_PUBLIC_SITE_URL` only after expansion.
+   - diagnostics show masked account reference, charges enabled, public checkout enabled and checkout ready where applicable.
 4. Click the Stripe onboarding action. If `STRIPE_SECRET_KEY` is not configured, confirm the UI shows a clear setup-needed message and does not mark the account connected. `STRIPE_CONNECT_CLIENT_ID` is not required for Account Links.
 5. If Stripe Account Links env is configured, onboard a Stripe test connected account and confirm the site-admin page returns with connection status connected or needs attention. It should store a connected account ID only, not access tokens or secret keys.
 6. Confirm `STRIPE_TENANT_WEBHOOK_SECRET` is configured on the hosted app and the Stripe dashboard webhook endpoint points to `https://myexperiment.club/api/sites/payments/stripe/webhook` for tenant booking payment events.
@@ -1515,9 +1516,9 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
    - Event payload style: `snapshot events`, not thin events.
    - Required events: `checkout.session.completed`, `checkout.session.expired`, `payment_intent.payment_failed`.
    - Do not use a `Your account` destination for tenant booking payments; `/api/stripe/webhook` is the separate platform subscription webhook.
-7. Select `Square` and repeat the OAuth setup-needed check. Square checkout is not live in this pass.
+7. Select `Square` and confirm the business-owner UI treats it as assisted setup. Square checkout is not live in this pass.
 8. Select PayPal, SumUp, Zettle, Worldpay and Other in turn and confirm each uses assisted setup/manual guidance rather than fake OAuth success.
-9. Mark assisted setup pending for a non-OAuth provider and confirm only non-secret account reference/notes are saved.
+9. Click `Request help setting up payments` for a non-Stripe provider and confirm only non-secret support notes/status are saved.
 10. Enable `Accept card payments` and `Require prepayment for online bookings`.
 11. Open `/sites/luna-hair-studio` or the relevant tenant public site.
 12. Book a fixed-price service and confirm the customer sees: `This booking requires online payment. You'll be taken to secure checkout.`
