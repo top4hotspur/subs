@@ -99,6 +99,7 @@ export async function createStripeTenantBookingCheckoutSession(
     serviceId: input.serviceId,
     staffId: input.staffId ?? "",
     customerEmail: input.customerEmail,
+    connectedAccountId: input.connectedAccountId,
   };
 
   return stripe.checkout.sessions.create({

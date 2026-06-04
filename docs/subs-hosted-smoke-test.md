@@ -1506,6 +1506,8 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
    - provider-specific Connect guidance is visible
    - no field asks for secret keys, API keys, access tokens, webhook secrets or card details
    - connection status starts as not connected or pending.
+   - Stripe diagnostics show yes/no for `STRIPE_SECRET_KEY`, `STRIPE_CONNECT_CLIENT_ID`, `STRIPE_TENANT_WEBHOOK_SECRET` and `NEXT_PUBLIC_SITE_URL` without exposing values.
+   - diagnostics show connected account ID, charges enabled, public checkout enabled and checkout ready where applicable.
 4. Click the Stripe Connect action. If `STRIPE_CONNECT_CLIENT_ID` is not configured, confirm the UI shows a clear setup-needed message and does not mark the account connected.
 5. If Stripe Connect env is configured, connect a Stripe test account and confirm the site-admin page returns with connection status connected or needs attention. It should store a connected account ID only, not access tokens or secret keys.
 6. Confirm `STRIPE_TENANT_WEBHOOK_SECRET` is configured on the hosted app and the Stripe dashboard webhook endpoint points to `https://myexperiment.club/api/sites/payments/stripe/webhook` for tenant booking payment events.
@@ -1522,12 +1524,21 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
    - booking is visible
    - payment status is `Paid online`
    - provider is `STRIPE`
-   - Stripe session/payment intent references are shown where available.
+   - Stripe connected account/session/payment intent references are shown where available.
 17. Confirm the same slot is no longer available for a second booking.
 18. Start another booking and cancel/abandon Stripe Checkout.
 19. Confirm the return page says payment was not completed and does not claim paid status.
-20. Confirm cancelled/expired checkout does not mark the booking paid. If Stripe expiry webhook has not fired yet, document that pending held-slot cleanup is a future job.
-21. Confirm no public booking redirects to the platform setup/subscription Stripe Checkout.
-22. Confirm platform subscription checkout and `/api/stripe/webhook` still work or are unaffected.
-23. Confirm no card details or provider secrets are visible in browser source, network JSON or admin UI.
+20. Confirm cancelled/expired checkout does not mark the booking paid.
+21. In site-admin Bookings, confirm the pending Stripe booking shows:
+   - `Awaiting Stripe payment`
+   - checkout age
+   - checkout expiry where recorded
+   - `Cancel expired pending payment` action.
+22. If Stripe `checkout.session.expired` can be triggered/observed, confirm the tenant webhook marks the booking cancelled/failed and releases the slot.
+23. If the webhook expiry is not available during testing, use `Cancel expired pending payment` and confirm the slot becomes available again.
+24. Confirm pending Stripe bookings older than the hold window do not block availability forever.
+25. Confirm paid online bookings show manual Stripe refund guidance and do not offer unsafe automated refund.
+26. Confirm no public booking redirects to the platform setup/subscription Stripe Checkout.
+27. Confirm platform subscription checkout and `/api/stripe/webhook` still work or are unaffected.
+28. Confirm no card details or provider secrets are visible in browser source, network JSON or admin UI.
 

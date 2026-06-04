@@ -70,6 +70,8 @@ async function markCheckoutSessionPaid(session: Stripe.Checkout.Session) {
   const existing = await getCustomerSiteBookingById(tenantSiteId, bookingId);
   if (!existing) return;
   if (existing.tenantSiteId !== tenantSiteId) return;
+  const connectedAccountId = session.metadata?.connectedAccountId;
+  if (connectedAccountId && existing.paymentProviderAccountId && existing.paymentProviderAccountId !== connectedAccountId) return;
   if (existing.paymentStatus === "PAID" || existing.paymentStatus === "PAYMENT_COMPLETED") return;
 
   await updateCustomerSiteBookingStatus(tenantSiteId, {
@@ -78,6 +80,7 @@ async function markCheckoutSessionPaid(session: Stripe.Checkout.Session) {
     paymentStatus: session.payment_status === "paid" ? "PAID" : "PENDING",
     paymentMethod: "CARD_ONLINE",
     paymentProvider: "STRIPE",
+    paymentProviderAccountId: connectedAccountId || existing.paymentProviderAccountId || undefined,
     paymentProviderSessionId: session.id,
     paymentProviderPaymentIntentId:
       typeof session.payment_intent === "string" ? session.payment_intent : undefined,
@@ -94,6 +97,8 @@ async function markCheckoutSessionFailed(session: Stripe.Checkout.Session) {
   if (!bookingId || !tenantSiteId) return;
   const existing = await getCustomerSiteBookingById(tenantSiteId, bookingId);
   if (!existing) return;
+  const connectedAccountId = session.metadata?.connectedAccountId;
+  if (connectedAccountId && existing.paymentProviderAccountId && existing.paymentProviderAccountId !== connectedAccountId) return;
   if (existing.paymentStatus === "PAID" || existing.paymentStatus === "PAYMENT_COMPLETED") return;
   await updateCustomerSiteBookingStatus(tenantSiteId, {
     bookingId,
@@ -101,7 +106,9 @@ async function markCheckoutSessionFailed(session: Stripe.Checkout.Session) {
     paymentStatus: "FAILED",
     paymentMethod: "CARD_ONLINE",
     paymentProvider: "STRIPE",
+    paymentProviderAccountId: connectedAccountId || existing.paymentProviderAccountId || undefined,
     paymentProviderSessionId: session.id,
+    paymentProviderCheckoutExpiresAt: session.expires_at ? new Date(session.expires_at * 1000) : undefined,
   });
 }
 
@@ -111,6 +118,8 @@ async function markPaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
   if (!bookingId || !tenantSiteId) return;
   const existing = await getCustomerSiteBookingById(tenantSiteId, bookingId);
   if (!existing) return;
+  const connectedAccountId = paymentIntent.metadata?.connectedAccountId;
+  if (connectedAccountId && existing.paymentProviderAccountId && existing.paymentProviderAccountId !== connectedAccountId) return;
   if (existing.paymentStatus === "PAID" || existing.paymentStatus === "PAYMENT_COMPLETED") return;
   await updateCustomerSiteBookingStatus(tenantSiteId, {
     bookingId,
@@ -118,6 +127,7 @@ async function markPaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
     paymentStatus: "FAILED",
     paymentMethod: "CARD_ONLINE",
     paymentProvider: "STRIPE",
+    paymentProviderAccountId: connectedAccountId || existing.paymentProviderAccountId || undefined,
     paymentProviderPaymentIntentId: paymentIntent.id,
   });
 }

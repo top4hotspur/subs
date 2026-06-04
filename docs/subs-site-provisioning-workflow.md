@@ -605,7 +605,9 @@ Stripe Connect is now the first provider-specific checkout path. Provisioning/su
 - public checkout is enabled only for fixed-price services, not quote-required services;
 - Stripe webhook confirmation, not frontend return, marks tenant bookings paid.
 
-The first charge approach is Stripe Checkout with Connect destination charges. The platform creates the Checkout Session with the tenant connected account as the destination, while platform subscription billing remains on the separate MyExperiment.club setup/subscription Stripe flow. Abandoned tenant checkout sessions may hold a booking slot until Stripe expiry/failure events or a future cleanup job updates the booking.
+The first charge approach is Stripe Checkout with Connect destination charges. The platform creates the Checkout Session with the tenant connected account as the destination, while platform subscription billing remains on the separate MyExperiment.club setup/subscription Stripe flow. Pending tenant checkout sessions hold the slot only while the Checkout session is valid, using Stripe expiry where recorded and a 30-minute fallback hold window otherwise. Stripe expiry/failure events cancel/release the booking, and site-admin has a manual cleanup action for expired pending payments.
+
+Refunds remain manual in Stripe for now. The app stores Stripe session/payment-intent/account references for operator guidance, but live refund automation waits for provider refund IDs and idempotent refund tracking.
 
 Detailed architecture is documented in `docs/subs-payment-provider-architecture.md`.
 Use `Send DNS instructions` only when the customer or their domain contact needs to update DNS. For platform-managed domains, keep the DNS/hosting target values as internal fulfilment notes unless the customer needs them.

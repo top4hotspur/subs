@@ -44,6 +44,7 @@ import {
   type SiteAdminCrmCustomer,
   type SiteAdminCrmEnquiry,
   type SiteAdminPaymentProviderConnection,
+  type SiteAdminStripeDiagnostics,
 } from "@/lib/sites/site-admin-client";
 import { outlineButtonClass, primaryButtonClass, smallButtonClass } from "@/lib/ui/button-styles";
 import type {
@@ -711,6 +712,23 @@ function formatBookingPaymentAmount(booking: CustomerSiteBookingRecord): string 
   }).format(booking.paymentAmountPence / 100);
 }
 
+function formatYesNo(value: boolean | null | undefined): string {
+  return value ? "Yes" : "No";
+}
+
+function formatRelativeAge(iso: string | null | undefined): string {
+  if (!iso) return "Not available";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "Not available";
+  const minutes = Math.max(0, Math.floor((Date.now() - date.getTime()) / 60000));
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes} min${minutes === 1 ? "" : "s"} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 48) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+}
+
 function formatRefundStatus(status: CustomerSiteBookingRecord["refundStatus"]): string {
   if (!status) return "Not assessed";
   return status.replaceAll("_", " ").toLowerCase().replace(/(^|\s)\S/g, (letter) => letter.toUpperCase());
@@ -1001,6 +1019,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   const [settingsDraft, setSettingsDraft] = useState<SettingsDraft>(() => toSettingsDraft(null));
   const [persistedSettings, setPersistedSettings] = useState<PersistedCustomerSiteSettings | null>(null);
   const [paymentProviderConnections, setPaymentProviderConnections] = useState<SiteAdminPaymentProviderConnection[]>([]);
+  const [stripeDiagnostics, setStripeDiagnostics] = useState<SiteAdminStripeDiagnostics | null>(null);
   const [paymentConnectionBusy, setPaymentConnectionBusy] = useState(false);
   const [serviceCategoriesDraft, setServiceCategoriesDraft] = useState<ServiceCategoryDraft[]>([]);
   const [servicesDraft, setServicesDraft] = useState<ServiceDraft[]>([]);
@@ -1139,6 +1158,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       setSettingsDraft(toSettingsDraft(settingsResult.settings));
       setPersistedSettings(settingsResult.settings);
       setPaymentProviderConnections(paymentConnectionsResult.connections);
+      setStripeDiagnostics(paymentConnectionsResult.stripeDiagnostics);
       setServiceCategoriesDraft(servicesResult.categories.map(toServiceCategoryDraft));
       setServicesDraft(servicesResult.services.map(toServiceDraft));
       setRolesDraft(rolesResult.roles.map(toRoleDraft));
@@ -1368,7 +1388,10 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       paymentProviderGuidance.providerKey === "STRIPE" ? "stripe" : "square",
     );
     const refreshed = await getSiteAdminPaymentProviderConnections(siteSlug);
-    if (refreshed.ok) setPaymentProviderConnections(refreshed.connections);
+    if (refreshed.ok) {
+      setPaymentProviderConnections(refreshed.connections);
+      setStripeDiagnostics(refreshed.stripeDiagnostics);
+    }
     setPaymentConnectionBusy(false);
     if (!result.ok) {
       setMessage(toMessage(result.error, result.status, result.details));
@@ -1401,6 +1424,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       return;
     }
     setPaymentProviderConnections(result.connections);
+    setStripeDiagnostics(result.stripeDiagnostics);
     setMessage(`${paymentProviderGuidance.provider} setup is marked pending. Online checkout is still disabled.`);
   }
 
@@ -2297,6 +2321,24 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                 <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 font-semibold text-amber-950">
                   Connected account found, but checkout is not enabled yet.
                 </p>
+              ) : null}
+              {paymentProviderGuidance.providerKey === "STRIPE" && stripeDiagnostics ? (
+                <div className="mt-3 rounded-md border border-sky-200 bg-sky-50 p-3 text-[11px] text-sky-950">
+                  <p className="font-semibold">Stripe setup diagnostics</p>
+                  <div className="mt-2 grid gap-1 sm:grid-cols-2">
+                    <p>Stripe secret configured: {formatYesNo(stripeDiagnostics.stripeSecretKeyConfigured)}</p>
+                    <p>Connect client ID configured: {formatYesNo(stripeDiagnostics.stripeConnectClientIdConfigured)}</p>
+                    <p>Tenant webhook secret configured: {formatYesNo(stripeDiagnostics.stripeTenantWebhookSecretConfigured)}</p>
+                    <p>Site URL configured: {formatYesNo(stripeDiagnostics.nextPublicSiteUrlConfigured)}</p>
+                    <p>Connected account: {stripeDiagnostics.connectedAccountId || "Not connected"}</p>
+                    <p>Charges enabled: {formatYesNo(stripeDiagnostics.chargesEnabled)}</p>
+                    <p>Public checkout enabled: {formatYesNo(stripeDiagnostics.publicEnabled)}</p>
+                    <p>Checkout ready: {formatYesNo(stripeDiagnostics.checkoutReady)}</p>
+                  </div>
+                  <p className="mt-2 text-sky-900">
+                    Values show presence/status only. Secret values are never shown here.
+                  </p>
+                </div>
               ) : null}
             </div>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -4415,8 +4457,21 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                         <p>Method: {booking.paymentMethod ?? "NONE"}</p>
                         <p>Amount: {formatBookingPaymentAmount(booking)}</p>
                         {booking.paymentProvider ? <p>Provider: {booking.paymentProvider}</p> : null}
+                        {booking.paymentProviderAccountId ? <p>Connected account: {booking.paymentProviderAccountId}</p> : null}
                         {booking.paymentProviderSessionId ? <p>Provider session: {booking.paymentProviderSessionId}</p> : null}
                         {booking.paymentProviderPaymentIntentId ? <p>Payment intent: {booking.paymentProviderPaymentIntentId}</p> : null}
+                        {booking.paymentMethod === "CARD_ONLINE" && booking.paymentStatus === "PENDING" ? (
+                          <>
+                            <p className="mt-1 font-semibold text-amber-800">Awaiting Stripe payment</p>
+                            <p>Checkout age: {formatRelativeAge(booking.createdAt)}</p>
+                            <p>Checkout expires: {booking.paymentProviderCheckoutExpiresAt ? formatUkDateTime(booking.paymentProviderCheckoutExpiresAt) : "Not recorded"}</p>
+                          </>
+                        ) : null}
+                        {booking.paymentMethod === "CARD_ONLINE" && (booking.paymentStatus === "PAID" || booking.paymentStatus === "PAYMENT_COMPLETED") ? (
+                          <p className="mt-1 font-semibold text-amber-800">
+                            Refunds are not automated yet. Use the Stripe references above to process any refund in Stripe.
+                          </p>
+                        ) : null}
                       </div>
                       <div className="mt-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
                         <p className="font-semibold text-slate-900">Refund: {formatRefundStatus(booking.refundStatus)}</p>
@@ -4448,6 +4503,11 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     {(booking.paymentStatus === "PENDING" || booking.paymentStatus === "PAYMENT_REQUIRED") && booking.paymentMethod !== "CARD_ONLINE" && booking.status !== "CANCELLED" ? (
                       <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void updateBookingStatus(booking.id, booking.status, "PAID")}>
                         Mark manual payment received
+                      </button>
+                    ) : null}
+                    {booking.paymentStatus === "PENDING" && booking.paymentMethod === "CARD_ONLINE" && booking.status !== "CANCELLED" ? (
+                      <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void updateBookingStatus(booking.id, "CANCELLED", "FAILED")}>
+                        Cancel expired pending payment
                       </button>
                     ) : null}
                   </div>

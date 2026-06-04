@@ -153,6 +153,17 @@ export type SiteAdminPaymentProviderConnection = {
   updatedAt: string;
 };
 
+export type SiteAdminStripeDiagnostics = {
+  stripeSecretKeyConfigured: boolean;
+  stripeConnectClientIdConfigured: boolean;
+  stripeTenantWebhookSecretConfigured: boolean;
+  nextPublicSiteUrlConfigured: boolean;
+  connectedAccountId: string | null;
+  chargesEnabled: boolean;
+  publicEnabled: boolean;
+  checkoutReady: boolean;
+};
+
 async function parseJsonSafe(response: Response): Promise<unknown> {
   try {
     return await response.json();
@@ -212,11 +223,12 @@ export async function patchSiteAdminSettings(
 
 export async function getSiteAdminPaymentProviderConnections(
   siteSlug: string,
-): Promise<ClientResult<{ connections: SiteAdminPaymentProviderConnection[] }>> {
+): Promise<ClientResult<{ connections: SiteAdminPaymentProviderConnection[]; stripeDiagnostics: SiteAdminStripeDiagnostics | null }>> {
   try {
     const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/payments/provider-connections`);
     const body = (await parseJsonSafe(response)) as
       | { ok?: boolean; connections?: SiteAdminPaymentProviderConnection[]; error?: string; details?: unknown }
+      & { stripeDiagnostics?: SiteAdminStripeDiagnostics | null }
       | null;
     if (!response.ok || !body?.ok || !Array.isArray(body.connections)) {
       return {
@@ -226,7 +238,7 @@ export async function getSiteAdminPaymentProviderConnections(
         details: body?.details,
       };
     }
-    return { ok: true, connections: body.connections };
+    return { ok: true, connections: body.connections, stripeDiagnostics: body.stripeDiagnostics ?? null };
   } catch {
     return { ok: false, error: "NETWORK_ERROR", status: 0 };
   }
@@ -235,7 +247,7 @@ export async function getSiteAdminPaymentProviderConnections(
 export async function saveSiteAdminPaymentProviderConnection(
   siteSlug: string,
   input: Partial<SiteAdminPaymentProviderConnection> & { provider: string },
-): Promise<ClientResult<{ connections: SiteAdminPaymentProviderConnection[] }>> {
+): Promise<ClientResult<{ connections: SiteAdminPaymentProviderConnection[]; stripeDiagnostics: SiteAdminStripeDiagnostics | null }>> {
   try {
     const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/payments/provider-connections`, {
       method: "PATCH",
@@ -244,6 +256,7 @@ export async function saveSiteAdminPaymentProviderConnection(
     });
     const body = (await parseJsonSafe(response)) as
       | { ok?: boolean; connections?: SiteAdminPaymentProviderConnection[]; error?: string; details?: unknown }
+      & { stripeDiagnostics?: SiteAdminStripeDiagnostics | null }
       | null;
     if (!response.ok || !body?.ok || !Array.isArray(body.connections)) {
       return {
@@ -253,7 +266,7 @@ export async function saveSiteAdminPaymentProviderConnection(
         details: body?.details,
       };
     }
-    return { ok: true, connections: body.connections };
+    return { ok: true, connections: body.connections, stripeDiagnostics: body.stripeDiagnostics ?? null };
   } catch {
     return { ok: false, error: "NETWORK_ERROR", status: 0 };
   }

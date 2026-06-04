@@ -146,6 +146,8 @@ export async function POST(
           ? paymentCurrency
           : undefined,
       paymentProvider: paymentDecision.paymentMethod === "CARD_ONLINE" ? "STRIPE" : undefined,
+      paymentProviderAccountId:
+        paymentDecision.paymentMethod === "CARD_ONLINE" ? selectedConnection?.providerAccountId ?? undefined : undefined,
       source: "customer_site",
       customerSiteCustomerId,
     });
@@ -180,9 +182,11 @@ export async function POST(
           paymentAmountPence: paymentAmountPence ?? undefined,
           paymentCurrency,
           paymentProvider: "STRIPE",
+          paymentProviderAccountId: selectedConnection.providerAccountId,
           paymentProviderSessionId: checkoutSession.id,
           paymentProviderPaymentIntentId:
             typeof checkoutSession.payment_intent === "string" ? checkoutSession.payment_intent : undefined,
+          paymentProviderCheckoutExpiresAt: checkoutSession.expires_at ? new Date(checkoutSession.expires_at * 1000) : undefined,
         });
 
         return NextResponse.json(
@@ -204,6 +208,7 @@ export async function POST(
           paymentAmountPence: paymentAmountPence ?? undefined,
           paymentCurrency,
           paymentProvider: "STRIPE",
+          paymentProviderAccountId: selectedConnection?.providerAccountId ?? undefined,
           notes: "Secure checkout could not be started. The customer was asked to contact the business.",
         }).catch(() => null);
         return NextResponse.json(

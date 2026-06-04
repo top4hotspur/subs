@@ -10,6 +10,7 @@ const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
 const DEFAULT_SLOT_INTERVAL_MINUTES = 15;
 const ACTIVE_BOOKING_STATUSES = ["REQUESTED", "SUBMITTED", "CONFIRMED"];
+const PENDING_STRIPE_HOLD_MINUTES = 30;
 
 export type CustomerSiteAvailabilitySlot = {
   date: string;
@@ -124,6 +125,27 @@ function isTimeRange(range: TimeRange | null): range is TimeRange {
 
 function addUniqueReason(reasons: string[], reason: string): void {
   if (!reasons.includes(reason)) reasons.push(reason);
+}
+
+function shouldBookingBlockAvailability(booking: {
+  status: string;
+  paymentStatus: string | null;
+  paymentMethod: string | null;
+  paymentProviderCheckoutExpiresAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}, now = new Date()): boolean {
+  if (booking.status === "CANCELLED" || booking.paymentStatus === "FAILED" || booking.paymentStatus === "REFUNDED") {
+    return false;
+  }
+  if (booking.paymentMethod === "CARD_ONLINE" && booking.paymentStatus === "PENDING") {
+    if (booking.paymentProviderCheckoutExpiresAt) {
+      return booking.paymentProviderCheckoutExpiresAt.getTime() > now.getTime();
+    }
+    const basis = booking.updatedAt ?? booking.createdAt;
+    return now.getTime() - basis.getTime() < PENDING_STRIPE_HOLD_MINUTES * 60 * 1000;
+  }
+  return ACTIVE_BOOKING_STATUSES.includes(booking.status);
 }
 
 export async function calculateCustomerSiteAvailability(
@@ -248,7 +270,7 @@ export async function calculateCustomerSiteAvailability(
       .map((holiday) => rangeWithReason(holiday.allDay, holiday.startTime, holiday.endTime, holiday.label || "staff leave"))
       .filter(isTimeRange);
     const bookingRanges: TimeRange[] = site.customerSiteBookings
-      .filter((booking) => booking.staffMemberId === staff.id && isTime(booking.preferredTime))
+      .filter((booking) => booking.staffMemberId === staff.id && isTime(booking.preferredTime) && shouldBookingBlockAvailability(booking))
       .reduce<TimeRange[]>((ranges, booking) => {
         const start = timeToMinutes(booking.preferredTime ?? "");
         if (start === null) return ranges;

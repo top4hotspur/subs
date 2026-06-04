@@ -645,8 +645,10 @@ model CustomerSiteBooking {
   paymentAmountPence             Int?
   paymentCurrency                String?
   paymentProvider                String?
+  paymentProviderAccountId       String?
   paymentProviderSessionId       String?
   paymentProviderPaymentIntentId String?
+  paymentProviderCheckoutExpiresAt DateTime?
   refundStatus                   String?
   refundGuidance                 String?
   cancellationReason             String?
@@ -668,6 +670,8 @@ model CustomerSiteBooking {
   @@index([tenantSiteId, serviceId])
   @@index([paymentProviderSessionId])
   @@index([paymentProviderPaymentIntentId])
+  @@index([paymentProviderAccountId])
+  @@index([paymentProviderCheckoutExpiresAt])
   @@index([tenantSiteId, refundStatus])
 }
 

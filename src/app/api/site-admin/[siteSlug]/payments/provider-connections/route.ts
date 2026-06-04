@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 import { getSiteAdminSessionContext } from "@/lib/auth/site-admin";
-import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
+import { getOptionalServerEnv, isBackendPersistenceConfigured } from "@/lib/config/server-env";
 import {
   listPaymentProviderConnections,
   PAYMENT_PROVIDER_KEYS,
   upsertPaymentProviderConnection,
 } from "@/lib/sites/payment-provider-connections";
 import { getTenantSiteBySlug } from "@/lib/sites/tenant-resolver";
+import { isStripeConnectionCheckoutReady } from "@/lib/billing/stripe-tenant-checkout";
 
 const connectionSchema = z.object({
   provider: z.enum(PAYMENT_PROVIDER_KEYS),
@@ -23,6 +24,20 @@ const connectionSchema = z.object({
 
 function backendNotConfigured() {
   return NextResponse.json({ ok: false, error: "BACKEND_PERSISTENCE_NOT_CONFIGURED" }, { status: 503 });
+}
+
+function getStripeDiagnostics(connections: Awaited<ReturnType<typeof listPaymentProviderConnections>>) {
+  const stripe = connections.find((connection) => connection.provider === "STRIPE") ?? null;
+  return {
+    stripeSecretKeyConfigured: Boolean(getOptionalServerEnv("STRIPE_SECRET_KEY")),
+    stripeConnectClientIdConfigured: Boolean(getOptionalServerEnv("STRIPE_CONNECT_CLIENT_ID")),
+    stripeTenantWebhookSecretConfigured: Boolean(getOptionalServerEnv("STRIPE_TENANT_WEBHOOK_SECRET")),
+    nextPublicSiteUrlConfigured: Boolean(getOptionalServerEnv("NEXT_PUBLIC_SITE_URL")),
+    connectedAccountId: stripe?.providerAccountId ?? null,
+    chargesEnabled: stripe?.connectionStatus === "CONNECTED",
+    publicEnabled: Boolean(stripe?.publicEnabled),
+    checkoutReady: isStripeConnectionCheckoutReady(stripe),
+  };
 }
 
 async function resolveAuthorizedTenant(siteSlug: string) {
@@ -46,7 +61,7 @@ export async function GET(
     const resolved = await resolveAuthorizedTenant(siteSlug);
     if ("error" in resolved) return NextResponse.json({ ok: false, error: resolved.error }, { status: resolved.status });
     const connections = await listPaymentProviderConnections(resolved.tenantSiteId);
-    return NextResponse.json({ ok: true, connections });
+    return NextResponse.json({ ok: true, connections, stripeDiagnostics: getStripeDiagnostics(connections) });
   } catch (error) {
     return NextResponse.json(
       { ok: false, error: "PAYMENT_CONNECTIONS_GET_FAILED", message: error instanceof Error ? error.message : "Unknown error" },
@@ -70,7 +85,7 @@ export async function PATCH(
       ...parsed,
     });
     const connections = await listPaymentProviderConnections(resolved.tenantSiteId);
-    return NextResponse.json({ ok: true, connections });
+    return NextResponse.json({ ok: true, connections, stripeDiagnostics: getStripeDiagnostics(connections) });
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json({ ok: false, error: "VALIDATION_ERROR", details: error.issues }, { status: 400 });

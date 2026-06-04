@@ -1005,6 +1005,8 @@ Booking checkout flow:
 - The customer return page shows payment-received/cancelled/confirming copy, but paid status is trusted only from the tenant Stripe webhook.
 - The tenant webhook verifies `STRIPE_TENANT_WEBHOOK_SECRET`, validates `tenantSiteId` + `bookingId`, stores Stripe session/payment-intent references and marks paid/failed without touching platform subscription records.
 - Abandoned checkout may leave a pending held slot until Stripe expiry/failure webhooks or a future cleanup job releases it.
+- Pending Stripe checkout lifecycle is now bounded. The app stores connected account ID and Checkout expiry when available; pending online-card bookings block availability only until Stripe expiry or a 30-minute fallback hold window. Site-admin can use `Cancel expired pending payment` as a manual fallback when webhook expiry is unavailable.
+- Automated refunds are not live yet. Paid Stripe bookings show provider references and manual refund guidance; future refund automation needs provider refund IDs/idempotency before it can safely mark bookings refunded from Stripe.
 
 Required env/config for hosted tenant Stripe checkout:
 - `STRIPE_SECRET_KEY`

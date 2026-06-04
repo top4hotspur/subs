@@ -53,8 +53,10 @@ export type CustomerSiteBookingRecord = {
   paymentAmountPence: number | null;
   paymentCurrency: string | null;
   paymentProvider: string | null;
+  paymentProviderAccountId: string | null;
   paymentProviderSessionId: string | null;
   paymentProviderPaymentIntentId: string | null;
+  paymentProviderCheckoutExpiresAt: string | null;
   refundStatus: CustomerSiteRefundStatus | null;
   refundGuidance: string | null;
   cancellationReason: string | null;
