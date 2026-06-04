@@ -112,8 +112,9 @@ Warnings:
 - If manual/cash is allowed, customers can still book and payment can be recorded manually where settings allow it.
 
 Current admin UI:
-- Stripe and Square show Connect-style actions when selected.
-- If provider app credentials are missing, Connect returns a setup-needed message and no fake success.
+- Stripe shows Stripe-hosted Account Links onboarding when selected.
+- If the platform Stripe secret is missing, Stripe Account Links returns a setup-needed message and no fake success.
+- Square still has an OAuth-style placeholder route, but Square checkout is not live.
 - PayPal, SumUp, Zettle, Worldpay and Other show assisted setup guidance.
 - Admin can mark assisted setup pending, which stores non-secret account reference/notes and leaves checkout disabled.
 
@@ -123,15 +124,14 @@ Current route foundation:
 - `POST /api/site-admin/[siteSlug]/payments/square/connect/start`
 - `GET /api/site-admin/[siteSlug]/payments/square/connect/callback`
 
-These routes require a signed-in site admin for the matching tenant. Start routes create a signed tenant-bound state value. Callback routes validate state against tenant/site/admin session. Stripe now exchanges the OAuth code for a connected account ID and stores only non-secret account metadata (`acct_...`, account name/email, environment and status). Raw access tokens are not stored or exposed client-side.
+These routes require a signed-in site admin for the matching tenant. Stripe now uses Accounts v2 plus Account Links: the start route creates or reuses a connected account ID (`acct_...`), stores that non-secret account metadata, and redirects the business admin to Stripe-hosted onboarding. The Account Link refresh URL creates a fresh Account Link. The return callback retrieves the connected account from Stripe and updates connection status. Raw access tokens are not requested, stored or exposed client-side.
 
 Required Stripe Connect/tenant payment config:
 - `STRIPE_SECRET_KEY` for the MyExperiment.club platform Stripe account.
-- `STRIPE_CONNECT_CLIENT_ID` for the Stripe Connect OAuth app.
 - `STRIPE_TENANT_WEBHOOK_SECRET` for `/api/sites/payments/stripe/webhook`.
 - `NEXT_PUBLIC_SITE_URL` for absolute hosted return URLs where needed.
 
-If Connect client config is missing, the Stripe Connect action returns a setup-needed response and leaves the connection pending. If the tenant webhook secret is missing, connected accounts can be recorded but booking checkout remains unavailable so the app does not create payments it cannot verify.
+`STRIPE_CONNECT_CLIENT_ID` is not required for the Account Links path. If the platform Stripe secret is missing, the Stripe onboarding action returns a setup-needed response and leaves the connection pending. If the tenant webhook secret is missing, connected accounts can be recorded but booking checkout remains unavailable so the app does not create payments it cannot verify.
 
 ## Booking flow rules
 
@@ -149,9 +149,9 @@ Provider connected:
 - Never mark paid from client redirect alone.
 - Store provider session/payment intent IDs on the tenant booking.
 
-Stripe Connect v1:
-- Uses Stripe Checkout with Connect destination charges.
-- Checkout sessions are created by the platform Stripe account, with `payment_intent_data.transfer_data.destination` set to the tenant connected account ID.
+Stripe Connect / Account Links v1:
+- Uses Stripe Checkout with the tenant connected account ID (`acct_...`) in the Stripe account request context.
+- Checkout sessions are created against the connected account rather than by collecting tenant secret keys.
 - No application fee is added in this first pass.
 - Booking metadata includes `tenantSiteId`, `siteSlug`, `bookingId`, `serviceId`, optional `staffId` and customer email.
 - The booking is created as `CONFIRMED` with `paymentStatus=PENDING` to hold the slot while the customer completes checkout.
@@ -231,6 +231,7 @@ Also state:
 Stripe Connect is the first implemented subscriber-provider checkout path. Current live-safe behaviour is:
 - Stripe is the only provider that can create subscriber booking Checkout Sessions.
 - Square/PayPal/SumUp/Zettle/Worldpay remain assisted setup/manual until their provider-specific OAuth/webhook paths are built.
+- Stripe uses Accounts v2 + Account Links, not legacy Connect OAuth client IDs.
 - No business-owner secret keys are requested.
 - No card details are stored.
 - Public booking blocks required online prepayment where Stripe Connect or tenant webhook config is unavailable.

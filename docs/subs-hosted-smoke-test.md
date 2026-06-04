@@ -1503,13 +1503,13 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
 1. Sign in at `/site-admin/login` for a provisioned tenant and open `/site-admin/[siteSlug]`.
 2. Open `Payments/sales`.
 3. Select `Stripe` as the payment provider and confirm:
-   - provider-specific Connect guidance is visible
+   - provider-specific Account Links / Connect guidance is visible
    - no field asks for secret keys, API keys, access tokens, webhook secrets or card details
    - connection status starts as not connected or pending.
-   - Stripe diagnostics show yes/no for `STRIPE_SECRET_KEY`, `STRIPE_CONNECT_CLIENT_ID`, `STRIPE_TENANT_WEBHOOK_SECRET` and `NEXT_PUBLIC_SITE_URL` without exposing values.
+   - Stripe diagnostics show yes/no for `STRIPE_SECRET_KEY`, Account Links readiness, `STRIPE_TENANT_WEBHOOK_SECRET` and `NEXT_PUBLIC_SITE_URL` without exposing values.
    - diagnostics show connected account ID, charges enabled, public checkout enabled and checkout ready where applicable.
-4. Click the Stripe Connect action. If `STRIPE_CONNECT_CLIENT_ID` is not configured, confirm the UI shows a clear setup-needed message and does not mark the account connected.
-5. If Stripe Connect env is configured, connect a Stripe test account and confirm the site-admin page returns with connection status connected or needs attention. It should store a connected account ID only, not access tokens or secret keys.
+4. Click the Stripe onboarding action. If `STRIPE_SECRET_KEY` is not configured, confirm the UI shows a clear setup-needed message and does not mark the account connected. `STRIPE_CONNECT_CLIENT_ID` is not required for Account Links.
+5. If Stripe Account Links env is configured, onboard a Stripe test connected account and confirm the site-admin page returns with connection status connected or needs attention. It should store a connected account ID only, not access tokens or secret keys.
 6. Confirm `STRIPE_TENANT_WEBHOOK_SECRET` is configured on the hosted app and the Stripe dashboard webhook endpoint points to `https://myexperiment.club/api/sites/payments/stripe/webhook` for tenant booking payment events.
 7. Select `Square` and repeat the OAuth setup-needed check. Square checkout is not live in this pass.
 8. Select PayPal, SumUp, Zettle, Worldpay and Other in turn and confirm each uses assisted setup/manual guidance rather than fake OAuth success.

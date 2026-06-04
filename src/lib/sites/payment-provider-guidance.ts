@@ -21,7 +21,7 @@ export type SubscriberPaymentProviderGuidance = {
 };
 
 const COMMON_SECRET_WARNING =
-  "Do not enter API keys, secret keys, access tokens, webhook secrets or passwords here. Live provider credentials require secure encrypted storage or provider OAuth/Connect setup before checkout can be enabled.";
+  "Do not enter API keys, secret keys, access tokens, webhook secrets or passwords here. Live provider credentials require secure encrypted storage or provider-managed onboarding before checkout can be enabled.";
 
 export function getSubscriberPaymentProviderGuidance(
   provider: SubscriberPaymentProvider | null | undefined,
@@ -135,15 +135,15 @@ export function getSubscriberPaymentProviderGuidance(
         provider: "Stripe",
         providerKey: "STRIPE",
         title: "Stripe setup guidance",
-        accountReferenceLabel: "Stripe account ID or Connect account ID",
-        connectActionLabel: "Connect Stripe",
+        accountReferenceLabel: "Stripe connected account ID",
+        connectActionLabel: "Onboard Stripe",
         connectionApproach: "OAUTH_CONNECT",
-        statusLine: "Stripe checkout for subscriber bookings is not connected yet. Platform Stripe billing is separate.",
-        setupFields: ["Stripe account ID / Connect account ID", "Test/live mode in future", "Webhook signing secret in secure storage in future"],
+        statusLine: "Stripe checkout for subscriber bookings uses Stripe-hosted Account Links onboarding. Platform subscription billing is separate.",
+        setupFields: ["Stripe connected account ID", "Stripe-hosted onboarding status", "Tenant webhook signing secret configured by the platform"],
         instructions: [
-          "Use this to record which Stripe account should receive this business's customer booking payments.",
+          "Use this to onboard or verify the Stripe connected account that should receive this business's customer booking payments.",
           "Do not reuse MyExperiment.club subscription Stripe credentials for tenant booking payments.",
-          "A future integration should prefer Stripe Connect or encrypted tenant credential storage with separate webhook handling.",
+          "The app stores the connected account ID only. It does not store OAuth access tokens, card details, API keys or webhook secrets in the tenant settings.",
         ],
         warning: COMMON_SECRET_WARNING,
       };

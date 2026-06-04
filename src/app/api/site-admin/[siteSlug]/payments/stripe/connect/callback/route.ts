@@ -1,86 +1,65 @@
 import { NextResponse } from "next/server";
 import { getSiteAdminSessionContext } from "@/lib/auth/site-admin";
 import {
-  upsertPaymentProviderConnection,
-  verifyPaymentConnectState,
-} from "@/lib/sites/payment-provider-connections";
-import {
-  getStripeClientForTenantPayments,
-  getStripeConnectConfig,
   getStripeTenantCheckoutConfig,
-  stripeEnvironmentFromSecret,
+  retrieveStripeV2ConnectedAccount,
 } from "@/lib/billing/stripe-tenant-checkout";
+import {
+  getPaymentProviderConnection,
+  upsertPaymentProviderConnection,
+} from "@/lib/sites/payment-provider-connections";
 
 export async function GET(request: Request) {
   const session = await getSiteAdminSessionContext();
   if (!session) return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
   const url = new URL(request.url);
-  const state = url.searchParams.get("state") ?? "";
-  const code = url.searchParams.get("code");
-  const verified = verifyPaymentConnectState(state);
-  if (
-    !verified ||
-    verified.provider !== "STRIPE" ||
-    verified.tenantSiteId !== session.tenantSiteId ||
-    verified.siteSlug !== session.tenantSlug ||
-    verified.siteAdminUserId !== session.siteAdminUserId
-  ) {
-    return NextResponse.json({ ok: false, error: "INVALID_CONNECT_STATE" }, { status: 400 });
-  }
-  if (!code) {
-    return NextResponse.json({ ok: false, error: "MISSING_STRIPE_CONNECT_CODE" }, { status: 400 });
-  }
-  const config = getStripeConnectConfig();
-  if (!config) {
+  const returnedAccountId = url.searchParams.get("account") ?? "";
+  const existing = await getPaymentProviderConnection(session.tenantSiteId, "STRIPE");
+  const connectedAccountId = existing?.providerAccountId ?? returnedAccountId;
+
+  if (!connectedAccountId.startsWith("acct_")) {
     await upsertPaymentProviderConnection({
       tenantSiteId: session.tenantSiteId,
       provider: "STRIPE",
       connectionMode: "OAUTH_PENDING",
-      connectionStatus: "PENDING",
+      connectionStatus: "NEEDS_ATTENTION",
       publicEnabled: false,
-      setupNotes: "Stripe Connect returned to the app, but platform Stripe Connect config is missing.",
+      setupNotes: "Stripe returned to the app, but no connected account ID was available.",
     });
-    return NextResponse.json({ ok: false, error: "STRIPE_CONNECT_NOT_CONFIGURED" }, { status: 501 });
+    return NextResponse.json({ ok: false, error: "STRIPE_CONNECTED_ACCOUNT_MISSING" }, { status: 400 });
+  }
+
+  if (returnedAccountId && existing?.providerAccountId && returnedAccountId !== existing.providerAccountId) {
+    return NextResponse.json({ ok: false, error: "STRIPE_CONNECTED_ACCOUNT_MISMATCH" }, { status: 400 });
   }
 
   try {
-    const stripe = getStripeClientForTenantPayments(config);
-    const oauth = await stripe.oauth.token({
-      grant_type: "authorization_code",
-      code,
-    });
-    const connectedAccountId = oauth.stripe_user_id;
-    if (!connectedAccountId || !connectedAccountId.startsWith("acct_")) {
-      throw new Error("STRIPE_CONNECTED_ACCOUNT_MISSING");
-    }
-
-    const account = await stripe.accounts.retrieve(connectedAccountId);
-    const accountReady = Boolean(account.charges_enabled);
+    const account = await retrieveStripeV2ConnectedAccount(connectedAccountId);
     const tenantWebhookConfigured = Boolean(getStripeTenantCheckoutConfig());
-    const publicCheckoutReady = accountReady && tenantWebhookConfigured;
-    const accountName =
-      account.business_profile?.name ||
-      (typeof account.company?.name === "string" ? account.company.name : null) ||
-      null;
+    const publicCheckoutReady = account.chargesEnabled && tenantWebhookConfigured;
+
     await upsertPaymentProviderConnection({
       tenantSiteId: session.tenantSiteId,
       provider: "STRIPE",
-      connectionMode: "OAUTH_CONNECTED",
-      connectionStatus: accountReady ? "CONNECTED" : "NEEDS_ATTENTION",
-      environment: stripeEnvironmentFromSecret(config.secretKey),
+      connectionMode: account.chargesEnabled ? "OAUTH_CONNECTED" : "OAUTH_PENDING",
+      connectionStatus: account.chargesEnabled ? "CONNECTED" : "NEEDS_ATTENTION",
+      environment: account.environment,
       providerAccountId: connectedAccountId,
-      providerAccountName: accountName,
-      providerAccountEmail: account.email ?? null,
+      providerAccountName: account.displayName,
+      providerAccountEmail: account.email,
       publicEnabled: publicCheckoutReady,
-      setupNotes: accountReady
+      setupNotes: account.chargesEnabled
         ? tenantWebhookConfigured
-          ? "Stripe Connect account connected. Tenant booking checkout is ready for fixed-price services."
-          : "Stripe Connect account connected, but tenant Stripe webhook config is missing so public checkout remains disabled."
-        : "Stripe account connected, but Stripe reports charges are not enabled yet. Complete Stripe onboarding before checkout goes live.",
+          ? "Stripe Account Links onboarding is complete. Tenant booking checkout is ready for fixed-price services."
+          : "Stripe Account Links onboarding is complete, but tenant Stripe webhook config is missing so public checkout remains disabled."
+        : account.requirementsSummary,
     });
 
     return NextResponse.redirect(
-      new URL(`/site-admin/${encodeURIComponent(session.tenantSlug)}?paymentProvider=stripe&connect=${publicCheckoutReady ? "connected" : "needs_attention"}`, request.url),
+      new URL(
+        `/site-admin/${encodeURIComponent(session.tenantSlug)}?paymentProvider=stripe&connect=${publicCheckoutReady ? "connected" : "needs_attention"}`,
+        request.url,
+      ),
     );
   } catch {
     await upsertPaymentProviderConnection({
@@ -89,8 +68,8 @@ export async function GET(request: Request) {
       connectionMode: "OAUTH_PENDING",
       connectionStatus: "NEEDS_ATTENTION",
       publicEnabled: false,
-      setupNotes: "Stripe Connect callback could not be completed. No access token was stored.",
+      setupNotes: "Stripe Account Links return could not be verified. No OAuth access token or secret was stored.",
     });
-    return NextResponse.json({ ok: false, error: "STRIPE_CONNECT_CALLBACK_FAILED" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "STRIPE_ACCOUNT_LINK_RETURN_FAILED" }, { status: 400 });
   }
 }

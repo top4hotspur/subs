@@ -612,7 +612,13 @@ function toMessage(error: string, status: number, details?: unknown): string {
     return "This campaign cannot be sent because it has already been sent or cancelled.";
   }
   if (error === "STRIPE_CONNECT_NOT_CONFIGURED") {
-    return "Stripe Connect is not configured yet. No account was connected.";
+    return "Stripe Account Links onboarding is not configured yet. No account was connected.";
+  }
+  if (error === "STRIPE_ACCOUNT_LINKS_NOT_CONFIGURED") {
+    return "Stripe Account Links onboarding needs a valid platform Stripe secret key. No account was connected.";
+  }
+  if (error === "STRIPE_ACCOUNT_LINK_CREATE_FAILED") {
+    return "Stripe could not create an onboarding link. Please try again or check Stripe setup.";
   }
   if (error === "SQUARE_OAUTH_NOT_CONFIGURED") {
     return "Square OAuth is not configured yet. No account was connected.";
@@ -2327,7 +2333,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                   <p className="font-semibold">Stripe setup diagnostics</p>
                   <div className="mt-2 grid gap-1 sm:grid-cols-2">
                     <p>Stripe secret configured: {formatYesNo(stripeDiagnostics.stripeSecretKeyConfigured)}</p>
-                    <p>Connect client ID configured: {formatYesNo(stripeDiagnostics.stripeConnectClientIdConfigured)}</p>
+                    <p>Account Links configured: {formatYesNo(stripeDiagnostics.stripeAccountLinksConfigured)}</p>
                     <p>Tenant webhook secret configured: {formatYesNo(stripeDiagnostics.stripeTenantWebhookSecretConfigured)}</p>
                     <p>Site URL configured: {formatYesNo(stripeDiagnostics.nextPublicSiteUrlConfigured)}</p>
                     <p>Connected account: {stripeDiagnostics.connectedAccountId || "Not connected"}</p>

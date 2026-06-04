@@ -220,10 +220,6 @@ export function verifyPaymentConnectState(token: string): {
   };
 }
 
-export function getStripeConnectClientId(): string | undefined {
-  return getOptionalServerEnv("STRIPE_CONNECT_CLIENT_ID");
-}
-
 export function getSquareOAuthConfig(): { applicationId?: string; redirectUrl?: string } {
   return {
     applicationId: getOptionalServerEnv("SQUARE_APPLICATION_ID"),

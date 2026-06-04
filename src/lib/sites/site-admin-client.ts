@@ -155,7 +155,7 @@ export type SiteAdminPaymentProviderConnection = {
 
 export type SiteAdminStripeDiagnostics = {
   stripeSecretKeyConfigured: boolean;
-  stripeConnectClientIdConfigured: boolean;
+  stripeAccountLinksConfigured: boolean;
   stripeTenantWebhookSecretConfigured: boolean;
   nextPublicSiteUrlConfigured: boolean;
   connectedAccountId: string | null;

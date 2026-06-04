@@ -969,19 +969,19 @@ Subscriber payment webhooks must be logically separated from platform subscripti
 
 Customer saved cards remain a placeholder. Any future saved card support must use provider-vaulted payment methods, customer consent and tenant/provider customer mapping. MyExperiment.club must not store card details.
 
-## 2026-06-04 OAuth/connect payment foundation
+## 2026-06-04 provider connection foundation
 
-Subscriber payment provider setup now has a tenant-scoped `CustomerSitePaymentProviderConnection` foundation. It stores non-secret metadata only: provider, connection mode, test/live environment, account ID/name/email, public enabled flag, connection status, timestamps, setup notes and a future `secureSecretRef` placeholder. No OAuth tokens or raw credentials are stored in this pass.
+Subscriber payment provider setup now has a tenant-scoped `CustomerSitePaymentProviderConnection` foundation. It stores non-secret metadata only: provider, connection mode, test/live environment, account ID/name/email, public enabled flag, connection status, timestamps, setup notes and a future `secureSecretRef` placeholder. No OAuth tokens, raw credentials, card details or business-owner secret keys are stored.
 
-Business admin Payments/sales now shows connection status beside provider-specific guidance. Stripe and Square display Connect/OAuth-style actions; missing provider app env/config returns a clear setup-needed message and does not fake a connected account. PayPal, SumUp, Zettle, Worldpay and Other remain assisted setup/manual until a safe provider connection path is designed.
+Business admin Payments/sales now shows connection status beside provider-specific guidance. Stripe uses Stripe-hosted Accounts v2 / Account Links onboarding. Square still has an OAuth-style placeholder route, while PayPal, SumUp, Zettle, Worldpay and Other remain assisted setup/manual until safe provider-specific connection paths are designed.
 
-Safe OAuth route foundations:
+Safe provider route foundations:
 - `POST /api/site-admin/[siteSlug]/payments/stripe/connect/start`
 - `GET /api/site-admin/[siteSlug]/payments/stripe/connect/callback`
 - `POST /api/site-admin/[siteSlug]/payments/square/connect/start`
 - `GET /api/site-admin/[siteSlug]/payments/square/connect/callback`
 
-The start routes require the current site-admin session and create signed state bound to tenant/site/admin/provider. The callback routes validate that state. Token exchange/storage is intentionally blocked until encrypted storage or provider Connect/OAuth storage is ready.
+The Stripe start route requires the current site-admin session, creates or reuses a Stripe connected account (`acct_...`) using the platform `STRIPE_SECRET_KEY`, stores the connected account ID, and creates a Stripe-hosted Account Link for onboarding. The Account Link refresh URL creates a fresh Account Link. The return callback retrieves the connected account from Stripe and updates the tenant connection status. No OAuth access tokens are requested or stored.
 
 Tenant payment webhook stubs now exist at `/api/sites/payments/stripe/webhook` and `/api/sites/payments/square/webhook`; both return `501` until provider signature verification, tenant booking mapping and idempotency are implemented.
 
@@ -995,13 +995,13 @@ Stripe Connect is now the first real subscriber online-payment path. It is still
 
 Connection flow:
 - Site admins start Stripe Connect from `/site-admin/[siteSlug]` Payments/sales.
-- The start route requires the matching site-admin session and signed tenant/provider state.
-- The callback validates tenant-bound state, exchanges the Stripe OAuth code, retrieves the connected account and stores only non-secret account metadata.
-- The connection is marked connected/public only when Stripe reports the account can take charges.
+- The start route requires the matching site-admin session, creates/reuses a Stripe Accounts v2 connected account and returns a Stripe-hosted Account Link.
+- The Stripe Account Link return callback retrieves the connected account and stores only non-secret account metadata.
+- The connection is marked connected/public only when Stripe reports the account can take charges and tenant webhook config is present.
 
 Booking checkout flow:
 - When card prepayment is required, Stripe is connected, tenant checkout env is configured and the selected service has a fixed price, the public booking API creates a `CONFIRMED` booking with `paymentStatus=PENDING` and starts Stripe Checkout.
-- Stripe Checkout uses Connect destination charges with the tenant connected account as the destination. No card details are stored by MyExperiment.club.
+- Stripe Checkout is created in the connected account context using the tenant `acct_...` ID. No card details are stored by MyExperiment.club.
 - The customer return page shows payment-received/cancelled/confirming copy, but paid status is trusted only from the tenant Stripe webhook.
 - The tenant webhook verifies `STRIPE_TENANT_WEBHOOK_SECRET`, validates `tenantSiteId` + `bookingId`, stores Stripe session/payment-intent references and marks paid/failed without touching platform subscription records.
 - Abandoned checkout may leave a pending held slot until Stripe expiry/failure webhooks or a future cleanup job releases it.
@@ -1010,9 +1010,10 @@ Booking checkout flow:
 
 Required env/config for hosted tenant Stripe checkout:
 - `STRIPE_SECRET_KEY`
-- `STRIPE_CONNECT_CLIENT_ID`
 - `STRIPE_TENANT_WEBHOOK_SECRET`
 - `NEXT_PUBLIC_SITE_URL`
+
+`STRIPE_CONNECT_CLIENT_ID` is not required for the first Stripe Account Links implementation. The `acct_...` value stored on `CustomerSitePaymentProviderConnection.providerAccountId` is a Stripe connected account ID, not a client ID.
 
 FAQ copy:
 `Can I use my existing payment provider? In many cases, yes. We can support common providers such as Stripe, Square, PayPal, SumUp/Zettle and other payment platforms depending on your setup. If you already use a provider, let us know during setup and we'll confirm the best way to connect payments to your site. More providers may be available on request.`

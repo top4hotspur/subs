@@ -8,7 +8,7 @@ import {
   upsertPaymentProviderConnection,
 } from "@/lib/sites/payment-provider-connections";
 import { getTenantSiteBySlug } from "@/lib/sites/tenant-resolver";
-import { isStripeConnectionCheckoutReady } from "@/lib/billing/stripe-tenant-checkout";
+import { isStripeAccountLinksConfigured, isStripeConnectionCheckoutReady } from "@/lib/billing/stripe-tenant-checkout";
 
 const connectionSchema = z.object({
   provider: z.enum(PAYMENT_PROVIDER_KEYS),
@@ -30,7 +30,7 @@ function getStripeDiagnostics(connections: Awaited<ReturnType<typeof listPayment
   const stripe = connections.find((connection) => connection.provider === "STRIPE") ?? null;
   return {
     stripeSecretKeyConfigured: Boolean(getOptionalServerEnv("STRIPE_SECRET_KEY")),
-    stripeConnectClientIdConfigured: Boolean(getOptionalServerEnv("STRIPE_CONNECT_CLIENT_ID")),
+    stripeAccountLinksConfigured: isStripeAccountLinksConfigured(),
     stripeTenantWebhookSecretConfigured: Boolean(getOptionalServerEnv("STRIPE_TENANT_WEBHOOK_SECRET")),
     nextPublicSiteUrlConfigured: Boolean(getOptionalServerEnv("NEXT_PUBLIC_SITE_URL")),
     connectedAccountId: stripe?.providerAccountId ?? null,
