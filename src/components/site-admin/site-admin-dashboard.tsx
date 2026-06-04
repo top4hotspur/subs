@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -159,6 +159,15 @@ const CUSTOMER_CAMPAIGN_AUDIENCE_OPTIONS = [
   { value: "SELECTED_CUSTOMERS", label: "Selected opted-in customers" },
   { value: "LAPSED_CUSTOMERS", label: "Possible lapsed customers" },
   { value: "CUSTOMERS_WITH_BOOKING_HISTORY", label: "Customers with booking history" },
+];
+
+const PAYMENT_HELP_PROVIDER_OPTIONS = [
+  "Not sure yet",
+  "Square",
+  "Stripe",
+  "PayPal",
+  "SumUp/Zettle",
+  "Other",
 ];
 
 type CustomerCampaignDraft = SiteAdminCustomerCampaignInput;
@@ -1253,7 +1262,15 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
         return;
       }
 
-      setSettingsDraft(toSettingsDraft(settingsResult.settings));
+      const nextSettingsDraft = toSettingsDraft(settingsResult.settings);
+      setSettingsDraft(nextSettingsDraft);
+      setPaymentHelpDraft({
+        name: nextSettingsDraft.businessName || nextSettingsDraft.siteDisplayName || "",
+        email: nextSettingsDraft.email,
+        phone: nextSettingsDraft.phone,
+        provider: nextSettingsDraft.paymentProcessorName === "None" ? "Not sure yet" : nextSettingsDraft.paymentProcessorName,
+        message: "For example: I'm not sure whether Square or Stripe is better, or I already have a Stripe account and need help connecting it.",
+      });
       setPersistedSettings(settingsResult.settings);
       setPaymentProviderConnections(paymentConnectionsResult.connections);
       setStripeDiagnostics(paymentConnectionsResult.stripeDiagnostics);
@@ -1531,7 +1548,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       window.location.assign(result.redirectUrl);
       return;
     }
-    const message = "Stripe setup responded, but no onboarding link was returned. Please try again or request help.";
+    const message = "Stripe did not return an onboarding link. Please request help or try again.";
     setPaymentConnectStatus({
       state: "error",
       title: "Stripe onboarding link missing",
@@ -1547,10 +1564,8 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       name: contactName,
       email: settingsDraft.email,
       phone: settingsDraft.phone,
-      provider: paymentProviderGuidance.provider,
-      message: settingsDraft.paymentProcessorNotes.trim()
-        ? settingsDraft.paymentProcessorNotes
-        : `Please help me set up ${paymentProviderGuidance.provider} payments for online bookings.`,
+      provider: paymentProviderGuidance.providerKey === "NONE" ? "Not sure yet" : paymentProviderGuidance.provider,
+      message: `Please help me set up ${paymentProviderGuidance.providerKey === "NONE" ? "online" : paymentProviderGuidance.provider} payments for online bookings.`,
     });
     setPaymentHelpMessage(null);
     setPaymentHelpOpen(true);
@@ -1568,7 +1583,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       return;
     }
     const message = result.emailSent
-      ? "Payment setup help request sent to MyExperiment.club support."
+      ? "Payment setup help request sent to MyExperiment.club. we will contact you if we need more details."
       : `Payment setup help request saved, but email delivery reported ${result.emailStatus}. You can still contact support manually.`;
     setPaymentHelpMessage(message);
     setMessage(message);
@@ -2188,14 +2203,17 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
     selectedPaymentConnection?.providerAccountEmail ||
     settingsDraft.paymentProcessorAccountRef ||
     null;
+  const paymentSetupMode = settingsDraft.paymentProcessorSetupMode;
   const businessPaymentSetupStatus = formatBusinessPaymentSetupStatus(
-    Boolean(selectedPaymentConnection),
-    tenantPaymentCheckoutConnected,
+    paymentSetupMode === "MANUAL_RECORDING_ONLY" ? false : Boolean(selectedPaymentConnection),
+    paymentSetupMode === "MANUAL_RECORDING_ONLY" ? false : tenantPaymentCheckoutConnected,
     selectedPaymentConnection?.connectionStatus,
-    paymentProviderGuidance.providerKey,
+    paymentSetupMode === "MANUAL_RECORDING_ONLY" ? "NONE" : paymentProviderGuidance.providerKey,
   );
-  const canUseHostedPaymentOnboarding = paymentProviderGuidance.providerKey === "STRIPE";
-  const noOnlineProviderSelected = paymentProviderGuidance.providerKey === "NONE";
+  const canUseHostedPaymentOnboarding =
+    paymentSetupMode === "EXISTING_PROCESSOR" && paymentProviderGuidance.providerKey === "STRIPE";
+  const noOnlineProviderSelected =
+    paymentSetupMode === "MANUAL_RECORDING_ONLY" || paymentProviderGuidance.providerKey === "NONE";
 
   return (
     <div className="space-y-6">
@@ -2468,10 +2486,26 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
                     value={settingsDraft.paymentProcessorSetupMode}
                     onChange={(event) =>
-                      setSettingsDraft((current) => ({
-                        ...current,
-                        paymentProcessorSetupMode: event.target.value as SettingsDraft["paymentProcessorSetupMode"],
-                      }))
+                      {
+                        const nextMode = event.target.value as SettingsDraft["paymentProcessorSetupMode"];
+                        if (nextMode === "NEED_HELP_SETUP") {
+                          setPaymentHelpDraft({
+                            name: settingsDraft.businessName || settingsDraft.siteDisplayName || "",
+                            email: settingsDraft.email,
+                            phone: settingsDraft.phone,
+                            provider: "Not sure yet",
+                            message: "For example: I'm not sure whether Square or Stripe is better, or I already have a Stripe account and need help connecting it.",
+                          });
+                        }
+                        setSettingsDraft((current) => {
+                          const nextProvider = nextMode === "MANUAL_RECORDING_ONLY" ? "None" : current.paymentProcessorName;
+                          return {
+                            ...current,
+                            paymentProcessorSetupMode: nextMode,
+                            paymentProcessorName: nextProvider,
+                          };
+                        });
+                      }
                     }
                   >
                     <option value="EXISTING_PROCESSOR">I already have a payment provider</option>
@@ -2479,95 +2513,45 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     <option value="MANUAL_RECORDING_ONLY">I only want to record payments manually for now</option>
                   </select>
                 </label>
-                <label className="text-xs font-semibold text-slate-700">
-                  Payment provider
-                  <select
-                    className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
-                    value={settingsDraft.paymentProcessorName}
-                    onChange={(event) =>
-                      setSettingsDraft((current) => ({
-                        ...current,
-                        paymentProcessorName: event.target.value as SettingsDraft["paymentProcessorName"],
-                      }))
-                    }
-                  >
-                    <option value="None">None / no online payment provider</option>
-                    <option value="Stripe">Stripe</option>
-                    <option value="Square">Square</option>
-                    <option value="SumUp">SumUp</option>
-                    <option value="PayPal">PayPal</option>
-                    <option value="Worldpay">Worldpay</option>
-                    <option value="Zettle">Zettle</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </label>
-                {settingsDraft.paymentProcessorSetupMode === "NEED_HELP_SETUP" ? (
-                  <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-950 sm:col-span-2">
-                    <p className="font-semibold text-emerald-950">Need help choosing a payment provider?</p>
-                    <p className="mt-1">
-                      Most businesses can start with either Square or Stripe. Square is often a good option if you want
-                      simple in-person and online payments. Stripe is a strong option for online card payments and
-                      future website checkout features.
-                    </p>
-                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-md border border-emerald-200 bg-white p-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Recommended first option</p>
-                        <a
-                          href="https://squareup.com/i/DC9E585AB0"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-1 inline-block font-semibold text-emerald-950 underline"
-                        >
-                          Square
-                        </a>
-                        <p className="mt-1 text-emerald-900">
-                          Good for businesses that want card readers, in-person payments and straightforward online payment options.
-                        </p>
-                      </div>
-                      <div className="rounded-md border border-emerald-200 bg-white p-3">
-                        <a
-                          href="https://www.stripe.com"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-block font-semibold text-emerald-950 underline"
-                        >
-                          Stripe
-                        </a>
-                        <p className="mt-1 text-emerald-900">
-                          Good for online card payments and website checkout. Stripe setup can be connected securely through this admin area when ready.
-                        </p>
-                      </div>
-                    </div>
-                    <p className="mt-3 font-semibold">
-                      If you are unsure, request help and we can advise which setup suits your business.
-                    </p>
-                  </div>
+                {settingsDraft.paymentProcessorSetupMode === "EXISTING_PROCESSOR" ? (
+                  <label className="text-xs font-semibold text-slate-700">
+                    Payment provider
+                    <select
+                      className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                      value={settingsDraft.paymentProcessorName}
+                      onChange={(event) =>
+                        setSettingsDraft((current) => ({
+                          ...current,
+                          paymentProcessorName: event.target.value as SettingsDraft["paymentProcessorName"],
+                        }))
+                      }
+                    >
+                      <option value="Stripe">Stripe</option>
+                      <option value="Square">Square</option>
+                      <option value="SumUp">SumUp</option>
+                      <option value="PayPal">PayPal</option>
+                      <option value="Worldpay">Worldpay</option>
+                      <option value="Zettle">Zettle</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </label>
                 ) : null}
-                <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
-                  Notes for MyExperiment.club support
-                  <textarea
-                    className="mt-1 min-h-[72px] w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
-                    value={settingsDraft.paymentProcessorNotes}
-                    onChange={(event) =>
-                      setSettingsDraft((current) => ({
-                        ...current,
-                        paymentProcessorNotes: event.target.value,
-                      }))
-                    }
-                    placeholder="Optional - tell us anything useful about your current payment setup. Do not enter passwords or private codes."
-                  />
-                  <span className="mt-1 block text-[11px] font-normal text-slate-600">
-                    Optional support notes only. Keep private credentials out of this form.
-                  </span>
-                </label>
               </div>
 
               <div className="mt-3 rounded-lg border border-white bg-white p-3 text-xs text-slate-700 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="font-semibold text-slate-950">Payment setup status</p>
+                    <p className="font-semibold text-slate-950">
+                      {paymentSetupMode === "MANUAL_RECORDING_ONLY"
+                        ? "Manual payment recording"
+                        : paymentSetupMode === "NEED_HELP_SETUP"
+                          ? "MyExperiment.club payment setup help"
+                          : paymentProviderGuidance.providerKey === "STRIPE"
+                            ? "Connect Stripe"
+                            : "Payment setup status"}
+                    </p>
                     <div className="mt-2 grid gap-1 sm:grid-cols-2">
-                      <p><span className="font-semibold">Provider:</span> {paymentProviderGuidance.provider}</p>
+                      <p><span className="font-semibold">Provider:</span> {paymentSetupMode === "MANUAL_RECORDING_ONLY" ? "Manual / none" : paymentProviderGuidance.provider}</p>
                       <p><span className="font-semibold">Status:</span> {businessPaymentSetupStatus}</p>
                       <p>
                         <span className="font-semibold">Online card payments:</span>{" "}
@@ -2577,14 +2561,15 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                             ? "Ready"
                             : "Not ready yet"}
                       </p>
-                      <p><span className="font-semibold">Support notes:</span> {settingsDraft.paymentProcessorNotes.trim() ? "Added" : "None added"}</p>
                     </div>
                     <p className="mt-2 text-[11px] text-slate-600">
-                      {noOnlineProviderSelected
-                        ? "No online payment provider is selected. Cash/manual payment options can still be used where enabled."
-                        : paymentProviderGuidance.providerKey === "STRIPE"
-                        ? "Stripe uses a secure Stripe-hosted setup page. Card payments only go live when the setup checks are complete."
-                        : "This provider is handled with MyExperiment.club support for now. We will confirm the safest setup path before online payments go live."}
+                      {paymentSetupMode === "MANUAL_RECORDING_ONLY"
+                        ? "You can record cash, card terminal or other manual payments in the system. Online checkout will stay off."
+                        : paymentSetupMode === "NEED_HELP_SETUP"
+                          ? "Tell us what you need and we will help you choose or connect the right payment provider. This message goes to MyExperiment.club support, not to your customers."
+                          : paymentProviderGuidance.providerKey === "STRIPE"
+                            ? "You'll be sent to Stripe to connect or create your Stripe account. Stripe handles your payment details securely. We never ask you to enter Stripe passwords, API keys or secret codes here."
+                            : "This provider is handled with MyExperiment.club support for now. We will confirm the safest setup path before online payments go live."}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -2598,14 +2583,16 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                         {paymentConnectionBusy ? "Starting Stripe..." : "Connect Stripe"}
                       </button>
                     ) : null}
-                    <button
-                      type="button"
-                      className={`${outlineButtonClass} ${smallButtonClass}`}
-                      onClick={openPaymentSetupHelpRequest}
-                      disabled={paymentHelpBusy}
-                    >
-                      Request help setting up payments
-                    </button>
+                    {paymentSetupMode === "EXISTING_PROCESSOR" ? (
+                      <button
+                        type="button"
+                        className={`${outlineButtonClass} ${smallButtonClass}`}
+                        onClick={openPaymentSetupHelpRequest}
+                        disabled={paymentHelpBusy}
+                      >
+                        {paymentProviderGuidance.providerKey === "STRIPE" ? "Request help connecting Stripe" : "Request help setting up payments"}
+                      </button>
+                    ) : null}
                   </div>
                 </div>
                 {paymentConnectStatus ? (
@@ -2627,27 +2614,62 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     ) : null}
                   </div>
                 ) : null}
-                {paymentHelpOpen ? (
+                {paymentSetupMode === "NEED_HELP_SETUP" || paymentHelpOpen ? (
                   <div className="mt-3 rounded-lg border border-sky-200 bg-sky-50 p-3 text-xs text-sky-950">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="font-semibold">Request help setting up payments</p>
-                        <p className="mt-1 text-sky-900">
-                          Tell MyExperiment.club support what you need. This creates a tenant-scoped support enquiry and
-                          attempts to email support. It does not connect a payment provider or mark setup complete.
+                    {paymentSetupMode === "NEED_HELP_SETUP" ? (
+                      <div className="mb-3 grid gap-3 sm:grid-cols-2">
+                        <div className="rounded-md border border-sky-200 bg-white p-3">
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-700">Recommended first option</p>
+                          <a
+                            href="https://squareup.com/i/DC9E585AB0"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-1 inline-block font-semibold text-sky-950 underline"
+                          >
+                            Square
+                          </a>
+                          <p className="mt-1 text-sky-900">
+                            Often a good fit if you want card readers, in-person payments and straightforward online payment options.
+                          </p>
+                        </div>
+                        <div className="rounded-md border border-sky-200 bg-white p-3">
+                          <a
+                            href="https://www.stripe.com"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block font-semibold text-sky-950 underline"
+                          >
+                            Stripe
+                          </a>
+                          <p className="mt-1 text-sky-900">
+                            Strong for online card payments and website checkout. If you already use Stripe, you can connect it securely when ready.
+                          </p>
+                        </div>
+                        <p className="text-[11px] text-sky-900 sm:col-span-2">
+                          These links are guidance only and do not connect your website automatically.
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        className={`${outlineButtonClass} ${smallButtonClass} bg-white`}
-                        onClick={() => setPaymentHelpOpen(false)}
-                      >
-                        Close
-                      </button>
+                    ) : null}
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold">Ask MyExperiment.club to help with payments</p>
+                        <p className="mt-1 text-sky-900">
+                          Tell us what you need and we will help you choose or connect the right payment provider. This message goes to MyExperiment.club support, not to your customers.
+                        </p>
+                      </div>
+                      {paymentSetupMode !== "NEED_HELP_SETUP" ? (
+                        <button
+                          type="button"
+                          className={`${outlineButtonClass} ${smallButtonClass} bg-white`}
+                          onClick={() => setPaymentHelpOpen(false)}
+                        >
+                          Cancel
+                        </button>
+                      ) : null}
                     </div>
                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
                       <label className="text-xs font-semibold text-sky-950">
-                        Your name / business contact
+                        Contact name
                         <input
                           className="mt-1 w-full rounded-md border border-sky-200 bg-white px-2 py-1 text-sm text-slate-900"
                           value={paymentHelpDraft.name}
@@ -2655,7 +2677,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                         />
                       </label>
                       <label className="text-xs font-semibold text-sky-950">
-                        Email
+                        Contact email
                         <input
                           type="email"
                           className="mt-1 w-full rounded-md border border-sky-200 bg-white px-2 py-1 text-sm text-slate-900"
@@ -2664,7 +2686,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                         />
                       </label>
                       <label className="text-xs font-semibold text-sky-950">
-                        Phone
+                        Contact phone
                         <input
                           className="mt-1 w-full rounded-md border border-sky-200 bg-white px-2 py-1 text-sm text-slate-900"
                           value={paymentHelpDraft.phone ?? ""}
@@ -2672,15 +2694,19 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                         />
                       </label>
                       <label className="text-xs font-semibold text-sky-950">
-                        Selected provider
-                        <input
+                        Preferred provider, optional
+                        <select
                           className="mt-1 w-full rounded-md border border-sky-200 bg-white px-2 py-1 text-sm text-slate-900"
                           value={paymentHelpDraft.provider}
                           onChange={(event) => setPaymentHelpDraft((current) => ({ ...current, provider: event.target.value }))}
-                        />
+                        >
+                          {PAYMENT_HELP_PROVIDER_OPTIONS.map((provider) => (
+                            <option key={provider} value={provider}>{provider}</option>
+                          ))}
+                        </select>
                       </label>
                       <label className="text-xs font-semibold text-sky-950 sm:col-span-2">
-                        What would you like help with?
+                        Message
                         <textarea
                           className="mt-1 min-h-[96px] w-full rounded-md border border-sky-200 bg-white px-2 py-1 text-sm text-slate-900"
                           value={paymentHelpDraft.message}
@@ -2696,7 +2722,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                         onClick={() => void submitPaymentSetupHelpRequest()}
                         disabled={paymentHelpBusy}
                       >
-                        {paymentHelpBusy ? "Sending request..." : "Send help request"}
+                        {paymentHelpBusy ? "Sending request..." : "Submit help request"}
                       </button>
                       <p className="text-[11px] text-sky-900">
                         Do not enter passwords, secret keys or private card/payment details.
@@ -2709,7 +2735,16 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     ) : null}
                   </div>
                 ) : null}
-                {!selectedPaymentConnection ? (
+                {settingsDraft.paymentProcessorNotes.trim() ? (
+                  <details className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-700">
+                    <summary className="cursor-pointer font-semibold text-slate-900">Previous support notes / advanced details</summary>
+                    <p className="mt-2 whitespace-pre-wrap">{settingsDraft.paymentProcessorNotes.trim()}</p>
+                    <p className="mt-2 text-slate-500">
+                      These notes are retained for support context only. Do not enter passwords, API keys, webhook secrets or private codes.
+                    </p>
+                  </details>
+                ) : null}
+                {paymentSetupMode === "EXISTING_PROCESSOR" && !selectedPaymentConnection ? (
                   <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 font-semibold text-amber-950">
                     Payment setup has not been completed yet.
                   </p>
@@ -2721,16 +2756,16 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                 ) : null}
                 {noOnlineProviderSelected ? (
                   <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 font-semibold text-amber-950">
-                    No online payment provider selected. Use cash/manual options, or choose a provider when you are ready for online card payments.
+                    Online checkout is off. Manual payment recording can still be used where enabled.
                   </p>
                 ) : null}
-                {paymentProviderGuidance.providerKey !== "STRIPE" && !noOnlineProviderSelected ? (
+                {paymentSetupMode === "EXISTING_PROCESSOR" && paymentProviderGuidance.providerKey !== "STRIPE" && !noOnlineProviderSelected ? (
                   <p className="mt-3 rounded-md border border-sky-200 bg-sky-50 px-2 py-1 font-semibold text-sky-950">
                     {paymentProviderGuidance.provider} payments are assisted setup only in this phase. Do not enter provider passwords or private codes.
                   </p>
                 ) : null}
 
-                {!noOnlineProviderSelected ? (
+                {paymentSetupMode === "EXISTING_PROCESSOR" && !noOnlineProviderSelected ? (
                   <details className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-700">
                     <summary className="cursor-pointer font-semibold text-slate-900">Technical diagnostics</summary>
                     <div className="mt-3 grid gap-1 sm:grid-cols-2">
@@ -2982,7 +3017,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                 Show Gift vouchers on public site
               </label>
               <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
-                Preset values (£)
+                Preset values (Â£)
                 <input
                   className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
                   value={voucherPresetValues}
@@ -3003,7 +3038,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
               </label>
               <div className="grid gap-2 sm:grid-cols-2">
                 <label className="text-xs font-semibold text-slate-700">
-                  Min custom (£)
+                  Min custom (Â£)
                   <input
                     className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
                     inputMode="numeric"
@@ -3012,7 +3047,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                   />
                 </label>
                 <label className="text-xs font-semibold text-slate-700">
-                  Max custom (£)
+                  Max custom (Â£)
                   <input
                     className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
                     inputMode="numeric"
@@ -3048,7 +3083,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                 </div>
               </div>
               <label className="text-xs font-semibold text-slate-700">
-                Postage charge (£)
+                Postage charge (Â£)
                 <input
                   className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
                   inputMode="numeric"
@@ -3320,7 +3355,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                           />
                           <span>
                             <span className="font-semibold text-slate-900">{customer.name || customer.email}</span>
-                            <span className="block">{customer.email} · {customer.marketingOptIn ? "Opted in" : "No consent"}</span>
+                            <span className="block">{customer.email} Â· {customer.marketingOptIn ? "Opted in" : "No consent"}</span>
                           </span>
                         </label>
                       ))}
@@ -3381,13 +3416,13 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                         <div className="flex flex-wrap items-start justify-between gap-2">
                           <div>
                             <p className="font-semibold text-slate-950">{campaign.title}</p>
-                            <p className="text-slate-600">{formatCampaignOptionLabel(CUSTOMER_CAMPAIGN_AUDIENCE_OPTIONS, campaign.audienceType)} · {formatCampaignOptionLabel(CUSTOMER_CAMPAIGN_TYPE_OPTIONS, campaign.campaignType)}</p>
+                            <p className="text-slate-600">{formatCampaignOptionLabel(CUSTOMER_CAMPAIGN_AUDIENCE_OPTIONS, campaign.audienceType)} Â· {formatCampaignOptionLabel(CUSTOMER_CAMPAIGN_TYPE_OPTIONS, campaign.campaignType)}</p>
                           </div>
                           <span className="rounded-full border border-slate-200 bg-white px-2 py-1 font-semibold text-slate-700">{campaign.status}</span>
                         </div>
                         <p className="mt-2 text-slate-600">
-                          Sent {campaign.counts.sent} · skipped {campaign.counts.skipped} · failed {campaign.counts.failed}
-                          {campaign.sentAt ? ` · ${new Date(campaign.sentAt).toLocaleString("en-GB")}` : ""}
+                          Sent {campaign.counts.sent} Â· skipped {campaign.counts.skipped} Â· failed {campaign.counts.failed}
+                          {campaign.sentAt ? ` Â· ${new Date(campaign.sentAt).toLocaleString("en-GB")}` : ""}
                         </p>
                       </button>
                     ))}
@@ -3398,7 +3433,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                       <div className="mt-2 space-y-1">
                         {selectedCustomerCampaign.recipients.slice(0, 8).map((recipient) => (
                           <p key={recipient.id} className="text-xs text-slate-600">
-                            <span className="font-semibold text-slate-800">{recipient.email}</span> · {recipient.status}{recipient.failureReason ? ` · ${recipient.failureReason}` : ""}
+                            <span className="font-semibold text-slate-800">{recipient.email}</span> Â· {recipient.status}{recipient.failureReason ? ` Â· ${recipient.failureReason}` : ""}
                           </p>
                         ))}
                       </div>
@@ -3431,7 +3466,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                   <p className="font-semibold text-slate-950">{customer.name || customer.email}</p>
                   <p className="text-xs text-slate-600">{customer.email}</p>
                   <p className="mt-1 text-xs text-slate-600">
-                    {customer.totalBookings} booking{customer.totalBookings === 1 ? "" : "s"} · {customer.marketingOptIn ? "Marketing opted in" : "Marketing opted out"}
+                    {customer.totalBookings} booking{customer.totalBookings === 1 ? "" : "s"} Â· {customer.marketingOptIn ? "Marketing opted in" : "Marketing opted out"}
                   </p>
                   <p className={`mt-2 inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
                     customer.lapsedCandidate ? "bg-amber-100 text-amber-900" : "bg-white text-slate-700"
@@ -3499,7 +3534,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                           <p className="font-semibold text-slate-950">{booking.serviceName || "Service not set"}</p>
                           <p>{booking.preferredDate || "Date not set"} {booking.preferredTime || ""}</p>
                           <p>Staff: {booking.staffName || "Assigned by business"}</p>
-                          <p>Status: {booking.status} · Payment: {booking.paymentStatus || "Not set"}</p>
+                          <p>Status: {booking.status} Â· Payment: {booking.paymentStatus || "Not set"}</p>
                           <a href={booking.detailHref} target="_blank" rel="noreferrer" className="mt-2 inline-flex font-semibold text-teal-700 underline">
                             View booking link
                           </a>
@@ -3542,14 +3577,14 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                 <article key={enquiry.id} className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
-                      <p className="font-semibold text-slate-950">{enquiry.purpose} · {enquiry.name}</p>
-                      <p>{enquiry.email}{enquiry.phone ? ` · ${enquiry.phone}` : ""}</p>
+                      <p className="font-semibold text-slate-950">{enquiry.purpose} Â· {enquiry.name}</p>
+                      <p>{enquiry.email}{enquiry.phone ? ` Â· ${enquiry.phone}` : ""}</p>
                       <p className="mt-1 whitespace-pre-wrap">{enquiry.message}</p>
                     </div>
                     <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 font-semibold text-slate-700">{enquiry.status}</span>
                   </div>
                   <p className="mt-2 text-slate-500">
-                    {new Date(enquiry.createdAt).toLocaleString("en-GB")} · Email {enquiry.emailStatus || "not attempted"}{enquiry.bookingId ? ` · Booking ${enquiry.bookingId}` : ""}
+                    {new Date(enquiry.createdAt).toLocaleString("en-GB")} Â· Email {enquiry.emailStatus || "not attempted"}{enquiry.bookingId ? ` Â· Booking ${enquiry.bookingId}` : ""}
                   </p>
                 </article>
               ))}
@@ -3778,9 +3813,9 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     </select>
                     <span className="mt-1 block text-[11px] font-normal text-slate-600">Save new categories before assigning them.</span>
                   </label>
-                  <label className="text-xs font-semibold text-slate-700">Base price (£)
+                  <label className="text-xs font-semibold text-slate-700">Base price (Â£)
                     <input className="mt-1 w-full max-w-[140px] rounded-md border border-slate-300 px-2 py-1 text-sm" inputMode="decimal" placeholder="35" value={service.basePrice} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, basePrice: event.target.value } : row))} />
-                    <span className="mt-1 block text-[11px] font-normal text-slate-600">Example: £35.</span>
+                    <span className="mt-1 block text-[11px] font-normal text-slate-600">Example: Â£35.</span>
                   </label>
                   <label className="text-xs font-semibold text-slate-700">Duration (minutes)
                     <input className="mt-1 w-full max-w-[140px] rounded-md border border-slate-300 px-2 py-1 text-sm" inputMode="numeric" placeholder="45" value={service.durationMinutes} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, durationMinutes: event.target.value } : row))} />

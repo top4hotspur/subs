@@ -1,4 +1,4 @@
-# Subs Hosted Smoke Test (Manual)
+﻿# Subs Hosted Smoke Test (Manual)
 
 Run these checks on the hosted environment after deployment.
 
@@ -199,7 +199,7 @@ Add these checks after backend envs are configured:
   - verify combined `Contact and opening hours` tile appears at the bottom
 
 ## Hosted smoke additions: theme system and CSV tool relocation`r`n- `/demo/barbers/admin`:`r`n  - change Theme and confirm `/demo/barbers` reflects clear personality/layout change`r`n  - change Colour palette and confirm accents/surfaces update`r`n  - verify palette selector is limited to 3 options for the selected theme`r`n  - verify `Open customer site preview` opens in a new tab`r`n  - verify `Import/export setup data` provides services/staff CSV template download and upload preview`r`n- `/demo/barbers/customise`:`r`n  - verify CSV operational tools are removed`r`n  - verify guidance points users to business admin for imports`r`n- Backward compatibility check:`r`n  - if older local settings exist, confirm page still loads and old template/scheme IDs map to valid theme/palette values`r`n- Repeat spot checks on `/demo/window-cleaning`, `/demo/bus-hire`, `/demo/tutors`.`r`n`r`n## Hosted smoke additions: payment setup intent (demo admin)
-- Open `/demo/barbers/admin` > `Payments/sales`.
+- Open `/demo/barbers/admin` > `Payment settings`.
 - Confirm payment processor setup option list appears:
   - existing processor
   - need help setting one up
@@ -273,7 +273,7 @@ olePrice:<role> columns accepted
 - Contact page:
   - always visible
   - no contact visibility toggle in admin
-- Payments/sales:
+- Payment settings:
   - verify setup mode + provider selector + instruction panel with no live provider connection.
 
 ## Hosted smoke additions: nav + admin section grid
@@ -458,9 +458,9 @@ olePrice:<role> columns accepted
 
 ## Hosted smoke: setup order/payment clarity
 1. Open `/setup/barbers` and confirm order summary includes:
-   - Website setup: £149 one-time
-   - Monthly subscription: £30/month
-   - Domain service: £49 only when we register/manage a new domain
+   - Website setup: Â£149 one-time
+   - Monthly subscription: Â£30/month
+   - Domain service: Â£49 only when we register/manage a new domain
 2. Confirm setup copy states payment/subscription setup is confirmed after request submission during onboarding.
 3. In Domain option section, confirm choices are:
    - I already own a domain
@@ -813,7 +813,7 @@ Notes:
    - service area field is not shown in manual add-lead form
    - industry labels are human-friendly
    - provider pricing table is visible
-8. Confirm `Booksy` exists with estimate `£40`.
+8. Confirm `Booksy` exists with estimate `Â£40`.
 9. Edit a provider row and save; confirm updated value persists after reload.
 10. Add a lead with provider `Booksy` and blank estimate; confirm estimate auto-fills.
 11. Override estimate manually; confirm manual value is retained.
@@ -1616,3 +1616,24 @@ Stripe Accounts v2 troubleshooting:
 7. If Stripe is configured, confirm the browser redirects to Stripe Account Links onboarding.
 8. If Stripe cannot start, confirm the UI shows a safe code such as `STRIPE_SECRET_KEY_MISSING`, `STRIPE_ACCOUNT_CREATE_FAILED`, `STRIPE_ACCOUNT_LINK_CREATE_FAILED`, or `STRIPE_ACCOUNT_LINK_URL_MISSING` without exposing secrets.
 9. Confirm `STRIPE_CONNECT_CLIENT_ID` is not required for this path and no OAuth access token is stored.
+
+## Hosted smoke checks: tightened payment setup journeys
+
+1. Open `/site-admin/luna-hair-studio`.
+2. Open `Payment settings`.
+3. Select `I only want to record payments manually for now`.
+4. Confirm no provider setup clutter appears and the copy says online checkout will stay off.
+5. Select `I would like help setting one up`.
+6. Confirm the `Ask MyExperiment.club to help with payments` panel appears.
+7. Confirm Square and Stripe recommendation cards appear and open in a new tab.
+8. Confirm `Submit help request` appears.
+9. Submit a help message.
+10. Confirm success/error message is clear and no provider is marked connected or checkout-ready.
+11. Select `I already have a payment provider`.
+12. Select Stripe.
+13. Confirm the Stripe setup card is simple and clear.
+14. Confirm no editable account ID, provider-name override, account email/reference, generic setup notes, API keys, passwords or secret fields appear in the normal flow.
+15. Click `Connect Stripe`.
+16. Confirm it redirects to Stripe Account Links onboarding or shows a visible safe error/status near the button.
+17. Open `/demo/hairdressers/admin`.
+18. Confirm demo payment setup follows the same conceptual journeys and clearly says live provider connection is disabled in demo.

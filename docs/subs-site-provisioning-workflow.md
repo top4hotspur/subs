@@ -660,3 +660,7 @@ Amplify builds generate `.env.production` explicitly in `amplify.yml`. New serve
 ## Payment setup fulfilment support
 
 Provisioned subscriber sites expose payment setup as a tenant-owned business-admin task. Stripe onboarding uses Account Links. If a business needs help choosing or configuring Square, Stripe, PayPal, SumUp/Zettle, Worldpay or another provider, the business admin can submit an inline payment help request. The request is stored as a tenant-scoped contact enquiry and support email delivery is fail-soft, so the request is not lost if email is temporarily unavailable.
+
+## Payment setup fulfilment UX
+
+Provisioned subscriber sites now guide business owners through three payment setup choices: manual recording, MyExperiment.club-assisted setup, or existing provider setup. The help route creates a support/contact enquiry and notifies platform support when email is configured. Stripe Account Links stays separate from help requests and must complete Stripe-hosted onboarding before tenant online checkout can become available.

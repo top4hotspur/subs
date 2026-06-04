@@ -95,7 +95,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
       sections: [
         { id: "business-settings", label: "Business settings" },
         { id: "services-prices", label: "Services and prices" },
-        { id: "payments", label: "Payments/sales" },
+        { id: "payments", label: "Payment settings" },
         { id: "import-export", label: "Import/export setup data" },
       ],
     },
@@ -1813,7 +1813,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
       ) : null}
 
       {selectedSection === "payments" ? (
-      <CollapsibleSection title="Payments/sales" subtitle="Local-only operational sales recording preferences." defaultOpen>
+      <CollapsibleSection title="Payment settings" subtitle="Demo-safe payment setup choices and manual sales recording preferences." defaultOpen>
         <div className="mb-3 space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3">
           <label className="text-xs font-semibold text-slate-700">
             Payment setup mode
@@ -1834,7 +1834,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
               }
             >
               <option value="EXISTING_PROCESSOR">I already have a payment processor</option>
-              <option value="NEED_HELP_SETUP">I need help setting one up</option>
+              <option value="NEED_HELP_SETUP">I would like help setting one up</option>
               <option value="MANUAL_RECORDING_ONLY">
                 I only want to record payments manually for now
               </option>
@@ -1877,82 +1877,78 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
                   <option value="OTHER">Other</option>
                 </select>
               </label>
-              <label className="text-xs font-semibold text-slate-700">
-                Provider name (if different)
-                <input
-                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
-                  placeholder="Provider display name"
-                  value={settings.paymentSettings.existingProcessorName ?? ""}
-                  onChange={(event) =>
-                    setSettings((current) => ({
-                      ...current,
-                      paymentSettings: {
-                        ...current.paymentSettings,
-                        existingProcessorName: event.target.value,
-                      },
-                    }))
-                  }
-                />
-              </label>
-              <label className="text-xs font-semibold text-slate-700">
-                Account email / merchant reference
-                <input
-                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
-                  placeholder="name@business.com or merchant reference"
-                  value={settings.paymentSettings.merchantReference ?? ""}
-                  onChange={(event) =>
-                    setSettings((current) => ({
-                      ...current,
-                      paymentSettings: {
-                        ...current.paymentSettings,
-                        merchantReference: event.target.value,
-                      },
-                    }))
-                  }
-                />
-              </label>
-              <div className="rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-600">
-                <p className="font-semibold text-slate-800">Connection instructions</p>
-                <p className="mt-1">
-                  Prepare your provider name, account email/merchant reference, and any
-                  checkout requirements. Provider connection is not active in this demo.
-                </p>
+              <div className="rounded-md border border-sky-200 bg-sky-50 p-3 text-xs text-sky-950 sm:col-span-2">
+                {settings.paymentSettings.processorProvider === "STRIPE" ? (
+                  <>
+                    <p className="font-semibold">Connect Stripe</p>
+                    <p className="mt-1">
+                      In the real business admin, Stripe opens a secure Stripe-hosted onboarding page. This demo does not connect a live provider and never asks for passwords, API keys or secret codes.
+                    </p>
+                    <button type="button" className="mt-2 rounded-md border border-sky-300 bg-white px-3 py-1 text-xs font-semibold text-sky-900">
+                      Demo only - Stripe connection disabled
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-semibold">Assisted provider setup</p>
+                    <p className="mt-1">
+                      This provider would be handled with MyExperiment.club support. The real business admin can submit a help request instead of collecting technical credentials here.
+                    </p>
+                  </>
+                )}
               </div>
             </>
           ) : null}
 
           {settings.paymentSettings.paymentProcessorSetupMode === "NEED_HELP_SETUP" ? (
-            <div className="rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-600">
-              We can help you choose and prepare a suitable processor during setup. Add
-              your preferences in notes below.
+            <div className="rounded-md border border-sky-200 bg-sky-50 p-3 text-xs text-sky-950">
+              <p className="font-semibold">Ask MyExperiment.club to help with payments</p>
+              <p className="mt-1">
+                Tell us what you need and we will help you choose or connect the right payment provider. In the live business admin, this message goes to MyExperiment.club support, not to customers.
+              </p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-md border border-sky-200 bg-white p-3">
+                  <a href="https://squareup.com/i/DC9E585AB0" target="_blank" rel="noopener noreferrer" className="font-semibold text-sky-950 underline">
+                    Square
+                  </a>
+                  <p className="mt-1 text-sky-900">Often a good fit if you want card readers, in-person payments and straightforward online payment options.</p>
+                </div>
+                <div className="rounded-md border border-sky-200 bg-white p-3">
+                  <a href="https://www.stripe.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-sky-950 underline">
+                    Stripe
+                  </a>
+                  <p className="mt-1 text-sky-900">Strong for online card payments and website checkout. If you already use Stripe, you can connect it securely when ready.</p>
+                </div>
+              </div>
+              <label className="mt-3 block text-xs font-semibold text-sky-950">
+                Demo help message
+                <textarea
+                  rows={3}
+                  className="mt-1 w-full rounded-md border border-sky-200 bg-white px-2 py-1 text-sm text-slate-900"
+                  placeholder="For example: I'm not sure whether Square or Stripe is better, or I already have Stripe and need help connecting it."
+                  value={settings.paymentSettings.processorSetupNotes ?? ""}
+                  onChange={(event) =>
+                    setSettings((current) => ({
+                      ...current,
+                      paymentSettings: {
+                        ...current.paymentSettings,
+                        processorSetupNotes: event.target.value,
+                      },
+                    }))
+                  }
+                />
+              </label>
+              <button type="button" className="mt-2 rounded-md bg-sky-700 px-3 py-1 text-xs font-semibold text-white">
+                Demo only - submit help request
+              </button>
             </div>
           ) : null}
 
           {settings.paymentSettings.paymentProcessorSetupMode === "MANUAL_RECORDING_ONLY" ? (
             <div className="rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-600">
-              You can start by recording in-store cash/card payments manually, then switch
-              to processor connection later.
+              You can record cash, card terminal or other manual payments in the system. Online checkout will stay off.
             </div>
           ) : null}
-
-          <label className="text-xs font-semibold text-slate-700">
-            Processor/setup notes
-            <textarea
-              rows={2}
-              className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
-              placeholder="Add any payment setup notes for this business."
-              value={settings.paymentSettings.processorSetupNotes ?? ""}
-              onChange={(event) =>
-                setSettings((current) => ({
-                  ...current,
-                  paymentSettings: {
-                    ...current.paymentSettings,
-                    processorSetupNotes: event.target.value,
-                  },
-                }))
-              }
-            />
-          </label>
           <p className="text-xs text-slate-600">
             This does not connect a payment provider yet. It records how the business plans to
             take payments and helps prepare setup.

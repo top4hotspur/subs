@@ -1,4 +1,4 @@
-# Subs Business Owner Admin Model (Planned)
+﻿# Subs Business Owner Admin Model (Planned)
 
 ## Purpose
 Define the intended operational ownership model for subscriber sites, separate from platform admin operations.
@@ -68,7 +68,7 @@ Business admin can:
 
 ## Current demo controls
 - Business admin demo includes editable service naming/description/pricing, staff details, rota, and closure management.
-- Role-level service pricing overrides can drive customer-facing From �x price labels.
+- Role-level service pricing overrides can drive customer-facing From £x price labels.
 
 
 ## Demo operational controls update
@@ -104,7 +104,7 @@ Business admin can:
   - Ad hoc closures
   - Gift vouchers
   - Page visibility/content
-  - Payments/sales
+  - Payment settings
   - Super-user permissions
 - Appointments section includes slot interval and customer staff-selection controls.
 
@@ -134,7 +134,7 @@ Important:
   - optional CTA label/link
   - contact details text and map placeholder text for Contact page
 - Branding controls include explicit remove actions for local logo/favicon previews.
-- Payments/sales helper text now clarifies local in-store recording supports finance reporting accuracy.
+- Payment settings helper text now clarifies local in-store recording supports finance reporting accuracy.
 
 ## Business admin setup tools
 - New `Site design` section allows subscriber business owners to choose visual template + colour scheme.

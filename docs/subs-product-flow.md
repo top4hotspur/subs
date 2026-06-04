@@ -1,4 +1,4 @@
-# Subs Product Flow
+﻿# Subs Product Flow
 
 ## Current v1 flow
 1. Homepage -> industry page -> demo page (customer/staff/admin views) -> setup order.
@@ -305,7 +305,7 @@ Still mock for infrastructure:
   - if none: `No appointments found for this closure date.`
   - if found: warning plus affected appointment list (time, customer, service, assigned staff, payment status)
 - Page visibility/content now includes editable About and Contact content blocks (title/body/image placement/CTA + contact/map text placeholders).
-- Payments/sales helper copy updated to include finance reporting context.
+- Payment settings helper copy updated to include finance reporting context.
 - Business branding controls now expose explicit `Remove logo` and `Remove favicon` actions.
 
 ## Subscriber site themes (local mock)`r`nBusiness admin now controls subscriber site style through a curated Theme + Palette system:`r`n- Themes: Modern Minimalist, Vintage Classic, Urban Hipster, Luxury Elegant, Rustic Warm`r`n- Each theme has 3 curated palettes; there is no unlimited colour picker in launch mode.`r`n- Theme controls visual personality and layout feel while feature scope remains consistent.`r`n- Changes made in `/demo/[industry]/admin` propagate to customer-facing `/demo/[industry]` immediately via local settings.`r`n- Legacy saved IDs from older template/scheme names are mapped automatically.`r`n- Themes are intentionally designed to look strong without requiring business photo uploads.`r`n`r`n## CSV tooling location update
@@ -415,9 +415,9 @@ CSV import/export setup tools moved out of demo customisation and into business 
 ## Setup order and payment clarity (2026-05-26)
 - Setup is an order-intent flow, not live checkout.
 - Setup page summary now states:
-  - Website setup: £149 one-time
-  - Monthly subscription: £30/month
-  - Domain service: £49 only when we register/manage a new domain
+  - Website setup: Â£149 one-time
+  - Monthly subscription: Â£30/month
+  - Domain service: Â£49 only when we register/manage a new domain
   - Existing domain: no domain service charge when customer can point DNS/nameservers
 - Setup flow messaging now confirms:
   - payment/subscription setup is handled during onboarding after request submission
@@ -1154,3 +1154,13 @@ The platform test Checkout Session carries `metadata.paymentPurpose=PLATFORM_BIL
 Business-owner `Payment settings` keeps Stripe Account Links separate from assisted setup. `Connect Stripe` creates/reuses a tenant Stripe connected account and redirects to Stripe-hosted onboarding. `Request help setting up payments` opens an inline help form, creates a tenant-scoped support/contact enquiry, and fail-soft emails MyExperiment.club support. This action does not mark a provider as connected and does not fake payment capability.
 
 The normal status wording is business-owner friendly: `Not connected`, `Stripe setup started`, `More information needed in Stripe`, `Connected - final checks still needed`, and `Ready to take online payments`. Internal compatibility values such as `OAUTH_PENDING` remain implementation details only.
+
+## Payment setup UX journeys
+
+Business-admin `Payment settings` now presents three distinct non-technical journeys:
+
+1. `I only want to record payments manually for now` hides provider setup controls and explains that cash, card-terminal or other manual payments can be recorded while online checkout stays off.
+2. `I would like help setting one up` shows an `Ask MyExperiment.club to help with payments` panel with Square and Stripe recommendation cards, a contact/help form and a `Submit help request` action. The request creates a tenant-scoped support/contact enquiry and fail-soft emails platform support; it does not mark any provider connected or enable checkout.
+3. `I already have a payment provider` shows the provider dropdown and provider-specific next step. Stripe gets a focused `Connect Stripe` card using Stripe-hosted Account Links. Non-Stripe providers remain assisted setup until provider-specific integrations are designed.
+
+The normal business-user flow no longer asks for provider-name overrides, merchant references, Stripe account IDs, API keys, passwords, access tokens, webhook secrets or private codes. Existing old support notes are retained only behind collapsed `Previous support notes / advanced details`.

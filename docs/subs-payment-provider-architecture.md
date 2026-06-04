@@ -295,3 +295,9 @@ Amplify runtime note: server-side Stripe vars used by Next.js SSR/API routes mus
 - `Connect Stripe` still uses Stripe Accounts v2 + Account Links. The UI now shows a visible status/error panel near the button, including safe error codes only.
 - Safe Stripe start-route errors include `STRIPE_SECRET_KEY_MISSING`, `SITE_NOT_FOUND`, `UNAUTHORISED`, `STRIPE_ACCOUNT_CREATE_FAILED`, `STRIPE_ACCOUNT_LINK_CREATE_FAILED` and `STRIPE_ACCOUNT_LINK_URL_MISSING`.
 - User-facing connection mode labels remain `Account Link Pending` and `Account Link Connected`; internal `OAUTH_PENDING` / `OAUTH_CONNECTED` values are retained only for compatibility.
+
+## Simplified business-admin payment setup UX
+
+The business-admin payment setup screen is intentionally split into manual recording, MyExperiment.club-assisted setup, and existing-provider setup. The assisted setup path sends a tenant-scoped support/contact enquiry to platform support and uses fail-soft email notification. Stripe remains the only live hosted onboarding path and uses Stripe Accounts v2 + Account Links. Square/Stripe recommendation cards are guidance links only and do not connect the site automatically.
+
+Demo admin mirrors the simplified concept but remains demo-safe: it does not create live Stripe/Square connections, does not collect credentials, and does not fake payment readiness.
