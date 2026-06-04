@@ -157,7 +157,14 @@ export async function PATCH(
         });
         let refundStatus = guidance.refundStatus;
         let refundGuidance = guidance.refundGuidance;
-        if (refundAction === "MANUAL_REFUND_HANDLED" && existing.paymentMethod !== "CARD_ONLINE") {
+        if (
+          existing.paymentMethod === "CARD_ONLINE" &&
+          existing.paymentStatus === "PENDING" &&
+          (parsed.paymentStatus === "EXPIRED" || parsed.paymentStatus === "FAILED")
+        ) {
+          refundStatus = "NOT_REQUIRED";
+          refundGuidance = "No refund is required because Stripe payment was not completed.";
+        } else if (refundAction === "MANUAL_REFUND_HANDLED" && existing.paymentMethod !== "CARD_ONLINE") {
           refundStatus = "REFUNDED";
           refundGuidance = "Manual refund/payment handling has been marked as handled by the business.";
         } else if (refundAction === "NO_REFUND") {

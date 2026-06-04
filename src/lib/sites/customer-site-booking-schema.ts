@@ -18,6 +18,7 @@ const paymentStatusSchema = z.enum([
   "PENDING",
   "PAID",
   "FAILED",
+  "EXPIRED",
   "REFUNDED",
   "PAYMENT_REQUIRED",
   "PAYMENT_COMPLETED",

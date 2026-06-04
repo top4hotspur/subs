@@ -21,6 +21,7 @@ function paymentLabel(paymentStatus: string | null | undefined, paymentMethod: s
   if (paymentStatus === "PAID" || paymentStatus === "PAYMENT_COMPLETED") return "Paid";
   if (paymentStatus === "PENDING" && paymentMethod === "CARD_ONLINE") return "Payment pending online";
   if (paymentStatus === "PENDING") return "Payment to be arranged directly";
+  if (paymentStatus === "EXPIRED") return "Payment expired";
   if (paymentStatus === "FAILED") return "Payment failed";
   if (paymentStatus === "REFUNDED") return "Refunded";
   return "No online payment required";

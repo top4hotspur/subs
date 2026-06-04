@@ -718,8 +718,11 @@ function formatBookingPaymentStatus(booking: CustomerSiteBookingRecord): string 
   if (booking.paymentStatus === "PAID" || booking.paymentStatus === "PAYMENT_COMPLETED") {
     return booking.paymentMethod === "CARD_ONLINE" ? "Paid online" : "Paid";
   }
+  if (booking.paymentStatus === "EXPIRED") {
+    return booking.paymentMethod === "CARD_ONLINE" ? "Online payment expired" : "Payment expired";
+  }
   if (booking.paymentStatus === "FAILED") {
-    return booking.paymentMethod === "CARD_ONLINE" ? "Online payment failed/expired" : "Failed";
+    return booking.paymentMethod === "CARD_ONLINE" ? "Online payment failed" : "Failed";
   }
   if (booking.paymentStatus === "REFUNDED") return "Refunded";
   if (booking.paymentStatus === "PENDING" || booking.paymentStatus === "PAYMENT_REQUIRED") {
@@ -754,6 +757,17 @@ function formatRelativeAge(iso: string | null | undefined): string {
   if (hours < 48) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
   const days = Math.floor(hours / 24);
   return `${days} day${days === 1 ? "" : "s"} ago`;
+}
+
+function isExpiredPendingStripeCheckout(booking: CustomerSiteBookingRecord): boolean {
+  if (booking.paymentMethod !== "CARD_ONLINE" || booking.paymentStatus !== "PENDING") return false;
+  if (booking.paymentProviderCheckoutExpiresAt) {
+    const expiresAt = new Date(booking.paymentProviderCheckoutExpiresAt);
+    return !Number.isNaN(expiresAt.getTime()) && expiresAt.getTime() <= Date.now();
+  }
+  const updatedAt = new Date(booking.updatedAt || booking.createdAt);
+  if (Number.isNaN(updatedAt.getTime())) return false;
+  return Date.now() - updatedAt.getTime() >= 30 * 60 * 1000;
 }
 
 function formatRefundStatus(status: CustomerSiteBookingRecord["refundStatus"]): string {
@@ -4537,8 +4551,8 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                         Mark manual payment received
                       </button>
                     ) : null}
-                    {booking.paymentStatus === "PENDING" && booking.paymentMethod === "CARD_ONLINE" && booking.status !== "CANCELLED" ? (
-                      <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void updateBookingStatus(booking.id, "CANCELLED", "FAILED")}>
+                    {isExpiredPendingStripeCheckout(booking) && booking.status !== "CANCELLED" ? (
+                      <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void updateBookingStatus(booking.id, "CANCELLED", "EXPIRED")}>
                         Cancel expired pending payment
                       </button>
                     ) : null}

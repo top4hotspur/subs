@@ -24,14 +24,21 @@ function statusCopy(checkout: string | undefined, paymentStatus: string | null |
   if (checkout === "cancelled") {
     return {
       title: "Payment was not completed",
-      body: "Payment was not completed. Your booking may not be confirmed until payment is arranged.",
+      body: "Payment was not completed. Your booking is not paid. The slot may be held temporarily while secure checkout is still active, then released if payment is not completed.",
+      tone: "warning" as const,
+    };
+  }
+  if (paymentStatus === "EXPIRED") {
+    return {
+      title: "Payment expired",
+      body: "Payment was not completed. The temporary booking hold has been released, so please choose a new time or contact the business if you still want this appointment.",
       tone: "warning" as const,
     };
   }
   if (paymentStatus === "FAILED") {
     return {
       title: "Payment failed",
-      body: "Payment was not completed. Please contact the business if you still want this appointment.",
+      body: "Payment was not completed. The booking is not paid, so please contact the business or choose another time if you still want this appointment.",
       tone: "warning" as const,
     };
   }

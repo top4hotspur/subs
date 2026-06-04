@@ -1532,14 +1532,14 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
 17. Confirm the same slot is no longer available for a second booking.
 18. Start another booking and cancel/abandon Stripe Checkout.
 19. Confirm the return page says payment was not completed and does not claim paid status.
-20. Confirm cancelled/expired checkout does not mark the booking paid.
+20. Confirm cancelled checkout does not mark the booking paid and explains the slot may only be held temporarily.
 21. In site-admin Bookings, confirm the pending Stripe booking shows:
    - `Awaiting Stripe payment`
    - checkout age
    - checkout expiry where recorded
    - `Cancel expired pending payment` action.
-22. If Stripe `checkout.session.expired` can be triggered/observed, confirm the tenant webhook marks the booking cancelled/failed and releases the slot.
-23. If the webhook expiry is not available during testing, use `Cancel expired pending payment` and confirm the slot becomes available again.
+22. If Stripe `checkout.session.expired` can be triggered/observed, confirm the tenant webhook marks the booking cancelled with `paymentStatus=EXPIRED` and releases the slot.
+23. If the webhook expiry is not available during testing, wait until Stripe expiry or the 30-minute fallback hold window, use `Cancel expired pending payment`, and confirm the slot becomes available again.
 24. Confirm pending Stripe bookings older than the hold window do not block availability forever.
 25. Confirm paid online bookings show manual Stripe refund guidance and do not offer unsafe automated refund.
 26. Confirm no public booking redirects to the platform setup/subscription Stripe Checkout.

@@ -164,7 +164,7 @@ Stripe Connect / Account Links v1:
 - Booking metadata includes `tenantSiteId`, `siteSlug`, `bookingId`, `serviceId`, optional `staffId` and customer email.
 - The booking is created as `CONFIRMED` with `paymentStatus=PENDING` to hold the slot while the customer completes checkout.
 - If checkout session creation fails, the pending booking is cancelled/marked failed so it does not silently hold the slot.
-- If checkout is abandoned after a session is created, the booking remains held only while the Stripe Checkout session is valid. The app stores `paymentProviderCheckoutExpiresAt` where Stripe returns it and uses a 30-minute fallback hold window when expiry is missing. Stripe `checkout.session.expired` marks the booking cancelled/failed, and site admin has a fallback `Cancel expired pending payment` action.
+- If checkout is abandoned after a session is created, the booking remains held only while the Stripe Checkout session is valid. The app stores `paymentProviderCheckoutExpiresAt` where Stripe returns it and uses a 30-minute fallback hold window when expiry is missing. Stripe `checkout.session.expired` marks the booking cancelled with `paymentStatus=EXPIRED`, and site admin has a fallback `Cancel expired pending payment` action after Stripe expiry or the fallback hold window.
 
 Quote-required service:
 - Do not create online payment session.
@@ -189,7 +189,7 @@ Webhook requirements:
 - Do not break platform subscription webhook behaviour.
 
 Current route status:
-- `POST /api/sites/payments/stripe/webhook` verifies the Stripe signature with `STRIPE_TENANT_WEBHOOK_SECRET`, maps events through snapshot `event.data.object.metadata` to `tenantSiteId` + `bookingId`, checks the booking belongs to that tenant, updates paid/failed state, and ignores duplicate paid updates.
+- `POST /api/sites/payments/stripe/webhook` verifies the Stripe signature with `STRIPE_TENANT_WEBHOOK_SECRET`, maps events through snapshot `event.data.object.metadata` to `tenantSiteId` + `bookingId`, checks the booking belongs to that tenant, checks connected-account/session/payment-intent references where already stored, updates paid/expired/failed state, and ignores duplicate paid updates.
 - Stripe dashboard destination required for tenant booking payments:
   - Scope/listen mode: `Connected accounts` / `Events on Connected accounts`, not `Your account`.
   - Event payload style: `snapshot events`, not `thin events`.
@@ -208,10 +208,10 @@ Availability blocks:
 
 Availability does not block:
 - `CANCELLED` bookings;
-- `FAILED` or refunded payment bookings;
+- `FAILED`, `EXPIRED` or refunded payment bookings;
 - expired pending Stripe bookings after their hold window.
 
-Site-admin Bookings shows pending Stripe checkout age, expiry where recorded, connected account, session and payment-intent references. The `Cancel expired pending payment` action cancels/releases a pending Stripe booking without marking it paid.
+Site-admin Bookings shows pending Stripe checkout age, expiry where recorded, connected account, session and payment-intent references. The `Cancel expired pending payment` action appears only after Stripe expiry or the 30-minute fallback hold window and cancels/releases a pending Stripe booking with no refund required.
 
 ## Refund groundwork
 

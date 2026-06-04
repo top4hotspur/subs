@@ -135,7 +135,12 @@ function shouldBookingBlockAvailability(booking: {
   createdAt: Date;
   updatedAt: Date;
 }, now = new Date()): boolean {
-  if (booking.status === "CANCELLED" || booking.paymentStatus === "FAILED" || booking.paymentStatus === "REFUNDED") {
+  if (
+    booking.status === "CANCELLED" ||
+    booking.paymentStatus === "FAILED" ||
+    booking.paymentStatus === "EXPIRED" ||
+    booking.paymentStatus === "REFUNDED"
+  ) {
     return false;
   }
   if (booking.paymentMethod === "CARD_ONLINE" && booking.paymentStatus === "PENDING") {

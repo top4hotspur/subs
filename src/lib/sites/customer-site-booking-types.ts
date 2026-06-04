@@ -11,6 +11,7 @@ export type CustomerSitePaymentStatus =
   | "PENDING"
   | "PAID"
   | "FAILED"
+  | "EXPIRED"
   | "REFUNDED"
   | "PAYMENT_REQUIRED"
   | "PAYMENT_COMPLETED";

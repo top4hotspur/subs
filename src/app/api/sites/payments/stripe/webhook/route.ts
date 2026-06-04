@@ -87,6 +87,7 @@ async function markCheckoutSessionPaid(session: Stripe.Checkout.Session) {
   if (existing.tenantSiteId !== tenantSiteId) return;
   const connectedAccountId = session.metadata?.connectedAccountId;
   if (connectedAccountId && existing.paymentProviderAccountId && existing.paymentProviderAccountId !== connectedAccountId) return;
+  if (existing.paymentProviderSessionId && existing.paymentProviderSessionId !== session.id) return;
   if (existing.paymentStatus === "PAID" || existing.paymentStatus === "PAYMENT_COMPLETED") return;
 
   await updateCustomerSiteBookingStatus(tenantSiteId, {
@@ -114,11 +115,12 @@ async function markCheckoutSessionFailed(session: Stripe.Checkout.Session) {
   if (!existing) return;
   const connectedAccountId = session.metadata?.connectedAccountId;
   if (connectedAccountId && existing.paymentProviderAccountId && existing.paymentProviderAccountId !== connectedAccountId) return;
+  if (existing.paymentProviderSessionId && existing.paymentProviderSessionId !== session.id) return;
   if (existing.paymentStatus === "PAID" || existing.paymentStatus === "PAYMENT_COMPLETED") return;
   await updateCustomerSiteBookingStatus(tenantSiteId, {
     bookingId,
     status: "CANCELLED",
-    paymentStatus: "FAILED",
+    paymentStatus: "EXPIRED",
     paymentMethod: "CARD_ONLINE",
     paymentProvider: "STRIPE",
     paymentProviderAccountId: connectedAccountId || existing.paymentProviderAccountId || undefined,
@@ -135,6 +137,7 @@ async function markPaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
   if (!existing) return;
   const connectedAccountId = paymentIntent.metadata?.connectedAccountId;
   if (connectedAccountId && existing.paymentProviderAccountId && existing.paymentProviderAccountId !== connectedAccountId) return;
+  if (existing.paymentProviderPaymentIntentId && existing.paymentProviderPaymentIntentId !== paymentIntent.id) return;
   if (existing.paymentStatus === "PAID" || existing.paymentStatus === "PAYMENT_COMPLETED") return;
   await updateCustomerSiteBookingStatus(tenantSiteId, {
     bookingId,
