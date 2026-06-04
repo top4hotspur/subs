@@ -236,3 +236,23 @@ Stripe Connect is the first implemented subscriber-provider checkout path. Curre
 - No card details are stored.
 - Public booking blocks required online prepayment where Stripe Connect or tenant webhook config is unavailable.
 - Manual/cash/card-terminal recording remains the fallback where enabled.
+
+## Platform checkout test separation
+
+`/admin/billing-test` is a platform-admin smoke tool for MyExperiment.club platform Stripe Checkout. It must remain separate from subscriber-business Stripe Connect checkout.
+
+Platform billing test:
+- uses the platform `STRIPE_SECRET_KEY` only;
+- uses `STRIPE_PLATFORM_TEST_PRICE_ID` when available;
+- can look up an active/default price from `STRIPE_PLATFORM_TEST_PRODUCT_ID` as a fallback;
+- creates Checkout Sessions without `stripeAccount` / connected-account context;
+- returns to `/admin/billing-test` and does not provision tenant sites;
+- sets `metadata.paymentPurpose=PLATFORM_BILLING_TEST` so the platform webhook can safely no-op the smoke event.
+
+Subscriber booking checkout remains tenant-scoped:
+- `/site-admin/[siteSlug]` Stripe onboarding uses Accounts v2 + Account Links;
+- tenant Checkout uses the connected `acct_...` context only after onboarding and tenant webhook config are ready;
+- `/api/sites/payments/stripe/webhook` handles tenant booking payment events;
+- `/api/stripe/webhook` remains platform setup/subscription billing only.
+
+A Stripe Product ID such as `prod_...` is not a Checkout line item by itself. Hosted smoke tests should prefer `STRIPE_PLATFORM_TEST_PRICE_ID=price_...` and use the product ID only to help find or validate the intended Stripe product.

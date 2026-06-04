@@ -407,6 +407,9 @@ export default function AdminPage() {
         <Link href="/admin/contact-enquiries" className={`${outlineButtonClass} ${smallButtonClass}`}>
           Contact Enquiries
         </Link>
+        <Link href="/admin/billing-test" className={`${outlineButtonClass} ${smallButtonClass}`}>
+          Platform Billing Test
+        </Link>
       </section>
     </main>
   );

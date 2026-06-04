@@ -1119,3 +1119,16 @@ Window Cleaning is a supported industry offering using slug `window-cleaning`. I
 - Platform admin manages the domain workflow in `/admin/sites`: expected DNS target, expected nameservers, instructions sent, waiting for customer, propagation/check status, verified/ready/live and notes.
 - DNS instructions can be copied or sent fail-soft by transactional email. The app records send/check metadata but does not change DNS or buy domains.
 - Subscriber admin shows read-only domain status and customer-friendly next-step wording.
+
+## 2026-06-04 platform Stripe checkout test
+
+Platform admin now has a controlled `/admin/billing-test` smoke route for testing MyExperiment.club platform Stripe Checkout separately from subscriber Stripe Connect booking checkout. This route is for the business/subscriber paying MyExperiment.club, not for a subscriber business taking payments from its own customers.
+
+The test route uses the platform Stripe account only:
+- `STRIPE_SECRET_KEY`
+- `STRIPE_PLATFORM_TEST_PRICE_ID` when set
+- `STRIPE_PLATFORM_TEST_PRODUCT_ID` only as a lookup source for an active/default price
+
+Stripe Checkout line items require a `price_...` Price ID. A `prod_...` Product ID alone is not enough unless Stripe can resolve a default or active price for that product. The current test product placeholder is `prod_Udlr40KU6MrWNU`; operators should copy the matching `price_...` value into `STRIPE_PLATFORM_TEST_PRICE_ID` for the most reliable hosted smoke test.
+
+The platform test Checkout Session carries `metadata.paymentPurpose=PLATFORM_BILLING_TEST`. `/api/stripe/webhook` acknowledges that test event safely but does not mark any setup request paid unless a real setup checkout includes `setupRequestId`. Tenant booking payments remain separate through connected accounts and `/api/sites/payments/stripe/webhook`.

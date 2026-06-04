@@ -22,6 +22,9 @@ export async function POST(request: NextRequest) {
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
+      if (session.metadata?.paymentPurpose === "PLATFORM_BILLING_TEST") {
+        return NextResponse.json({ ok: true });
+      }
       const setupRequestId = session.metadata?.setupRequestId;
       if (setupRequestId) {
         const updated = await markSetupRequestPaidByCheckout({

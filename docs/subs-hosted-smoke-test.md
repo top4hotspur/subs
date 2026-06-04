@@ -1542,3 +1542,23 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
 27. Confirm platform subscription checkout and `/api/stripe/webhook` still work or are unaffected.
 28. Confirm no card details or provider secrets are visible in browser source, network JSON or admin UI.
 
+
+## Platform Stripe checkout test smoke
+
+1. Configure hosted env vars:
+   - `STRIPE_PLATFORM_TEST_PRODUCT_ID=prod_Udlr40KU6MrWNU`
+   - `STRIPE_PLATFORM_TEST_PRICE_ID=price_...` where possible.
+2. Redeploy the hosted app so env vars are loaded.
+3. Open `/admin/billing-test` as a platform admin.
+4. Confirm safe diagnostics show the platform Stripe secret is present and the test price/product values look like Stripe IDs.
+5. Click **Test platform Stripe checkout**.
+6. Confirm Stripe Checkout opens from the platform Stripe account, not a connected subscriber account.
+7. Complete the test purchase.
+8. Confirm `/admin/billing-test?checkout=success&session_id=...` loads and shows session mode, payment status, product/price and purpose.
+9. Confirm no tenant booking was created and no subscriber site was provisioned.
+10. Confirm `/api/stripe/webhook` remains the platform webhook and only marks setup requests paid when checkout metadata includes a real `setupRequestId`.
+11. Confirm `/api/sites/payments/stripe/webhook` remains the tenant booking webhook and ignores platform test checkout sessions because they are not `TENANT_BOOKING` events.
+12. Open `/site-admin/[siteSlug]` Payments/sales and confirm Stripe setup still uses Account Links, not `STRIPE_CONNECT_CLIENT_ID`.
+13. Confirm tenant booking checkout still requires a connected/onboarded `acct_...` account and `STRIPE_TENANT_WEBHOOK_SECRET` before online card prepayment can be offered publicly.
+
+If checkout fails because only a Product ID is configured, open the Stripe test product and copy the active `price_...` value into `STRIPE_PLATFORM_TEST_PRICE_ID`. Product IDs (`prod_...`) identify products; Checkout line items need prices.

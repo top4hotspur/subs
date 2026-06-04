@@ -17,6 +17,7 @@ const items: AdminNavItem[] = [
   { href: "/admin/contact-enquiries", label: "Contact Enquiries" },
   { href: "/admin/setup-requests", label: "Setup Requests" },
   { href: "/admin/sites", label: "Subscriber Sites", startsWith: "/admin/sites" },
+  { href: "/admin/billing-test", label: "Billing Test" },
 ];
 
 export function AdminPillNav() {

@@ -636,3 +636,9 @@ Subscriber admin `/site-admin/[siteSlug]` shows a read-only **Domain setup** car
 
 Domain/DNS remains manual in this milestone. There is no Route 53 registration, registrar API call, DNS provider write, AWS resource creation, automatic SSL issuance, or external DNS automation.
 
+
+## Platform billing test route
+
+Platform fulfilment can use `/admin/billing-test` to smoke-test MyExperiment.club platform Stripe Checkout without creating or modifying a setup request. This is deliberately separate from paid setup request fulfilment and separate from subscriber Stripe Connect booking payments.
+
+The billing test route uses the platform Stripe account and either `STRIPE_PLATFORM_TEST_PRICE_ID` or a price resolved from `STRIPE_PLATFORM_TEST_PRODUCT_ID`. It does not create a `TenantSite`, `SiteDomain`, `SubscriptionRecord`, booking, or Stripe connected-account charge. A successful return confirms the platform Checkout Session can be created and returned; real setup request payment state is still updated only by `/api/stripe/webhook` events that carry a real `setupRequestId`.
