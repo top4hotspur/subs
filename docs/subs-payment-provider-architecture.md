@@ -133,6 +133,8 @@ Required Stripe Connect/tenant payment config:
 
 `STRIPE_CONNECT_CLIENT_ID` is not required for the Account Links path. If the platform Stripe secret is missing, the Stripe onboarding action returns a setup-needed response and leaves the connection pending. If the tenant webhook secret is missing, connected accounts can be recorded but booking checkout remains unavailable so the app does not create payments it cannot verify.
 
+User-facing connection mode labels say `Account Link Pending` and `Account Link Connected`. The internal `OAUTH_PENDING` / `OAUTH_CONNECTED` values are retained for compatibility with existing stored rows and provider-connection guards.
+
 ## Booking flow rules
 
 Manual-only:
@@ -181,7 +183,14 @@ Webhook requirements:
 - Do not break platform subscription webhook behaviour.
 
 Current route status:
-- `POST /api/sites/payments/stripe/webhook` verifies the Stripe signature with `STRIPE_TENANT_WEBHOOK_SECRET`, maps events through metadata to `tenantSiteId` + `bookingId`, checks the booking belongs to that tenant, updates paid/failed state, and ignores duplicate paid updates.
+- `POST /api/sites/payments/stripe/webhook` verifies the Stripe signature with `STRIPE_TENANT_WEBHOOK_SECRET`, maps events through snapshot `event.data.object.metadata` to `tenantSiteId` + `bookingId`, checks the booking belongs to that tenant, updates paid/failed state, and ignores duplicate paid updates.
+- Stripe dashboard destination required for tenant booking payments:
+  - Scope/listen mode: `Connected accounts` / `Events on Connected accounts`, not `Your account`.
+  - Event payload style: `snapshot events`, not `thin events`.
+  - Endpoint URL: `https://myexperiment.club/api/sites/payments/stripe/webhook`.
+  - Required events: `checkout.session.completed`, `checkout.session.expired`, `payment_intent.payment_failed`.
+  - Signing secret env var: `STRIPE_TENANT_WEBHOOK_SECRET` from this connected-accounts snapshot destination.
+- Thin events are not supported by the current tenant booking handler. Thin event types such as `v1.checkout.session.completed` are rejected with `TENANT_STRIPE_WEBHOOK_THIN_EVENTS_NOT_SUPPORTED` so the platform does not fake successful payment handling without booking metadata.
 - `POST /api/sites/payments/square/webhook` remains a `501` verification-required stub.
 
 ## Slot blocking and pending payment cleanup

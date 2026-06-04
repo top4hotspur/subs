@@ -17,6 +17,21 @@ import {
   getStripeTenantCheckoutConfig,
 } from "@/lib/billing/stripe-tenant-checkout";
 
+const TENANT_BOOKING_SNAPSHOT_EVENT_TYPES = new Set([
+  "checkout.session.completed",
+  "checkout.session.expired",
+  "payment_intent.payment_failed",
+]);
+
+function hasSnapshotEventObject(event: Stripe.Event): boolean {
+  const object = (event.data as { object?: unknown }).object;
+  return Boolean(object && typeof object === "object");
+}
+
+function isLikelyThinEvent(event: Stripe.Event): boolean {
+  return event.type.startsWith("v1.") || !hasSnapshotEventObject(event);
+}
+
 async function sendBookingPaymentConfirmationEmails(
   bookingId: string,
   tenantSiteId: string,
@@ -147,6 +162,30 @@ export async function POST(request: NextRequest) {
     const payload = await request.text();
     const stripe = getStripeClientForTenantPayments(config);
     const event = stripe.webhooks.constructEvent(payload, signature, config.webhookSecret);
+
+    if (isLikelyThinEvent(event)) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "TENANT_STRIPE_WEBHOOK_THIN_EVENTS_NOT_SUPPORTED",
+          message:
+            "This tenant booking webhook expects Stripe snapshot events for connected accounts. Configure the Stripe destination for snapshot events, not thin events.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (TENANT_BOOKING_SNAPSHOT_EVENT_TYPES.has(event.type) && !hasSnapshotEventObject(event)) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "TENANT_STRIPE_WEBHOOK_SNAPSHOT_OBJECT_MISSING",
+          message:
+            "Tenant booking payment events must include the full Stripe object in event.data.object so booking metadata can be verified.",
+        },
+        { status: 400 },
+      );
+    }
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;

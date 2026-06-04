@@ -1511,6 +1511,10 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
 4. Click the Stripe onboarding action. If `STRIPE_SECRET_KEY` is not configured, confirm the UI shows a clear setup-needed message and does not mark the account connected. `STRIPE_CONNECT_CLIENT_ID` is not required for Account Links.
 5. If Stripe Account Links env is configured, onboard a Stripe test connected account and confirm the site-admin page returns with connection status connected or needs attention. It should store a connected account ID only, not access tokens or secret keys.
 6. Confirm `STRIPE_TENANT_WEBHOOK_SECRET` is configured on the hosted app and the Stripe dashboard webhook endpoint points to `https://myexperiment.club/api/sites/payments/stripe/webhook` for tenant booking payment events.
+   - Stripe dashboard scope: `Connected accounts` / `Events on Connected accounts`.
+   - Event payload style: `snapshot events`, not thin events.
+   - Required events: `checkout.session.completed`, `checkout.session.expired`, `payment_intent.payment_failed`.
+   - Do not use a `Your account` destination for tenant booking payments; `/api/stripe/webhook` is the separate platform subscription webhook.
 7. Select `Square` and repeat the OAuth setup-needed check. Square checkout is not live in this pass.
 8. Select PayPal, SumUp, Zettle, Worldpay and Other in turn and confirm each uses assisted setup/manual guidance rather than fake OAuth success.
 9. Mark assisted setup pending for a non-OAuth provider and confirm only non-secret account reference/notes are saved.
@@ -1541,6 +1545,14 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
 26. Confirm no public booking redirects to the platform setup/subscription Stripe Checkout.
 27. Confirm platform subscription checkout and `/api/stripe/webhook` still work or are unaffected.
 28. Confirm no card details or provider secrets are visible in browser source, network JSON or admin UI.
+
+Tenant Stripe webhook event-mode check:
+1. In Stripe sandbox, open Developers/Workbench > Webhooks/Event destinations.
+2. Open the tenant booking endpoint for `https://myexperiment.club/api/sites/payments/stripe/webhook`.
+3. Confirm the destination listens to `Connected accounts` events.
+4. Confirm the destination uses snapshot events. The current tenant booking handler reads `event.data.object.metadata`; thin events such as `v1.checkout.session.completed` are not supported by this route.
+5. Confirm the enabled event list is exactly the tenant booking payment lifecycle set unless a future implementation expands it: `checkout.session.completed`, `checkout.session.expired`, `payment_intent.payment_failed`.
+6. If a thin event is delivered accidentally, confirm the response is not a fake success and reports `TENANT_STRIPE_WEBHOOK_THIN_EVENTS_NOT_SUPPORTED`.
 
 
 ## Platform Stripe checkout test smoke

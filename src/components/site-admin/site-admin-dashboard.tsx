@@ -638,6 +638,24 @@ function validationDetailsToMessage(details: unknown): string | null {
   return uniqueMessages.length > 0 ? uniqueMessages.join(" ") : null;
 }
 
+function formatPaymentConnectionMode(mode?: string | null): string {
+  if (!mode) return "Not started";
+  switch (mode) {
+    case "OAUTH_PENDING":
+      return "Account Link Pending";
+    case "OAUTH_CONNECTED":
+      return "Account Link Connected";
+    case "ASSISTED_SETUP":
+      return "Assisted setup";
+    case "MANUAL_ONLY":
+      return "Manual only";
+    case "DISCONNECTED":
+      return "Disconnected";
+    default:
+      return mode;
+  }
+}
+
 function formatAdminServicePrice(value: string): string {
   const amount = Number(value);
   if (!Number.isFinite(amount)) return "Price not set";
@@ -2287,7 +2305,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                   <p className="font-semibold text-slate-950">Provider connection status</p>
                   <div className="mt-2 grid gap-1 sm:grid-cols-2">
                     <p><span className="font-semibold">Provider:</span> {paymentProviderGuidance.provider}</p>
-                    <p><span className="font-semibold">Connection mode:</span> {selectedPaymentConnection?.connectionMode ?? (paymentProviderGuidance.connectionApproach === "OAUTH_CONNECT" ? "OAUTH_PENDING" : "ASSISTED_SETUP")}</p>
+                    <p><span className="font-semibold">Connection mode:</span> {formatPaymentConnectionMode(selectedPaymentConnection?.connectionMode ?? (paymentProviderGuidance.connectionApproach === "OAUTH_CONNECT" ? "OAUTH_PENDING" : "ASSISTED_SETUP"))}</p>
                     <p><span className="font-semibold">Status:</span> {selectedPaymentConnection?.connectionStatus ?? "NOT_STARTED"}</p>
                     <p><span className="font-semibold">Environment:</span> {selectedPaymentConnection?.environment ?? "TEST"}</p>
                     <p><span className="font-semibold">Public checkout enabled:</span> {tenantPaymentCheckoutConnected ? "Yes" : "No"}</p>

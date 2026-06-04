@@ -592,9 +592,17 @@ Stripe and Square expose provider connection route foundations:
 - `POST /api/site-admin/[siteSlug]/payments/square/connect/start`
 - `GET /api/site-admin/[siteSlug]/payments/square/connect/callback`
 
-Stripe uses Accounts v2 plus Stripe-hosted Account Links. The start route requires the current tenant site-admin session, creates or reuses a connected account ID, stores only non-secret account metadata, and redirects to Stripe onboarding. The refresh URL creates a new Account Link, and the return callback retrieves the account to update connected/pending/needs-attention status. `STRIPE_CONNECT_CLIENT_ID` is not required for this path. Square remains an OAuth placeholder until a provider-specific safe connection path is completed. PayPal, SumUp/Zettle, Worldpay and Other remain assisted setup/manual guidance only.
+Stripe uses Accounts v2 plus Stripe-hosted Account Links. The start route requires the current tenant site-admin session, creates or reuses a connected account ID, stores only non-secret account metadata, and redirects to Stripe onboarding. The refresh URL creates a new Account Link, and the return callback retrieves the account to update connected/pending/needs-attention status. User-facing labels say Account Link Pending / Account Link Connected, while existing internal `OAUTH_PENDING` / `OAUTH_CONNECTED` values remain for compatibility. `STRIPE_CONNECT_CLIENT_ID` is not required for this path. Square remains an OAuth placeholder until a provider-specific safe connection path is completed. PayPal, SumUp/Zettle, Worldpay and Other remain assisted setup/manual guidance only.
 
 Future go-live checklist for provider checkout must include secure credential storage or provider-managed onboarding, test/live mode, provider-specific webhook signature validation, tenant/booking mapping, idempotency and refund/status handling. Tenant webhook routes now live at `/api/sites/payments/stripe/webhook` and `/api/sites/payments/square/webhook`; Stripe verifies `STRIPE_TENANT_WEBHOOK_SECRET`, while Square remains a `501` verification-required stub.
+
+Stripe tenant booking webhook setup:
+- URL: `https://myexperiment.club/api/sites/payments/stripe/webhook`
+- Stripe scope: `Connected accounts` / `Events on Connected accounts`
+- Payload style: `snapshot events`, not thin events
+- Required events: `checkout.session.completed`, `checkout.session.expired`, `payment_intent.payment_failed`
+
+The tenant Stripe handler reads the full snapshot object metadata from `event.data.object` to verify `paymentPurpose=TENANT_BOOKING`, `tenantSiteId` and `bookingId`. Thin events are rejected rather than acknowledged because they do not include the full object needed by the current booking updater.
 
 Booking guardrails remain conservative. A connected provider account does not automatically mean checkout is live. If card prepayment is required and a provider is connected but booking checkout has not been implemented, public booking stays blocked with customer-facing copy telling the customer that online payment setup is connected but checkout is not enabled yet.
 

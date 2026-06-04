@@ -983,7 +983,7 @@ Safe provider route foundations:
 
 The Stripe start route requires the current site-admin session, creates or reuses a Stripe connected account (`acct_...`) using the platform `STRIPE_SECRET_KEY`, stores the connected account ID, and creates a Stripe-hosted Account Link for onboarding. The Account Link refresh URL creates a fresh Account Link. The return callback retrieves the connected account from Stripe and updates the tenant connection status. No OAuth access tokens are requested or stored.
 
-Tenant payment webhook stubs now exist at `/api/sites/payments/stripe/webhook` and `/api/sites/payments/square/webhook`; both return `501` until provider signature verification, tenant booking mapping and idempotency are implemented.
+Tenant payment webhook routes are provider-specific. `/api/sites/payments/stripe/webhook` verifies Stripe tenant booking payment events, while `/api/sites/payments/square/webhook` remains a `501` verification-required stub until Square signature verification and booking mapping are implemented.
 
 Booking guardrails now distinguish a connected provider account from checkout availability. If a provider account is connected but checkout is not implemented, required online prepayment remains blocked with customer-facing copy: `Online payment setup is connected but checkout is not enabled yet. Please contact the business to book.`
 
@@ -1004,6 +1004,7 @@ Booking checkout flow:
 - Stripe Checkout is created in the connected account context using the tenant `acct_...` ID. No card details are stored by MyExperiment.club.
 - The customer return page shows payment-received/cancelled/confirming copy, but paid status is trusted only from the tenant Stripe webhook.
 - The tenant webhook verifies `STRIPE_TENANT_WEBHOOK_SECRET`, validates `tenantSiteId` + `bookingId`, stores Stripe session/payment-intent references and marks paid/failed without touching platform subscription records.
+- The tenant webhook expects Stripe connected-accounts **snapshot events** because it reads the full Checkout Session / PaymentIntent metadata from `event.data.object`. It must be configured as a `Connected accounts` / `Events on Connected accounts` destination, not a `Your account` platform webhook and not a thin-event destination.
 - Abandoned checkout may leave a pending held slot until Stripe expiry/failure webhooks or a future cleanup job releases it.
 - Pending Stripe checkout lifecycle is now bounded. The app stores connected account ID and Checkout expiry when available; pending online-card bookings block availability only until Stripe expiry or a 30-minute fallback hold window. Site-admin can use `Cancel expired pending payment` as a manual fallback when webhook expiry is unavailable.
 - Automated refunds are not live yet. Paid Stripe bookings show provider references and manual refund guidance; future refund automation needs provider refund IDs/idempotency before it can safely mark bookings refunded from Stripe.
@@ -1012,6 +1013,14 @@ Required env/config for hosted tenant Stripe checkout:
 - `STRIPE_SECRET_KEY`
 - `STRIPE_TENANT_WEBHOOK_SECRET`
 - `NEXT_PUBLIC_SITE_URL`
+
+Required Stripe tenant webhook destination:
+- URL: `https://myexperiment.club/api/sites/payments/stripe/webhook`
+- Scope: `Connected accounts` / `Events on Connected accounts`
+- Event payload style: `snapshot events`
+- Events: `checkout.session.completed`, `checkout.session.expired`, `payment_intent.payment_failed`
+
+Do not point thin events at the tenant booking webhook. Thin events such as `v1.checkout.session.completed` require a separate retrieval-based handler and are rejected by the current route with `TENANT_STRIPE_WEBHOOK_THIN_EVENTS_NOT_SUPPORTED`.
 
 `STRIPE_CONNECT_CLIENT_ID` is not required for the first Stripe Account Links implementation. The `acct_...` value stored on `CustomerSitePaymentProviderConnection.providerAccountId` is a Stripe connected account ID, not a client ID.
 
