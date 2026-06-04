@@ -2,6 +2,9 @@ import { AdminLogoutButton } from "@/components/admin/admin-logout-button";
 import { AdminPillNav } from "@/components/admin/admin-pill-nav";
 import { PlatformBillingTestClient } from "@/components/admin/platform-billing-test-client";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function AdminBillingTestPage({
   searchParams,
 }: {

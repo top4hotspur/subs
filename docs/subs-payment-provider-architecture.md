@@ -126,6 +126,12 @@ Current route foundation:
 
 These routes require a signed-in site admin for the matching tenant. Stripe now uses Accounts v2 plus Account Links: the start route creates or reuses a connected account ID (`acct_...`), stores that non-secret account metadata, and redirects the business admin to Stripe-hosted onboarding. The Account Link refresh URL creates a fresh Account Link. The return callback retrieves the connected account from Stripe and updates connection status. Raw access tokens are not requested, stored or exposed client-side.
 
+Stripe Accounts v2 connected-account creation uses the platform `STRIPE_SECRET_KEY` server-side and includes required default responsibilities:
+- `defaults.responsibilities.fees_collector = stripe`
+- `defaults.responsibilities.losses_collector = stripe`
+
+If Stripe returns `invalid_fields` for these responsibility fields, site-admin shows a safe setup error and does not mark the provider connected or create fake checkout readiness.
+
 Required Stripe Connect/tenant payment config:
 - `STRIPE_SECRET_KEY` for the MyExperiment.club platform Stripe account.
 - `STRIPE_TENANT_WEBHOOK_SECRET` for `/api/sites/payments/stripe/webhook`.
@@ -254,6 +260,9 @@ Platform billing test:
 - uses the platform `STRIPE_SECRET_KEY` only;
 - uses `STRIPE_PLATFORM_TEST_PRICE_ID` when available;
 - can look up an active/default price from `STRIPE_PLATFORM_TEST_PRODUCT_ID` as a fallback;
+- reads safe diagnostics at runtime with no-store caching and masked product/price IDs;
+- validates the configured price exists and is active before creating Checkout;
+- warns if the optional product ID does not match the configured price product but still uses the explicit price;
 - creates Checkout Sessions without `stripeAccount` / connected-account context;
 - returns to `/admin/billing-test` and does not provision tenant sites;
 - sets `metadata.paymentPurpose=PLATFORM_BILLING_TEST` so the platform webhook can safely no-op the smoke event.
@@ -264,4 +273,4 @@ Subscriber booking checkout remains tenant-scoped:
 - `/api/sites/payments/stripe/webhook` handles tenant booking payment events;
 - `/api/stripe/webhook` remains platform setup/subscription billing only.
 
-A Stripe Product ID such as `prod_...` is not a Checkout line item by itself. Hosted smoke tests should prefer `STRIPE_PLATFORM_TEST_PRICE_ID=price_...` and use the product ID only to help find or validate the intended Stripe product.
+A Stripe Product ID such as `prod_...` is not a Checkout line item by itself. Hosted smoke tests should prefer `STRIPE_PLATFORM_TEST_PRICE_ID=price_...` and use the product ID only to help find or validate the intended Stripe product. If hosted diagnostics still show missing env vars after Amplify configuration, verify the correct app/branch env, redeploy, and confirm the runtime diagnostic timestamp updates.

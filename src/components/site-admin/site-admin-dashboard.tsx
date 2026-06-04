@@ -620,6 +620,9 @@ function toMessage(error: string, status: number, details?: unknown): string {
   if (error === "STRIPE_ACCOUNT_LINK_CREATE_FAILED") {
     return "Stripe could not create an onboarding link. Please try again or check Stripe setup.";
   }
+  if (error === "STRIPE_ACCOUNT_RESPONSIBILITIES_INVALID") {
+    return "Stripe connected account could not be created. Stripe says required account responsibility fields are missing or invalid. Please check platform Connect setup.";
+  }
   if (error === "SQUARE_OAUTH_NOT_CONFIGURED") {
     return "Square OAuth is not configured yet. No account was connected.";
   }
@@ -2362,6 +2365,11 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                   <p className="mt-2 text-sky-900">
                     Values show presence/status only. Secret values are never shown here.
                   </p>
+                  {!stripeDiagnostics.stripeTenantWebhookSecretConfigured ? (
+                    <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 font-semibold text-amber-950">
+                      Tenant Stripe booking checkout also needs `STRIPE_TENANT_WEBHOOK_SECRET` configured on the hosted app.
+                    </p>
+                  ) : null}
                 </div>
               ) : null}
             </div>

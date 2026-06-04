@@ -12,6 +12,10 @@ export type PlatformStripeTestPriceSelection = {
   productId: string | null;
   mode: "payment" | "subscription";
   source: "PRICE_ENV" | "PRODUCT_DEFAULT_PRICE" | "PRODUCT_ACTIVE_PRICE";
+  active: boolean;
+  currency: string | null;
+  unitAmount: number | null;
+  warnings: string[];
 };
 
 function looksLikeStripeSecret(value: string | null | undefined): boolean {
@@ -24,6 +28,12 @@ function looksLikeStripePriceId(value: string | null | undefined): boolean {
 
 function looksLikeStripeProductId(value: string | null | undefined): boolean {
   return Boolean(value && value.startsWith("prod_"));
+}
+
+function maskStripeId(value: string): string | null {
+  if (!value) return null;
+  if (value.length <= 10) return `${value.slice(0, 4)}...`;
+  return `${value.slice(0, 8)}...${value.slice(-4)}`;
 }
 
 export function getPlatformStripeTestCheckoutConfig(): PlatformStripeTestCheckoutConfig | null {
@@ -52,13 +62,25 @@ export async function resolvePlatformStripeTestPrice(
   stripe: Stripe,
   config: PlatformStripeTestCheckoutConfig,
 ): Promise<PlatformStripeTestPriceSelection> {
+  const warnings: string[] = [];
   if (config.priceId) {
     const price = await stripe.prices.retrieve(config.priceId);
+    const priceProductId = typeof price.product === "string" ? price.product : price.product?.id ?? null;
+    if (!price.active) {
+      throw new Error("STRIPE_PLATFORM_TEST_PRICE_INACTIVE");
+    }
+    if (config.productId && priceProductId && config.productId !== priceProductId) {
+      warnings.push("STRIPE_PLATFORM_TEST_PRODUCT_ID does not match the configured price product. The price is being used.");
+    }
     return {
       priceId: price.id,
-      productId: typeof price.product === "string" ? price.product : price.product?.id ?? config.productId,
+      productId: priceProductId ?? config.productId,
       mode: checkoutModeForPrice(price),
       source: "PRICE_ENV",
+      active: price.active,
+      currency: price.currency ?? null,
+      unitAmount: price.unit_amount ?? null,
+      warnings,
     };
   }
 
@@ -79,6 +101,10 @@ export async function resolvePlatformStripeTestPrice(
         productId: product.id,
         mode: checkoutModeForPrice(price),
         source: "PRODUCT_DEFAULT_PRICE",
+        active: price.active,
+        currency: price.currency ?? null,
+        unitAmount: price.unit_amount ?? null,
+        warnings,
       };
     }
   }
@@ -97,6 +123,10 @@ export async function resolvePlatformStripeTestPrice(
     productId: product.id,
     mode: checkoutModeForPrice(price),
     source: "PRODUCT_ACTIVE_PRICE",
+    active: price.active,
+    currency: price.currency ?? null,
+    unitAmount: price.unit_amount ?? null,
+    warnings,
   };
 }
 
@@ -119,9 +149,18 @@ export function platformStripeTestConfigHealth() {
     stripeSecretLooksLikeStripeSecret: looksLikeStripeSecret(secretKey),
     testProductPresent: Boolean(productId),
     testProductLooksLikeStripeProductId: looksLikeStripeProductId(productId),
+    testProductMasked: maskStripeId(productId),
     testPricePresent: Boolean(priceId),
     testPriceLooksLikeStripePriceId: looksLikeStripePriceId(priceId),
+    testPriceMasked: maskStripeId(priceId),
     configured: Boolean(looksLikeStripeSecret(secretKey) && (looksLikeStripePriceId(priceId) || looksLikeStripeProductId(productId))),
+    expectedEnvKeys: [
+      "STRIPE_SECRET_KEY",
+      "STRIPE_PLATFORM_TEST_PRICE_ID",
+      "STRIPE_PLATFORM_TEST_PRODUCT_ID",
+    ],
+    checkedAt: new Date().toISOString(),
+    nodeEnv: process.env.NODE_ENV ?? null,
     warnings,
   };
 }

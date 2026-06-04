@@ -1558,11 +1558,11 @@ Tenant Stripe webhook event-mode check:
 ## Platform Stripe checkout test smoke
 
 1. Configure hosted env vars:
-   - `STRIPE_PLATFORM_TEST_PRODUCT_ID=prod_Udlr40KU6MrWNU`
+   - `STRIPE_PLATFORM_TEST_PRODUCT_ID=prod_...`
    - `STRIPE_PLATFORM_TEST_PRICE_ID=price_...` where possible.
 2. Redeploy the hosted app so env vars are loaded.
 3. Open `/admin/billing-test` as a platform admin.
-4. Confirm safe diagnostics show the platform Stripe secret is present and the test price/product values look like Stripe IDs.
+4. Confirm safe diagnostics show the platform Stripe secret is present and the test price/product values look like Stripe IDs. Diagnostics are server-side, no-store runtime checks and show masked IDs only.
 5. Click **Test platform Stripe checkout**.
 6. Confirm Stripe Checkout opens from the platform Stripe account, not a connected subscriber account.
 7. Complete the test purchase.
@@ -1573,4 +1573,15 @@ Tenant Stripe webhook event-mode check:
 12. Open `/site-admin/[siteSlug]` Payments/sales and confirm Stripe setup still uses Account Links, not `STRIPE_CONNECT_CLIENT_ID`.
 13. Confirm tenant booking checkout still requires a connected/onboarded `acct_...` account and `STRIPE_TENANT_WEBHOOK_SECRET` before online card prepayment can be offered publicly.
 
+If `/admin/billing-test` says the price/product env vars are missing after Amplify env is set:
+1. Confirm the env vars are set on the correct Amplify app and branch.
+2. Redeploy after changing env vars so the runtime receives them.
+3. Reload `/admin/billing-test` and confirm the server-side diagnostics `Runtime checked` timestamp updates.
+4. Confirm `STRIPE_PLATFORM_TEST_PRICE_ID` starts with `price_`.
+5. Confirm `STRIPE_PLATFORM_TEST_PRODUCT_ID` starts with `prod_`.
+
 If checkout fails because only a Product ID is configured, open the Stripe test product and copy the active `price_...` value into `STRIPE_PLATFORM_TEST_PRICE_ID`. Product IDs (`prod_...`) identify products; Checkout line items need prices.
+
+Stripe Accounts v2 troubleshooting:
+- If `/site-admin/[siteSlug]` Stripe Account Links onboarding fails on `POST /v2/core/accounts` with `invalid_fields`, check the account creation payload includes `defaults.responsibilities.fees_collector` and `defaults.responsibilities.losses_collector`.
+- The current implementation sets both responsibility fields to `stripe` and does not use legacy OAuth or `STRIPE_CONNECT_CLIENT_ID`.

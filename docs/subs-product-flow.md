@@ -983,6 +983,8 @@ Safe provider route foundations:
 
 The Stripe start route requires the current site-admin session, creates or reuses a Stripe connected account (`acct_...`) using the platform `STRIPE_SECRET_KEY`, stores the connected account ID, and creates a Stripe-hosted Account Link for onboarding. The Account Link refresh URL creates a fresh Account Link. The return callback retrieves the connected account from Stripe and updates the tenant connection status. No OAuth access tokens are requested or stored.
 
+Stripe Accounts v2 connected-account creation includes the required default responsibilities (`fees_collector=stripe`, `losses_collector=stripe`). If Stripe returns `invalid_fields` for responsibility fields, the site-admin connection flow reports a safe setup error and does not mark the provider connected.
+
 Tenant payment webhook routes are provider-specific. `/api/sites/payments/stripe/webhook` verifies Stripe tenant booking payment events, while `/api/sites/payments/square/webhook` remains a `501` verification-required stub until Square signature verification and booking mapping are implemented.
 
 Booking guardrails now distinguish a connected provider account from checkout availability. If a provider account is connected but checkout is not implemented, required online prepayment remains blocked with customer-facing copy: `Online payment setup is connected but checkout is not enabled yet. Please contact the business to book.`
@@ -1138,6 +1140,6 @@ The test route uses the platform Stripe account only:
 - `STRIPE_PLATFORM_TEST_PRICE_ID` when set
 - `STRIPE_PLATFORM_TEST_PRODUCT_ID` only as a lookup source for an active/default price
 
-Stripe Checkout line items require a `price_...` Price ID. A `prod_...` Product ID alone is not enough unless Stripe can resolve a default or active price for that product. The current test product placeholder is `prod_Udlr40KU6MrWNU`; operators should copy the matching `price_...` value into `STRIPE_PLATFORM_TEST_PRICE_ID` for the most reliable hosted smoke test.
+Stripe Checkout line items require a `price_...` Price ID. A `prod_...` Product ID alone is not enough unless Stripe can resolve a default or active price for that product. Operators should copy the matching `price_...` value into `STRIPE_PLATFORM_TEST_PRICE_ID` for the most reliable hosted smoke test. Billing-test diagnostics are server-side runtime checks with no-store caching, masked IDs, expected env key names and a runtime timestamp so hosted env/deploy issues can be confirmed without exposing secrets.
 
 The platform test Checkout Session carries `metadata.paymentPurpose=PLATFORM_BILLING_TEST`. `/api/stripe/webhook` acknowledges that test event safely but does not mark any setup request paid unless a real setup checkout includes `setupRequestId`. Tenant booking payments remain separate through connected accounts and `/api/sites/payments/stripe/webhook`.

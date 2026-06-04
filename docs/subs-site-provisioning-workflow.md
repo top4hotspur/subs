@@ -594,6 +594,8 @@ Stripe and Square expose provider connection route foundations:
 
 Stripe uses Accounts v2 plus Stripe-hosted Account Links. The start route requires the current tenant site-admin session, creates or reuses a connected account ID, stores only non-secret account metadata, and redirects to Stripe onboarding. The refresh URL creates a new Account Link, and the return callback retrieves the account to update connected/pending/needs-attention status. User-facing labels say Account Link Pending / Account Link Connected, while existing internal `OAUTH_PENDING` / `OAUTH_CONNECTED` values remain for compatibility. `STRIPE_CONNECT_CLIENT_ID` is not required for this path. Square remains an OAuth placeholder until a provider-specific safe connection path is completed. PayPal, SumUp/Zettle, Worldpay and Other remain assisted setup/manual guidance only.
 
+Stripe Accounts v2 creation includes `defaults.responsibilities.fees_collector=stripe` and `defaults.responsibilities.losses_collector=stripe`, as required by the current sandbox Account Links flow. If Stripe returns `invalid_fields` for responsibility fields, the site-admin UI surfaces a safe setup error and leaves the provider unconnected.
+
 Future go-live checklist for provider checkout must include secure credential storage or provider-managed onboarding, test/live mode, provider-specific webhook signature validation, tenant/booking mapping, idempotency and refund/status handling. Tenant webhook routes now live at `/api/sites/payments/stripe/webhook` and `/api/sites/payments/square/webhook`; Stripe verifies `STRIPE_TENANT_WEBHOOK_SECRET`, while Square remains a `501` verification-required stub.
 
 Stripe tenant booking webhook setup:
@@ -650,3 +652,5 @@ Domain/DNS remains manual in this milestone. There is no Route 53 registration, 
 Platform fulfilment can use `/admin/billing-test` to smoke-test MyExperiment.club platform Stripe Checkout without creating or modifying a setup request. This is deliberately separate from paid setup request fulfilment and separate from subscriber Stripe Connect booking payments.
 
 The billing test route uses the platform Stripe account and either `STRIPE_PLATFORM_TEST_PRICE_ID` or a price resolved from `STRIPE_PLATFORM_TEST_PRODUCT_ID`. It does not create a `TenantSite`, `SiteDomain`, `SubscriptionRecord`, booking, or Stripe connected-account charge. A successful return confirms the platform Checkout Session can be created and returned; real setup request payment state is still updated only by `/api/stripe/webhook` events that carry a real `setupRequestId`.
+
+The billing test diagnostics are runtime server checks with no-store caching. If Amplify env vars were added but hosted still reports them missing, confirm the correct app/branch env, redeploy after the env change, and check the runtime diagnostic timestamp on `/admin/billing-test`.

@@ -115,6 +115,10 @@ export async function createStripeV2ConnectedAccount(input: {
     display_name: input.businessName,
     defaults: {
       currency: "gbp",
+      responsibilities: {
+        fees_collector: "stripe",
+        losses_collector: "stripe",
+      },
     },
     identity: {
       country: "GB",

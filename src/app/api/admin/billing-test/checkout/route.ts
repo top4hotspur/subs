@@ -8,12 +8,22 @@ import {
   resolvePlatformStripeTestPrice,
 } from "@/lib/billing/platform-stripe-test-checkout";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 function toCheckoutError(error: unknown) {
   if (error instanceof Error && error.message === "STRIPE_PLATFORM_TEST_PRICE_REQUIRED") {
     return NextResponse.json({
       ok: false,
       error: "STRIPE_PLATFORM_TEST_PRICE_REQUIRED",
       message: "Stripe Price ID is required for this test checkout. Open the Stripe product and copy the price_... value into STRIPE_PLATFORM_TEST_PRICE_ID.",
+    }, { status: 400 });
+  }
+  if (error instanceof Error && error.message === "STRIPE_PLATFORM_TEST_PRICE_INACTIVE") {
+    return NextResponse.json({
+      ok: false,
+      error: "STRIPE_PLATFORM_TEST_PRICE_INACTIVE",
+      message: "The configured STRIPE_PLATFORM_TEST_PRICE_ID exists but is inactive. Use an active price_... value from the platform Stripe account.",
     }, { status: 400 });
   }
   return NextResponse.json({
@@ -27,7 +37,10 @@ export async function GET() {
   if (!(await isPlatformAdminSession())) {
     return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
   }
-  return NextResponse.json({ ok: true, health: platformStripeTestConfigHealth() });
+  return NextResponse.json(
+    { ok: true, health: platformStripeTestConfigHealth() },
+    { headers: { "Cache-Control": "no-store, max-age=0" } },
+  );
 }
 
 export async function POST(request: Request) {
@@ -84,6 +97,10 @@ export async function POST(request: Request) {
       priceId: price.priceId,
       productId: price.productId,
       priceSource: price.source,
+      priceActive: price.active,
+      priceCurrency: price.currency,
+      priceUnitAmount: price.unitAmount,
+      warnings: price.warnings,
     });
   } catch (error) {
     return toCheckoutError(error);

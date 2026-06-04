@@ -5,6 +5,9 @@ import {
   getPlatformStripeTestClient,
 } from "@/lib/billing/platform-stripe-test-checkout";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET(request: Request) {
   if (!(await isPlatformAdminSession())) {
     return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });

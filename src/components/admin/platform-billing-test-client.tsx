@@ -10,9 +10,14 @@ type Health = {
   stripeSecretLooksLikeStripeSecret: boolean;
   testProductPresent: boolean;
   testProductLooksLikeStripeProductId: boolean;
+  testProductMasked: string | null;
   testPricePresent: boolean;
   testPriceLooksLikeStripePriceId: boolean;
+  testPriceMasked: string | null;
   configured: boolean;
+  expectedEnvKeys: string[];
+  checkedAt: string;
+  nodeEnv: string | null;
   warnings: string[];
 };
 
@@ -58,7 +63,7 @@ export function PlatformBillingTestClient({
     let cancelled = false;
     async function load() {
       try {
-        const response = await fetch("/api/admin/billing-test/checkout");
+        const response = await fetch("/api/admin/billing-test/checkout", { cache: "no-store" });
         const body = (await response.json()) as { ok?: boolean; health?: Health; error?: string };
         if (!cancelled && body.ok && body.health) setHealth(body.health);
       } catch {
@@ -171,9 +176,14 @@ export function PlatformBillingTestClient({
             <p><span className="font-semibold">Stripe secret looks valid:</span> {yesNo(health.stripeSecretLooksLikeStripeSecret)}</p>
             <p><span className="font-semibold">Test product present:</span> {yesNo(health.testProductPresent)}</p>
             <p><span className="font-semibold">Test product looks like prod_:</span> {yesNo(health.testProductLooksLikeStripeProductId)}</p>
+            <p><span className="font-semibold">Test product ID:</span> {health.testProductMasked ?? "-"}</p>
             <p><span className="font-semibold">Test price present:</span> {yesNo(health.testPricePresent)}</p>
             <p><span className="font-semibold">Test price looks like price_:</span> {yesNo(health.testPriceLooksLikeStripePriceId)}</p>
+            <p><span className="font-semibold">Test price ID:</span> {health.testPriceMasked ?? "-"}</p>
             <p><span className="font-semibold">Configured enough to try:</span> {yesNo(health.configured)}</p>
+            <p><span className="font-semibold">Runtime checked:</span> {health.checkedAt}</p>
+            <p><span className="font-semibold">Node env:</span> {health.nodeEnv ?? "-"}</p>
+            <p><span className="font-semibold">Expected env keys:</span> {health.expectedEnvKeys.join(", ")}</p>
             {health.warnings.length ? (
               <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
                 {health.warnings.map((warning) => <p key={warning}>{warning}</p>)}

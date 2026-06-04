@@ -19,6 +19,33 @@ function backendNotConfigured() {
   return NextResponse.json({ ok: false, error: "BACKEND_PERSISTENCE_NOT_CONFIGURED" }, { status: 503 });
 }
 
+function stripeAccountLinkErrorResponse(error: unknown) {
+  const stripeCode =
+    error && typeof error === "object" && "code" in error && typeof error.code === "string"
+      ? error.code
+      : null;
+  const stripeMessage = error instanceof Error ? error.message : "";
+  const responsibilityFieldError =
+    stripeCode === "invalid_fields" ||
+    stripeMessage.includes("defaults.responsibilities.losses_collector") ||
+    stripeMessage.includes("defaults.responsibilities.fees_collector");
+
+  if (responsibilityFieldError) {
+    return NextResponse.json({
+      ok: false,
+      error: "STRIPE_ACCOUNT_RESPONSIBILITIES_INVALID",
+      message:
+        "Stripe connected account could not be created. Stripe says required account responsibility fields are missing or invalid. Please check platform Connect setup.",
+    }, { status: 400 });
+  }
+
+  return NextResponse.json({
+    ok: false,
+    error: "STRIPE_ACCOUNT_LINK_CREATE_FAILED",
+    message: "Stripe could not create an onboarding link. Please try again or check Stripe setup.",
+  }, { status: 400 });
+}
+
 async function createStripeOnboardingLink(request: Request, siteSlug: string) {
   if (!isBackendPersistenceConfigured()) return { response: backendNotConfigured() };
   const session = await getSiteAdminSessionContext();
@@ -103,8 +130,8 @@ export async function GET(
     const result = await createStripeOnboardingLink(request, siteSlug);
     if ("response" in result) return result.response;
     return NextResponse.redirect(result.redirectUrl);
-  } catch {
-    return NextResponse.json({ ok: false, error: "STRIPE_ACCOUNT_LINK_CREATE_FAILED" }, { status: 400 });
+  } catch (error) {
+    return stripeAccountLinkErrorResponse(error);
   }
 }
 
@@ -122,11 +149,7 @@ export async function POST(
       expiresAt: result.expiresAt,
       message: "Stripe Account Links onboarding can start.",
     });
-  } catch {
-    return NextResponse.json({
-      ok: false,
-      error: "STRIPE_ACCOUNT_LINK_CREATE_FAILED",
-      message: "Stripe could not create an onboarding link. Please try again or check Stripe setup.",
-    }, { status: 400 });
+  } catch (error) {
+    return stripeAccountLinkErrorResponse(error);
   }
 }
