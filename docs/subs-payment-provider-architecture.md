@@ -286,3 +286,12 @@ Amplify runtime note: server-side Stripe vars used by Next.js SSR/API routes mus
 - `STRIPE_PLATFORM_TEST_PRICE_ID`
 - `STRIPE_PLATFORM_TEST_PRODUCT_ID`
 - `STRIPE_TENANT_WEBHOOK_SECRET`
+
+## Site-admin payment setup help and Stripe Account Links diagnostics
+
+- `/site-admin/[siteSlug]` `Payment settings` now treats `Request help setting up payments` as a real support handover, not a fake provider connection. The inline form captures contact name, email, phone, selected provider and setup notes.
+- Submitting the help request creates a tenant-scoped `CustomerSiteContactEnquiry` with source `site_admin_payment_setup_help` and attempts a fail-soft email to `PLATFORM_NOTIFICATION_EMAIL`.
+- The UI reports whether the support email was sent or whether the enquiry was saved but email delivery failed/not configured. Provider connection status is not marked connected by this action.
+- `Connect Stripe` still uses Stripe Accounts v2 + Account Links. The UI now shows a visible status/error panel near the button, including safe error codes only.
+- Safe Stripe start-route errors include `STRIPE_SECRET_KEY_MISSING`, `SITE_NOT_FOUND`, `UNAUTHORISED`, `STRIPE_ACCOUNT_CREATE_FAILED`, `STRIPE_ACCOUNT_LINK_CREATE_FAILED` and `STRIPE_ACCOUNT_LINK_URL_MISSING`.
+- User-facing connection mode labels remain `Account Link Pending` and `Account Link Connected`; internal `OAUTH_PENDING` / `OAUTH_CONNECTED` values are retained only for compatibility.

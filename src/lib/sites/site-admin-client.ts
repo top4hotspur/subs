@@ -164,6 +164,14 @@ export type SiteAdminStripeDiagnostics = {
   checkoutReady: boolean;
 };
 
+export type SiteAdminPaymentSetupHelpInput = {
+  name: string;
+  email: string;
+  phone?: string | null;
+  provider: string;
+  message: string;
+};
+
 async function parseJsonSafe(response: Response): Promise<unknown> {
   try {
     return await response.json();
@@ -281,17 +289,58 @@ export async function startSiteAdminPaymentProviderConnect(
       method: "POST",
     });
     const body = (await parseJsonSafe(response)) as
-      | { ok?: boolean; redirectUrl?: string; message?: string; error?: string; details?: unknown }
+      | { ok?: boolean; redirectUrl?: string; url?: string; accountLinkUrl?: string; message?: string; error?: string; details?: unknown }
       | null;
     if (!response.ok || !body?.ok) {
       return {
         ok: false,
         error: body?.error ?? "SITE_ADMIN_PAYMENT_CONNECT_START_FAILED",
         status: response.status,
-        details: body?.message ?? body?.details,
+        details: body?.details ?? body?.message,
       };
     }
-    return { ok: true, redirectUrl: body.redirectUrl, message: body.message };
+    return { ok: true, redirectUrl: body.redirectUrl ?? body.url ?? body.accountLinkUrl, message: body.message };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function sendSiteAdminPaymentSetupHelp(
+  siteSlug: string,
+  input: SiteAdminPaymentSetupHelpInput,
+): Promise<ClientResult<{ enquiryId: string; emailSent: boolean; emailStatus: string; message?: string }>> {
+  try {
+    const response = await fetch(`/api/site-admin/${encodeURIComponent(siteSlug)}/payments/help`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    const body = (await parseJsonSafe(response)) as
+      | {
+          ok?: boolean;
+          enquiryId?: string;
+          emailSent?: boolean;
+          emailStatus?: string;
+          message?: string;
+          error?: string;
+          details?: unknown;
+        }
+      | null;
+    if (!response.ok || !body?.ok || !body.enquiryId) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_PAYMENT_HELP_FAILED",
+        status: response.status,
+        details: body?.details ?? body?.message,
+      };
+    }
+    return {
+      ok: true,
+      enquiryId: body.enquiryId,
+      emailSent: Boolean(body.emailSent),
+      emailStatus: body.emailStatus ?? "UNKNOWN",
+      message: body.message,
+    };
   } catch {
     return { ok: false, error: "NETWORK_ERROR", status: 0 };
   }

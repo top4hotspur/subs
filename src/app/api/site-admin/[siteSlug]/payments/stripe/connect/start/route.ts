@@ -7,6 +7,7 @@ import {
   getStripeTenantCheckoutConfig,
   isStripeAccountLinksConfigured,
   retrieveStripeV2ConnectedAccount,
+  type StripeConnectedAccountSummary,
 } from "@/lib/billing/stripe-tenant-checkout";
 import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
 import {
@@ -19,41 +20,59 @@ function backendNotConfigured() {
   return NextResponse.json({ ok: false, error: "BACKEND_PERSISTENCE_NOT_CONFIGURED" }, { status: 503 });
 }
 
-function stripeAccountLinkErrorResponse(error: unknown) {
+function safeStripeErrorDetails(error: unknown) {
   const stripeCode =
     error && typeof error === "object" && "code" in error && typeof error.code === "string"
       ? error.code
       : null;
   const stripeMessage = error instanceof Error ? error.message : "";
-  const responsibilityFieldError =
-    stripeCode === "invalid_fields" ||
-    stripeMessage.includes("defaults.responsibilities.losses_collector") ||
-    stripeMessage.includes("defaults.responsibilities.fees_collector");
+  return {
+    stripeCode,
+    message: stripeMessage || null,
+  };
+}
 
-  if (responsibilityFieldError) {
-    return NextResponse.json({
-      ok: false,
-      error: "STRIPE_ACCOUNT_RESPONSIBILITIES_INVALID",
-      message:
-        "Stripe connected account could not be created. Stripe says required account responsibility fields are missing or invalid. Please check platform Connect setup.",
-    }, { status: 400 });
-  }
-
+function stripeErrorResponse(errorCode: string, message: string, status: number, error?: unknown) {
   return NextResponse.json({
     ok: false,
-    error: "STRIPE_ACCOUNT_LINK_CREATE_FAILED",
-    message: "Stripe could not create an onboarding link. Please try again or check Stripe setup.",
-  }, { status: 400 });
+    error: errorCode,
+    message,
+    details: error ? safeStripeErrorDetails(error) : undefined,
+  }, { status });
+}
+
+function stripeAccountCreateErrorResponse(error: unknown) {
+  const { stripeCode, message: stripeMessage } = safeStripeErrorDetails(error);
+  const responsibilityFieldError =
+    stripeCode === "invalid_fields" ||
+    (stripeMessage ?? "").includes("defaults.responsibilities.losses_collector") ||
+    (stripeMessage ?? "").includes("defaults.responsibilities.fees_collector");
+
+  if (responsibilityFieldError) {
+    return stripeErrorResponse(
+      "STRIPE_ACCOUNT_RESPONSIBILITIES_INVALID",
+      "Stripe connected account could not be created. Stripe says required account responsibility fields are missing or invalid. Please check platform Connect setup.",
+      400,
+      error,
+    );
+  }
+
+  return stripeErrorResponse(
+    "STRIPE_ACCOUNT_CREATE_FAILED",
+    "Stripe could not create a connected account. Please try again or check Stripe Connect setup.",
+    400,
+    error,
+  );
 }
 
 async function createStripeOnboardingLink(request: Request, siteSlug: string) {
   if (!isBackendPersistenceConfigured()) return { response: backendNotConfigured() };
   const session = await getSiteAdminSessionContext();
-  if (!session) return { response: NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 }) };
+  if (!session) return { response: NextResponse.json({ ok: false, error: "UNAUTHORISED" }, { status: 403 }) };
   const site = await getTenantSiteBySlug(siteSlug);
   if (!site) return { response: NextResponse.json({ ok: false, error: "SITE_NOT_FOUND" }, { status: 404 }) };
   if (session.tenantSiteId !== site.id || session.tenantSlug !== site.slug) {
-    return { response: NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 }) };
+    return { response: NextResponse.json({ ok: false, error: "UNAUTHORISED" }, { status: 403 }) };
   }
 
   if (!isStripeAccountLinksConfigured()) {
@@ -68,7 +87,7 @@ async function createStripeOnboardingLink(request: Request, siteSlug: string) {
     return {
       response: NextResponse.json({
         ok: false,
-        error: "STRIPE_ACCOUNT_LINKS_NOT_CONFIGURED",
+        error: "STRIPE_SECRET_KEY_MISSING",
         message: "Stripe Account Links onboarding is not configured yet. Add a valid platform STRIPE_SECRET_KEY.",
       }, { status: 501 }),
     };
@@ -76,14 +95,25 @@ async function createStripeOnboardingLink(request: Request, siteSlug: string) {
 
   const existing = await getPaymentProviderConnection(site.id, "STRIPE");
   let connectedAccountId = existing?.providerAccountId?.startsWith("acct_") ? existing.providerAccountId : null;
-  let accountSummary = connectedAccountId ? await retrieveStripeV2ConnectedAccount(connectedAccountId) : null;
+  let accountSummary: StripeConnectedAccountSummary | null = null;
+  if (connectedAccountId) {
+    try {
+      accountSummary = await retrieveStripeV2ConnectedAccount(connectedAccountId);
+    } catch {
+      connectedAccountId = null;
+    }
+  }
   if (!accountSummary) {
-    accountSummary = await createStripeV2ConnectedAccount({
-      siteSlug: site.slug,
-      tenantSiteId: site.id,
-      businessName: site.displayName,
-      contactEmail: null,
-    });
+    try {
+      accountSummary = await createStripeV2ConnectedAccount({
+        siteSlug: site.slug,
+        tenantSiteId: site.id,
+        businessName: site.displayName,
+        contactEmail: null,
+      });
+    } catch (error) {
+      return { response: stripeAccountCreateErrorResponse(error) };
+    }
     connectedAccountId = accountSummary.id;
   }
   const accountId = connectedAccountId ?? accountSummary.id;
@@ -109,11 +139,33 @@ async function createStripeOnboardingLink(request: Request, siteSlug: string) {
   const baseUrl = getSiteUrl(new URL(request.url).origin);
   const refreshUrl = `${baseUrl}/api/site-admin/${encodeURIComponent(site.slug)}/payments/stripe/connect/start`;
   const returnUrl = `${baseUrl}/api/site-admin/${encodeURIComponent(site.slug)}/payments/stripe/connect/callback?account=${encodeURIComponent(accountId)}`;
-  const accountLink = await createStripeV2AccountLink({
-    connectedAccountId: accountId,
-    refreshUrl,
-    returnUrl,
-  });
+  let accountLink;
+  try {
+    accountLink = await createStripeV2AccountLink({
+      connectedAccountId: accountId,
+      refreshUrl,
+      returnUrl,
+    });
+  } catch (error) {
+    return {
+      response: stripeErrorResponse(
+        "STRIPE_ACCOUNT_LINK_CREATE_FAILED",
+        "Stripe could not create an onboarding link. Please try again or check Stripe setup.",
+        400,
+        error,
+      ),
+    };
+  }
+
+  if (!accountLink.url) {
+    return {
+      response: stripeErrorResponse(
+        "STRIPE_ACCOUNT_LINK_URL_MISSING",
+        "Stripe created an Account Link response without an onboarding URL.",
+        502,
+      ),
+    };
+  }
 
   return {
     redirectUrl: accountLink.url,
@@ -131,7 +183,12 @@ export async function GET(
     if ("response" in result) return result.response;
     return NextResponse.redirect(result.redirectUrl);
   } catch (error) {
-    return stripeAccountLinkErrorResponse(error);
+    return stripeErrorResponse(
+      "STRIPE_ACCOUNT_LINK_CREATE_FAILED",
+      "Stripe could not create an onboarding link. Please try again or check Stripe setup.",
+      400,
+      error,
+    );
   }
 }
 
@@ -150,6 +207,11 @@ export async function POST(
       message: "Stripe Account Links onboarding can start.",
     });
   } catch (error) {
-    return stripeAccountLinkErrorResponse(error);
+    return stripeErrorResponse(
+      "STRIPE_ACCOUNT_LINK_CREATE_FAILED",
+      "Stripe could not create an onboarding link. Please try again or check Stripe setup.",
+      400,
+      error,
+    );
   }
 }

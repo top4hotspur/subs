@@ -656,3 +656,7 @@ The billing test route uses the platform Stripe account and either `STRIPE_PLATF
 The billing test diagnostics are runtime server checks with no-store caching. If Amplify env vars were added but hosted still reports them missing, confirm the correct app/branch env, redeploy after the env change, and check the runtime diagnostic timestamp on `/admin/billing-test`.
 
 Amplify builds generate `.env.production` explicitly in `amplify.yml`. New server-side env vars must be added to that preBuild list or hosted SSR/API routes will not see them even when the Amplify UI shows them configured. The platform billing test vars and tenant webhook secret are now included there.
+
+## Payment setup fulfilment support
+
+Provisioned subscriber sites expose payment setup as a tenant-owned business-admin task. Stripe onboarding uses Account Links. If a business needs help choosing or configuring Square, Stripe, PayPal, SumUp/Zettle, Worldpay or another provider, the business admin can submit an inline payment help request. The request is stored as a tenant-scoped contact enquiry and support email delivery is fail-soft, so the request is not lost if email is temporarily unavailable.

@@ -1148,3 +1148,9 @@ The test route uses the platform Stripe account only:
 Stripe Checkout line items require a `price_...` Price ID. A `prod_...` Product ID alone is not enough unless Stripe can resolve a default or active price for that product. Operators should copy the matching `price_...` value into `STRIPE_PLATFORM_TEST_PRICE_ID` for the most reliable hosted smoke test. Billing-test diagnostics are server-side runtime checks with no-store caching, masked IDs, expected env key names and a runtime timestamp so hosted env/deploy issues can be confirmed without exposing secrets.
 
 The platform test Checkout Session carries `metadata.paymentPurpose=PLATFORM_BILLING_TEST`. `/api/stripe/webhook` acknowledges that test event safely but does not mark any setup request paid unless a real setup checkout includes `setupRequestId`. Tenant booking payments remain separate through connected accounts and `/api/sites/payments/stripe/webhook`.
+
+## Payment setup help flow
+
+Business-owner `Payment settings` keeps Stripe Account Links separate from assisted setup. `Connect Stripe` creates/reuses a tenant Stripe connected account and redirects to Stripe-hosted onboarding. `Request help setting up payments` opens an inline help form, creates a tenant-scoped support/contact enquiry, and fail-soft emails MyExperiment.club support. This action does not mark a provider as connected and does not fake payment capability.
+
+The normal status wording is business-owner friendly: `Not connected`, `Stripe setup started`, `More information needed in Stripe`, `Connected - final checks still needed`, and `Ready to take online payments`. Internal compatibility values such as `OAUTH_PENDING` remain implementation details only.

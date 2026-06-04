@@ -37,13 +37,14 @@ import {
   createSiteAdminCustomerCampaign,
   sendSiteAdminCustomerCampaign,
   updateSiteAdminCustomerCampaign,
-  saveSiteAdminPaymentProviderConnection,
+  sendSiteAdminPaymentSetupHelp,
   startSiteAdminPaymentProviderConnect,
   type SiteAdminCustomerCampaign,
   type SiteAdminCustomerCampaignInput,
   type SiteAdminCrmCustomer,
   type SiteAdminCrmEnquiry,
   type SiteAdminPaymentProviderConnection,
+  type SiteAdminPaymentSetupHelpInput,
   type SiteAdminStripeDiagnostics,
 } from "@/lib/sites/site-admin-client";
 import { outlineButtonClass, primaryButtonClass, smallButtonClass } from "@/lib/ui/button-styles";
@@ -355,6 +356,13 @@ type BookingCancellationDraft = {
   refundAction: "CANCEL_ONLY" | "MANUAL_REFUND_HANDLED" | "NO_REFUND";
 };
 
+type PaymentConnectStatus = {
+  state: "loading" | "redirecting" | "success" | "error";
+  title: string;
+  message: string;
+  errorCode?: string;
+};
+
 function findRotaDay(
   rotaDays: RotaDayDraft[],
   staffMemberId: string,
@@ -577,10 +585,13 @@ function toMessage(error: string, status: number, details?: unknown): string {
   const validationMessage = validationDetailsToMessage(details);
   if (validationMessage) return validationMessage;
   if (typeof details === "string" && details.trim()) return details;
+  if (details && typeof details === "object" && "message" in details && typeof details.message === "string") {
+    return details.message;
+  }
   if (error === "BACKEND_PERSISTENCE_NOT_CONFIGURED" || status === 503) {
     return "Backend persistence is not configured for this environment yet.";
   }
-  if (error === "FORBIDDEN" || status === 403) {
+  if (error === "FORBIDDEN" || error === "UNAUTHORISED" || status === 403) {
     return "Access denied for this subscriber site.";
   }
   if (error === "SITE_NOT_FOUND" || status === 404) {
@@ -619,8 +630,17 @@ function toMessage(error: string, status: number, details?: unknown): string {
   if (error === "STRIPE_ACCOUNT_LINKS_NOT_CONFIGURED") {
     return "Stripe Account Links onboarding needs a valid platform Stripe secret key. No account was connected.";
   }
+  if (error === "STRIPE_SECRET_KEY_MISSING") {
+    return "Stripe Account Links onboarding needs STRIPE_SECRET_KEY configured on the platform. No account was connected.";
+  }
+  if (error === "STRIPE_ACCOUNT_CREATE_FAILED") {
+    return "Stripe could not create the connected account. Please check Stripe Connect setup and try again.";
+  }
   if (error === "STRIPE_ACCOUNT_LINK_CREATE_FAILED") {
     return "Stripe could not create an onboarding link. Please try again or check Stripe setup.";
+  }
+  if (error === "STRIPE_ACCOUNT_LINK_URL_MISSING") {
+    return "Stripe responded without an onboarding URL. Please try again or contact support.";
   }
   if (error === "STRIPE_ACCOUNT_RESPONSIBILITIES_INVALID") {
     return "Stripe connected account could not be created. Stripe says required account responsibility fields are missing or invalid. Please check platform Connect setup.";
@@ -669,18 +689,20 @@ function maskProviderAccountReference(value?: string | null): string {
 }
 
 function formatBusinessPaymentSetupStatus(
-  connected: boolean,
+  hasConnection: boolean,
   checkoutReady: boolean,
   status?: string | null,
   providerKey?: string | null,
 ): string {
   if (providerKey === "NONE") return "No online payment provider selected";
-  if (checkoutReady) return "Ready for online booking payments";
-  if (connected) return "Connected - final payment checks still needed";
-  if (status === "PENDING") return "Setup requested";
-  if (status === "NEEDS_ATTENTION") return "Needs attention";
+  if (checkoutReady) return "Ready to take online payments";
+  if (status === "NEEDS_ATTENTION") {
+    return providerKey === "STRIPE" ? "More information needed in Stripe" : "More information needed";
+  }
+  if (status === "CONNECTED") return "Connected - final checks still needed";
+  if (status === "PENDING" || hasConnection) return providerKey === "STRIPE" ? "Stripe setup started" : "Setup started";
   if (status === "DISCONNECTED") return "Disconnected";
-  return "Not connected yet";
+  return "Not connected";
 }
 
 function formatAdminServicePrice(value: string): string {
@@ -1086,6 +1108,17 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   const [paymentProviderConnections, setPaymentProviderConnections] = useState<SiteAdminPaymentProviderConnection[]>([]);
   const [stripeDiagnostics, setStripeDiagnostics] = useState<SiteAdminStripeDiagnostics | null>(null);
   const [paymentConnectionBusy, setPaymentConnectionBusy] = useState(false);
+  const [paymentConnectStatus, setPaymentConnectStatus] = useState<PaymentConnectStatus | null>(null);
+  const [paymentHelpOpen, setPaymentHelpOpen] = useState(false);
+  const [paymentHelpBusy, setPaymentHelpBusy] = useState(false);
+  const [paymentHelpMessage, setPaymentHelpMessage] = useState<string | null>(null);
+  const [paymentHelpDraft, setPaymentHelpDraft] = useState<SiteAdminPaymentSetupHelpInput>({
+    name: "",
+    email: "",
+    phone: "",
+    provider: "Stripe",
+    message: "",
+  });
   const [serviceCategoriesDraft, setServiceCategoriesDraft] = useState<ServiceCategoryDraft[]>([]);
   const [servicesDraft, setServicesDraft] = useState<ServiceDraft[]>([]);
   const [rolesDraft, setRolesDraft] = useState<StaffRoleDraft[]>([]);
@@ -1443,14 +1476,29 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
 
   async function startPaymentProviderConnect() {
     if (paymentProviderGuidance.providerKey === "NONE") {
+      setPaymentConnectStatus({
+        state: "error",
+        title: "Stripe setup not started",
+        message: "Choose Stripe before starting Stripe onboarding, or use Request help setting up payments.",
+      });
       setMessage("Choose Stripe before starting Stripe onboarding, or use Request help setting up payments.");
       return;
     }
     if (paymentProviderGuidance.providerKey !== "STRIPE" && paymentProviderGuidance.providerKey !== "SQUARE") {
+      setPaymentConnectStatus({
+        state: "error",
+        title: `${paymentProviderGuidance.provider} setup is assisted`,
+        message: "This provider is assisted setup for now. Request help and we will confirm the safest setup path.",
+      });
       setMessage("This provider is assisted setup for now. Request help and we will confirm the safest setup path.");
       return;
     }
     setPaymentConnectionBusy(true);
+    setPaymentConnectStatus({
+      state: "loading",
+      title: `Starting ${paymentProviderGuidance.provider} setup`,
+      message: "Requesting a secure hosted onboarding link...",
+    });
     setMessage(`Starting ${paymentProviderGuidance.provider} connection...`);
     const result = await startSiteAdminPaymentProviderConnect(
       siteSlug,
@@ -1463,44 +1511,67 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
     }
     setPaymentConnectionBusy(false);
     if (!result.ok) {
-      setMessage(toMessage(result.error, result.status, result.details));
+      const message = toMessage(result.error, result.status, result.details);
+      setPaymentConnectStatus({
+        state: "error",
+        title: "Stripe setup could not start",
+        message,
+        errorCode: result.error,
+      });
+      setMessage(message);
       return;
     }
-    setMessage(result.message ?? `${paymentProviderGuidance.provider} connection can start.`);
     if (result.redirectUrl) {
+      setPaymentConnectStatus({
+        state: "redirecting",
+        title: "Stripe onboarding link ready",
+        message: "Redirecting to Stripe-hosted onboarding...",
+      });
+      setMessage(result.message ?? `${paymentProviderGuidance.provider} connection can start.`);
       window.location.assign(result.redirectUrl);
       return;
     }
-    setMessage("Stripe setup responded, but no onboarding link was returned. Please try again or request help.");
+    const message = "Stripe setup responded, but no onboarding link was returned. Please try again or request help.";
+    setPaymentConnectStatus({
+      state: "error",
+      title: "Stripe onboarding link missing",
+      message,
+      errorCode: "STRIPE_ACCOUNT_LINK_URL_MISSING",
+    });
+    setMessage(message);
   }
 
-  async function markPaymentProviderAssistedSetup() {
-    if (paymentProviderGuidance.providerKey === "NONE") {
-      setMessage("No online payment provider selected. Use cash/manual options, or choose Square or Stripe if you want help setting one up.");
-      return;
-    }
-    setPaymentConnectionBusy(true);
-    setMessage(`Requesting help with ${paymentProviderGuidance.provider} payments...`);
-    const result = await saveSiteAdminPaymentProviderConnection(siteSlug, {
-      provider: paymentProviderGuidance.providerKey,
-      connectionMode: paymentProviderGuidance.connectionApproach === "ASSISTED_SETUP" ? "ASSISTED_SETUP" : "OAUTH_PENDING",
-      connectionStatus: "PENDING",
-      environment: selectedPaymentConnection?.environment ?? "TEST",
-      providerAccountId: settingsDraft.paymentProcessorAccountRef.trim() || null,
-      providerAccountEmail: settingsDraft.paymentProcessorAccountRef.includes("@")
-        ? settingsDraft.paymentProcessorAccountRef.trim()
-        : null,
-      publicEnabled: false,
-      setupNotes: settingsDraft.paymentProcessorNotes.trim() || null,
+  function openPaymentSetupHelpRequest() {
+    const contactName = settingsDraft.businessName || settingsDraft.siteDisplayName || "";
+    setPaymentHelpDraft({
+      name: contactName,
+      email: settingsDraft.email,
+      phone: settingsDraft.phone,
+      provider: paymentProviderGuidance.provider,
+      message: settingsDraft.paymentProcessorNotes.trim()
+        ? settingsDraft.paymentProcessorNotes
+        : `Please help me set up ${paymentProviderGuidance.provider} payments for online bookings.`,
     });
-    setPaymentConnectionBusy(false);
+    setPaymentHelpMessage(null);
+    setPaymentHelpOpen(true);
+  }
+
+  async function submitPaymentSetupHelpRequest() {
+    setPaymentHelpBusy(true);
+    setPaymentHelpMessage("Sending payment setup help request...");
+    const result = await sendSiteAdminPaymentSetupHelp(siteSlug, paymentHelpDraft);
+    setPaymentHelpBusy(false);
     if (!result.ok) {
-      setMessage(toMessage(result.error, result.status, result.details));
+      const message = toMessage(result.error, result.status, result.details);
+      setPaymentHelpMessage(message);
+      setMessage(message);
       return;
     }
-    setPaymentProviderConnections(result.connections);
-    setStripeDiagnostics(result.stripeDiagnostics);
-    setMessage("Payment setup help requested. We will contact you if we need more details.");
+    const message = result.emailSent
+      ? "Payment setup help request sent to MyExperiment.club support."
+      : `Payment setup help request saved, but email delivery reported ${result.emailStatus}. You can still contact support manually.`;
+    setPaymentHelpMessage(message);
+    setMessage(message);
   }
 
   function updateVoucherSetting<K extends keyof CustomerSiteGiftVoucherSettings>(
@@ -2530,13 +2601,114 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     <button
                       type="button"
                       className={`${outlineButtonClass} ${smallButtonClass}`}
-                      onClick={() => void markPaymentProviderAssistedSetup()}
-                      disabled={paymentConnectionBusy}
+                      onClick={openPaymentSetupHelpRequest}
+                      disabled={paymentHelpBusy}
                     >
                       Request help setting up payments
                     </button>
                   </div>
                 </div>
+                {paymentConnectStatus ? (
+                  <div
+                    className={`mt-3 rounded-md border px-3 py-2 text-xs ${
+                      paymentConnectStatus.state === "error"
+                        ? "border-rose-200 bg-rose-50 text-rose-950"
+                        : paymentConnectStatus.state === "redirecting"
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-950"
+                          : "border-sky-200 bg-sky-50 text-sky-950"
+                    }`}
+                  >
+                    <p className="font-semibold">{paymentConnectStatus.title}</p>
+                    <p className="mt-1">{paymentConnectStatus.message}</p>
+                    {paymentConnectStatus.errorCode ? (
+                      <p className="mt-1 text-[11px]">
+                        Safe error code: <span className="font-mono">{paymentConnectStatus.errorCode}</span>
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+                {paymentHelpOpen ? (
+                  <div className="mt-3 rounded-lg border border-sky-200 bg-sky-50 p-3 text-xs text-sky-950">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold">Request help setting up payments</p>
+                        <p className="mt-1 text-sky-900">
+                          Tell MyExperiment.club support what you need. This creates a tenant-scoped support enquiry and
+                          attempts to email support. It does not connect a payment provider or mark setup complete.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className={`${outlineButtonClass} ${smallButtonClass} bg-white`}
+                        onClick={() => setPaymentHelpOpen(false)}
+                      >
+                        Close
+                      </button>
+                    </div>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <label className="text-xs font-semibold text-sky-950">
+                        Your name / business contact
+                        <input
+                          className="mt-1 w-full rounded-md border border-sky-200 bg-white px-2 py-1 text-sm text-slate-900"
+                          value={paymentHelpDraft.name}
+                          onChange={(event) => setPaymentHelpDraft((current) => ({ ...current, name: event.target.value }))}
+                        />
+                      </label>
+                      <label className="text-xs font-semibold text-sky-950">
+                        Email
+                        <input
+                          type="email"
+                          className="mt-1 w-full rounded-md border border-sky-200 bg-white px-2 py-1 text-sm text-slate-900"
+                          value={paymentHelpDraft.email}
+                          onChange={(event) => setPaymentHelpDraft((current) => ({ ...current, email: event.target.value }))}
+                        />
+                      </label>
+                      <label className="text-xs font-semibold text-sky-950">
+                        Phone
+                        <input
+                          className="mt-1 w-full rounded-md border border-sky-200 bg-white px-2 py-1 text-sm text-slate-900"
+                          value={paymentHelpDraft.phone ?? ""}
+                          onChange={(event) => setPaymentHelpDraft((current) => ({ ...current, phone: event.target.value }))}
+                        />
+                      </label>
+                      <label className="text-xs font-semibold text-sky-950">
+                        Selected provider
+                        <input
+                          className="mt-1 w-full rounded-md border border-sky-200 bg-white px-2 py-1 text-sm text-slate-900"
+                          value={paymentHelpDraft.provider}
+                          onChange={(event) => setPaymentHelpDraft((current) => ({ ...current, provider: event.target.value }))}
+                        />
+                      </label>
+                      <label className="text-xs font-semibold text-sky-950 sm:col-span-2">
+                        What would you like help with?
+                        <textarea
+                          className="mt-1 min-h-[96px] w-full rounded-md border border-sky-200 bg-white px-2 py-1 text-sm text-slate-900"
+                          value={paymentHelpDraft.message}
+                          onChange={(event) => setPaymentHelpDraft((current) => ({ ...current, message: event.target.value }))}
+                          placeholder="For example: I need help choosing between Square and Stripe, or I already have Stripe and need help connecting it."
+                        />
+                      </label>
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        className={`${primaryButtonClass} ${smallButtonClass}`}
+                        onClick={() => void submitPaymentSetupHelpRequest()}
+                        disabled={paymentHelpBusy}
+                      >
+                        {paymentHelpBusy ? "Sending request..." : "Send help request"}
+                      </button>
+                      <p className="text-[11px] text-sky-900">
+                        Do not enter passwords, secret keys or private card/payment details.
+                      </p>
+                    </div>
+                    {paymentHelpMessage ? (
+                      <p className="mt-3 rounded-md border border-sky-200 bg-white px-2 py-1 font-semibold text-sky-950">
+                        {paymentHelpMessage}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
                 {!selectedPaymentConnection ? (
                   <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 font-semibold text-amber-950">
                     Payment setup has not been completed yet.

@@ -1604,3 +1604,15 @@ Sandbox/live mode warning:
 Stripe Accounts v2 troubleshooting:
 - If `/site-admin/[siteSlug]` Stripe Account Links onboarding fails on `POST /v2/core/accounts` with `invalid_fields`, check the account creation payload includes `defaults.responsibilities.fees_collector` and `defaults.responsibilities.losses_collector`.
 - The current implementation sets both responsibility fields to `stripe` and does not use legacy OAuth or `STRIPE_CONNECT_CLIENT_ID`.
+
+## Hosted smoke checks: payment help request and Stripe connect diagnostics
+
+1. Open `/site-admin/luna-hair-studio` and go to `Payment settings`.
+2. Select `I would like help setting one up` and confirm the Square and Stripe recommendation names are obvious external links.
+3. Click `Request help setting up payments` and confirm an inline form opens instead of silently changing provider status.
+4. Submit name, email, phone, provider and setup notes. Confirm the UI says the support enquiry was saved and shows whether the email was sent or failed/not configured.
+5. Confirm the tenant CRM/contact enquiry list can show the request with source `site_admin_payment_setup_help` where admin tooling exposes it.
+6. Select Stripe and click `Connect Stripe`. Confirm a visible status panel appears beside the button.
+7. If Stripe is configured, confirm the browser redirects to Stripe Account Links onboarding.
+8. If Stripe cannot start, confirm the UI shows a safe code such as `STRIPE_SECRET_KEY_MISSING`, `STRIPE_ACCOUNT_CREATE_FAILED`, `STRIPE_ACCOUNT_LINK_CREATE_FAILED`, or `STRIPE_ACCOUNT_LINK_URL_MISSING` without exposing secrets.
+9. Confirm `STRIPE_CONNECT_CLIENT_ID` is not required for this path and no OAuth access token is stored.

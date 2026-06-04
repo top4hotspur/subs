@@ -47,6 +47,17 @@ type SiteDnsInstructionsEmailInput = {
   dnsInstructionsText: string;
 };
 
+type PaymentSetupHelpEmailInput = {
+  businessName: string;
+  siteSlug: string;
+  adminUrl: string;
+  provider: string;
+  requesterName: string;
+  requesterEmail: string;
+  requesterPhone?: string | null;
+  message: string;
+};
+
 type VoucherSiteSummaryForEmail = SiteSummaryForEmail & {
   voucherUrl?: string | null;
 };
@@ -405,6 +416,36 @@ ${escapedInstructions}
 <p>Please keep these details handy while your domain is being linked to your site.</p>
 <p>If you need help, reply to this email and MyExperiment.club support will help you through the next step.</p>
 <p>MyExperiment.club</p>`;
+
+  return { subject, text, html };
+}
+
+export function paymentSetupHelpAdminNotification(input: PaymentSetupHelpEmailInput) {
+  const subject = `Payment setup help request - ${input.businessName}`;
+  const text = [
+    "A subscriber business has requested help setting up payments.",
+    "",
+    `Business: ${input.businessName}`,
+    `Site slug: ${input.siteSlug}`,
+    `Provider: ${input.provider}`,
+    `Requester: ${input.requesterName}`,
+    `Email: ${input.requesterEmail}`,
+    `Phone: ${input.requesterPhone || "-"}`,
+    `Business admin: ${input.adminUrl}`,
+    "",
+    "Message:",
+    input.message,
+  ].join("\n");
+
+  const html = `<p><strong>A subscriber business has requested help setting up payments.</strong></p>
+<p><strong>Business:</strong> ${escapeHtml(input.businessName)}<br/>
+<strong>Site slug:</strong> ${escapeHtml(input.siteSlug)}<br/>
+<strong>Provider:</strong> ${escapeHtml(input.provider)}<br/>
+<strong>Requester:</strong> ${escapeHtml(input.requesterName)}<br/>
+<strong>Email:</strong> ${escapeHtml(input.requesterEmail)}<br/>
+<strong>Phone:</strong> ${escapeHtml(input.requesterPhone || "-")}<br/>
+<strong>Business admin:</strong> <a href="${escapeHtml(input.adminUrl)}">${escapeHtml(input.adminUrl)}</a></p>
+<p><strong>Message:</strong><br/>${escapeHtml(input.message).replace(/\n/g, "<br/>")}</p>`;
 
   return { subject, text, html };
 }
