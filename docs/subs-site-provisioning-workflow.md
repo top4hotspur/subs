@@ -664,3 +664,26 @@ Provisioned subscriber sites expose payment setup as a tenant-owned business-adm
 ## Payment setup fulfilment UX
 
 Provisioned subscriber sites now guide business owners through three payment setup choices: manual recording, MyExperiment.club-assisted setup, or existing provider setup. The help route creates a support/contact enquiry and notifies platform support when email is configured. Stripe Account Links stays separate from help requests and must complete Stripe-hosted onboarding before tenant online checkout can become available.
+
+## Planned full fulfilment rehearsal: FundMyClub.online
+
+Use `FundMyClub.online` as a dummy customer domain for the next end-to-end fulfilment rehearsal. This rehearsal must not automate domain purchase, registrar changes, DNS changes, AWS resources or separate customer apps.
+
+Rehearsal path:
+
+1. Use a test setup/subscription purchase.
+2. Create/provision a dummy subscriber site.
+3. Use a realistic business name and stable site slug.
+4. Configure services, staff, opening hours and booking options.
+5. Configure Payment Settings using either `I don't need an online payment processor` or Stripe test setup if needed later.
+6. Add `FundMyClub.online` as the intended live domain.
+7. Enter DNS target values in platform admin.
+8. Send or copy DNS instructions.
+9. Point DNS/host as required outside the app.
+10. Mark domain configured/ready.
+11. Mark site live.
+12. Confirm custom-domain routing renders the tenant site.
+13. Confirm `/sites/[siteSlug]` remains the platform preview route.
+14. Confirm platform/admin routes are not exposed through the custom domain.
+15. Test booking, customer account, contact, policy, staff login and business admin links.
+16. Suspend/reactivate and confirm the public rendering behaviour changes appropriately.

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -898,7 +898,7 @@ export default function AdminSiteSettingsPage() {
                   <select className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.paymentProcessorSetupMode} onChange={(event) => setSettingsDraft((current) => ({ ...current, paymentProcessorSetupMode: event.target.value as PersistedSettingsDraft["paymentProcessorSetupMode"] }))}>
                     <option value="EXISTING_PROCESSOR">I already have a payment processor</option>
                     <option value="NEED_HELP_SETUP">I need help setting one up</option>
-                    <option value="MANUAL_RECORDING_ONLY">I only want to record payments manually for now</option>
+                    <option value="MANUAL_RECORDING_ONLY">I don&apos;t need an online payment processor</option>
                   </select>
                 </label>
                 <label className="text-xs font-semibold text-slate-700">

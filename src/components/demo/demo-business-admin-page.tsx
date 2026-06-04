@@ -1836,7 +1836,7 @@ export function DemoBusinessAdminPage({ template }: DemoBusinessAdminPageProps) 
               <option value="EXISTING_PROCESSOR">I already have a payment processor</option>
               <option value="NEED_HELP_SETUP">I would like help setting one up</option>
               <option value="MANUAL_RECORDING_ONLY">
-                I only want to record payments manually for now
+                I don&apos;t need an online payment processor
               </option>
             </select>
           </label>

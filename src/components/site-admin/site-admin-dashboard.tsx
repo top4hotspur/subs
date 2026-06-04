@@ -2510,7 +2510,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                   >
                     <option value="EXISTING_PROCESSOR">I already have a payment provider</option>
                     <option value="NEED_HELP_SETUP">I would like help setting one up</option>
-                    <option value="MANUAL_RECORDING_ONLY">I only want to record payments manually for now</option>
+                    <option value="MANUAL_RECORDING_ONLY">I don&apos;t need an online payment processor</option>
                   </select>
                 </label>
                 {settingsDraft.paymentProcessorSetupMode === "EXISTING_PROCESSOR" ? (

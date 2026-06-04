@@ -1621,7 +1621,7 @@ Stripe Accounts v2 troubleshooting:
 
 1. Open `/site-admin/luna-hair-studio`.
 2. Open `Payment settings`.
-3. Select `I only want to record payments manually for now`.
+3. Select `I don't need an online payment processor`.
 4. Confirm no provider setup clutter appears and the copy says online checkout will stay off.
 5. Select `I would like help setting one up`.
 6. Confirm the `Ask MyExperiment.club to help with payments` panel appears.
@@ -1637,3 +1637,23 @@ Stripe Accounts v2 troubleshooting:
 16. Confirm it redirects to Stripe Account Links onboarding or shows a visible safe error/status near the button.
 17. Open `/demo/hairdressers/admin`.
 18. Confirm demo payment setup follows the same conceptual journeys and clearly says live provider connection is disabled in demo.
+
+## Hosted fulfilment rehearsal: FundMyClub.online
+
+Planned rehearsal domain: `FundMyClub.online`.
+
+1. Use a test setup/subscription purchase.
+2. Provision a dummy subscriber site with a realistic business name and site slug.
+3. Configure services, staff, opening hours and booking options.
+4. Configure Payment Settings as either `I don't need an online payment processor` or Stripe test setup if needed later.
+5. Add `FundMyClub.online` as the intended live domain.
+6. Enter DNS target values.
+7. Send or copy DNS instructions.
+8. Point DNS/host as required outside the app.
+9. Mark domain configured/ready.
+10. Mark site live.
+11. Confirm custom-domain routing renders the tenant site.
+12. Confirm `/sites/[siteSlug]` still opens as the preview route.
+13. Confirm platform routes and `/admin` are not exposed through the custom domain.
+14. Test booking, customer account, contact, policy, staff/admin links.
+15. Suspend/reactivate and confirm behaviour.
