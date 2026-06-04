@@ -30,9 +30,9 @@ const NO_PAYMENT_METHOD_COPY =
   "This business does not currently have a payment method available for online booking. Please contact the business to book.";
 
 export function getSubscriberCheckoutAvailable(): boolean {
-  // Subscriber-site payment processors are deliberately not connected yet. Platform Stripe billing
-  // is separate and must not be treated as a business customer's booking checkout.
-  return false;
+  // Tenant checkout availability is decided by the caller after checking the tenant provider
+  // connection and provider-specific runtime config. Platform Stripe billing must still stay separate.
+  return true;
 }
 
 export function getCustomerSiteBookingPaymentDecision(
@@ -63,6 +63,18 @@ export function getCustomerSiteBookingPaymentDecision(
       canCreateBooking: false,
       publicCopy: ONLINE_PAYMENT_NOT_CONNECTED_COPY,
       blockedReason: "ONLINE_PAYMENT_NOT_CONNECTED",
+      paymentStatus: "PENDING",
+      paymentMethod: "CARD_ONLINE",
+      requiresOnlinePrepayment: true,
+      onlineCheckoutAvailable,
+    };
+  }
+
+  if (requireBookingPrepayment && acceptCardPayments && onlineCheckoutAvailable) {
+    return {
+      canCreateBooking: true,
+      publicCopy: "This booking requires online payment. You'll be taken to secure checkout.",
+      blockedReason: null,
       paymentStatus: "PENDING",
       paymentMethod: "CARD_ONLINE",
       requiresOnlinePrepayment: true,

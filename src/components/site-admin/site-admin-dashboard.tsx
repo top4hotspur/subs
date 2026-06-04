@@ -687,8 +687,12 @@ function formatDateRange(startDate: string, endDate: string): string {
 }
 
 function formatBookingPaymentStatus(booking: CustomerSiteBookingRecord): string {
-  if (booking.paymentStatus === "PAID" || booking.paymentStatus === "PAYMENT_COMPLETED") return "Paid";
-  if (booking.paymentStatus === "FAILED") return "Failed";
+  if (booking.paymentStatus === "PAID" || booking.paymentStatus === "PAYMENT_COMPLETED") {
+    return booking.paymentMethod === "CARD_ONLINE" ? "Paid online" : "Paid";
+  }
+  if (booking.paymentStatus === "FAILED") {
+    return booking.paymentMethod === "CARD_ONLINE" ? "Online payment failed/expired" : "Failed";
+  }
   if (booking.paymentStatus === "REFUNDED") return "Refunded";
   if (booking.paymentStatus === "PENDING" || booking.paymentStatus === "PAYMENT_REQUIRED") {
     if (booking.paymentMethod === "CASH") return "Cash/manual payment expected";
@@ -1990,7 +1994,6 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   const staffLeaveGroups = splitActiveFutureAndPast(staffHolidaysDraft);
   const hasCustomPolicy = isCustomPolicyContent(settingsDraft);
   const policyNeedsReview = !hasCustomPolicy && !settingsDraft.policyDefaultAccepted;
-  const tenantPaymentCheckoutConnected = false;
   const paymentProviderGuidance = getSubscriberPaymentProviderGuidance(settingsDraft.paymentProcessorName);
   const selectedPaymentConnection =
     paymentProviderConnections.find((connection) => connection.provider === paymentProviderGuidance.providerKey) ?? null;
@@ -1998,6 +2001,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
     selectedPaymentConnection?.connectionStatus === "CONNECTED" &&
     selectedPaymentConnection.connectionMode === "OAUTH_CONNECTED" &&
     selectedPaymentConnection.publicEnabled;
+  const tenantPaymentCheckoutConnected = paymentProviderGuidance.providerKey === "STRIPE" && paymentProviderConnected;
   const manualPaymentFallbackAvailable =
     settingsDraft.acceptCashPayments || settingsDraft.allowInStorePaymentRecording;
   const prepaymentCheckoutMissing =

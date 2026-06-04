@@ -847,8 +847,8 @@ CSV import/export setup tools moved out of demo customisation and into business 
 ## Subscriber Booking Card Checkout Boundary
 
 - Subscriber booking checkout is not live. `getSubscriberCheckoutAvailable()` deliberately returns false so platform Stripe billing is not accidentally reused for tenant customer bookings.
-- A dormant Stripe booking checkout helper and `SUBSCRIBER_BOOKING` webhook branch exist in the codebase, but public booking does not create those sessions in the current safe configuration.
-- Before any subscriber provider checkout goes live, the webhook path should be separated from platform subscription billing and backed by a tenant-scoped provider configuration/credential model.
+- The old dormant Stripe booking checkout helper is deprecated and no longer processes subscriber booking payments. Tenant booking checkout now uses the separate Stripe Connect helper and tenant webhook path.
+- Subscriber provider checkout must remain separated from platform subscription billing and backed by tenant-scoped provider connection metadata.
 - Card details must remain handled only by the selected provider checkout/vault; the app must not store card details.
 - If online payment is not safely connected, public booking shows a clear customer message and does not fake a paid booking.
 - Cash/manual payment remains supported and can still be marked paid manually by the business admin.
@@ -986,6 +986,31 @@ The start routes require the current site-admin session and create signed state 
 Tenant payment webhook stubs now exist at `/api/sites/payments/stripe/webhook` and `/api/sites/payments/square/webhook`; both return `501` until provider signature verification, tenant booking mapping and idempotency are implemented.
 
 Booking guardrails now distinguish a connected provider account from checkout availability. If a provider account is connected but checkout is not implemented, required online prepayment remains blocked with customer-facing copy: `Online payment setup is connected but checkout is not enabled yet. Please contact the business to book.`
+
+## 2026-06-04 Stripe Connect booking checkout
+
+Stripe Connect is now the first real subscriber online-payment path. It is still separate from MyExperiment.club platform subscription billing:
+- platform setup/subscription purchases continue to use `/api/setup-requests/[id]/checkout` and `/api/stripe/webhook`;
+- subscriber customer booking payments use tenant Stripe Connect metadata and `/api/sites/payments/stripe/webhook`.
+
+Connection flow:
+- Site admins start Stripe Connect from `/site-admin/[siteSlug]` Payments/sales.
+- The start route requires the matching site-admin session and signed tenant/provider state.
+- The callback validates tenant-bound state, exchanges the Stripe OAuth code, retrieves the connected account and stores only non-secret account metadata.
+- The connection is marked connected/public only when Stripe reports the account can take charges.
+
+Booking checkout flow:
+- When card prepayment is required, Stripe is connected, tenant checkout env is configured and the selected service has a fixed price, the public booking API creates a `CONFIRMED` booking with `paymentStatus=PENDING` and starts Stripe Checkout.
+- Stripe Checkout uses Connect destination charges with the tenant connected account as the destination. No card details are stored by MyExperiment.club.
+- The customer return page shows payment-received/cancelled/confirming copy, but paid status is trusted only from the tenant Stripe webhook.
+- The tenant webhook verifies `STRIPE_TENANT_WEBHOOK_SECRET`, validates `tenantSiteId` + `bookingId`, stores Stripe session/payment-intent references and marks paid/failed without touching platform subscription records.
+- Abandoned checkout may leave a pending held slot until Stripe expiry/failure webhooks or a future cleanup job releases it.
+
+Required env/config for hosted tenant Stripe checkout:
+- `STRIPE_SECRET_KEY`
+- `STRIPE_CONNECT_CLIENT_ID`
+- `STRIPE_TENANT_WEBHOOK_SECRET`
+- `NEXT_PUBLIC_SITE_URL`
 
 FAQ copy:
 `Can I use my existing payment provider? In many cases, yes. We can support common providers such as Stripe, Square, PayPal, SumUp/Zettle and other payment platforms depending on your setup. If you already use a provider, let us know during setup and we'll confirm the best way to connect payments to your site. More providers may be available on request.`

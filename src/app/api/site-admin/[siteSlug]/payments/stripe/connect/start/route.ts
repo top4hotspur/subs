@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { getSiteAdminSessionContext } from "@/lib/auth/site-admin";
 import { isBackendPersistenceConfigured } from "@/lib/config/server-env";
+import { getSiteUrl } from "@/lib/billing/stripe-checkout";
 import {
   createPaymentConnectState,
-  getStripeConnectClientId,
   upsertPaymentProviderConnection,
 } from "@/lib/sites/payment-provider-connections";
+import { getStripeConnectConfig } from "@/lib/billing/stripe-tenant-checkout";
 import { getTenantSiteBySlug } from "@/lib/sites/tenant-resolver";
 
 function backendNotConfigured() {
@@ -13,7 +14,7 @@ function backendNotConfigured() {
 }
 
 export async function POST(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ siteSlug: string }> },
 ) {
   if (!isBackendPersistenceConfigured()) return backendNotConfigured();
@@ -26,8 +27,8 @@ export async function POST(
     return NextResponse.json({ ok: false, error: "FORBIDDEN" }, { status: 403 });
   }
 
-  const clientId = getStripeConnectClientId();
-  if (!clientId) {
+  const config = getStripeConnectConfig();
+  if (!config) {
     await upsertPaymentProviderConnection({
       tenantSiteId: site.id,
       provider: "STRIPE",
@@ -57,14 +58,16 @@ export async function POST(
     publicEnabled: false,
   });
   const redirectUrl = new URL("https://connect.stripe.com/oauth/authorize");
+  const callbackUrl = `${getSiteUrl(new URL(request.url).origin)}/api/site-admin/${encodeURIComponent(site.slug)}/payments/stripe/connect/callback`;
   redirectUrl.searchParams.set("response_type", "code");
-  redirectUrl.searchParams.set("client_id", clientId);
+  redirectUrl.searchParams.set("client_id", config.clientId);
   redirectUrl.searchParams.set("scope", "read_write");
   redirectUrl.searchParams.set("state", state);
+  redirectUrl.searchParams.set("redirect_uri", callbackUrl);
 
   return NextResponse.json({
     ok: true,
     redirectUrl: redirectUrl.toString(),
-    message: "Stripe Connect authorization can start. Callback token exchange is not enabled in this pass.",
+    message: "Stripe Connect authorization can start.",
   });
 }

@@ -28,7 +28,7 @@ Must not be reused:
 - Provider API keys, secret keys, access tokens and webhook secrets must not be entered into plain admin fields or exposed to client-side code.
 
 Current security gaps / risks:
-- The codebase contains a dormant `stripe-booking-checkout` helper and the platform Stripe webhook contains `SUBSCRIBER_BOOKING` handling. Public booking does not currently create those sessions because subscriber checkout is hardcoded unavailable, but this mixed webhook path should be separated before tenant payments go live.
+- The old dormant `stripe-booking-checkout` helper is now an explicit deprecated stub. Tenant Stripe booking payments must use `stripe-tenant-checkout.ts`; `/api/stripe/webhook` remains platform subscription-only.
 - There is no tenant-scoped secure provider credential model yet.
 - There is no encrypted-at-rest secret store or provider OAuth/Connect flow for subscriber payment credentials.
 - There is no provider-specific tenant webhook route/idempotency log yet.
@@ -123,7 +123,15 @@ Current route foundation:
 - `POST /api/site-admin/[siteSlug]/payments/square/connect/start`
 - `GET /api/site-admin/[siteSlug]/payments/square/connect/callback`
 
-These routes require a signed-in site admin for the matching tenant. Start routes create a signed tenant-bound state value. Callback routes validate state against tenant/site/admin session. Token exchange and secure token storage are intentionally not enabled yet.
+These routes require a signed-in site admin for the matching tenant. Start routes create a signed tenant-bound state value. Callback routes validate state against tenant/site/admin session. Stripe now exchanges the OAuth code for a connected account ID and stores only non-secret account metadata (`acct_...`, account name/email, environment and status). Raw access tokens are not stored or exposed client-side.
+
+Required Stripe Connect/tenant payment config:
+- `STRIPE_SECRET_KEY` for the MyExperiment.club platform Stripe account.
+- `STRIPE_CONNECT_CLIENT_ID` for the Stripe Connect OAuth app.
+- `STRIPE_TENANT_WEBHOOK_SECRET` for `/api/sites/payments/stripe/webhook`.
+- `NEXT_PUBLIC_SITE_URL` for absolute hosted return URLs where needed.
+
+If Connect client config is missing, the Stripe Connect action returns a setup-needed response and leaves the connection pending. If the tenant webhook secret is missing, connected accounts can be recorded but booking checkout remains unavailable so the app does not create payments it cannot verify.
 
 ## Booking flow rules
 
@@ -141,15 +149,24 @@ Provider connected:
 - Never mark paid from client redirect alone.
 - Store provider session/payment intent IDs on the tenant booking.
 
+Stripe Connect v1:
+- Uses Stripe Checkout with Connect destination charges.
+- Checkout sessions are created by the platform Stripe account, with `payment_intent_data.transfer_data.destination` set to the tenant connected account ID.
+- No application fee is added in this first pass.
+- Booking metadata includes `tenantSiteId`, `siteSlug`, `bookingId`, `serviceId`, optional `staffId` and customer email.
+- The booking is created as `CONFIRMED` with `paymentStatus=PENDING` to hold the slot while the customer completes checkout.
+- If checkout session creation fails, the pending booking is cancelled/marked failed so it does not silently hold the slot.
+- If checkout is abandoned after a session is created, the booking remains held/pending until Stripe sends an expiry/failure event or a future cleanup job releases it.
+
 Quote-required service:
 - Do not create online payment session.
 - Route to quote/contact flow.
 
 ## Webhook architecture
 
-Platform and subscriber payment webhooks should be separate:
+Platform and subscriber payment webhooks are separate:
 - Current platform subscription webhook: `/api/stripe/webhook`.
-- Future subscriber Stripe booking webhook: `/api/sites/payments/stripe/webhook`.
+- Subscriber Stripe booking webhook: `/api/sites/payments/stripe/webhook`.
 - Future subscriber Square webhook: `/api/sites/payments/square/webhook`.
 - Similar provider-specific routes for PayPal/Worldpay/etc.
 
@@ -163,11 +180,9 @@ Webhook requirements:
 - Update only matching tenant booking/payment state.
 - Do not break platform subscription webhook behaviour.
 
-Current route stubs:
-- `POST /api/sites/payments/stripe/webhook`
-- `POST /api/sites/payments/square/webhook`
-
-They return `501` until provider signature verification, tenant booking mapping and idempotency are implemented.
+Current route status:
+- `POST /api/sites/payments/stripe/webhook` verifies the Stripe signature with `STRIPE_TENANT_WEBHOOK_SECRET`, maps events through metadata to `tenantSiteId` + `bookingId`, checks the booking belongs to that tenant, updates paid/failed state, and ignores duplicate paid updates.
+- `POST /api/sites/payments/square/webhook` remains a `501` verification-required stub.
 
 ## Saved cards future
 
@@ -195,8 +210,10 @@ Also state:
 
 ## Current live boundary
 
-Live subscriber-provider checkout is not enabled in this pass. Current live-safe behaviour is:
-- payment settings capture intent/reference only;
-- no secrets are requested;
-- public booking blocks required online prepayment where tenant checkout is unavailable;
-- manual/cash/card-terminal recording remains the fallback.
+Stripe Connect is the first implemented subscriber-provider checkout path. Current live-safe behaviour is:
+- Stripe is the only provider that can create subscriber booking Checkout Sessions.
+- Square/PayPal/SumUp/Zettle/Worldpay remain assisted setup/manual until their provider-specific OAuth/webhook paths are built.
+- No business-owner secret keys are requested.
+- No card details are stored.
+- Public booking blocks required online prepayment where Stripe Connect or tenant webhook config is unavailable.
+- Manual/cash/card-terminal recording remains the fallback where enabled.

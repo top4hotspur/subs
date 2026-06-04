@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { getOptionalServerEnv, isBackendPersistenceConfigured } from "@/lib/config/server-env";
-import { createCustomerSiteBooking } from "@/lib/sites/customer-site-booking-repository";
+import { prisma } from "@/lib/db/prisma";
+import {
+  createCustomerSiteBooking,
+  updateCustomerSiteBookingStatus,
+} from "@/lib/sites/customer-site-booking-repository";
 import { createCustomerSiteBookingSchema } from "@/lib/sites/customer-site-booking-schema";
 import { calculateCustomerSiteAvailability } from "@/lib/sites/customer-site-availability";
 import { getCustomerSitePreviewDataBySlug } from "@/lib/sites/customer-site-preview-repository";
@@ -17,6 +21,10 @@ import {
   getCustomerSiteBookingPaymentDecision,
 } from "@/lib/sites/customer-site-payment-policy";
 import { hasConnectedProviderCheckout, normalizePaymentProviderKey } from "@/lib/sites/payment-provider-connections";
+import {
+  createStripeTenantBookingCheckoutSession,
+  isStripeConnectionCheckoutReady,
+} from "@/lib/billing/stripe-tenant-checkout";
 
 function backendNotConfigured() {
   return NextResponse.json(
@@ -29,6 +37,13 @@ function absoluteSiteAdminUrl(siteSlug: string): string {
   const baseUrl = getOptionalServerEnv("NEXT_PUBLIC_SITE_URL")?.replace(/\/+$/, "");
   const path = `/site-admin/${encodeURIComponent(siteSlug)}`;
   return baseUrl ? `${baseUrl}${path}` : path;
+}
+
+function priceToPence(value: unknown): number | null {
+  if (value === null || value === undefined) return null;
+  const amount = Number(value);
+  if (!Number.isFinite(amount) || amount <= 0) return null;
+  return Math.round(amount * 100);
 }
 
 export async function POST(
@@ -72,7 +87,7 @@ export async function POST(
     const selectedConnection = site.paymentProviderConnections.find((connection) => connection.provider === selectedProvider);
     const tenantCheckoutAvailable = hasConnectedProviderCheckout({
       connection: selectedConnection,
-      checkoutImplemented: false,
+      checkoutImplemented: selectedProvider === "STRIPE" && isStripeConnectionCheckoutReady(selectedConnection),
     });
     const paymentDecision = getCustomerSiteBookingPaymentDecision({
       ...site.settings,
@@ -95,6 +110,28 @@ export async function POST(
       );
     }
 
+    const servicePaymentDetails =
+      paymentDecision.paymentMethod === "CARD_ONLINE"
+        ? await prisma.customerSiteService.findFirst({
+            where: { id: parsed.serviceId, tenantSiteId: site.tenantSite.id, active: true },
+            select: { basePrice: true, name: true },
+          })
+        : null;
+    const paymentAmountPence =
+      paymentDecision.paymentMethod === "CARD_ONLINE"
+        ? priceToPence(servicePaymentDetails?.basePrice)
+        : null;
+    if (paymentDecision.paymentMethod === "CARD_ONLINE" && (!paymentAmountPence || paymentAmountPence <= 0)) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "BOOKING_PAYMENT_AMOUNT_REQUIRED",
+          message: "This service needs a fixed price before secure online payment can be taken.",
+        },
+        { status: 400 },
+      );
+    }
+
     const booking = await createCustomerSiteBooking(site.tenantSite.id, {
       ...parsed,
       customerEmail: parsed.customerEmail.toLowerCase(),
@@ -103,13 +140,86 @@ export async function POST(
       status: "CONFIRMED",
       paymentStatus: paymentDecision.paymentStatus,
       paymentMethod: paymentDecision.paymentMethod,
+      paymentAmountPence: paymentAmountPence ?? undefined,
       paymentCurrency:
         paymentDecision.paymentStatus === "PENDING" && paymentDecision.paymentMethod !== "NONE"
           ? paymentCurrency
           : undefined,
+      paymentProvider: paymentDecision.paymentMethod === "CARD_ONLINE" ? "STRIPE" : undefined,
       source: "customer_site",
       customerSiteCustomerId,
     });
+
+    if (paymentDecision.paymentMethod === "CARD_ONLINE") {
+      try {
+        if (!selectedConnection?.providerAccountId) {
+          throw new Error("STRIPE_CONNECTED_ACCOUNT_REQUIRED");
+        }
+        const checkoutSession = await createStripeTenantBookingCheckoutSession({
+          siteSlug: site.tenantSite.slug,
+          tenantSiteId: site.tenantSite.id,
+          bookingId: booking.id,
+          serviceId: parsed.serviceId,
+          serviceName: servicePaymentDetails?.name ?? booking.serviceName ?? parsed.serviceName ?? "Booking",
+          staffId: matchingSlot.staffMemberId,
+          customerEmail: booking.customerEmail ?? parsed.customerEmail,
+          customerName: booking.customerName,
+          amountPence: paymentAmountPence ?? 0,
+          currency: paymentCurrency,
+          origin: request.nextUrl.origin,
+          connectedAccountId: selectedConnection.providerAccountId,
+        });
+        if (!checkoutSession.url) {
+          throw new Error("BOOKING_CHECKOUT_SESSION_FAILED");
+        }
+        const updatedBooking = await updateCustomerSiteBookingStatus(site.tenantSite.id, {
+          bookingId: booking.id,
+          status: "CONFIRMED",
+          paymentStatus: "PENDING",
+          paymentMethod: "CARD_ONLINE",
+          paymentAmountPence: paymentAmountPence ?? undefined,
+          paymentCurrency,
+          paymentProvider: "STRIPE",
+          paymentProviderSessionId: checkoutSession.id,
+          paymentProviderPaymentIntentId:
+            typeof checkoutSession.payment_intent === "string" ? checkoutSession.payment_intent : undefined,
+        });
+
+        return NextResponse.json(
+          {
+            ok: true,
+            booking: updatedBooking,
+            checkoutUrl: checkoutSession.url,
+            checkoutSessionId: checkoutSession.id,
+            emailStatus: { customer: { skipped: true, reason: "PAYMENT_PENDING" }, business: { skipped: true, reason: "PAYMENT_PENDING" } },
+          },
+          { status: 201 },
+        );
+      } catch (checkoutError) {
+        await updateCustomerSiteBookingStatus(site.tenantSite.id, {
+          bookingId: booking.id,
+          status: "CANCELLED",
+          paymentStatus: "FAILED",
+          paymentMethod: "CARD_ONLINE",
+          paymentAmountPence: paymentAmountPence ?? undefined,
+          paymentCurrency,
+          paymentProvider: "STRIPE",
+          notes: "Secure checkout could not be started. The customer was asked to contact the business.",
+        }).catch(() => null);
+        return NextResponse.json(
+          {
+            ok: false,
+            error:
+              checkoutError instanceof Error && checkoutError.message === "STRIPE_TENANT_CHECKOUT_NOT_CONFIGURED"
+                ? "ONLINE_PAYMENT_NOT_CONFIGURED"
+                : "BOOKING_CHECKOUT_SESSION_FAILED",
+            message: "We could not start secure payment. Please contact the business to book.",
+          },
+          { status: 503 },
+        );
+      }
+    }
+
     const siteName =
       site.settings?.siteDisplayName ||
       site.settings?.businessName ||

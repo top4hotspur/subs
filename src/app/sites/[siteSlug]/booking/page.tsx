@@ -3,6 +3,7 @@ import { PublicSiteBookingForm } from "@/components/sites/public-site-booking-fo
 import { getCustomerSitePreviewDataBySlug } from "@/lib/sites/customer-site-preview-repository";
 import { getPublicSiteBasePath } from "@/lib/sites/public-site-url";
 import { hasConnectedProviderCheckout, normalizePaymentProviderKey } from "@/lib/sites/payment-provider-connections";
+import { isStripeConnectionCheckoutReady } from "@/lib/billing/stripe-tenant-checkout";
 
 export default async function PublicSiteSlugBookingPage({
   params,
@@ -31,7 +32,7 @@ export default async function PublicSiteSlugBookingPage({
   const selectedConnection = preview.paymentProviderConnections.find((connection) => connection.provider === selectedProvider);
   const tenantCheckoutAvailable = hasConnectedProviderCheckout({
     connection: selectedConnection,
-    checkoutImplemented: false,
+    checkoutImplemented: selectedProvider === "STRIPE" && isStripeConnectionCheckoutReady(selectedConnection),
   });
 
   return (

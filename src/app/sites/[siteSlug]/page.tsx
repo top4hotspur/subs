@@ -15,6 +15,7 @@ import { PublicSiteAvailabilityPreview } from "@/components/sites/public-site-av
 import { vouchersArePublic } from "@/lib/sites/customer-site-voucher-types";
 import { buildPublicSitePath, getPublicSiteBasePath } from "@/lib/sites/public-site-url";
 import { hasConnectedProviderCheckout, normalizePaymentProviderKey } from "@/lib/sites/payment-provider-connections";
+import { isStripeConnectionCheckoutReady } from "@/lib/billing/stripe-tenant-checkout";
 
 function formatMoney(amount: number | null, currencyCode: string): string {
   if (amount === null) return "Quote required";
@@ -153,7 +154,7 @@ export default async function PublicSiteSlugPage({
   const selectedPaymentConnection = preview.paymentProviderConnections.find((connection) => connection.provider === selectedPaymentProvider);
   const tenantCheckoutAvailable = hasConnectedProviderCheckout({
     connection: selectedPaymentConnection,
-    checkoutImplemented: false,
+    checkoutImplemented: selectedPaymentProvider === "STRIPE" && isStripeConnectionCheckoutReady(selectedPaymentConnection),
   });
   const mapsUrl = settings?.contactMapEnabled ? mapUrlFromAddress(settings?.address ?? null) : null;
   const openingHoursSummary =

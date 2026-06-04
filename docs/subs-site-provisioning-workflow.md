@@ -598,6 +598,15 @@ Future go-live checklist for provider checkout must include secure credential st
 
 Booking guardrails remain conservative. A connected provider account does not automatically mean checkout is live. If card prepayment is required and a provider is connected but booking checkout has not been implemented, public booking stays blocked with customer-facing copy telling the customer that online payment setup is connected but checkout is not enabled yet.
 
+Stripe Connect is now the first provider-specific checkout path. Provisioning/support should verify:
+- the subscriber admin has connected Stripe from `/site-admin/[siteSlug]` Payments/sales;
+- `CustomerSitePaymentProviderConnection.provider=STRIPE` has a connected account ID and `connectionStatus=CONNECTED`;
+- `STRIPE_TENANT_WEBHOOK_SECRET` is configured for `/api/sites/payments/stripe/webhook`;
+- public checkout is enabled only for fixed-price services, not quote-required services;
+- Stripe webhook confirmation, not frontend return, marks tenant bookings paid.
+
+The first charge approach is Stripe Checkout with Connect destination charges. The platform creates the Checkout Session with the tenant connected account as the destination, while platform subscription billing remains on the separate MyExperiment.club setup/subscription Stripe flow. Abandoned tenant checkout sessions may hold a booking slot until Stripe expiry/failure events or a future cleanup job updates the booking.
+
 Detailed architecture is documented in `docs/subs-payment-provider-architecture.md`.
 Use `Send DNS instructions` only when the customer or their domain contact needs to update DNS. For platform-managed domains, keep the DNS/hosting target values as internal fulfilment notes unless the customer needs them.
 
