@@ -330,14 +330,14 @@ export function businessAdminAccessHandoverEmail(input: BusinessAdminAccessEmail
     input.previewUrl ? `Preview your website: ${input.previewUrl}` : "",
     `Business admin login URL: ${input.loginUrl}`,
     `Admin email: ${input.adminEmail}`,
-    `One-time access code: ${input.accessCode}`,
+    `One-time password: ${input.accessCode}`,
     "",
     "Next steps:",
     "- Check your business details, logo and contact information.",
     "- Add services, prices, staff, opening hours, policies and page content.",
     "- Preview your public site before go-live.",
     "",
-    "Keep this access code private. If it is exposed, request a reset immediately.",
+    "Keep this password private. If it is exposed, request a reset immediately.",
     "Please keep an eye on your inbox and check junk/spam if future emails are not seen.",
     "",
     "If you need help, contact MyExperiment.club support.",
@@ -350,14 +350,14 @@ export function businessAdminAccessHandoverEmail(input: BusinessAdminAccessEmail
 ${input.previewUrl ? `<strong>Preview your website:</strong> <a href="${escapeHtml(input.previewUrl)}">${escapeHtml(input.previewUrl)}</a><br/>` : ""}
 <strong>Business admin login URL:</strong> <a href="${escapeHtml(input.loginUrl)}">${escapeHtml(input.loginUrl)}</a><br/>
 <strong>Admin email:</strong> ${escapeHtml(input.adminEmail)}<br/>
-<strong>One-time access code:</strong> ${escapeHtml(input.accessCode)}</p>
+<strong>One-time password:</strong> ${escapeHtml(input.accessCode)}</p>
 <p><strong>Next steps:</strong></p>
 <ul>
 <li>Check your business details, logo and contact information.</li>
 <li>Add services, prices, staff, opening hours, policies and page content.</li>
 <li>Preview your public site before go-live.</li>
 </ul>
-<p>Keep this access code private. If it is exposed, request a reset immediately.</p>
+<p>Keep this password private. If it is exposed, request a reset immediately.</p>
 <p>Please keep an eye on your inbox and check junk/spam if future emails are not seen.</p>
 <p>If you need help, contact MyExperiment.club support.</p>`;
   return { subject, text, html };

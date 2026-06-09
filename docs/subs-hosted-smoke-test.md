@@ -1,4 +1,4 @@
-﻿# Subs Hosted Smoke Test (Manual)
+# Subs Hosted Smoke Test (Manual)
 
 Run these checks on the hosted environment after deployment.
 
@@ -107,11 +107,11 @@ Add these checks after backend envs are configured:
 ## Hosted smoke additions: admin auth
 
 - Logged out: opening `/admin` should redirect to `/admin/login`.
-- Login with allowlisted admin email + access code should load `/admin`.
+- Login with allowlisted admin email + password should load `/admin`.
 - `/admin/setup-requests` and `/admin/sites` should load without manual header input.
 - Logout should end session and redirect protected admin routes to `/admin/login`.
 - Public `/setup/barbers` should still work while logged out.
-- On failed login, the page should show a clear error (for example: "Login failed. Check your admin email and access code.").
+- On failed login, the page should show a clear error (for example: "Login failed. Check your admin email and password.").
 - `GET /api/admin-auth-health` should report auth/env readiness booleans without exposing secret values.
 
 ## Hosted smoke additions: platform vs business settings wording
@@ -345,11 +345,11 @@ olePrice:<role> columns accepted
 
 ## Hosted smoke checks: subscriber business-owner access foundation
 1. As platform admin, open `/admin/sites/[siteId]/settings`.
-2. In `Business owner access`, create a tenant business-owner user and capture one-time temporary access code.
+2. In `Business owner access`, create a tenant business-owner user and capture one-time temporary password.
 3. Open `/site-admin/login` and sign in with:
    - site slug
    - user email
-   - temporary access code
+   - temporary password
 4. Confirm `/site-admin/[siteSlug]` loads and allows editing persisted site settings/services.
 5. Confirm the same user cannot access:
    - `/admin`
@@ -803,7 +803,7 @@ Notes:
 12. Confirm deleted leads disappear and page remains stable.
 
 ## 2026-06-01 hosted smoke checks: deliverability + anti-spam + provider pricing
-1. Generate/reset a provisioned site-admin access code in `/admin/setup-requests`.
+1. Generate/reset a provisioned site-admin password in `/admin/setup-requests`.
 2. Confirm UI shows one-time handover code and email delivery status.
 3. Check inbox and junk/spam; verify access email wording is professional and includes login URL + code.
 4. Open `/api/email-health` and verify sender-domain diagnostics are present.
@@ -824,7 +824,7 @@ Notes:
 ## 2026-06-01 hosted smoke checks: business admin access email handover
 1. Open `/admin/setup-requests`.
 2. Select provisioned Luna Hair Studio request.
-3. Click `Reset and email access code`.
+3. Click `Reset and email password`.
 4. Confirm one-time code is shown in platform admin.
 5. Confirm UI shows email delivery status (`SENT`, `EMAIL_NOT_CONFIGURED`, or `EMAIL_SEND_FAILED`).
 6. Check target inbox and junk/spam for admin access email.
@@ -1222,16 +1222,16 @@ Notes:
 
 1. Open `/site-admin/luna-hair-studio` as the subscriber business admin.
 2. Go to `Staff setup`.
-3. Confirm saved staff cards show staff appointment view access status, whether an access code exists, and the staff login link `/site-staff/luna-hair-studio`.
+3. Confirm saved staff cards show staff appointment view access status, whether an password exists, and the staff login link `/site-staff/luna-hair-studio`.
 4. Add or confirm an active staff member with an email address.
-5. Click `Generate access code` or `Reset access code`.
+5. Click `Generate password` or `Reset password`.
 6. Confirm a one-time code is shown in the business admin UI and the staff access status becomes enabled.
 7. Open `/site-staff/luna-hair-studio`.
 8. Confirm unauthenticated access redirects to `/site-staff/login` with the site slug prefilled.
 9. Log in with:
    - site slug: `luna-hair-studio`
    - staff email: the saved staff member email
-   - access code: the latest generated code
+   - password: the latest generated code
 10. Confirm the page title is `[Business Name] staff appointments` and the page shows the shared appointment diary.
 11. Confirm the default filter is all staff, with optional staff filters available.
 12. Confirm today's appointments, upcoming appointments, and recently completed/cancelled sections show tenant bookings only.
@@ -1478,18 +1478,18 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
 2. Select a paid setup request that has not yet been provisioned.
 3. Click `Create blank subscriber site`.
 4. Confirm the result shows the subscriber preview link, subscriber admin link and business admin handover email status.
-5. Confirm a one-time generated access code appears only in platform admin when new access is created.
+5. Confirm a one-time generated password appears only in platform admin when new access is created.
 6. Confirm the customer receives or can be manually given:
    - site slug
    - business admin email
-   - one-time access code
+   - one-time password
    - `/site-admin/[siteSlug]` or `/site-admin/[siteSlug]/login`
 7. If email is configured, check inbox and junk/spam for the admin access email.
 8. Open `/site-admin/[siteSlug]/login` and confirm the central login form is prefilled with the site slug and returns to `/site-admin/[siteSlug]`.
-9. Log in with the provisioned admin email and latest access code.
+9. Log in with the provisioned admin email and latest password.
 10. Confirm `/site-admin/[siteSlug]` loads the tenant setup dashboard/checklist.
 11. Confirm a different tenant slug is blocked for that same site-admin session.
-12. Click `Reset and email access code` from `/admin/setup-requests` and confirm only the new code works after reset.
+12. Click `Reset and email password` from `/admin/setup-requests` and confirm only the new password works after reset.
 13. Repeat `Create blank subscriber site` for the same paid request and confirm the existing tenant site is reused rather than creating duplicate tenant/domain/subscription rows.
 
 ## 2026-06-03 hosted smoke checks: domain/DNS status workflow

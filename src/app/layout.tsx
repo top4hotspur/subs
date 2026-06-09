@@ -52,7 +52,9 @@ export default async function RootLayout({
 }>) {
   const requestHeaders = await headers();
   const host = extractHost(requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host"));
-  const showPlatformChrome = isPlatformHost(host);
+  const pathname = requestHeaders.get("x-mec-pathname") ?? "";
+  const tenantAuthShell = pathname.startsWith("/site-admin") || pathname.startsWith("/site-staff");
+  const showPlatformChrome = isPlatformHost(host) && !tenantAuthShell;
 
   return (
     <html lang="en" className="h-full antialiased">

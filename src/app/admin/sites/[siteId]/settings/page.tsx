@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -553,7 +553,7 @@ export default function AdminSiteSettingsPage() {
     });
     setGeneratedAccessCode(result.generatedAccessCode);
     setSiteAdminUserDraft((current) => ({ ...current, email: "", displayName: "" }));
-    setMessage("Business owner/admin user saved. Share the one-time access code securely.");
+    setMessage("Business owner/admin user saved. Share the one-time password securely.");
   }
 
   async function savePersistedSettings(): Promise<void> {
@@ -1557,7 +1557,7 @@ export default function AdminSiteSettingsPage() {
 
             {generatedAccessCode ? (
               <div className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 p-3">
-                <p className="text-sm font-semibold text-emerald-900">Temporary access code (shown once)</p>
+                <p className="text-sm font-semibold text-emerald-900">Temporary password (shown once)</p>
                 <p className="mt-1 text-sm text-emerald-800">{generatedAccessCode}</p>
               </div>
             ) : null}

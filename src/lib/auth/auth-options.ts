@@ -19,7 +19,7 @@ export const authOptions: NextAuthOptions = {
       id: "platform-admin-credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        accessCode: { label: "Access code", type: "password" },
+        accessCode: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         const email = credentials?.email?.toString().trim().toLowerCase();
@@ -42,7 +42,7 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         siteSlug: { label: "Site slug", type: "text" },
         email: { label: "Email", type: "email" },
-        accessCode: { label: "Access code", type: "password" },
+        accessCode: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         const siteSlug = credentials?.siteSlug?.toString().trim();

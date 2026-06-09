@@ -181,7 +181,6 @@ export default async function PublicSiteSlugPage({
   const cardClass = `${scheme.cardClass} p-5`;
   const bookingHref = "#services";
   const publicBasePath = await getPublicSiteBasePath(preview.tenantSite.slug);
-  const aboutHref = buildPublicSitePath(publicBasePath, "about");
   const contactHref = buildPublicSitePath(publicBasePath, "contact");
   const policyHref = buildPublicSitePath(publicBasePath, "policy");
   const cookiesHref = buildPublicSitePath(publicBasePath, "cookies");
@@ -196,26 +195,18 @@ export default async function PublicSiteSlugPage({
     <main className={`min-h-screen ${shellClass}`}>
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <section className={`overflow-hidden rounded-3xl border ${scheme.borderClass} shadow-sm`}>
-          <header className={`border-b ${scheme.borderClass} px-6 py-4 sm:px-8`}>
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <p className="text-sm font-semibold uppercase tracking-wide">{siteName}</p>
-              <div className="flex flex-wrap items-center gap-2 text-sm">
-                <a href="#home" className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Home</a>
-                <a href="#services" className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Services</a>
-                <a href={bookingHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Book now</a>
-                {giftVouchersVisible ? (
-                  <Link href={vouchersHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Gift vouchers</Link>
-                ) : null}
-                {settings?.aboutPageEnabled ? (
-                  <Link href={aboutHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">About</Link>
-                ) : null}
-                <Link href={contactHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Contact</Link>
-                <Link href={customerAccountHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Customer login</Link>
-              </div>
-            </div>
-          </header>
           <div className="space-y-6 px-6 py-8 sm:px-8">
             <div id="home" className={heroClass}>
+              <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <p className="text-sm font-semibold uppercase tracking-wide">{siteName}</p>
+                <nav className="flex flex-wrap items-center gap-2 text-sm" aria-label={`${siteName} navigation`}>
+                  <a href="#home" className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Home</a>
+                  <a href="#services" className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Services</a>
+                  <a href={bookingHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Book now</a>
+                  <Link href={contactHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Contact</Link>
+                  <Link href={customerAccountHref} className="rounded-md border border-slate-300 bg-white px-3 py-1 font-medium text-slate-900">Customer login</Link>
+                </nav>
+              </div>
               {settings?.logoUrl ? (
                 <img
                   src={settings.logoUrl}
@@ -223,9 +214,6 @@ export default async function PublicSiteSlugPage({
                   className="h-14 w-auto max-w-[220px] rounded-md border border-white/20 bg-white/10 p-1"
                 />
               ) : null}
-              <p className={`text-xs font-semibold uppercase tracking-wider ${scheme.accentTextClass}`}>
-                {siteName}
-              </p>
               <h1 className="mt-4 text-4xl font-bold tracking-tight">{heroHeadline}</h1>
               {heroSubheading ? <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>{heroSubheading}</p> : null}
             </div>

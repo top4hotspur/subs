@@ -1,4 +1,4 @@
-﻿# Subs Site Provisioning Workflow (Persisted v1)
+# Subs Site Provisioning Workflow (Persisted v1)
 
 This workflow turns a persisted setup request into a persisted subscriber site record.
 
@@ -149,7 +149,7 @@ Still local/mock in current product:
 - Platform admin can now bootstrap tenant-scoped business-owner users in:
   - `/admin/sites/[siteId]/settings` (`Business owner access` section)
 - Bootstrap creates/updates `CustomerSiteAdminUser` records for that tenant.
-- Temporary access code is generated for secure handoff (no plaintext persistence).
+- Temporary password is generated for secure handoff (no plaintext persistence).
 - This is separate from platform-admin auth and does not grant platform admin access.
 
 ## Business-owner operational expansion
@@ -249,8 +249,8 @@ Still local/mock in current product:
 - Cookie acceptance is currently a simple local browser consent banner (no third-party cookie manager in this phase).
 
 ## Business admin access handover (email)
-- Platform admin can generate/reset business admin access codes from `/admin/setup-requests` for provisioned sites.
-- Access code is stored hashed (`CustomerSiteAdminUser.accessCodeHash`), never plaintext in DB.
+- Platform admin can generate/reset business admin passwords from `/admin/setup-requests` for provisioned sites.
+- Password is stored hashed (`CustomerSiteAdminUser.accessCodeHash`), never plaintext in DB.
 - On generate/reset, system now attempts transactional email handover to the site admin email.
 - API is fail-soft: code generation succeeds even if email fails or is not configured.
 - Platform admin UI displays email delivery status and still shows one-time code for temporary dev/hosted handover.
@@ -439,11 +439,11 @@ Still local/mock in current product:
 
 - After a paid setup request creates a clean tenant site, the business owner can configure staff in `/site-admin/[siteSlug]` without copying demo staff data.
 - Staff setup now includes access handover controls for saved active staff members:
-  - generate/reset staff access code
+  - generate/reset staff password
   - enable/disable staff access
   - staff login link `/site-staff/[siteSlug]`
 - Staff access is intentionally separate from platform admin and subscriber business admin.
-- Staff access codes are hashed in `CustomerSiteStaffMember.staffAccessCodeHash`; `staffAccessEnabled` controls whether the staff member can log in.
+- Staff passwords are hashed in `CustomerSiteStaffMember.staffAccessCodeHash`; `staffAccessEnabled` controls whether the staff member can log in.
 - `/site-staff/[siteSlug]` is a shared appointment diary for the tenant site. It reads tenant bookings from the central database and does not expose platform provisioning controls.
 - This milestone does not send staff access emails automatically, create demo data, add full staff permissions, or implement staff-specific booking ownership.
 

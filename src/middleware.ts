@@ -18,6 +18,28 @@ function redirectToLogin(req: NextRequest, loginPath: string): NextResponse {
   return NextResponse.redirect(url);
 }
 
+function requestHeadersWithPath(req: NextRequest): Headers {
+  const headers = new Headers(req.headers);
+  headers.set("x-mec-pathname", req.nextUrl.pathname);
+  return headers;
+}
+
+function nextWithPath(req: NextRequest): NextResponse {
+  return NextResponse.next({
+    request: {
+      headers: requestHeadersWithPath(req),
+    },
+  });
+}
+
+function rewriteWithPath(req: NextRequest, url: URL): NextResponse {
+  return NextResponse.rewrite(url, {
+    request: {
+      headers: requestHeadersWithPath(req),
+    },
+  });
+}
+
 function extractHost(value: string | null): string {
   if (!value) return "";
   return value.trim().toLowerCase().split(":")[0]?.replace(/\.$/, "") ?? "";
@@ -73,11 +95,15 @@ export default async function middleware(req: NextRequest) {
   if (!isPlatformHost(host) && !shouldBypassTenantRewrite(pathname)) {
     const url = req.nextUrl.clone();
     url.pathname = `/tenant-domain-runtime${pathname === "/" ? "" : pathname}`;
-    return NextResponse.rewrite(url);
+    return rewriteWithPath(req, url);
   }
 
-  if (pathname.startsWith("/admin/login") || pathname.startsWith("/site-admin/login")) {
-    return NextResponse.next();
+  if (
+    pathname.startsWith("/admin/login") ||
+    pathname.startsWith("/site-admin/login") ||
+    pathname.startsWith("/site-staff/login")
+  ) {
+    return nextWithPath(req);
   }
 
   if (pathname.startsWith("/admin")) {
@@ -87,7 +113,7 @@ export default async function middleware(req: NextRequest) {
     if (!email || !isPlatformRole || !parsePlatformAdminEmails().includes(email)) {
       return redirectToLogin(req, "/admin/login");
     }
-    return NextResponse.next();
+    return nextWithPath(req);
   }
 
   if (pathname.startsWith("/site-admin")) {
@@ -95,10 +121,10 @@ export default async function middleware(req: NextRequest) {
     if (token?.roleType !== "SITE_ADMIN") {
       return redirectToLogin(req, "/site-admin/login");
     }
-    return NextResponse.next();
+    return nextWithPath(req);
   }
 
-  return NextResponse.next();
+  return nextWithPath(req);
 }
 
 export const config = {

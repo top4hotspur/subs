@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -601,7 +601,7 @@ function toMessage(error: string, status: number, details?: unknown): string {
     return "Backend persistence is not configured for this environment yet.";
   }
   if (error === "FORBIDDEN" || error === "UNAUTHORISED" || status === 403) {
-    return "Access denied for this subscriber site.";
+    return "Access denied for this website.";
   }
   if (error === "SITE_NOT_FOUND" || status === 404) {
     return "Subscriber site was not found for this login session.";
@@ -628,7 +628,7 @@ function toMessage(error: string, status: number, details?: unknown): string {
     return "Email is not configured for this environment. Campaigns were not sent or marked as sent.";
   }
   if (error === "CAMPAIGN_NOT_FOUND") {
-    return "Campaign draft was not found for this subscriber site.";
+    return "Campaign draft was not found for this website.";
   }
   if (error === "CAMPAIGN_NOT_SENDABLE") {
     return "This campaign cannot be sent because it has already been sent or cancelled.";
@@ -1919,7 +1919,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       setMessage("Add and save a staff email before generating staff access.");
       return;
     }
-    setMessage(action === "generate" ? "Generating staff access code..." : "Updating staff access...");
+    setMessage(action === "generate" ? "Generating staff password..." : "Updating staff access...");
     const result = await updateSiteAdminStaffAccess(siteSlug, staffId, action);
     if (!result.ok) {
       setMessage(toMessage(result.error, result.status, result.details));
@@ -1928,7 +1928,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
     setStaffDraft((current) => current.map((item) => (item.id === result.staff.id ? toStaffDraft(result.staff) : item)));
     if (result.accessCode) {
       setStaffAccessCodes((current) => ({ ...current, [result.staff.id]: result.accessCode ?? "" }));
-      setMessage("Staff access code generated. Copy it now; it is only shown once.");
+      setMessage("Staff password generated. Copy it now; it is only shown once.");
     } else {
       setStaffAccessCodes((current) => {
         const next = { ...current };
@@ -2220,7 +2220,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">This is your business admin area</h2>
         <p className="mt-2 text-sm text-slate-600">
-          Manage the live data for your subscriber site. Your account is tenant-scoped to this site only.
+          Manage the live data for your website. Your account is tenant-scoped to this site only.
         </p>
       </section>
 
@@ -4066,11 +4066,11 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                                 Login link: <a href={`/site-staff/${encodeURIComponent(siteSlug)}`} className="font-semibold text-slate-900 underline" target="_blank" rel="noopener noreferrer">/site-staff/{siteSlug}</a>
                               </p>
                               <p className="mt-1 text-[11px] text-slate-600">
-                                Status: {staff.staffAccessEnabled ? "Enabled" : "Disabled"} | Code: {staff.staffAccessCodeExists ? "exists" : "not generated"}
+                                Status: {staff.staffAccessEnabled ? "Enabled" : "Disabled"} | Password: {staff.staffAccessCodeExists ? "exists" : "not generated"}
                               </p>
                               {staffAccessCodes[staff.id] ? (
                                 <p className="mt-2 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-900">
-                                  One-time code: <span className="font-mono">{staffAccessCodes[staff.id]}</span>
+                                  One-time password: <span className="font-mono">{staffAccessCodes[staff.id]}</span>
                                 </p>
                               ) : null}
                             </div>
@@ -4080,7 +4080,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                                 className={`${outlineButtonClass} ${smallButtonClass}`}
                                 onClick={() => void updateStaffAccess(staff.id, "generate")}
                               >
-                                {staff.staffAccessCodeExists ? "Reset access code" : "Generate access code"}
+                                {staff.staffAccessCodeExists ? "Reset password" : "Generate password"}
                               </button>
                               {staff.staffAccessEnabled ? (
                                 <button
@@ -5116,4 +5116,3 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
     </div>
   );
 }
-

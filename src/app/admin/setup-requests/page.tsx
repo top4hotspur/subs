@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -73,7 +73,7 @@ function toMessage(error: string, status: number): string {
     return "Provision the subscriber site first, then generate business admin access.";
   }
   if (error === "SITE_ADMIN_EMAIL_REQUIRED") {
-    return "No business admin email is available yet. Add a contact email before generating an access code.";
+    return "No business admin email is available yet. Add a contact email before generating an password.";
   }
   return `Request failed: ${error}`;
 }
@@ -260,7 +260,7 @@ export default function AdminSetupRequestsPage() {
 
   async function resetSiteAdminAccessCode(requestId: string): Promise<void> {
     const confirmed = window.confirm(
-      "Generate or reset the business admin access code for this subscriber site? The new code should be shared securely.",
+      "Generate or reset the business admin password for this subscriber site? The new password should be shared securely.",
     );
     if (!confirmed) return;
 
@@ -273,14 +273,14 @@ export default function AdminSetupRequestsPage() {
     setSiteAdminAccessCode(result.generatedAccessCode);
     setSiteAdminAccessEmailStatus(result.emailStatus);
     if (result.emailSent) {
-      setMessage("Business admin access code generated and emailed.");
+      setMessage("Business admin password generated and emailed.");
       return;
     }
     if (result.emailStatus === "EMAIL_NOT_CONFIGURED") {
-      setMessage("Access code generated, but email is not configured. Share the one-time code manually for now.");
+      setMessage("Password generated, but email is not configured. Share the one-time password manually for now.");
       return;
     }
-    setMessage("Access code generated, but email delivery failed. Share the one-time code manually for now.");
+    setMessage("Password generated, but email delivery failed. Share the one-time password manually for now.");
   }
 
   async function hideFromQueue(requestId: string, cancelled: boolean): Promise<void> {
@@ -513,7 +513,7 @@ export default function AdminSetupRequestsPage() {
                     {formatOptional(siteAdminAccess?.adminEmail ?? selectedRequest.contactEmail)}
                   </p>
                   <p>
-                    <span className="font-semibold">Access code exists:</span>{" "}
+                    <span className="font-semibold">Password exists:</span>{" "}
                     {siteAdminAccess?.accessCodeExists ? "Yes" : "No"}
                   </p>
                   <p>
@@ -527,8 +527,8 @@ export default function AdminSetupRequestsPage() {
                       onClick={() => resetSiteAdminAccessCode(selectedRequest.id)}
                     >
                       {siteAdminAccess?.accessCodeExists
-                        ? "Reset and email access code"
-                        : "Generate and email access code"}
+                        ? "Reset and email password"
+                        : "Generate and email password"}
                     </button>
                     <Link
                       href={`/site-admin/${selectedRequest.tenantSite.slug}`}
@@ -542,7 +542,7 @@ export default function AdminSetupRequestsPage() {
                   {siteAdminAccessCode ? (
                     <div className="mt-3 rounded-md border border-sky-300 bg-white px-3 py-2">
                       <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">
-                        One-time generated access code (dev handover)
+                        One-time generated password (dev handover)
                       </p>
                       <p className="mt-1 font-mono text-base text-sky-950">{siteAdminAccessCode}</p>
                       <p className="mt-1 text-xs text-sky-700">
@@ -693,4 +693,3 @@ export default function AdminSetupRequestsPage() {
     </main>
   );
 }
-

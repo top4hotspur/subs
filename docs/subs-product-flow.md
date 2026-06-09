@@ -1,4 +1,4 @@
-﻿# Subs Product Flow
+# Subs Product Flow
 
 ## Current v1 flow
 1. Homepage -> industry page -> demo page (customer/staff/admin views) -> setup order.
@@ -588,13 +588,13 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Card details remain handled by Stripe Checkout only; webhook remains source of truth for paid status.
 
 ## Business admin login handover
-- When a site-admin access code is generated/reset from platform admin setup requests, a transactional email attempt is made to the business admin email.
-- Email includes login URL, site slug, admin email, and one-time access code with privacy guidance.
+- When a site-admin password is generated/reset from platform admin setup requests, a transactional email attempt is made to the business admin email.
+- Email includes login URL, site slug, admin email, and one-time password with privacy guidance.
 - If email fails or is not configured, platform admin sees delivery status and can manually share the one-time code as temporary fallback.
 - `/site-admin/login` now explicitly instructs business owners to check junk/spam if they do not see access emails.
 
 ## 2026-06-01 deliverability and anti-spam hardening
-- Transactional access-code handover continues to send fail-soft and now uses platform reply-to where configured.
+- Transactional password handover continues to send fail-soft and now uses platform reply-to where configured.
 - Deliverability expectations:
   - sender domain alignment (SPF/DKIM/DMARC) is required for `myexperiment.club`
   - inbox placement can still vary while domain reputation builds (Outlook/Hotmail/Gmail checks required)
@@ -879,7 +879,7 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Provisioned subscriber sites now have a first-pass staff route at `/site-staff/[siteSlug]`.
 - The staff view is tenant-scoped and shows a shared business appointment diary, not only the signed-in staff member's own appointments.
 - Business owners generate/reset staff access from `/site-admin/[siteSlug]` in the Staff setup section.
-- Staff access uses the existing staff member email plus a generated access code. The code is hashed before storage; only an immediate one-time handover code is shown in the business admin UI.
+- Staff access uses the existing staff member email plus a generated password. The code is hashed before storage; only an immediate one-time handover code is shown in the business admin UI.
 - Staff login uses `/site-staff/login` and stores a signed, HTTP-only staff session cookie scoped to `/site-staff`.
 - Any active staff member with enabled access can view today's appointments, upcoming appointments, and recent completed/cancelled appointments for the tenant site.
 - Staff can mark active bookings completed. Staff cannot edit settings, pricing, rota, policies, payments, refunds, platform admin state, or subscriber admin controls in this pass.
@@ -1036,7 +1036,7 @@ FAQ copy:
 
 ## 2026-06-02 customer account and booking payment guardrails
 - Public subscriber sites link customer access to `/sites/[siteSlug]/account`, with login and registration at `/sites/[siteSlug]/account/login` and `/sites/[siteSlug]/account/register`.
-- Customer account v1 is tenant-scoped and access-code based. Logged-in customers can see upcoming, past and cancelled bookings, booking status, service/staff details, payment status, policy links, business contact actions, and a prefilled editable profile form for first name, last name, email and phone.
+- Customer account v1 is tenant-scoped and password-based. Logged-in customers can see upcoming, past and cancelled bookings, booking status, service/staff details, payment status, policy links, business contact actions, and a prefilled editable profile form for first name, last name, email and phone.
 - Guest booking remains allowed. If a customer is logged in while booking, the public booking form prefills their saved name/email/phone from the tenant-scoped account and associates the booking with that tenant customer account.
 - Subscriber booking payment behaviour now follows the business payment settings conservatively. Platform Stripe checkout for MyExperiment.club subscriptions is not reused for subscriber businesses taking payments from their own customers.
 - If online prepayment is required but subscriber checkout is not connected, public booking is blocked with a contact-the-business message. No fake payment success is recorded and no card details are collected.
@@ -1124,7 +1124,7 @@ Window Cleaning is a supported industry offering using slug `window-cleaning`. I
 ## 2026-06-03 Subscriber admin access onboarding
 - Paid-order fulfilment now follows: paid setup request -> platform admin creates clean subscriber site -> first tenant-scoped business-owner/admin access record is created -> onboarding email is attempted -> customer logs in at `/site-admin/[siteSlug]`.
 - Platform admin and subscriber admin remain separate auth scopes. Subscriber owners use `CustomerSiteAdminUser` credentials; they do not use platform-admin credentials.
-- Access codes are hashed in the database. The plaintext one-time code is returned only during generation/reset for temporary platform-admin handover and is also sent by fail-soft transactional email where configured.
+- Passwords are hashed in the database. The plaintext one-time code is returned only during generation/reset for temporary platform-admin handover and is also sent by fail-soft transactional email where configured.
 - Platform admin can resend/reset access details from `/admin/setup-requests` if the customer cannot find the email or the code needs rotating.
 - The site-admin onboarding checklist remains the first setup guide after login: business details, services/prices, staff, rota, policies, public preview and go-live readiness.
 

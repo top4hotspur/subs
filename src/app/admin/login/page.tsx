@@ -7,10 +7,10 @@ import { primaryButtonClass } from "@/lib/ui/button-styles";
 
 function toFriendlyLoginError(error: string | null | undefined): string {
   if (!error) {
-    return "Login failed. Check your admin email and access code.";
+    return "Login failed. Check your admin email and password.";
   }
   if (error === "CredentialsSignin") {
-    return "Login failed. Check your admin email and access code.";
+    return "Login failed. Check your admin email and password.";
   }
   if (error === "Configuration") {
     return "Login failed due to auth configuration. Please contact platform admin.";
@@ -80,7 +80,7 @@ export default function AdminLoginPage() {
             />
           </label>
           <label className="block text-sm font-medium text-slate-800">
-            Access code
+            Password
             <input
               type="password"
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
