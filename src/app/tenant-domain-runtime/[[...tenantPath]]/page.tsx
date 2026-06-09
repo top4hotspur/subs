@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import PublicSiteSlugPage from "@/app/sites/[siteSlug]/page";
 import PublicSiteAboutPage from "@/app/sites/[siteSlug]/about/page";
 import CustomerAccountPage from "@/app/sites/[siteSlug]/account/page";
@@ -14,7 +14,10 @@ import PublicSitePolicyPage from "@/app/sites/[siteSlug]/policy/page";
 import PublicSitePrivacyPage from "@/app/sites/[siteSlug]/privacy/page";
 import SiteGiftVouchersPage from "@/app/sites/[siteSlug]/vouchers/page";
 import {
+  getTenantDomainBlockReason,
   getLiveTenantSiteByDomainHost,
+  isTenantDomainRenderable,
+  isTenantUnavailableStatus,
   resolveTenantSiteByHost,
 } from "@/lib/sites/tenant-resolver";
 
@@ -23,18 +26,21 @@ type TenantDomainPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-function isUnavailableStatus(value?: string | null): boolean {
-  return value === "SUSPENDED" || value === "CANCELLED";
-}
-
-function unavailablePage() {
+function unavailablePage(reason = "SITE_NOT_LIVE") {
+  const suspended = reason === "SUSPENDED_OR_CANCELLED";
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-16 text-slate-900">
       <section className="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-        <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">Website unavailable</p>
-        <h1 className="mt-3 text-3xl font-bold">This website is currently unavailable.</h1>
+        <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">
+          {suspended ? "Website unavailable" : "Website not live yet"}
+        </p>
+        <h1 className="mt-3 text-3xl font-bold">
+          {suspended ? "This website is currently unavailable." : "This website is being prepared."}
+        </h1>
         <p className="mt-3 text-sm text-slate-600">
-          Please contact the business or MyExperiment.club support.
+          {suspended
+            ? "Please contact the business or MyExperiment.club support."
+            : "The domain is connected to MyExperiment.club, but this site is not marked live yet."}
         </p>
       </section>
     </main>
@@ -50,13 +56,17 @@ export default async function TenantDomainPage({ params, searchParams }: TenantD
   const liveMatch = await getLiveTenantSiteByDomainHost(host);
   if (!liveMatch) {
     const broadMatch = await resolveTenantSiteByHost(host, { includeUnavailable: true });
-    if (
-      broadMatch &&
-      (isUnavailableStatus(broadMatch.siteStatus) ||
-        isUnavailableStatus(broadMatch.provisioningStatus) ||
-        isUnavailableStatus(broadMatch.domainStatus))
-    ) {
-      return unavailablePage();
+    if (broadMatch) {
+      const blockReason = getTenantDomainBlockReason(broadMatch);
+      if (
+        blockReason ||
+        !isTenantDomainRenderable(broadMatch) ||
+        isTenantUnavailableStatus(broadMatch.siteStatus) ||
+        isTenantUnavailableStatus(broadMatch.provisioningStatus) ||
+        isTenantUnavailableStatus(broadMatch.domainStatus)
+      ) {
+        return unavailablePage(blockReason ?? "SITE_NOT_LIVE");
+      }
     }
     notFound();
   }
@@ -66,6 +76,9 @@ export default async function TenantDomainPage({ params, searchParams }: TenantD
   const path = tenantPath.map((segment) => segment.toLowerCase());
 
   if (path.length === 0) return <PublicSiteSlugPage params={siteParams} />;
+  if (path.length === 2 && path[0] === "sites" && path[1] === liveMatch.tenantSlug.toLowerCase()) {
+    redirect("/");
+  }
   if (path.length === 1 && path[0] === "about") return <PublicSiteAboutPage params={siteParams} />;
   if (path.length === 1 && (path[0] === "account" || path[0] === "my-account")) {
     return <CustomerAccountPage params={siteParams} />;

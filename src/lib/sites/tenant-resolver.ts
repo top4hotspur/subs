@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db/prisma";
 
-type ResolvedTenantSite = {
+export type ResolvedTenantSite = {
   tenantSiteId: string;
   tenantSlug: string;
   tenantDisplayName: string;
@@ -11,6 +11,7 @@ type ResolvedTenantSite = {
   sslStatus?: string | null;
   siteStatus?: string | null;
   provisioningStatus?: string | null;
+  subscriptionStatus?: string | null;
 };
 
 function trimProtocolAndPath(value: string): string {
@@ -54,6 +55,13 @@ function buildHostCandidates(normalizedHost: string): string[] {
   return [...candidates];
 }
 
+function domainTypePriority(domainType: string): number {
+  if (domainType === "PRIMARY") return 0;
+  if (domainType === "APEX") return 1;
+  if (domainType === "WWW") return 2;
+  return 3;
+}
+
 function isLocalDevHost(host: string): boolean {
   return host === "localhost" || host === "127.0.0.1" || host === "::1";
 }
@@ -74,7 +82,29 @@ const ACTIVE_DOMAIN_STATUSES = [
   "LIVE",
 ];
 
-const LIVE_DOMAIN_STATUSES = ["DNS_CONFIGURED", "DOMAIN_READY", "READY", "LIVE"];
+export const LIVE_DOMAIN_STATUSES = ["DNS_CONFIGURED", "DOMAIN_READY", "READY", "LIVE"];
+
+export function isTenantUnavailableStatus(value?: string | null): boolean {
+  return value === "SUSPENDED" || value === "CANCELLED";
+}
+
+export function getTenantDomainBlockReason(match: ResolvedTenantSite | null): string | null {
+  if (!match) return "NO_SITE_DOMAIN_MATCH";
+  if (
+    isTenantUnavailableStatus(match.siteStatus) ||
+    isTenantUnavailableStatus(match.provisioningStatus) ||
+    isTenantUnavailableStatus(match.domainStatus)
+  ) {
+    return "SUSPENDED_OR_CANCELLED";
+  }
+  if (!LIVE_DOMAIN_STATUSES.includes(match.domainStatus)) return "DOMAIN_NOT_READY";
+  if (match.siteStatus !== "LIVE" && match.provisioningStatus !== "LIVE") return "SITE_NOT_LIVE";
+  return null;
+}
+
+export function isTenantDomainRenderable(match: ResolvedTenantSite | null): boolean {
+  return getTenantDomainBlockReason(match) === null;
+}
 
 export async function getTenantSiteByDomainHost(
   host: string,
@@ -84,7 +114,7 @@ export async function getTenantSiteByDomainHost(
   if (!normalized || isLocalDevHost(normalized)) return null;
 
   const candidates = buildHostCandidates(normalized);
-  const domainMatch = await prisma.siteDomain.findFirst({
+  const domainMatches = await prisma.siteDomain.findMany({
     where: {
       domain: { in: candidates },
       status: options.includeUnavailable
@@ -93,7 +123,7 @@ export async function getTenantSiteByDomainHost(
           ? { in: LIVE_DOMAIN_STATUSES }
           : { in: ACTIVE_DOMAIN_STATUSES },
     },
-    orderBy: [{ domainType: "asc" }, { createdAt: "asc" }],
+    orderBy: [{ createdAt: "asc" }],
     select: {
       domain: true,
       domainType: true,
@@ -107,10 +137,20 @@ export async function getTenantSiteByDomainHost(
           displayName: true,
           status: true,
           provisioningStatus: true,
+          subscriptionStatus: true,
         },
       },
     },
   });
+
+  const domainMatch = domainMatches.sort((left, right) => {
+    const leftHostPriority = candidates.indexOf(left.domain);
+    const rightHostPriority = candidates.indexOf(right.domain);
+    if (leftHostPriority !== rightHostPriority) return leftHostPriority - rightHostPriority;
+    const leftTypePriority = domainTypePriority(left.domainType);
+    const rightTypePriority = domainTypePriority(right.domainType);
+    return leftTypePriority - rightTypePriority;
+  })[0];
 
   if (!domainMatch) return null;
   if (!options.includeUnavailable) {
@@ -129,6 +169,7 @@ export async function getTenantSiteByDomainHost(
     sslStatus: domainMatch.sslStatus,
     siteStatus: domainMatch.tenantSite.status,
     provisioningStatus: domainMatch.tenantSite.provisioningStatus,
+    subscriptionStatus: domainMatch.tenantSite.subscriptionStatus,
   };
 }
 
@@ -142,7 +183,7 @@ export async function resolveTenantSiteByHost(
 export async function getLiveTenantSiteByDomainHost(host: string): Promise<ResolvedTenantSite | null> {
   const match = await getTenantSiteByDomainHost(host, { requireLive: true });
   if (!match) return null;
-  if (match.siteStatus !== "LIVE" && match.provisioningStatus !== "LIVE") return null;
+  if (!isTenantDomainRenderable(match)) return null;
   return match;
 }
 

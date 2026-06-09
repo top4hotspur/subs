@@ -1049,6 +1049,9 @@ export default function AdminSitesPage() {
                   >
                     {domainSaving ? "Saving SiteDomain..." : "Save SiteDomain"}
                   </button>
+                  {message ? (
+                    <p className="mt-2 text-xs font-semibold text-slate-700">{message}</p>
+                  ) : null}
                   <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-2">
                     <p className="text-xs font-semibold text-slate-900">Record manual DNS check</p>
                     <div className="mt-2 grid gap-2 sm:grid-cols-2">

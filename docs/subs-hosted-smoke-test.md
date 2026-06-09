@@ -1681,3 +1681,20 @@ Use the dummy customer:
 13. Confirm sent DNS instructions refer to the customer's new `FundMyClub Nails` website, not a "MyExperiment.club website".
 14. Mark DNS configured/ready and site live only after manual external checks are complete.
 15. Confirm `/sites/fundmyclub-nails` remains the preview route and `fundmyclub.online` renders only when public DNS/SSL are actually configured.
+
+### FundMyClub.online custom-domain runtime rendering
+
+Amplify custom domain available means DNS/SSL is reaching the hosted app. If the custom domain returns the app 404, the remaining issue is app-side host routing, tenant resolver matching or status gating.
+
+1. Confirm `/sites/fundmyclub-nails` works on the platform host when the tenant is public-preview/live enough.
+2. Open `/api/site-resolve-debug?host=fundmyclub.online&path=/` as a platform admin.
+3. Confirm the response reports `matched=true`, `tenantSlug=fundmyclub-nails`, the SiteDomain status, DNS status, SSL status, tenant lifecycle/provisioning/subscription statuses, `wouldRender`, `blockReason` and `rewriteTarget`.
+4. Confirm `fundmyclub.online` root renders FundMyClub Nails when the SiteDomain is domain-ready/live and the tenant is live.
+5. Confirm `www.fundmyclub.online` root renders or redirects according to the SiteDomain records configured for the `www` alias.
+6. Confirm `fundmyclub.online/sites/fundmyclub-nails` redirects to `/` or renders tenant content safely, not the platform 404.
+7. Confirm `fundmyclub.online/admin` does not expose platform admin.
+8. Confirm `fundmyclub.online/api/admin/sites` returns a safe 404/blocked response and does not expose platform API data.
+9. Suspend the site and confirm the customer domain shows the tenant unavailable page.
+10. Reactivate/mark live again and confirm the customer domain renders.
+11. Confirm `Save SiteDomain` shows visible loading/success/no-change/error feedback.
+12. Confirm preview/admin links open in new tabs.

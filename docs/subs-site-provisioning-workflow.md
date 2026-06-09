@@ -592,6 +592,18 @@ DNS target values must come from the real hosting/domain attachment process. For
 
 The domain resolution tester checks MyExperiment.club's internal mapping only. It confirms whether an entered hostname maps to a `SiteDomain` and `TenantSite`. It does not prove public DNS propagation, SSL/certificate readiness or external registrar configuration.
 
+If an Amplify custom domain is marked available and `https://customer-domain.example` reaches the Next.js app but shows the app 404, treat that as an app-side host-routing/status-gating issue rather than a DNS purchase issue. Use `/api/site-resolve-debug?host=customer-domain.example&path=/` as a platform admin to confirm the normalised host, SiteDomain match, tenant lifecycle/provisioning/subscription statuses, domain/DNS/SSL statuses, render decision, block reason and rewrite target.
+
+Current runtime gating:
+
+- Platform hosts such as `myexperiment.club`, `www.myexperiment.club`, localhost and Amplify app hosts render platform routes normally.
+- Customer hosts are rewritten to the tenant-domain runtime unless they are static assets or API routes.
+- `/api/admin/*` on customer hosts returns a safe 404 and must not expose platform APIs.
+- A matched customer domain renders the tenant site only when the SiteDomain status is `DNS_CONFIGURED`, `DOMAIN_READY`, `READY` or `LIVE`, and the TenantSite `status` or `provisioningStatus` is `LIVE`.
+- Matched domains that are not ready show a tenant "website not live yet" page instead of the generic platform 404.
+- Suspended/cancelled sites show a tenant unavailable page.
+- `/sites/[siteSlug]` remains the platform preview route; on a matching customer host, `/sites/[sameSlug]` redirects to `/`.
+
 Recommended go-live mini checklist:
 
 1. Internal `SiteDomain` saved.

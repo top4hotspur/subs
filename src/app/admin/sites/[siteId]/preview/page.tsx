@@ -75,7 +75,7 @@ export default async function AdminSitePersistedPreviewPage({
             href={`/sites/${encodeURIComponent(preview.tenantSite.slug)}`}
             className={`${outlineButtonClass} ${smallButtonClass}`}
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
           >
             Open public site URL
           </Link>
