@@ -603,6 +603,8 @@ Current runtime gating:
 - Matched domains that are not ready show a tenant "website not live yet" page instead of the generic platform 404.
 - Suspended/cancelled sites show a tenant unavailable page.
 - `/sites/[siteSlug]` remains the platform preview route; on a matching customer host, `/sites/[sameSlug]` redirects to `/`.
+- Customer-domain tenant pages must not render the MyExperiment.club platform header or marketing footer. The tenant public shell should use the business/site name, public customer navigation and tenant footer details.
+- Public footer links for business admin and staff access must not point to broken customer-domain `/site-admin` or `/site-staff` paths. Until those auth shells are supported on custom domains, they should link to the platform host, for example `https://myexperiment.club/site-admin/[siteSlug]`, in a new tab.
 
 If Amplify reports a custom domain as available and `/api/site-resolve-debug?host=[domain]&path=/` reports `matched=true` with `blockReason=DOMAIN_NOT_READY`, DNS/AWS/SSL routing is reaching the app and the remaining gate is app-side status. Operators can use `Mark Amplify domain verified` in `/admin/sites` after manually confirming Amplify custom-domain readiness. This records DNS verified, SSL issued and domain ready without calling AWS APIs.
 

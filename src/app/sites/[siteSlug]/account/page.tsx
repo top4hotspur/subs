@@ -157,14 +157,14 @@ export default async function CustomerAccountPage({ params }: AccountPageProps) 
         <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
           <p className="font-semibold text-slate-950">Your account details</p>
           <p className="mt-1">
-            These details are saved for this business only and can be used to prefill future booking forms.
+            These details are saved will be used to prefill future booking forms.
           </p>
           <SiteCustomerProfileForm siteSlug={site.tenantSite.slug} initialCustomer={customer} />
         </section>
         <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
           <p className="font-semibold text-slate-950">Marketing preference</p>
           <p className="mt-1">
-            Choose whether this business can send you offers, updates and reminders. This is specific to this business only.
+            Let us know if you are happy for us to send you offers, updates and reminders.
           </p>
           <SiteCustomerMarketingPreference
             siteSlug={site.tenantSite.slug}

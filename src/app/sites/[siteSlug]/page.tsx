@@ -55,6 +55,11 @@ function formatClosureRange(startDate: string, endDate: string | null): string {
   return end === startDate ? formatUkDate(startDate) : `${formatUkDate(startDate)} to ${formatUkDate(end)}`;
 }
 
+function platformAbsolutePath(path: string): string {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") || "https://myexperiment.club";
+  return `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
 function getEnabledSocialEntries(socialLinks: PersistedSocialLinks) {
   const entries = [
     { key: "facebook", id: "facebook" },
@@ -181,8 +186,8 @@ export default async function PublicSiteSlugPage({
   const policyHref = buildPublicSitePath(publicBasePath, "policy");
   const cookiesHref = buildPublicSitePath(publicBasePath, "cookies");
   const privacyHref = buildPublicSitePath(publicBasePath, "privacy");
-  const siteAdminHref = `/site-admin/${encodeURIComponent(preview.tenantSite.slug)}`;
-  const staffLoginHref = `/site-staff/${encodeURIComponent(preview.tenantSite.slug)}`;
+  const siteAdminHref = platformAbsolutePath(`/site-admin/${encodeURIComponent(preview.tenantSite.slug)}`);
+  const staffLoginHref = platformAbsolutePath(`/site-staff/${encodeURIComponent(preview.tenantSite.slug)}`);
   const customerAccountHref = buildPublicSitePath(publicBasePath, "account");
   const vouchersHref = buildPublicSitePath(publicBasePath, "vouchers");
   const giftVouchersVisible = vouchersArePublic(settings?.giftVoucherSettingsJson);
@@ -310,6 +315,12 @@ export default async function PublicSiteSlugPage({
                   {upcomingClosure.customerNote?.trim() || upcomingClosure.label} ({formatClosureRange(upcomingClosure.date, upcomingClosure.endDate)})
                 </div>
               ) : null}
+              <div className="mb-3">
+                <p className="text-sm font-semibold text-slate-900">{siteName}</p>
+                {preview.tenantSite.domainPrimary ? (
+                  <p className="mt-1 text-xs text-slate-500">{preview.tenantSite.domainPrimary}</p>
+                ) : null}
+              </div>
               <div id="contact" className="mb-3 flex flex-wrap gap-x-4 gap-y-1">
                 {settings?.phone ? <span>Phone: {settings.phone}</span> : null}
                 {settings?.email ? <span>Email: {settings.email}</span> : null}
@@ -345,8 +356,8 @@ export default async function PublicSiteSlugPage({
                   <Link href={policyHref} className="hover:text-slate-900">Terms / Policies</Link>
                 ) : null}
                 <span className="mx-1 text-slate-300">|</span>
-                <Link href={staffLoginHref} id="staff-access" className="hover:text-slate-900">Staff login</Link>
-                <Link href={siteAdminHref} className="hover:text-slate-900">Business admin login</Link>
+                <Link href={staffLoginHref} id="staff-access" target="_blank" rel="noopener noreferrer" className="hover:text-slate-900">Staff login</Link>
+                <Link href={siteAdminHref} target="_blank" rel="noopener noreferrer" className="hover:text-slate-900">Business admin login</Link>
               </div>
             </footer>
           </div>

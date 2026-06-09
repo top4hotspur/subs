@@ -13,8 +13,8 @@ type AccountFormProps = {
 
 function friendlyError(error: string | undefined, mode: "login" | "register"): string {
   if (error === "CUSTOMER_ACCOUNT_NOT_CREATED") return "We could not create this account with those details. Please check the form or log in if you already have an account.";
-  if (error === "INVALID_CUSTOMER_ACCESS") return "Login failed. Check your email and access code.";
-  if (error === "VALIDATION_ERROR") return "Please check the form fields and access code.";
+  if (error === "INVALID_CUSTOMER_ACCESS") return "Login failed. Check your email and password.";
+  if (error === "VALIDATION_ERROR") return "Please check the form fields and password.";
   return mode === "login" ? "Could not log in right now." : "Could not create account right now.";
 }
 
@@ -93,11 +93,11 @@ export function SiteCustomerAccountForm({ siteSlug, mode, publicBasePath }: Acco
         </label>
       ) : null}
       <label className="block text-sm font-semibold text-slate-800">
-        Access code
+        Password
         <input type="password" className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={accessCode} onChange={(event) => setAccessCode(event.target.value)} required minLength={6} />
       </label>
       <p className="text-xs text-slate-600">
-        Use a private access code for this site account. It is separate from staff and business-admin access.
+        Use a private password for this site account. It is separate from staff and business-admin access.
       </p>
       {mode === "register" ? (
         <label className="flex items-start gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">

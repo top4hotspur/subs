@@ -889,7 +889,7 @@ CSV import/export setup tools moved out of demo customisation and into business 
 ## Customer Accounts and Staff Permissions v1
 
 - Provisioned subscriber sites now have tenant-scoped customer account routes under `/sites/[siteSlug]/account`.
-- Customers can register with first name, last name, email, phone, and a private access code. The access code is hashed before storage.
+- Customers can register with first name, last name, email, phone, and a private password. The internal compatibility field is still stored securely and hashed before storage.
 - Customer login is site-specific and uses a signed HTTP-only session cookie scoped to `/sites`.
 - Guest booking remains available. A logged-in customer's booking form is prefilled from their account, and successful bookings are linked to that tenant customer account.
 - Customer account dashboards show bookings linked to that tenant/customer account plus safe same-tenant guest bookings matched by normalised email, grouped into upcoming, past, and cancelled bookings.
@@ -1184,3 +1184,5 @@ If a customer domain reaches the app but shows the app 404, the likely problem i
 Runtime rules are intentionally conservative: customer-domain root renders only for a mapped SiteDomain whose status is `DNS_CONFIGURED`, `DOMAIN_READY`, `READY` or `LIVE` and whose TenantSite is live by `status` or `provisioningStatus`. Matched but not-ready sites show a tenant not-live page; suspended/cancelled sites show unavailable. Customer-domain `/sites/[sameSlug]` redirects to `/`, while platform admin/API routes remain blocked from customer hosts.
 
 For platform-managed Amplify domains, missing DNS target values block customer DNS instruction email only. They do not block an operator from saving manual readiness states after Amplify shows the domain available. `/admin/sites` includes a `Mark Amplify domain verified` action that records DNS verified, SSL issued and domain ready without calling AWS. The final public rendering gate still requires the tenant site to be marked live.
+
+Live customer domains render as standalone tenant sites. The MyExperiment.club platform header/footer is hidden on non-platform hosts, and the tenant shell uses the business name, customer navigation and tenant footer details. Business admin and staff links on public tenant pages use platform-hosted URLs in a new tab until those auth routes are deliberately supported on custom domains. Customer account registration uses customer-friendly `Password` wording even if internal compatibility fields still use access-code naming.

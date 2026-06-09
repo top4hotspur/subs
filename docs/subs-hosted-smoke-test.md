@@ -1242,8 +1242,8 @@ Notes:
 ## Hosted Smoke Test - Customer Accounts and Staff Permissions v1
 
 1. Open `/sites/luna-hair-studio` and confirm the top `Customer login` link opens `/sites/luna-hair-studio/account` or redirects to customer login.
-2. Create a customer account at `/sites/luna-hair-studio/account/register` with first name, last name, email, phone, and a private access code.
-3. Log out, then log back in at `/sites/luna-hair-studio/account/login` using the same email and access code.
+2. Create a customer account at `/sites/luna-hair-studio/account/register` with first name, last name, email, phone, and a private password.
+3. Log out, then log back in at `/sites/luna-hair-studio/account/login` using the same email and password.
 4. Open `/sites/luna-hair-studio/account` and confirm the customer account details form is prefilled with the saved first name, last name, email and phone for that tenant.
 5. Edit the account details, save, reload, and confirm the saved values remain visible.
 6. Start a booking from `/sites/luna-hair-studio` while logged in and confirm the booking form pre-fills the saved customer name, email, and phone.
@@ -1338,8 +1338,8 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
 
 ## Hosted smoke: customer login and payment requirement flow
 1. Open `/sites/[siteSlug]` and confirm `Customer login` opens `/sites/[siteSlug]/account` or redirects to `/sites/[siteSlug]/account/login`.
-2. Register a customer account at `/sites/[siteSlug]/account/register` with first name, last name, email, phone and private access code.
-3. Log out, then log in again at `/sites/[siteSlug]/account/login` with the same tenant site, email and access code.
+2. Register a customer account at `/sites/[siteSlug]/account/register` with first name, last name, email, phone and private password.
+3. Log out, then log in again at `/sites/[siteSlug]/account/login` with the same tenant site, email and password.
 4. Confirm `/sites/[siteSlug]/account` shows upcoming, past and cancelled booking sections plus the saved-payment-method placeholder.
 5. While logged in, open the public booking flow and confirm name/email/phone are prefilled from the customer account.
 6. With prepayment disabled, confirm public booking copy says no payment is taken online or payment is arranged directly with the business, and booking submission succeeds where availability allows.
@@ -1378,7 +1378,7 @@ Current limitation: custom-domain host rendering is wired for hosts that reach t
 2. Open `Customer login` / `/sites/[siteSlug]/account/register`.
 3. Register with the same email address and leave marketing consent unchecked.
 4. Confirm the guest booking appears in the account dashboard under upcoming, past or cancelled bookings as appropriate.
-5. Log out and back in with the same email/access code, then confirm the previously guest booking still appears because it has been linked to the account.
+5. Log out and back in with the same email/password, then confirm the previously guest booking still appears because it has been linked to the account.
 6. Create another booking while logged in and confirm the success prompt says the booking has been added to the account.
 7. Toggle the account marketing preference on and off, then refresh and confirm it persists.
 8. Confirm the customer account shows the Special offers section with `No offers available right now.`
@@ -1726,3 +1726,19 @@ This means AWS/DNS/SSL reaches the app, but app-side statuses still block render
 8. Open `https://fundmyclub.online` and confirm FundMyClub Nails renders.
 9. Open `https://fundmyclub.online/sites/fundmyclub-nails` and confirm it redirects to `/` or renders safely.
 10. Confirm `https://fundmyclub.online/admin` and `https://fundmyclub.online/api/admin/sites` do not expose platform admin/API.
+
+### FundMyClub.online tenant shell check
+
+1. Open `https://fundmyclub.online`.
+2. Confirm the page renders `FundMyClub Nails`.
+3. Confirm the MyExperiment.club platform header is not visible.
+4. Confirm the MyExperiment.club marketing/platform footer is not visible.
+5. Confirm the tenant header shows `FundMyClub Nails`, `Home`, `Services`, `Book now`, `Contact`, and `Customer login`.
+6. Confirm the tenant footer uses `FundMyClub Nails` / tenant business details, not MyExperiment.club marketing copy.
+7. Confirm `https://fundmyclub.online/admin` does not expose platform admin.
+8. Confirm `https://fundmyclub.online/api/admin/sites` returns safe 404/NOT_FOUND.
+9. Confirm `Business admin login`, if visible, opens `https://myexperiment.club/site-admin/fundmyclub-nails` in a new tab.
+10. Confirm `Staff login`, if visible, opens a valid platform-hosted staff route in a new tab.
+11. Open `https://fundmyclub.online/account/register` and confirm the customer credential label says `Password`, not `Access code`.
+12. Open `https://fundmyclub.online/account` and confirm the updated account details and marketing preference wording.
+13. Confirm platform host `/admin`, `/sites/fundmyclub-nails`, and `/site-admin/fundmyclub-nails` still work on `myexperiment.club`.
