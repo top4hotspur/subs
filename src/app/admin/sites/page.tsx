@@ -36,6 +36,17 @@ import { buildDnsInstructionsText } from "@/lib/sites/domain-go-live";
 
 const TASK_STATUS_OPTIONS = ["TODO", "IN_PROGRESS", "DONE", "BLOCKED", "SKIPPED"];
 
+const SIMPLE_DOMAIN_STATUS_OPTIONS = [
+  { value: "DOMAIN_PENDING", label: "Domain details needed" },
+  { value: "DOMAIN_PURCHASED", label: "Domain purchased / owned" },
+  { value: "INSTRUCTIONS_NEEDED", label: "DNS instructions needed" },
+  { value: "WAITING_FOR_CUSTOMER_DNS", label: "Waiting for DNS" },
+  { value: "DNS_CONFIGURED", label: "DNS configured" },
+  { value: "DOMAIN_READY", label: "Ready to go live" },
+  { value: "LIVE", label: "Live" },
+  { value: "NEEDS_ATTENTION", label: "Needs attention" },
+] as const;
+
 type TaskGroupKey =
   | "setupReview"
   | "businessDetails"
@@ -159,6 +170,14 @@ function getDomainTypeHelper(value: string): string {
   return "Other alias: extra domain that should also point here.";
 }
 
+function simpleDomainStatusLabel(value?: string | null): string {
+  return SIMPLE_DOMAIN_STATUS_OPTIONS.find((option) => option.value === value)?.label ?? lifecycleStatusLabel(value);
+}
+
+function checklistStatus(done: boolean, fallback = "Manual check needed"): string {
+  return done ? "Yes" : fallback;
+}
+
 function canSendCustomerDnsInstructions(domainOption?: string | null, setupMode?: string | null): boolean {
   return (
     domainOption === "EXISTING_DOMAIN" ||
@@ -224,6 +243,7 @@ export default function AdminSitesPage() {
   const [domainTestResult, setDomainTestResult] = useState<string | null>(null);
   const [dnsCopyStatus, setDnsCopyStatus] = useState<string | null>(null);
   const [dnsEmailStatus, setDnsEmailStatus] = useState<string | null>(null);
+  const [domainSaving, setDomainSaving] = useState(false);
   const [domainDraft, setDomainDraft] = useState({
     domain: "",
     domainType: "PRIMARY" as "PRIMARY" | "APEX" | "WWW" | "ALIAS",
@@ -399,44 +419,68 @@ export default function AdminSitesPage() {
       setMessage("Enter the intended live domain before saving.");
       return;
     }
-    const result = await saveAdminSiteDomain(selectedSiteId, {
-      domain: domainDraft.domain,
-      domainType: domainDraft.domainType,
-      status: domainDraft.status,
-      domainStatus: domainDraft.status,
-      domainSetupMode: domainDraft.domainSetupMode,
-      dnsStatus: domainDraft.dnsStatus,
-      sslStatus: domainDraft.sslStatus,
-      domainNotes: domainDraft.domainNotes.trim() || null,
-      expectedDnsTarget: domainDraft.expectedDnsTarget.trim() || null,
-      expectedNameservers: csvToJsonArray(domainDraft.expectedNameserversText),
-      registrarNotes: domainDraft.registrarNotes.trim() || null,
-      dnsInstructions: {
-        ...getDnsInstructionMetadata(
-          detail?.domains.find(
-            (domain) =>
-              domain.domain === domainDraft.domain.trim().toLowerCase() &&
-              domain.domainType === domainDraft.domainType,
-          )?.dnsInstructions,
-        ),
-        targetInstructions: buildTargetInstructions(domainDraft) || undefined,
-      },
-    });
-    if (!result.ok) {
-      if (result.error === "SITE_DOMAIN_INVALID") {
-        setMessage("Enter a valid domain/host, for example www.customerbusiness.co.uk.");
-        return;
-      }
-      if (result.error === "SITE_DOMAIN_ALREADY_ASSIGNED") {
-        setMessage("This domain is already assigned to another active subscriber site.");
-        return;
-      }
-      setMessage(toMessage(result.error, result.status));
+    const normalizedDomain = domainDraft.domain.trim().toLowerCase();
+    const existingDomain = detail?.domains.find(
+      (domain) => domain.domain === normalizedDomain && domain.domainType === domainDraft.domainType,
+    );
+    const nextTargetInstructions = buildTargetInstructions(domainDraft);
+    const existingDnsMetadata = getDnsInstructionMetadata(existingDomain?.dnsInstructions);
+    const nextNameservers = csvToJsonArray(domainDraft.expectedNameserversText) ?? [];
+    const existingNameservers = Array.isArray(existingDomain?.expectedNameservers)
+      ? existingDomain.expectedNameservers.filter((item): item is string => typeof item === "string")
+      : [];
+    const unchanged =
+      Boolean(existingDomain) &&
+      existingDomain?.status === domainDraft.status &&
+      existingDomain?.domainSetupMode === domainDraft.domainSetupMode &&
+      existingDomain?.dnsStatus === domainDraft.dnsStatus &&
+      existingDomain?.sslStatus === domainDraft.sslStatus &&
+      (existingDomain?.domainNotes ?? "") === domainDraft.domainNotes.trim() &&
+      (existingDomain?.expectedDnsTarget ?? "") === domainDraft.expectedDnsTarget.trim() &&
+      existingNameservers.join("\n") === nextNameservers.join("\n") &&
+      (existingDomain?.registrarNotes ?? "") === domainDraft.registrarNotes.trim() &&
+      (existingDnsMetadata.targetInstructions ?? "") === nextTargetInstructions;
+    if (unchanged) {
+      setMessage("Domain settings already up to date.");
       return;
     }
-    setMessage(`Domain saved: ${result.domain.domain}.`);
-    await loadSites();
-    await loadSiteDetail(selectedSiteId);
+    setDomainSaving(true);
+    try {
+      const result = await saveAdminSiteDomain(selectedSiteId, {
+        domain: domainDraft.domain,
+        domainType: domainDraft.domainType,
+        status: domainDraft.status,
+        domainStatus: domainDraft.status,
+        domainSetupMode: domainDraft.domainSetupMode,
+        dnsStatus: domainDraft.dnsStatus,
+        sslStatus: domainDraft.sslStatus,
+        domainNotes: domainDraft.domainNotes.trim() || null,
+        expectedDnsTarget: domainDraft.expectedDnsTarget.trim() || null,
+        expectedNameservers: csvToJsonArray(domainDraft.expectedNameserversText),
+        registrarNotes: domainDraft.registrarNotes.trim() || null,
+        dnsInstructions: {
+          ...existingDnsMetadata,
+          targetInstructions: nextTargetInstructions || undefined,
+        },
+      });
+      if (!result.ok) {
+        if (result.error === "SITE_DOMAIN_INVALID") {
+          setMessage("Enter a valid domain/host, for example www.customerbusiness.co.uk.");
+          return;
+        }
+        if (result.error === "SITE_DOMAIN_ALREADY_ASSIGNED") {
+          setMessage("This domain is already assigned to another active subscriber site.");
+          return;
+        }
+        setMessage(toMessage(result.error, result.status));
+        return;
+      }
+      setMessage("Domain settings saved.");
+      await loadSites();
+      await loadSiteDetail(selectedSiteId);
+    } finally {
+      setDomainSaving(false);
+    }
   }
 
   async function recordManualDnsCheck(): Promise<void> {
@@ -496,7 +540,7 @@ export default function AdminSitesPage() {
       return;
     }
     if (!buildTargetInstructions(domainDraft)) {
-      setMessage("Add DNS/hosting target values before emailing customer instructions.");
+      setMessage("DNS records have not been entered yet. Open Amplify Custom domains, copy the required DNS/verification values, save them here, then send instructions.");
       return;
     }
     if (!window.confirm(`Send DNS instructions to the customer for ${selectedDomain.domain}?`)) return;
@@ -504,7 +548,7 @@ export default function AdminSitesPage() {
     const result = await emailAdminSiteDnsInstructions(selectedSiteId, selectedDomain.id);
     if (!result.ok) {
       if (result.error === "DNS_TARGET_MISSING") {
-        setMessage("Add DNS/hosting target values before emailing customer instructions.");
+        setMessage("DNS records have not been entered yet. Open Amplify Custom domains, copy the required DNS/verification values, save them here, then send instructions.");
         return;
       }
       if (result.error === "CONTACT_EMAIL_MISSING") {
@@ -593,11 +637,12 @@ export default function AdminSitesPage() {
 
       setDomainTestResult(
         [
-          `Matched tenant ${body.tenantSlug ?? "(unknown)"} (${body.tenantSiteId ?? "n/a"}) via ${body.matchedDomain ?? candidate}.`,
+          `Internal mapping matched tenant ${body.tenantSlug ?? "(unknown)"} (${body.tenantSiteId ?? "n/a"}) via ${body.matchedDomain ?? candidate}.`,
           `Domain: ${body.domainStatus ?? "status unknown"}.`,
           `DNS: ${body.dnsStatus ?? "not set"}.`,
           `SSL: ${body.sslStatus ?? "not set"}.`,
           `Would render: ${body.routeWouldRewriteTo ?? "no rewrite target"}.`,
+          "This confirms MyExperiment.club knows which tenant should render once DNS points here; it does not prove public DNS propagation or SSL is live.",
         ].join(" "),
       );
     } catch {
@@ -638,6 +683,7 @@ export default function AdminSitesPage() {
           <p className="text-sm font-semibold text-slate-900">Create blank subscriber site from setup request</p>
           <p className="mt-1 text-xs text-slate-600">
             This creates live subscriber-site records with clean defaults. Demo data is not copied automatically.
+            Paid setup requests ready for provisioning appear in Setup Requests. Once created, continue domain, DNS and go-live setup here.
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             <input
@@ -659,6 +705,15 @@ export default function AdminSitesPage() {
 
         {message ? <p className="mt-3 text-sm text-slate-700">{message}</p> : null}
       </section>
+
+      {sites.length > 0 ? (
+        <section className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+          <p className="text-sm font-semibold text-emerald-950">Recently provisioned / continue setup</p>
+          <p className="mt-1 text-xs text-emerald-900">
+            Latest site: <span className="font-semibold">{sites[0]?.displayName}</span>. Select a site below to continue domain, DNS, admin and go-live checks.
+          </p>
+        </section>
+      ) : null}
 
       <section className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_1.2fr]">
         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -716,7 +771,7 @@ export default function AdminSitesPage() {
                   <Link
                     href={`/sites/${encodeURIComponent(selectedSite.slug)}`}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     className="text-sky-700 underline underline-offset-2"
                   >
                     /sites/{selectedSite.slug}
@@ -727,7 +782,7 @@ export default function AdminSitesPage() {
                   <Link
                     href={`/site-admin/${encodeURIComponent(selectedSite.slug)}`}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     className="text-sky-700 underline underline-offset-2"
                   >
                     /site-admin/{selectedSite.slug}
@@ -775,6 +830,8 @@ export default function AdminSitesPage() {
                 </Link>
                 <Link
                   href={`/admin/sites/${encodeURIComponent(selectedSite.id)}/preview`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className={`ml-2 ${outlineButtonClass} ${smallButtonClass}`}
                 >
                   Open persisted site preview
@@ -788,9 +845,22 @@ export default function AdminSitesPage() {
                 <p className="text-sm font-semibold text-slate-900">Domain panel</p>
                 <div className="mt-2 grid gap-1 text-xs text-slate-700 sm:grid-cols-2">
                   <p><span className="font-semibold">Domain option:</span> {getDomainOptionSummary(detail.site.setupRequest?.domainOption)}</p>
-                  <p><span className="font-semibold">Domain status:</span> {lifecycleStatusLabel(selectedSite.domainStatus)}</p>
+                  <p><span className="font-semibold">Domain status:</span> {simpleDomainStatusLabel(selectedSite.domainStatus)}</p>
                   <p><span className="font-semibold">Existing domain:</span> {formatOptional(detail.site.setupRequest?.existingDomain)}</p>
                   <p><span className="font-semibold">Desired domain:</span> {formatOptional(detail.site.setupRequest?.desiredDomain)}</p>
+                </div>
+                <div className="mt-3 rounded-md border border-slate-200 bg-white p-3">
+                  <p className="text-xs font-semibold text-slate-900">Domain/go-live mini checklist</p>
+                  <div className="mt-2 grid gap-1 text-xs text-slate-700 sm:grid-cols-2">
+                    <p><span className="font-semibold">Internal SiteDomain saved:</span> {checklistStatus(detail.domains.length > 0, "No")}</p>
+                    <p><span className="font-semibold">Resolver maps domain to tenant:</span> {checklistStatus(Boolean(domainTestResult?.startsWith("Internal mapping matched")), "Run resolver test")}</p>
+                    <p><span className="font-semibold">Amplify custom domain created:</span> Manual check needed</p>
+                    <p><span className="font-semibold">DNS target values recorded:</span> {checklistStatus(Boolean(buildTargetInstructions(domainDraft)), "No")}</p>
+                    <p><span className="font-semibold">DNS records configured:</span> {checklistStatus(domainDraft.dnsStatus === "VERIFIED" || ["DNS_CONFIGURED", "DOMAIN_READY", "LIVE"].includes(domainDraft.status), "Manual check needed")}</p>
+                    <p><span className="font-semibold">SSL/certificate ready:</span> {checklistStatus(domainDraft.sslStatus === "ISSUED")}</p>
+                    <p><span className="font-semibold">Site marked live:</span> {checklistStatus(selectedSite.status === "LIVE" || selectedSite.provisioningStatus === "LIVE" || domainDraft.status === "LIVE", "No")}</p>
+                    <p><span className="font-semibold">Public domain tested:</span> Manual check needed</p>
+                  </div>
                 </div>
                 <div className="mt-3 rounded-md border border-slate-200 bg-white p-3">
                   <p className="text-xs font-semibold text-slate-900">Intended live domain / SiteDomain record</p>
@@ -839,29 +909,15 @@ export default function AdminSitesPage() {
                         value={domainDraft.status}
                         onChange={(event) => setDomainDraft((current) => ({ ...current, status: event.target.value }))}
                       >
-                        {[
-                          "NOT_STARTED",
-                          "INSTRUCTIONS_NEEDED",
-                          "DOMAIN_TO_BUY",
-                          "DOMAIN_SEARCH_STARTED",
-                          "DOMAIN_AVAILABLE",
-                          "DOMAIN_PURCHASED",
-                          "DNS_INSTRUCTIONS_SENT",
-                          "WAITING_FOR_CUSTOMER_DNS",
-                          "PENDING_PROPAGATION",
-                          "DNS_CONFIGURED",
-                          "DOMAIN_READY",
-                          "LIVE",
-                          "NEEDS_ATTENTION",
-                          "FAILED",
-                          "SUSPENDED",
-                          "CANCELLED",
-                        ].map((status) => (
-                          <option key={status} value={status}>
-                            {lifecycleStatusLabel(status)}
+                        {SIMPLE_DOMAIN_STATUS_OPTIONS.map((status) => (
+                          <option key={status.value} value={status.value}>
+                            {status.label}
                           </option>
                         ))}
                       </select>
+                      <span className="mt-1 block text-[11px] font-normal text-slate-500">
+                        Simplified operator flow. Advanced/internal statuses remain available in stored history where needed.
+                      </span>
                     </label>
                     <label className="text-xs font-semibold text-slate-700">
                       Domain setup mode
@@ -910,26 +966,47 @@ export default function AdminSitesPage() {
                         ))}
                       </select>
                     </label>
+                    <div className="rounded-md border border-sky-200 bg-sky-50 p-3 text-xs text-sky-950 sm:col-span-2">
+                      <p className="font-semibold">Where do I get these DNS values?</p>
+                      <p className="mt-1">
+                        For Amplify-hosted sites, open AWS Amplify - your app - Hosting - Custom domains - Add domain.
+                        Amplify will provide the verification and DNS records needed for this domain. Copy those exact
+                        values here so they can be included in customer instructions and go-live checks.
+                      </p>
+                      <p className="mt-2 font-semibold">
+                        Do not invent DNS values. Leave this blank until Amplify shows the required records.
+                      </p>
+                      <p className="mt-1">
+                        If the domain is in Route 53, Amplify may create or verify some records automatically. If records
+                        must be added manually, copy the exact CNAME, A/ALIAS, TXT or verification values from Amplify.
+                      </p>
+                    </div>
                     <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
-                      Expected DNS target
+                      Amplify/hosting DNS target
                       <input
                         className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
                         value={domainDraft.expectedDnsTarget}
                         onChange={(event) => setDomainDraft((current) => ({ ...current, expectedDnsTarget: event.target.value }))}
                         placeholder="CNAME/A/TXT target or hosting verification value"
                       />
+                      <span className="mt-1 block text-[11px] font-normal text-slate-500">
+                        CNAME, A/ALIAS, or hosting target shown by Amplify.
+                      </span>
                     </label>
                     <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
-                      Expected nameservers
+                      Nameservers, if customer is changing nameservers
                       <textarea
                         className="mt-1 min-h-[70px] w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
                         value={domainDraft.expectedNameserversText}
                         onChange={(event) => setDomainDraft((current) => ({ ...current, expectedNameserversText: event.target.value }))}
                         placeholder="One nameserver per line, if nameserver handover is used."
                       />
+                      <span className="mt-1 block text-[11px] font-normal text-slate-500">
+                        Only use if the customer is moving DNS management. Usually blank for Route 53/manual record setup.
+                      </span>
                     </label>
                     <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
-                      DNS / hosting target values
+                      Verification records
                       <textarea
                         className="mt-1 min-h-[110px] w-full rounded-md border border-slate-300 px-2 py-1 text-xs"
                         value={domainDraft.dnsTargetInstructions}
@@ -942,7 +1019,7 @@ export default function AdminSitesPage() {
                         placeholder={"Paste exact nameserver, CNAME, A, TXT or hosting verification values here. Do not invent values."}
                       />
                       <span className="mt-1 block text-[11px] font-normal text-slate-500">
-                        These values are included in customer DNS emails. Leave blank until Amplify/hosting/domain verification values are known.
+                        CNAME/TXT verification records shown by Amplify for SSL/domain ownership. These values are included in customer DNS emails.
                       </span>
                     </label>
                     <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
@@ -968,8 +1045,9 @@ export default function AdminSitesPage() {
                     type="button"
                     className={`mt-3 ${primaryButtonClass} ${smallButtonClass}`}
                     onClick={() => void saveDomainDraft()}
+                    disabled={domainSaving}
                   >
-                    Save SiteDomain
+                    {domainSaving ? "Saving SiteDomain..." : "Save SiteDomain"}
                   </button>
                   <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-2">
                     <p className="text-xs font-semibold text-slate-900">Record manual DNS check</p>
@@ -1019,7 +1097,7 @@ export default function AdminSitesPage() {
                       return (
                         <div key={domain.id} className="rounded-md border border-slate-200 bg-white p-2">
                           <p>
-                            {domain.domain} ({domain.domainType}) - {lifecycleStatusLabel(domain.status)}
+                            {domain.domain} ({domain.domainType}) - {simpleDomainStatusLabel(domain.status)}
                             {domain.registrarNotes ? ` | ${domain.registrarNotes}` : ""}
                           </p>
                           <p>
@@ -1067,7 +1145,7 @@ export default function AdminSitesPage() {
                       ) : null}
                       {!buildTargetInstructions(domainDraft) ? (
                         <p className="mt-1 text-xs font-semibold text-amber-700">
-                          DNS target values are missing. Email sending is blocked until real values are saved.
+                          DNS records have not been entered yet. Open Amplify Custom domains, copy the required DNS/verification values, save them here, then send instructions.
                         </p>
                       ) : null}
                     </div>
@@ -1114,8 +1192,8 @@ export default function AdminSitesPage() {
                 <div className="mt-3 rounded-md border border-slate-200 bg-white p-2">
                   <p className="text-xs font-semibold text-slate-900">Test domain resolution</p>
                   <p className="mt-1 text-xs text-slate-600">
-                    Use this to check whether the platform would map a hostname to a subscriber site.
-                    This does not check public DNS propagation or SSL certificates.
+                    This checks MyExperiment.club&apos;s internal mapping only. It does not prove public DNS or SSL is live yet.
+                    If this says matched tenant, the platform knows which site should render once DNS points here.
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     <input

@@ -361,18 +361,25 @@ export default function AdminSetupRequestsPage() {
             <div className="mt-2 flex flex-wrap gap-2">
               <Link
                 href={siteSetupResult.publicSiteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
                 className={`${primaryButtonClass} ${smallButtonClass}`}
               >
                 View subscriber site
               </Link>
               <Link
                 href={siteSetupResult.adminSiteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
                 className={`${primaryButtonClass} ${smallButtonClass}`}
               >
                 Open subscriber admin
               </Link>
-              <Link href="/admin/sites" className={`${outlineButtonClass} ${smallButtonClass}`}>
-                Open subscriber sites
+              <Link
+                href={`/admin/sites?siteId=${encodeURIComponent(siteSetupResult.tenantSiteId)}`}
+                className={`${outlineButtonClass} ${smallButtonClass}`}
+              >
+                Continue setup in Subscriber Sites
               </Link>
             </div>
           </div>
@@ -471,12 +478,16 @@ export default function AdminSetupRequestsPage() {
                   <div className="mt-2 flex flex-wrap gap-2">
                     <Link
                       href={`/sites/${selectedRequest.tenantSite.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className={`${primaryButtonClass} ${smallButtonClass}`}
                     >
                       View subscriber site
                     </Link>
                     <Link
                       href={`/site-admin/${selectedRequest.tenantSite.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className={`${primaryButtonClass} ${smallButtonClass}`}
                     >
                       Open subscriber admin
@@ -485,7 +496,7 @@ export default function AdminSetupRequestsPage() {
                       href={`/admin/sites?siteId=${encodeURIComponent(selectedRequest.tenantSite.id)}`}
                       className={`${outlineButtonClass} ${smallButtonClass}`}
                     >
-                      Manage domain/go-live
+                      Continue setup in Subscriber Sites
                     </Link>
                   </div>
                 </div>
@@ -521,6 +532,8 @@ export default function AdminSetupRequestsPage() {
                     </button>
                     <Link
                       href={`/site-admin/${selectedRequest.tenantSite.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className={`${primaryButtonClass} ${smallButtonClass}`}
                     >
                       Open subscriber admin
@@ -660,10 +673,16 @@ export default function AdminSetupRequestsPage() {
                     </button>
                   ) : null}
                   <Link
-                    href={`/admin/sites${siteSetupResult ? `?siteId=${encodeURIComponent(siteSetupResult.tenantSiteId)}` : ""}`}
+                    href={`/admin/sites${
+                      siteSetupResult
+                        ? `?siteId=${encodeURIComponent(siteSetupResult.tenantSiteId)}`
+                        : selectedRequest.tenantSite?.id
+                          ? `?siteId=${encodeURIComponent(selectedRequest.tenantSite.id)}`
+                          : ""
+                    }`}
                     className={`${outlineButtonClass} ${smallButtonClass}`}
                   >
-                    Open subscriber sites
+                    Continue setup in Subscriber Sites
                   </Link>
                 </div>
               </div>

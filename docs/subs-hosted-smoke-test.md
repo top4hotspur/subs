@@ -1657,3 +1657,27 @@ Planned rehearsal domain: `FundMyClub.online`.
 13. Confirm platform routes and `/admin` are not exposed through the custom domain.
 14. Test booking, customer account, contact, policy, staff/admin links.
 15. Suspend/reactivate and confirm behaviour.
+
+### FundMyClub.online domain/go-live operator polish check
+
+Use the dummy customer:
+
+- Business: `FundMyClub Nails`
+- Site slug: `fundmyclub-nails`
+- Domain: `fundmyclub.online`
+
+1. Open `/admin/setup-requests` and confirm a provisioned setup request shows `View subscriber site`, `Open subscriber admin`, and `Continue setup in Subscriber Sites`.
+2. Confirm subscriber-site and subscriber-admin links open in a new tab.
+3. Open `/admin/sites` and confirm the page explains that paid setup requests ready for provisioning start in Setup Requests and continue here after creation.
+4. Select `FundMyClub Nails` and confirm preview/admin links open in a new tab.
+5. Confirm the Domain panel uses the simplified domain status list: Domain details needed, Domain purchased / owned, DNS instructions needed, Waiting for DNS, DNS configured, Ready to go live, Live, Needs attention.
+6. Confirm Domain type helper copy explains that Primary is normal for most customers and aliases are only for deliberate extra hostnames.
+7. Enter or edit `fundmyclub.online`, leave DNS target values blank, and confirm DNS instruction sending is blocked with the message telling the operator to open Amplify Custom domains and copy required DNS/verification values first.
+8. Confirm the DNS guidance box says the records should come from AWS Amplify -> app -> Hosting -> Custom domains -> Add domain and that operators must not invent values.
+9. Save SiteDomain and confirm loading/success/error/no-change feedback appears and the same selected site remains active.
+10. Run the domain resolver test for `fundmyclub.online` and confirm the copy says it checks internal mapping only, not public DNS or SSL.
+11. Confirm the go-live mini checklist is visible and includes SiteDomain saved, resolver maps domain, Amplify custom domain, DNS target values, DNS configured, SSL ready, site live and public domain tested.
+12. After real DNS values are available, paste the Amplify/hosting target, verification records and nameserver values where appropriate, then copy or send DNS instructions.
+13. Confirm sent DNS instructions refer to the customer's new `FundMyClub Nails` website, not a "MyExperiment.club website".
+14. Mark DNS configured/ready and site live only after manual external checks are complete.
+15. Confirm `/sites/fundmyclub-nails` remains the preview route and `fundmyclub.online` renders only when public DNS/SSL are actually configured.

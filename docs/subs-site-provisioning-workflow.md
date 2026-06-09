@@ -573,6 +573,38 @@ The generated instruction copy is customer-facing and should refer to the custom
 
 For customer-owned or customer-managed domains, the next operational state after successful instruction handover is `WAITING_FOR_CUSTOMER_DNS`. For platform-managed domains, admin continues manual registrar/DNS setup and then marks DNS configured/domain ready.
 
+### Simplified platform go-live controls
+
+`/admin/sites` presents a simplified operator status list for normal fulfilment while keeping the underlying lifecycle/status values compatible with older internal states:
+
+- Domain details needed
+- Domain purchased / owned
+- DNS instructions needed
+- Waiting for DNS
+- DNS configured
+- Ready to go live
+- Live
+- Needs attention
+
+The `Save SiteDomain` action gives visible loading, saved, error or no-change feedback and keeps the same subscriber site selected after refresh. Preview and subscriber-admin links open in a new tab so operators can inspect the site without losing the go-live workflow.
+
+DNS target values must come from the real hosting/domain attachment process. For Amplify-hosted sites, open AWS Amplify -> your app -> Hosting -> Custom domains -> Add domain. Amplify provides the verification and DNS records for that customer domain. Copy those exact CNAME, A/ALIAS, TXT, nameserver or verification values into the SiteDomain fields. Do not invent records. If Route 53 is used, Amplify may create or verify some records automatically; otherwise copy the manual records shown by Amplify.
+
+The domain resolution tester checks MyExperiment.club's internal mapping only. It confirms whether an entered hostname maps to a `SiteDomain` and `TenantSite`. It does not prove public DNS propagation, SSL/certificate readiness or external registrar configuration.
+
+Recommended go-live mini checklist:
+
+1. Internal `SiteDomain` saved.
+2. Resolver maps domain to tenant.
+3. Amplify custom domain created.
+4. DNS target values recorded.
+5. DNS records configured.
+6. SSL/certificate ready.
+7. Site marked live.
+8. Public domain tested.
+
+Setup Requests and Subscriber Sites are one fulfilment journey with two admin surfaces. Paid requests ready for provisioning appear in `/admin/setup-requests`; after the clean subscriber site is created, continue domain, DNS, admin-access and go-live setup in `/admin/sites`.
+
 ## Subscriber payment-provider readiness
 
 Provisioned tenant sites keep subscriber customer payments separate from platform subscription billing. The platform Stripe flow proves MyExperiment.club subscription payment, but it is not a tenant business payment processor connection.

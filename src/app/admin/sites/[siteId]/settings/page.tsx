@@ -808,6 +808,8 @@ export default function AdminSiteSettingsPage() {
         <div className="flex flex-wrap gap-2">
           <Link
             href={`/admin/sites/${encodeURIComponent(siteId)}/preview`}
+            target="_blank"
+            rel="noopener noreferrer"
             className={`${outlineButtonClass} ${smallButtonClass}`}
           >
             Preview persisted customer site

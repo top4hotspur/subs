@@ -1168,3 +1168,13 @@ The normal business-user flow no longer asks for provider-name overrides, mercha
 ## Fulfilment rehearsal domain note
 
 The first full custom-domain fulfilment rehearsal should use `FundMyClub.online` as a dummy customer domain. The rehearsal validates setup purchase, blank site provisioning, tenant configuration, DNS instruction handover, custom-domain rendering, route protection, booking/contact/account smoke checks and suspend/reactivate behaviour. DNS purchase and registrar automation remain out of scope.
+
+## Platform domain/go-live operator flow
+
+Domain fulfilment is tracked in `/admin/sites` after a paid setup request has been provisioned from `/admin/setup-requests`. Setup Requests remains the payment/order queue; Subscriber Sites is where operators continue domain, DNS, subscriber-admin and go-live work. Links to the tenant preview and subscriber admin open in a new tab so operators can inspect the site without losing the workflow.
+
+The platform admin UI uses simplified customer-fulfilment labels for the normal domain journey: Domain details needed, Domain purchased / owned, DNS instructions needed, Waiting for DNS, DNS configured, Ready to go live, Live and Needs attention. The stored lifecycle/status fields remain compatible with existing advanced/internal values.
+
+DNS target values are operational notes copied from the hosting provider, not invented by the app. For Amplify-hosted customer domains, operators should open AWS Amplify -> app -> Hosting -> Custom domains -> Add domain, then copy the exact CNAME, A/ALIAS, TXT, nameserver or verification records into the SiteDomain fields. DNS instruction emails are blocked until these values are recorded.
+
+The resolver test checks only MyExperiment.club's internal `SiteDomain -> TenantSite` mapping. It does not prove public DNS propagation, SSL certificates or registrar configuration. `/sites/[siteSlug]` remains the preview route; the customer's own domain becomes the final public route only after external DNS and SSL are ready.
