@@ -37,7 +37,7 @@ import { buildDnsInstructionsText } from "@/lib/sites/domain-go-live";
 const TASK_STATUS_OPTIONS = ["TODO", "IN_PROGRESS", "DONE", "BLOCKED", "SKIPPED"];
 
 const SIMPLE_DOMAIN_STATUS_OPTIONS = [
-  { value: "DOMAIN_PENDING", label: "Domain details needed" },
+  { value: "DETAILS_NEEDED", label: "Domain details needed" },
   { value: "DOMAIN_PURCHASED", label: "Domain purchased / owned" },
   { value: "INSTRUCTIONS_NEEDED", label: "DNS instructions needed" },
   { value: "WAITING_FOR_CUSTOMER_DNS", label: "Waiting for DNS" },
@@ -174,8 +174,28 @@ function simpleDomainStatusLabel(value?: string | null): string {
   return SIMPLE_DOMAIN_STATUS_OPTIONS.find((option) => option.value === value)?.label ?? lifecycleStatusLabel(value);
 }
 
+function normalizeSimpleDomainStatus(value?: string | null): string {
+  if (!value || value === "DOMAIN_PENDING" || value === "NOT_STARTED") return "DETAILS_NEEDED";
+  if (SIMPLE_DOMAIN_STATUS_OPTIONS.some((option) => option.value === value)) return value;
+  return "NEEDS_ATTENTION";
+}
+
 function checklistStatus(done: boolean, fallback = "Manual check needed"): string {
   return done ? "Yes" : fallback;
+}
+
+function formatValidationDetails(details: unknown): string | null {
+  if (!Array.isArray(details)) return null;
+  const messages = details
+    .map((detail) => {
+      if (!detail || typeof detail !== "object") return null;
+      const record = detail as Record<string, unknown>;
+      const path = Array.isArray(record.path) ? record.path.join(".") : "field";
+      const message = typeof record.message === "string" ? record.message : "Invalid value";
+      return `${path}: ${message}`;
+    })
+    .filter((message): message is string => Boolean(message));
+  return messages.length ? messages.join("; ") : null;
 }
 
 function canSendCustomerDnsInstructions(domainOption?: string | null, setupMode?: string | null): boolean {
@@ -206,6 +226,24 @@ function lifecycleActionLabel(action: AdminSiteLifecycleAction): string {
   if (action === "MARK_SITE_LIVE") return "Mark site live";
   if (action === "REACTIVATE_SITE") return "Reactivate site";
   return "Suspend site";
+}
+
+function domainReadinessGuidance(body: {
+  blockReason?: string | null;
+  domainStatus?: string | null;
+  dnsStatus?: string | null;
+  sslStatus?: string | null;
+  tenantLifecycleStatus?: string | null;
+  tenantProvisioningStatus?: string | null;
+}): string | null {
+  if (!body.blockReason || body.blockReason === "PLATFORM_HOST") return null;
+  if (body.blockReason === "NO_SITE_DOMAIN_MATCH") return "No matching SiteDomain was found for this host.";
+  if (body.blockReason === "SUSPENDED_OR_CANCELLED") return "The domain is matched, but the tenant or domain is suspended/cancelled.";
+  return [
+    "Domain is matched but not ready.",
+    "Required: domain status Domain Ready/Live, DNS configured, SSL issued, tenant site Live.",
+    `Current: Domain ${lifecycleStatusLabel(body.domainStatus)}, DNS ${dnsWorkflowStatusLabel(body.dnsStatus)}, SSL ${sslWorkflowStatusLabel(body.sslStatus)}, Tenant ${lifecycleStatusLabel(body.tenantLifecycleStatus)} / ${lifecycleStatusLabel(body.tenantProvisioningStatus)}.`,
+  ].join(" ");
 }
 
 export default function AdminSitesPage() {
@@ -329,7 +367,7 @@ export default function AdminSitesPage() {
     setDomainDraft({
       domain: primaryDomain?.domain ?? result.site.domainPrimary ?? result.site.setupRequest?.existingDomain ?? result.site.setupRequest?.desiredDomain ?? "",
       domainType: (primaryDomain?.domainType as "PRIMARY" | "APEX" | "WWW" | "ALIAS" | undefined) ?? "PRIMARY",
-      status: primaryDomain?.status ?? result.site.domainStatus ?? "DOMAIN_PENDING",
+      status: normalizeSimpleDomainStatus(primaryDomain?.status ?? result.site.domainStatus),
       domainSetupMode: setupMode,
       dnsStatus: primaryDomain?.dnsStatus ?? (primaryDomain?.status === "LIVE" ? "LIVE" : "INSTRUCTIONS_NEEDED"),
       sslStatus: primaryDomain?.sslStatus ?? "NOT_STARTED",
@@ -472,6 +510,11 @@ export default function AdminSitesPage() {
           setMessage("This domain is already assigned to another active subscriber site.");
           return;
         }
+        if (result.error === "VALIDATION_ERROR") {
+          const details = formatValidationDetails(result.details);
+          setMessage(`Could not save domain settings: ${details ?? "validation failed."}`);
+          return;
+        }
         setMessage(toMessage(result.error, result.status));
         return;
       }
@@ -481,6 +524,62 @@ export default function AdminSitesPage() {
     } finally {
       setDomainSaving(false);
     }
+  }
+
+  async function markAmplifyDomainVerified(): Promise<void> {
+    if (!selectedSiteId) return;
+    if (!domainDraft.domain.trim()) {
+      setMessage("Enter the intended live domain before marking Amplify verification.");
+      return;
+    }
+    if (!window.confirm("Mark this domain verified in Amplify? This is a manual platform-admin assertion and does not call AWS.")) return;
+
+    const checkedAt = new Date().toISOString();
+    const existingDomain = detail?.domains.find(
+      (domain) =>
+        domain.domain === domainDraft.domain.trim().toLowerCase() &&
+        domain.domainType === domainDraft.domainType,
+    );
+    const existingDnsMetadata = getDnsInstructionMetadata(existingDomain?.dnsInstructions);
+    const amplifyNote = "Verified in Amplify custom domain management.";
+    const result = await saveAdminSiteDomain(selectedSiteId, {
+      domain: domainDraft.domain,
+      domainType: domainDraft.domainType,
+      status: "DOMAIN_READY",
+      domainStatus: "DOMAIN_READY",
+      domainSetupMode: domainDraft.domainSetupMode,
+      dnsStatus: "VERIFIED",
+      sslStatus: "ISSUED",
+      dnsLastCheckedAt: checkedAt,
+      dnsVerifiedAt: checkedAt,
+      domainNotes: domainDraft.domainNotes.trim() || null,
+      expectedDnsTarget: domainDraft.expectedDnsTarget.trim() || null,
+      expectedNameservers: csvToJsonArray(domainDraft.expectedNameserversText),
+      lastDnsCheckResult: {
+        result: "VERIFIED",
+        notes: amplifyNote,
+        checkedAt,
+      },
+      registrarNotes: domainDraft.registrarNotes.trim()
+        ? `${domainDraft.registrarNotes.trim()}\n${amplifyNote}`
+        : amplifyNote,
+      dnsInstructions: {
+        ...existingDnsMetadata,
+        targetInstructions: buildTargetInstructions(domainDraft) || existingDnsMetadata.targetInstructions,
+      },
+    });
+    if (!result.ok) {
+      if (result.error === "VALIDATION_ERROR") {
+        const details = formatValidationDetails(result.details);
+        setMessage(`Could not mark Amplify domain verified: ${details ?? "validation failed."}`);
+        return;
+      }
+      setMessage(toMessage(result.error, result.status));
+      return;
+    }
+    setMessage("Amplify domain marked verified. Next step: mark domain configured/ready or mark site live when checks are complete.");
+    await loadSites();
+    await loadSiteDetail(selectedSiteId);
   }
 
   async function recordManualDnsCheck(): Promise<void> {
@@ -522,6 +621,11 @@ export default function AdminSitesPage() {
       },
     });
     if (!result.ok) {
+      if (result.error === "VALIDATION_ERROR") {
+        const details = formatValidationDetails(result.details);
+        setMessage(`Could not record manual DNS check: ${details ?? "validation failed."}`);
+        return;
+      }
       setMessage(toMessage(result.error, result.status));
       return;
     }
@@ -620,6 +724,10 @@ export default function AdminSitesPage() {
             domainStatus?: string | null;
             dnsStatus?: string | null;
             sslStatus?: string | null;
+            tenantLifecycleStatus?: string | null;
+            tenantProvisioningStatus?: string | null;
+            blockReason?: string | null;
+            wouldRender?: boolean;
             matchedDomain?: string | null;
             routeWouldRewriteTo?: string | null;
           }
@@ -642,6 +750,7 @@ export default function AdminSitesPage() {
           `DNS: ${body.dnsStatus ?? "not set"}.`,
           `SSL: ${body.sslStatus ?? "not set"}.`,
           `Would render: ${body.routeWouldRewriteTo ?? "no rewrite target"}.`,
+          body.wouldRender ? "Render gate: ready." : (domainReadinessGuidance(body) ?? "Render gate: not ready."),
           "This confirms MyExperiment.club knows which tenant should render once DNS points here; it does not prove public DNS propagation or SSL is live.",
         ].join(" "),
       );
@@ -966,6 +1075,21 @@ export default function AdminSitesPage() {
                         ))}
                       </select>
                     </label>
+                    <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-950 sm:col-span-2">
+                      <p className="font-semibold">Amplify/manual verification</p>
+                      <p className="mt-1">
+                        If Amplify shows this custom domain as available and SSL managed, you can record that manual
+                        verification here. Missing DNS target values still block customer DNS emails, but they do not
+                        block platform-managed go-live status saves.
+                      </p>
+                      <button
+                        type="button"
+                        className={`mt-2 ${outlineButtonClass} ${smallButtonClass}`}
+                        onClick={() => void markAmplifyDomainVerified()}
+                      >
+                        Mark Amplify domain verified
+                      </button>
+                    </div>
                     <div className="rounded-md border border-sky-200 bg-sky-50 p-3 text-xs text-sky-950 sm:col-span-2">
                       <p className="font-semibold">Where do I get these DNS values?</p>
                       <p className="mt-1">

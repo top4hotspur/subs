@@ -1698,3 +1698,31 @@ Amplify custom domain available means DNS/SSL is reaching the hosted app. If the
 10. Reactivate/mark live again and confirm the customer domain renders.
 11. Confirm `Save SiteDomain` shows visible loading/success/no-change/error feedback.
 12. Confirm preview/admin links open in new tabs.
+
+### FundMyClub.online status-gate rehearsal
+
+Current expected pre-live debug shape:
+
+- `matched=true`
+- `tenantSlug=fundmyclub-nails`
+- `domainStatus=DOMAIN_PURCHASED`
+- `dnsStatus=INSTRUCTIONS_NEEDED`
+- `sslStatus=NOT_STARTED`
+- `tenantLifecycleStatus=PROVISIONED`
+- `tenantProvisioningStatus=DOMAIN_PENDING`
+- `tenantSubscriptionStatus=ACTIVE`
+- `wouldRender=false`
+- `blockReason=DOMAIN_NOT_READY`
+
+This means AWS/DNS/SSL reaches the app, but app-side statuses still block rendering.
+
+1. Select `FundMyClub Nails` in `/admin/sites`.
+2. Use `Mark Amplify domain verified` after confirming Amplify says the custom domain is available.
+3. Confirm SiteDomain saves without requiring DNS target values.
+4. Confirm DNS target values still block `Send DNS instructions` when missing.
+5. Click `Mark site live` after manual checks are complete.
+6. Open `/api/site-resolve-debug?host=fundmyclub.online&path=/`.
+7. Confirm `wouldRender=true`, `rewriteTarget` is populated and `blockReason=null`.
+8. Open `https://fundmyclub.online` and confirm FundMyClub Nails renders.
+9. Open `https://fundmyclub.online/sites/fundmyclub-nails` and confirm it redirects to `/` or renders safely.
+10. Confirm `https://fundmyclub.online/admin` and `https://fundmyclub.online/api/admin/sites` do not expose platform admin/API.

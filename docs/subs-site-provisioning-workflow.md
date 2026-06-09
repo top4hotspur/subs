@@ -604,6 +604,10 @@ Current runtime gating:
 - Suspended/cancelled sites show a tenant unavailable page.
 - `/sites/[siteSlug]` remains the platform preview route; on a matching customer host, `/sites/[sameSlug]` redirects to `/`.
 
+If Amplify reports a custom domain as available and `/api/site-resolve-debug?host=[domain]&path=/` reports `matched=true` with `blockReason=DOMAIN_NOT_READY`, DNS/AWS/SSL routing is reaching the app and the remaining gate is app-side status. Operators can use `Mark Amplify domain verified` in `/admin/sites` after manually confirming Amplify custom-domain readiness. This records DNS verified, SSL issued and domain ready without calling AWS APIs.
+
+Missing DNS target values block `Send DNS instructions` only. They do not block saving SiteDomain readiness states for platform-managed/manual Amplify setup where customer DNS email is not required. Validation errors from SiteDomain save should surface field-level details rather than only `VALIDATION_ERROR`.
+
 Recommended go-live mini checklist:
 
 1. Internal `SiteDomain` saved.

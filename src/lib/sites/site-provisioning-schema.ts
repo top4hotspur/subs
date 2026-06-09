@@ -32,11 +32,11 @@ export const createOrUpdateSiteDomainSchema = z.object({
   dnsVerifiedAt: z.coerce.date().nullable().optional(),
   goLiveRequestedAt: z.coerce.date().nullable().optional(),
   wentLiveAt: z.coerce.date().nullable().optional(),
-  domainNotes: z.string().optional(),
-  expectedDnsTarget: z.string().optional(),
+  domainNotes: z.string().nullable().optional(),
+  expectedDnsTarget: z.string().nullable().optional(),
   expectedNameservers: jsonValue.optional(),
   lastDnsCheckResult: jsonValue.optional(),
-  registrarNotes: z.string().optional(),
+  registrarNotes: z.string().nullable().optional(),
   dnsInstructions: jsonValue.optional(),
 });
 
