@@ -193,7 +193,7 @@ Still local/mock in current product:
 
 ## Platform operations dashboard update
 - Order queue monitoring is now surfaced from /admin as Order Requests with in-page status reporting and link-out to /admin/setup-requests.
-- Subscriber provisioning visibility is surfaced from /admin as Subscriber Sites with live-site count and recent-site reporting.
+- Subscriber provisioning visibility is surfaced from /admin as Customer Sites with live-site count and recent-site reporting.
 - Payment failure monitoring is prepared at platform level and will populate as Stripe/webhook subscription failures are connected.
 
 ## Sales outreach readiness note (2026-05-30)
@@ -621,7 +621,7 @@ Recommended go-live mini checklist:
 7. Site marked live.
 8. Public domain tested.
 
-Setup Requests and Subscriber Sites are one fulfilment journey with two admin surfaces. Paid requests ready for provisioning appear in `/admin/setup-requests`; after the clean subscriber site is created, continue domain, DNS, admin-access and go-live setup in `/admin/sites`.
+Setup Requests and Customer Sites are one fulfilment journey with two admin surfaces. Paid requests ready for provisioning appear in `/admin/setup-requests`; after the clean subscriber site is created, continue domain, DNS, admin-access and go-live setup in `/admin/sites`.
 
 ## Subscriber payment-provider readiness
 
@@ -737,3 +737,11 @@ Rehearsal path:
 14. Confirm platform/admin routes are not exposed through the custom domain.
 15. Test booking, customer account, contact, policy, staff login and business admin links.
 16. Suspend/reactivate and confirm the public rendering behaviour changes appropriately.
+
+## 2026-06-09 Customer Sites workflow consolidation
+
+Customer Sites (`/admin/sites`) is becoming the main operator workspace for paid customer fulfilment. It now surfaces paid setup requests that are ready to provision, allows the operator to create a clean subscriber site from that panel, and shows a fulfilment progress checklist for selected provisioned sites.
+
+Setup Requests remains available as the order/history view. Operators should use it to inspect payment/order detail, then continue customer-site setup, domain, DNS and go-live work from Customer Sites.
+
+Tenant shell consistency now covers the public site, customer account/login/register pages, staff login and business-admin login when a tenant slug is known. Custom-domain pages and tenant auth shells must not show MyExperiment.club platform navigation or marketing footer. Staff and business-admin links on customer domains continue to point to platform-hosted routes in a new tab.

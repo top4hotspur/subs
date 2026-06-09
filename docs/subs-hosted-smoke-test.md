@@ -458,9 +458,9 @@ olePrice:<role> columns accepted
 
 ## Hosted smoke: setup order/payment clarity
 1. Open `/setup/barbers` and confirm order summary includes:
-   - Website setup: Â£149 one-time
-   - Monthly subscription: Â£30/month
-   - Domain service: Â£49 only when we register/manage a new domain
+   - Website setup: £149 one-time
+   - Monthly subscription: £30/month
+   - Domain service: £49 only when we register/manage a new domain
 2. Confirm setup copy states payment/subscription setup is confirmed after request submission during onboarding.
 3. In Domain option section, confirm choices are:
    - I already own a domain
@@ -604,7 +604,7 @@ olePrice:<role> columns accepted
 
 ## Platform dashboard smoke checks (2026-05-30)
 - Open /admin and verify operation tiles are clickable report selectors on-page.
-- Verify top tiles: Order Requests, Subscriber Sites, Payment Fails, Sales Pipeline, Contact Enquiries, Revenue by Industry.
+- Verify top tiles: Order Requests, Customer Sites, Payment Fails, Sales Pipeline, Contact Enquiries, Revenue by Industry.
 - Verify old sections are removed from /admin: demo/site-owner tools, business site settings demo, mock booking panels, and local analytics preview.
 - Verify Payment Fails shows real failures if present, otherwise honest placeholder text.
 - Verify Revenue by Industry table uses persisted platform data and shows month-on-month placeholder note.
@@ -813,7 +813,7 @@ Notes:
    - service area field is not shown in manual add-lead form
    - industry labels are human-friendly
    - provider pricing table is visible
-8. Confirm `Booksy` exists with estimate `Â£40`.
+8. Confirm `Booksy` exists with estimate `£40`.
 9. Edit a provider row and save; confirm updated value persists after reload.
 10. Add a lead with provider `Booksy` and blank estimate; confirm estimate auto-fills.
 11. Override estimate manually; confirm manual value is retained.
@@ -1666,7 +1666,7 @@ Use the dummy customer:
 - Site slug: `fundmyclub-nails`
 - Domain: `fundmyclub.online`
 
-1. Open `/admin/setup-requests` and confirm a provisioned setup request shows `View subscriber site`, `Open subscriber admin`, and `Continue setup in Subscriber Sites`.
+1. Open `/admin/setup-requests` and confirm a provisioned setup request shows `View subscriber site`, `Open subscriber admin`, and `Continue setup in Customer Sites`.
 2. Confirm subscriber-site and subscriber-admin links open in a new tab.
 3. Open `/admin/sites` and confirm the page explains that paid setup requests ready for provisioning start in Setup Requests and continue here after creation.
 4. Select `FundMyClub Nails` and confirm preview/admin links open in a new tab.
@@ -1742,3 +1742,21 @@ This means AWS/DNS/SSL reaches the app, but app-side statuses still block render
 11. Open `https://fundmyclub.online/account/register` and confirm the customer credential label says `Password`, not `Access code`.
 12. Open `https://fundmyclub.online/account` and confirm the updated account details and marketing preference wording.
 13. Confirm platform host `/admin`, `/sites/fundmyclub-nails`, and `/site-admin/fundmyclub-nails` still work on `myexperiment.club`.
+
+## Tenant custom-domain shell and Customer Sites workflow smoke checks (2026-06-09)
+
+1. Open `https://fundmyclub.online` and confirm the tenant header/footer renders without MyExperiment.club platform chrome.
+2. Confirm the tenant header shows `FundMyClub Nails`, `Home`, `Services`, `Book now`, `Contact`, and `Customer login`.
+3. Open `https://fundmyclub.online/account/register` and confirm the same tenant header/footer wraps the registration form.
+4. Confirm customer auth uses `Password` wording and no normal user-facing auth page says `Access code`.
+5. Open Business admin login from the tenant footer and confirm it opens the platform-hosted `/site-admin/[siteSlug]` flow in a new tab with tenant branding.
+6. Open Staff login from the tenant footer and confirm it opens the platform-hosted `/site-staff/[siteSlug]` flow in a new tab with tenant branding.
+7. Confirm the Services section no longer says online booking will be connected in a later milestone.
+8. For a live tenant with no active services, confirm the page shows `This site is almost ready`, explains that services/prices/booking options appear after setup, and includes an `Open business admin` button.
+9. Confirm `Open business admin` uses the platform-hosted business admin route and does not expose platform admin on the customer domain.
+10. Open `/admin/sites` and confirm the nav/heading refers to Customer Sites.
+11. Confirm `/admin/sites` shows `Paid setup requests ready to provision` with business, industry, payment, domain, contact email, `Create subscriber site`, and `View order details`.
+12. Select a provisioned customer site and confirm the fulfilment progress checklist shows Paid, Site created, Business admin access sent, Site setup started, Domain configured, and Site live.
+13. Open `/admin/setup-requests` and confirm it behaves as setup request/order history and links back to Customer Sites for fulfilment.
+14. Confirm `https://fundmyclub.online/admin` is safe-blocked.
+15. Confirm `https://fundmyclub.online/api/admin/sites` returns safe 404/NOT_FOUND and does not expose platform API data.

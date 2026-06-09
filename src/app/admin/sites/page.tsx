@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
@@ -33,6 +33,10 @@ import {
   sslWorkflowStatusLabel,
 } from "@/lib/sites/site-lifecycle";
 import { buildDnsInstructionsText } from "@/lib/sites/domain-go-live";
+import {
+  listBackendSetupRequests,
+  type BackendSetupRequestRecord,
+} from "@/lib/setup/admin-setup-request-client";
 
 const TASK_STATUS_OPTIONS = ["TODO", "IN_PROGRESS", "DONE", "BLOCKED", "SKIPPED"];
 
@@ -83,13 +87,13 @@ function toMessage(error: string, status: number): string {
     return "Network error while contacting backend API.";
   }
   if (error === "SETUP_REQUEST_NOT_PAID") {
-    return "Payment must be completed before creating the subscriber site.";
+    return "Payment must be completed before creating the customer site.";
   }
   if (error === "SETUP_REQUEST_CANCELLED") {
-    return "Cancelled setup requests cannot create subscriber sites.";
+    return "Cancelled setup requests cannot create customer sites.";
   }
   if (error === "SETUP_REQUEST_ARCHIVED") {
-    return "Archived setup requests cannot create subscriber sites.";
+    return "Archived setup requests cannot create customer sites.";
   }
   return `Request failed: ${error}`;
 }
@@ -184,6 +188,18 @@ function checklistStatus(done: boolean, fallback = "Manual check needed"): strin
   return done ? "Yes" : fallback;
 }
 
+function progressBadgeClass(done: boolean): string {
+  return done
+    ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+    : "border-amber-200 bg-amber-50 text-amber-800";
+}
+
+function isPaidSetupRequestReadyToProvision(request: BackendSetupRequestRecord): boolean {
+  if (request.archivedAt || request.tenantSiteId || request.tenantSite?.id) return false;
+  if (request.status === "CANCELLED") return false;
+  return request.paymentStatus === "PAID" || request.paymentStatus === "SUBSCRIPTION_ACTIVE";
+}
+
 function formatValidationDetails(details: unknown): string | null {
   if (!Array.isArray(details)) return null;
   const messages = details
@@ -256,6 +272,7 @@ export default function AdminSitesPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [sites, setSites] = useState<AdminTenantSiteSummary[]>([]);
+  const [readySetupRequests, setReadySetupRequests] = useState<BackendSetupRequestRecord[]>([]);
   const [selectedSiteId, setSelectedSiteId] = useState("");
   const [detail, setDetail] = useState<{
     site: AdminTenantSiteSummary;
@@ -327,7 +344,10 @@ export default function AdminSitesPage() {
     setLoading(true);
     setMessage(null);
 
-    const result = await listAdminTenantSites();
+    const [result, setupResult] = await Promise.all([
+      listAdminTenantSites(),
+      listBackendSetupRequests({ take: 100 }),
+    ]);
     if (!result.ok) {
       setSites([]);
       setDetail(null);
@@ -337,6 +357,7 @@ export default function AdminSitesPage() {
     }
 
     setSites(result.sites);
+    setReadySetupRequests(setupResult.ok ? setupResult.setupRequests.filter(isPaidSetupRequestReadyToProvision) : []);
 
     const queryMatch = siteIdFromQuery ? result.sites.find((site) => site.id === siteIdFromQuery) : null;
     const targetSite = queryMatch ?? result.sites[0] ?? null;
@@ -389,13 +410,13 @@ export default function AdminSitesPage() {
     });
   }
 
-  async function startSiteSetup(): Promise<void> {
-    if (!setupRequestId.trim()) {
+  async function startSiteSetup(requestId = setupRequestId.trim()): Promise<void> {
+    if (!requestId.trim()) {
       setMessage("Enter a setup request id.");
       return;
     }
 
-    const result = await createAdminTenantSiteFromSetupRequest(setupRequestId.trim());
+    const result = await createAdminTenantSiteFromSetupRequest(requestId.trim());
     if (!result.ok) {
       setMessage(toMessage(result.error, result.status));
       return;
@@ -430,7 +451,7 @@ export default function AdminSitesPage() {
     if (!selectedSiteId) return;
     const confirmation =
       action === "SUSPEND_SITE"
-        ? "Suspend this subscriber site? This does not cancel Stripe automatically and should only be used when platform access should be paused."
+        ? "Suspend this customer site? This does not cancel Stripe automatically and should only be used when platform access should be paused."
         : `${lifecycleActionLabel(action)}? DNS/domain changes are still manual; this only updates platform tracking.`;
     if (!window.confirm(confirmation)) return;
 
@@ -507,7 +528,7 @@ export default function AdminSitesPage() {
           return;
         }
         if (result.error === "SITE_DOMAIN_ALREADY_ASSIGNED") {
-          setMessage("This domain is already assigned to another active subscriber site.");
+          setMessage("This domain is already assigned to another active customer site.");
           return;
         }
         if (result.error === "VALIDATION_ERROR") {
@@ -763,7 +784,7 @@ export default function AdminSitesPage() {
     <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Subscriber sites</h1>
+          <h1 className="text-3xl font-bold text-slate-900">Customer sites</h1>
           <p className="mt-2 text-sm text-slate-600">
             Persisted provisioning model. Platform-admin session required.
           </p>
@@ -784,15 +805,55 @@ export default function AdminSitesPage() {
             onClick={loadSites}
             disabled={loading}
           >
-            {loading ? "Loading..." : "Load subscriber sites"}
+            {loading ? "Loading..." : "Load customer sites"}
           </button>
         </div>
 
         <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <p className="text-sm font-semibold text-slate-900">Create blank subscriber site from setup request</p>
+          <p className="text-sm font-semibold text-slate-900">Paid setup requests ready to provision</p>
           <p className="mt-1 text-xs text-slate-600">
-            This creates live subscriber-site records with clean defaults. Demo data is not copied automatically.
-            Paid setup requests ready for provisioning appear in Setup Requests. Once created, continue domain, DNS and go-live setup here.
+            Customer Sites is the main fulfilment workspace. Paid orders that do not yet have a site can be provisioned here, then managed through domain, DNS and go-live.
+          </p>
+          {readySetupRequests.length === 0 ? (
+            <p className="mt-3 rounded-lg border border-dashed border-slate-300 bg-white p-3 text-sm text-slate-600">
+              No paid unprovisioned setup requests found.
+            </p>
+          ) : (
+            <div className="mt-3 space-y-2">
+              {readySetupRequests.map((request) => (
+                <div key={request.id} className="rounded-lg border border-emerald-200 bg-white p-3">
+                  <div className="grid gap-1 text-xs text-slate-700 sm:grid-cols-2 lg:grid-cols-3">
+                    <p><span className="font-semibold">Business:</span> {request.businessName}</p>
+                    <p><span className="font-semibold">Industry:</span> {request.industrySlug}</p>
+                    <p><span className="font-semibold">Payment:</span> {formatOptional(request.paymentStatus)}</p>
+                    <p><span className="font-semibold">Domain option:</span> {getDomainOptionSummary(request.domainOption)}</p>
+                    <p><span className="font-semibold">Requested domain:</span> {formatOptional(request.existingDomain || request.desiredDomain)}</p>
+                    <p><span className="font-semibold">Contact email:</span> {formatOptional(request.contactEmail)}</p>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className={`${primaryButtonClass} ${smallButtonClass}`}
+                      onClick={() => {
+                        void startSiteSetup(request.id);
+                      }}
+                    >
+                      Create subscriber site
+                    </button>
+                    <Link href="/admin/setup-requests" className={`${outlineButtonClass} ${smallButtonClass}`}>
+                      View order details
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p className="text-sm font-semibold text-slate-900">Create blank customer site by setup request ID</p>
+          <p className="mt-1 text-xs text-slate-600">
+            Fallback manual entry for support cases. This creates live customer-site records with clean defaults. Demo data is not copied automatically.
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             <input
@@ -805,9 +866,11 @@ export default function AdminSitesPage() {
             <button
               type="button"
               className={`${primaryButtonClass} ${smallButtonClass}`}
-              onClick={startSiteSetup}
+              onClick={() => {
+                void startSiteSetup();
+              }}
             >
-              Create blank subscriber site
+              Create blank customer site
             </button>
           </div>
         </div>
@@ -826,7 +889,7 @@ export default function AdminSitesPage() {
 
       <section className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_1.2fr]">
         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Subscriber sites</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Customer sites</h2>
           {sites.length === 0 ? (
             <p className="mt-3 text-sm text-slate-600">No persisted sites loaded yet.</p>
           ) : (
@@ -897,6 +960,43 @@ export default function AdminSitesPage() {
                     /site-admin/{selectedSite.slug}
                   </Link>
                 </p>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <p className="text-sm font-semibold text-slate-900">Customer fulfilment progress</p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {[
+                    {
+                      label: "Paid",
+                      done: detail.subscription?.status === "ACTIVE" || selectedSite.subscriptionStatus === "ACTIVE",
+                    },
+                    { label: "Site created", done: Boolean(selectedSite.id) },
+                    {
+                      label: "Business admin access sent",
+                      done: detail.statusEvents.some((event) =>
+                        event.message?.toLowerCase().includes("admin access") ||
+                        event.eventType.toLowerCase().includes("admin_access"),
+                      ),
+                    },
+                    {
+                      label: "Site setup started",
+                      done: detail.tasks.some((task) => task.status === "IN_PROGRESS" || task.status === "DONE"),
+                    },
+                    {
+                      label: "Domain configured",
+                      done: ["DNS_CONFIGURED", "DOMAIN_READY", "READY", "LIVE"].includes(selectedSite.domainStatus ?? ""),
+                    },
+                    {
+                      label: "Site live",
+                      done: selectedSite.status === "LIVE" || selectedSite.provisioningStatus === "LIVE",
+                    },
+                  ].map((item) => (
+                    <div key={item.label} className={`rounded-lg border px-3 py-2 text-xs ${progressBadgeClass(item.done)}`}>
+                      <p className="font-semibold">{item.label}</p>
+                      <p className="mt-1">{checklistStatus(item.done, "Pending")}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
               <div className="rounded-xl border border-sky-200 bg-sky-50 p-3">
                 <p className="text-sm font-semibold text-sky-950">Domain and go-live actions</p>

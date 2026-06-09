@@ -16,7 +16,7 @@ const items: AdminNavItem[] = [
   { href: "/admin/sales", label: "Sales Pipeline" },
   { href: "/admin/contact-enquiries", label: "Contact Enquiries" },
   { href: "/admin/setup-requests", label: "Setup Requests" },
-  { href: "/admin/sites", label: "Subscriber Sites", startsWith: "/admin/sites" },
+  { href: "/admin/sites", label: "Customer Sites", startsWith: "/admin/sites" },
   { href: "/admin/billing-test", label: "Billing Test" },
 ];
 

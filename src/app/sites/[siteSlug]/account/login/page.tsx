@@ -2,25 +2,38 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteCustomerAccountForm } from "@/components/sites/site-customer-account-forms";
-import { getTenantSiteBySlug } from "@/lib/sites/tenant-resolver";
+import { TenantSiteShell } from "@/components/sites/tenant-site-shell";
+import { getCustomerSitePreviewDataBySlug } from "@/lib/sites/customer-site-preview-repository";
 import { buildPublicSitePath, getPublicSiteBasePath } from "@/lib/sites/public-site-url";
 
 export default async function CustomerAccountLoginPage({ params }: { params: Promise<{ siteSlug: string }> }) {
   const { siteSlug } = await params;
-  const site = await getTenantSiteBySlug(siteSlug);
-  if (!site) notFound();
-  const publicBasePath = await getPublicSiteBasePath(site.slug);
+  const preview = await getCustomerSitePreviewDataBySlug(siteSlug);
+  if (!preview) notFound();
+  const publicBasePath = await getPublicSiteBasePath(preview.tenantSite.slug);
+  const siteName =
+    preview.settings?.siteDisplayName ||
+    preview.settings?.businessName ||
+    preview.tenantSite.displayName;
+
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-10">
+    <TenantSiteShell
+      siteSlug={preview.tenantSite.slug}
+      siteName={siteName}
+      publicBasePath={publicBasePath}
+      domainPrimary={preview.tenantSite.domainPrimary}
+      phone={preview.settings?.phone}
+      email={preview.settings?.email}
+    >
       <section className="mx-auto max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">{site.displayName}</p>
+        <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">{siteName}</p>
         <h1 className="mt-2 text-2xl font-bold text-slate-950">Customer login</h1>
         <p className="mt-2 text-sm text-slate-600">
           Log in to view your bookings for this business. Your customer account is separate from staff and business-admin access.
         </p>
         <div className="mt-5">
           <Suspense fallback={<p className="text-sm text-slate-600">Loading login...</p>}>
-            <SiteCustomerAccountForm siteSlug={site.slug} mode="login" publicBasePath={publicBasePath} />
+            <SiteCustomerAccountForm siteSlug={preview.tenantSite.slug} mode="login" publicBasePath={publicBasePath} />
           </Suspense>
         </div>
         <p className="mt-4 text-sm text-slate-600">
@@ -30,6 +43,6 @@ export default async function CustomerAccountLoginPage({ params }: { params: Pro
           </Link>.
         </p>
       </section>
-    </main>
+    </TenantSiteShell>
   );
 }

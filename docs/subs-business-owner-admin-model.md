@@ -1,4 +1,4 @@
-﻿# Subs Business Owner Admin Model (Planned)
+# Subs Business Owner Admin Model (Planned)
 
 ## Purpose
 Define the intended operational ownership model for subscriber sites, separate from platform admin operations.
@@ -342,3 +342,9 @@ Important:
 - Existing free-text service category values are preserved during local/demo settings normalisation and added to the managed category list instead of being discarded.
 - Services without a category remain valid and display as uncategorised/Services where appropriate.
 
+
+## 2026-06-09 Tenant shell consistency
+
+Business-admin and staff login screens are still platform-hosted for security, but when a tenant slug is known they render inside a tenant-branded shell with the customer site's header/footer. User-facing auth wording uses `Password`; internal access-code field names and hashes remain implementation details.
+
+A live tenant site with no active services now shows a setup-friendly public empty state. It tells visitors that services, prices and booking options will appear after setup, and gives the business owner a safe platform-hosted route back to the business admin area.

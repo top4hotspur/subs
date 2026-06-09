@@ -224,7 +224,7 @@ export default async function PublicSiteSlugPage({
                   <div>
                     <h2 className="text-xl font-semibold">Services</h2>
                     <p className={`mt-1 text-sm ${scheme.mutedTextClass}`}>
-                      Choose a service to start. Online booking will be connected in a later milestone.
+                      {activeServices.length > 0 ? "Choose a service to start your booking." : "Services will appear here when setup is complete."}
                     </p>
                   </div>
                   {publicStaff.length > 0 ? (
@@ -234,10 +234,31 @@ export default async function PublicSiteSlugPage({
                   ) : null}
                 </div>
                 {activeServices.length === 0 ? (
-                  <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
-                    <p className={`text-sm ${scheme.mutedTextClass}`}>
+                  <div className="mt-4 rounded-xl border border-dashed border-teal-200 bg-teal-50 p-5">
+                    <h3 className="text-base font-semibold text-slate-950">This site is almost ready</h3>
+                    <p className="mt-2 text-sm text-slate-700">
                       Services, prices and durations will appear here once the business owner finishes setup.
                     </p>
+                    <p className="mt-2 text-sm text-slate-700">
+                      Are you the business owner? Sign in to your business admin area to add services, prices,
+                      staff, opening hours and booking settings.
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Link
+                        href={siteAdminHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
+                      >
+                        Open business admin
+                      </Link>
+                      <Link
+                        href={contactHref}
+                        className="rounded-md border border-teal-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-teal-100"
+                      >
+                        Contact the business
+                      </Link>
+                    </div>
                   </div>
                 ) : (
                   <div className="mt-5 space-y-6">

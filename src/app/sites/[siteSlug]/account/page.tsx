@@ -5,6 +5,7 @@ import {
   SiteCustomerMarketingPreference,
   SiteCustomerProfileForm,
 } from "@/components/sites/site-customer-account-forms";
+import { TenantSiteShell } from "@/components/sites/tenant-site-shell";
 import { getSiteCustomerSessionContext } from "@/lib/auth/site-customer-session";
 import { prisma } from "@/lib/db/prisma";
 import { createBookingAccessPath } from "@/lib/sites/booking-access-token";
@@ -129,7 +130,14 @@ export default async function CustomerAccountPage({ params }: AccountPageProps) 
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-10">
+    <TenantSiteShell
+      siteSlug={site.tenantSite.slug}
+      siteName={siteName}
+      publicBasePath={publicBasePath}
+      domainPrimary={site.tenantSite.domainPrimary}
+      phone={site.settings?.phone}
+      email={site.settings?.email}
+    >
       <div className="mx-auto max-w-5xl">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -157,7 +165,7 @@ export default async function CustomerAccountPage({ params }: AccountPageProps) 
         <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
           <p className="font-semibold text-slate-950">Your account details</p>
           <p className="mt-1">
-            These details are saved will be used to prefill future booking forms.
+            These details are saved and will be used to prefill future booking forms.
           </p>
           <SiteCustomerProfileForm siteSlug={site.tenantSite.slug} initialCustomer={customer} />
         </section>
@@ -187,6 +195,6 @@ export default async function CustomerAccountPage({ params }: AccountPageProps) 
           {renderBookings("Cancelled bookings", cancelled)}
         </div>
       </div>
-    </main>
+    </TenantSiteShell>
   );
 }

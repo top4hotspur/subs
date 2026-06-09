@@ -415,9 +415,9 @@ CSV import/export setup tools moved out of demo customisation and into business 
 ## Setup order and payment clarity (2026-05-26)
 - Setup is an order-intent flow, not live checkout.
 - Setup page summary now states:
-  - Website setup: Â£149 one-time
-  - Monthly subscription: Â£30/month
-  - Domain service: Â£49 only when we register/manage a new domain
+  - Website setup: £149 one-time
+  - Monthly subscription: £30/month
+  - Domain service: £49 only when we register/manage a new domain
   - Existing domain: no domain service charge when customer can point DNS/nameservers
 - Setup flow messaging now confirms:
   - payment/subscription setup is handled during onboarding after request submission
@@ -492,7 +492,7 @@ CSV import/export setup tools moved out of demo customisation and into business 
 
 ## 2026-05-30 platform admin dashboard refocus
 - /admin now acts as a platform operations dashboard instead of a demo/business-owner workspace.
-- Main tiles are report selectors: Order Requests, Subscriber Sites, Payment Fails, Sales Pipeline, Contact Enquiries, Revenue by Industry.
+- Main tiles are report selectors: Order Requests, Customer Sites, Payment Fails, Sales Pipeline, Contact Enquiries, Revenue by Industry.
 - Payment Fails and Revenue by Industry use real persisted platform data where available and show honest placeholders when Stripe/webhook data is not yet populated.
 
 ## 2026-05-30 industry sales journey polish
@@ -1171,7 +1171,7 @@ The first full custom-domain fulfilment rehearsal should use `FundMyClub.online`
 
 ## Platform domain/go-live operator flow
 
-Domain fulfilment is tracked in `/admin/sites` after a paid setup request has been provisioned from `/admin/setup-requests`. Setup Requests remains the payment/order queue; Subscriber Sites is where operators continue domain, DNS, subscriber-admin and go-live work. Links to the tenant preview and subscriber admin open in a new tab so operators can inspect the site without losing the workflow.
+Domain fulfilment is tracked in `/admin/sites` after a paid setup request has been provisioned from `/admin/setup-requests`. Setup Requests remains the payment/order queue; Customer Sites is where operators continue domain, DNS, subscriber-admin and go-live work. Links to the tenant preview and subscriber admin open in a new tab so operators can inspect the site without losing the workflow.
 
 The platform admin UI uses simplified customer-fulfilment labels for the normal domain journey: Domain details needed, Domain purchased / owned, DNS instructions needed, Waiting for DNS, DNS configured, Ready to go live, Live and Needs attention. The stored lifecycle/status fields remain compatible with existing advanced/internal values.
 
@@ -1186,3 +1186,11 @@ Runtime rules are intentionally conservative: customer-domain root renders only 
 For platform-managed Amplify domains, missing DNS target values block customer DNS instruction email only. They do not block an operator from saving manual readiness states after Amplify shows the domain available. `/admin/sites` includes a `Mark Amplify domain verified` action that records DNS verified, SSL issued and domain ready without calling AWS. The final public rendering gate still requires the tenant site to be marked live.
 
 Live customer domains render as standalone tenant sites. The MyExperiment.club platform header/footer is hidden on non-platform hosts, and the tenant shell uses the business name, customer navigation and tenant footer details. Business admin and staff links on public tenant pages use platform-hosted URLs in a new tab until those auth routes are deliberately supported on custom domains. Customer account registration uses customer-friendly `Password` wording even if internal compatibility fields still use access-code naming.
+
+## 2026-06-09 Tenant shell and Customer Sites workflow polish
+
+Tenant-branded shells now apply beyond the public homepage. When the tenant is known, customer account/login/register pages, business-admin login and staff login render with the tenant header/footer instead of a bare form or MyExperiment.club platform chrome. Staff and business-admin login links remain platform-hosted for security and open in a new tab from customer domains.
+
+Public tenant service copy no longer says online booking is a future milestone. If a live tenant has no active services yet, the Services section shows a setup-friendly `This site is almost ready` empty state with guidance for the business owner and a safe platform-hosted `Open business admin` link.
+
+Platform admin is being consolidated around `/admin/sites`, now labelled Customer Sites. Setup Requests remains available as order/history, while Customer Sites starts to surface paid setup requests ready to provision and the fulfilment checklist for provisioned sites.

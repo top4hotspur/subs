@@ -70,7 +70,7 @@ function toMessage(error: string, status: number): string {
     return "Only non-paid, non-provisioned requests can be hidden from the queue.";
   }
   if (error === "SUBSCRIBER_SITE_NOT_PROVISIONED") {
-    return "Provision the subscriber site first, then generate business admin access.";
+    return "Provision the customer site first, then generate business admin access.";
   }
   if (error === "SITE_ADMIN_EMAIL_REQUIRED") {
     return "No business admin email is available yet. Add a contact email before generating an password.";
@@ -241,13 +241,13 @@ export default function AdminSetupRequestsPage() {
       siteAdminEmailStatus: result.siteAdminAccess?.emailStatus ?? null,
     });
     if (result.created && result.siteAdminAccess?.emailSent) {
-      setMessage("Subscriber site created and business admin access emailed.");
+      setMessage("Customer site created and business admin access emailed.");
     } else if (result.created && result.siteAdminAccess?.emailStatus === "EMAIL_NOT_CONFIGURED") {
-      setMessage("Subscriber site created. Email is not configured, so share the one-time admin code manually.");
+      setMessage("Customer site created. Email is not configured, so share the one-time admin code manually.");
     } else if (result.created && result.siteAdminAccess?.emailStatus === "EMAIL_SEND_FAILED") {
-      setMessage("Subscriber site created. Admin access email failed, so share the one-time code manually for now.");
+      setMessage("Customer site created. Admin access email failed, so share the one-time code manually for now.");
     } else {
-      setMessage(result.created ? "Subscriber site created." : "Subscriber site already provisioned.");
+      setMessage(result.created ? "Customer site created." : "Customer site already provisioned.");
     }
     await loadRequestDetail(requestId);
     await loadRequests(requestId);
@@ -260,7 +260,7 @@ export default function AdminSetupRequestsPage() {
 
   async function resetSiteAdminAccessCode(requestId: string): Promise<void> {
     const confirmed = window.confirm(
-      "Generate or reset the business admin password for this subscriber site? The new password should be shared securely.",
+      "Generate or reset the business admin password for this customer site? The new password should be shared securely.",
     );
     if (!confirmed) return;
 
@@ -312,12 +312,12 @@ export default function AdminSetupRequestsPage() {
     <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Platform setup requests</h1>
+          <h1 className="text-3xl font-bold text-slate-900">Setup request history</h1>
           <p className="mt-2 text-sm text-slate-600">
-            Uses persisted backend setup requests. Platform-admin login required.
+            Order and setup-request history. Customer Sites is now the main workspace for provisioning, domain, DNS and go-live work.
           </p>
           <p className="mt-1 text-xs text-slate-600">
-            Starting setup creates a blank subscriber site structure; demo data is not copied automatically.
+            Starting setup creates a blank customer site structure; demo data is not copied automatically.
           </p>
         </div>
         <Link href="/admin" className={`${outlineButtonClass} ${smallButtonClass}`}>
@@ -365,7 +365,7 @@ export default function AdminSetupRequestsPage() {
                 rel="noopener noreferrer"
                 className={`${primaryButtonClass} ${smallButtonClass}`}
               >
-                View subscriber site
+                View customer site
               </Link>
               <Link
                 href={siteSetupResult.adminSiteUrl}
@@ -379,7 +379,7 @@ export default function AdminSetupRequestsPage() {
                 href={`/admin/sites?siteId=${encodeURIComponent(siteSetupResult.tenantSiteId)}`}
                 className={`${outlineButtonClass} ${smallButtonClass}`}
               >
-                Continue setup in Subscriber Sites
+                Continue setup in Customer Sites
               </Link>
             </div>
           </div>
@@ -388,7 +388,7 @@ export default function AdminSetupRequestsPage() {
 
       <section className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_1fr]">
         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Persisted queue</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Order history</h2>
           {requests.length === 0 ? (
             <p className="mt-3 text-sm text-slate-600">No persisted setup requests loaded yet.</p>
           ) : (
@@ -406,7 +406,7 @@ export default function AdminSetupRequestsPage() {
                 >
                   <p className="font-semibold text-slate-900">{request.businessName}</p>
                   <p className="mt-1 text-xs text-slate-600">
-                    {request.industrySlug} · {setupStatusLabel(request.status as SubscriptionSetupStatus)}
+                    {request.industrySlug} - {setupStatusLabel(request.status as SubscriptionSetupStatus)}
                   </p>
                   <p className="mt-1 text-xs text-slate-600">Created: {formatUkDateTime(request.createdAt)}</p>
                 </button>
@@ -451,7 +451,7 @@ export default function AdminSetupRequestsPage() {
 
               {selectedRequest.tenantSite?.slug ? (
                 <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
-                  <p className="font-semibold">Subscriber site created</p>
+                  <p className="font-semibold">Customer site created</p>
                   <div className="mt-2 grid gap-1 text-xs sm:grid-cols-2">
                     <p><span className="font-semibold">Preview route:</span> /sites/{selectedRequest.tenantSite.slug}</p>
                     <p><span className="font-semibold">Subscriber admin:</span> /site-admin/{selectedRequest.tenantSite.slug}</p>
@@ -482,7 +482,7 @@ export default function AdminSetupRequestsPage() {
                       rel="noopener noreferrer"
                       className={`${primaryButtonClass} ${smallButtonClass}`}
                     >
-                      View subscriber site
+                      View customer site
                     </Link>
                     <Link
                       href={`/site-admin/${selectedRequest.tenantSite.slug}`}
@@ -496,7 +496,7 @@ export default function AdminSetupRequestsPage() {
                       href={`/admin/sites?siteId=${encodeURIComponent(selectedRequest.tenantSite.id)}`}
                       className={`${outlineButtonClass} ${smallButtonClass}`}
                     >
-                      Continue setup in Subscriber Sites
+                      Continue setup in Customer Sites
                     </Link>
                   </div>
                 </div>
@@ -587,7 +587,7 @@ export default function AdminSetupRequestsPage() {
                   {selectedRequest.paymentStatus === "PAYMENT_FAILED"
                     ? "contact customer and retry checkout, then confirm subscription payment."
                     : selectedRequest.paymentStatus === "PAID"
-                      ? "continue provisioning and move the subscriber site toward go-live."
+                      ? "continue provisioning and move the customer site toward go-live."
                       : "contact customer, confirm domain path, then complete checkout/subscription onboarding."}
                 </p>
               </div>
@@ -637,9 +637,11 @@ export default function AdminSetupRequestsPage() {
                     <button
                       type="button"
                       className={`${outlineButtonClass} ${smallButtonClass}`}
-                      onClick={() => startSiteSetup(selectedRequest.id)}
+                      onClick={() => {
+                        void startSiteSetup(selectedRequest.id);
+                      }}
                     >
-                      Create blank subscriber site
+                      Create blank customer site
                     </button>
                   ) : null}
                   {!isProvisionablePaymentStatus(selectedRequest.paymentStatus) &&
@@ -647,7 +649,7 @@ export default function AdminSetupRequestsPage() {
                   !selectedRequest.archivedAt &&
                   !selectedRequest.tenantSite?.id ? (
                     <p className="w-full text-xs text-slate-600">
-                      Payment must be completed before creating the subscriber site.
+                      Payment must be completed before creating the customer site.
                     </p>
                   ) : null}
                   {selectedRequest.status === SubscriptionSetupStatus.CANCELLED ? (
@@ -682,7 +684,7 @@ export default function AdminSetupRequestsPage() {
                     }`}
                     className={`${outlineButtonClass} ${smallButtonClass}`}
                   >
-                    Continue setup in Subscriber Sites
+                    Continue setup in Customer Sites
                   </Link>
                 </div>
               </div>

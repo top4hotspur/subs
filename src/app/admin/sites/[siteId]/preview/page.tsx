@@ -65,7 +65,7 @@ export default async function AdminSitePersistedPreviewPage({
     <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Subscriber site preview</h1>
+          <h1 className="text-3xl font-bold text-slate-900">Customer site preview</h1>
           <p className="mt-2 text-sm text-slate-600">
             This preview uses persisted subscriber-site settings. It is not yet custom-domain public routing.
           </p>
@@ -83,7 +83,7 @@ export default async function AdminSitePersistedPreviewPage({
             Back to persisted settings
           </Link>
           <Link href={`/admin/sites?siteId=${encodeURIComponent(siteId)}`} className={`${outlineButtonClass} ${smallButtonClass}`}>
-            Back to subscriber site
+            Back to customer site
           </Link>
           <AdminLogoutButton />
         </div>
@@ -130,7 +130,7 @@ export default async function AdminSitePersistedPreviewPage({
           <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
             <div className={cardClass}>
               <h3 className="text-lg font-semibold">Services</h3>
-              <p className={`mt-1 text-sm ${scheme.mutedTextClass}`}>Persisted service/pricing records for this subscriber site.</p>
+              <p className={`mt-1 text-sm ${scheme.mutedTextClass}`}>Persisted service/pricing records for this customer site.</p>
               {activeServices.length === 0 ? (
                 <p className={`mt-4 text-sm ${scheme.mutedTextClass}`}>No active persisted services yet.</p>
               ) : (

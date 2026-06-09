@@ -149,9 +149,9 @@ export default function AdminPage() {
       },
       {
         key: "subscribers" as const,
-        label: "Subscriber Sites",
+        label: "Customer Sites",
         metric: summary ? String(summary.liveSubscriberSiteCount) : "—",
-        hint: "Live subscriber sites",
+        hint: "Live customer sites",
       },
       {
         key: "payment-fails" as const,
@@ -187,7 +187,7 @@ export default function AdminPage() {
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Platform Admin Dashboard</h1>
           <p className="mt-2 text-sm text-slate-600">
-            Manage MyExperiment.club orders, subscriber sites, payments, enquiries and sales pipeline.
+            Manage MyExperiment.club orders, customer sites, payments, enquiries and sales pipeline.
           </p>
         </div>
         <AdminLogoutButton />
@@ -251,7 +251,7 @@ export default function AdminPage() {
 
         {selectedReport === "subscribers" ? (
           <>
-            <h2 className="text-xl font-semibold text-slate-900">Subscriber Sites</h2>
+            <h2 className="text-xl font-semibold text-slate-900">Customer Sites</h2>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               {summary?.subscriberStatusCounts.map((row) => (
                 <div key={row.status} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
@@ -271,7 +271,7 @@ export default function AdminPage() {
             </div>
             <div className="mt-4">
               <Link href="/admin/sites" className={`${primaryButtonClass} ${smallButtonClass}`}>
-                Open subscriber sites
+                Open customer sites
               </Link>
             </div>
           </>
@@ -366,7 +366,7 @@ export default function AdminPage() {
                 <thead>
                   <tr className="border-b border-slate-200 text-left text-slate-600">
                     <th className="px-2 py-2">Industry</th>
-                    <th className="px-2 py-2">Active subscriber sites</th>
+                    <th className="px-2 py-2">Active customer sites</th>
                     <th className="px-2 py-2">Monthly revenue estimate</th>
                     <th className="px-2 py-2">Setup fees known</th>
                     <th className="px-2 py-2">Domain fees known</th>
@@ -399,7 +399,7 @@ export default function AdminPage() {
           Order Requests
         </Link>
         <Link href="/admin/sites" className={`${outlineButtonClass} ${smallButtonClass}`}>
-          Subscriber Sites
+          Customer Sites
         </Link>
         <Link href="/admin/sales" className={`${outlineButtonClass} ${smallButtonClass}`}>
           Sales Pipeline

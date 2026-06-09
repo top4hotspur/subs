@@ -177,7 +177,7 @@ function toMessage(error: string, status: number): string {
     return "Admin access denied. Please sign in with a platform admin account.";
   }
   if (error === "NETWORK_ERROR" || status === 0) {
-    return "Network error while loading subscriber site detail.";
+    return "Network error while loading customer site detail.";
   }
   return `Could not load site detail: ${error}`;
 }
@@ -791,7 +791,7 @@ export default function AdminSiteSettingsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">
-            Subscriber Site Setup Data for {siteName ?? "Subscriber site"}
+            Subscriber Site Setup Data for {siteName ?? "Customer site"}
           </h1>
           <p className="mt-2 text-sm text-slate-600">
             Support/provisioning settings editor until subscriber admin auth is added.
@@ -815,7 +815,7 @@ export default function AdminSiteSettingsPage() {
             Preview persisted customer site
           </Link>
           <Link href={`/admin/sites?siteId=${encodeURIComponent(siteId)}`} className={`${outlineButtonClass} ${smallButtonClass}`}>
-            Back to subscriber site
+            Back to customer site
           </Link>
           <AdminLogoutButton />
         </div>
@@ -829,7 +829,7 @@ export default function AdminSiteSettingsPage() {
           <p>{error}</p>
           <div className="mt-3">
             <Link href="/admin/sites" className={`${outlineButtonClass} ${smallButtonClass}`}>
-              Back to subscriber sites
+              Back to customer sites
             </Link>
           </div>
         </div>
@@ -1093,7 +1093,7 @@ export default function AdminSiteSettingsPage() {
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-xl font-semibold text-slate-900">Persisted staff and roles</h2>
             <p className="mt-2 text-sm text-slate-600">
-              Staff records and role definitions are persisted per subscriber site. Use this for support/provisioning changes.
+              Staff records and role definitions are persisted per customer site. Use this for support/provisioning changes.
             </p>
 
             <div className="mt-4 grid gap-6 lg:grid-cols-2">
