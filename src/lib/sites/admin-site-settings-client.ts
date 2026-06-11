@@ -8,6 +8,7 @@ export type PersistedCustomerSiteSettings = {
   address: string | null;
   openingHoursSummary: string | null;
   openingHoursJson: unknown;
+  staffingTargetsJson: unknown;
   heroHeadline: string | null;
   heroSubheading: string | null;
   homepageHeroImageUrl: string | null;

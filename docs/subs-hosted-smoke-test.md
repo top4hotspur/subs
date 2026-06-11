@@ -379,7 +379,7 @@ olePrice:<role> columns accepted
 1. Sign in to `/site-admin/login` for a test tenant.
 2. In `Site settings`, upload a valid logo (`png/svg/jpeg/webp`, <=1MB).
 3. Confirm upload succeeds and preview updates.
-4. Upload a valid favicon (`png/ico/svg`, <=512KB).
+4. Upload a valid favicon (`png/ico`, <=512KB).
 5. Confirm `/sites/[siteSlug]` renders logo when set, and text fallback when removed.
 6. Remove logo and favicon and confirm persisted metadata clears.
 7. Negative checks:
@@ -458,9 +458,9 @@ olePrice:<role> columns accepted
 
 ## Hosted smoke: setup order/payment clarity
 1. Open `/setup/barbers` and confirm order summary includes:
-   - Website setup: £149 one-time
-   - Monthly subscription: £30/month
-   - Domain service: £49 only when we register/manage a new domain
+   - Website setup: Â£149 one-time
+   - Monthly subscription: Â£30/month
+   - Domain service: Â£49 only when we register/manage a new domain
 2. Confirm setup copy states payment/subscription setup is confirmed after request submission during onboarding.
 3. In Domain option section, confirm choices are:
    - I already own a domain
@@ -850,7 +850,7 @@ Notes:
    - service area field is not shown in manual add-lead form
    - industry labels are human-friendly
    - provider pricing table is visible
-8. Confirm `Booksy` exists with estimate `£40`.
+8. Confirm `Booksy` exists with estimate `Â£40`.
 9. Edit a provider row and save; confirm updated value persists after reload.
 10. Add a lead with provider `Booksy` and blank estimate; confirm estimate auto-fills.
 11. Override estimate manually; confirm manual value is retained.
@@ -1823,3 +1823,19 @@ This means AWS/DNS/SSL reaches the app, but app-side statuses still block render
 - Turn off `Show initial setup guidance on public site` in Business settings, save, and confirm the public guidance hides even if services are still empty.
 - For a live/domain-connected tenant, confirm the site-admin domain card shows a compact `Domain connected` summary instead of a setup-heavy domain warning.
 - On a customer domain, confirm `/admin` and `/api/admin/*` remain blocked/not found.
+
+## 2026-06-11 media setup and rota coverage smoke checks
+
+1. Open `/site-admin/fundmyclub-nails` on the platform host.
+2. In Business settings, try an unsupported logo type and confirm a visible validation error appears.
+3. Upload a supported logo (`png/svg/jpg/webp`, <=1MB) and confirm loading state, success message and preview.
+4. Upload a favicon (`png/ico`, <=512KB) and confirm loading state, success/error message and preview.
+5. Add a homepage background image URL and save Business settings. Confirm the public homepage uses the image with readable text, or shows a clear limitation if the URL is invalid.
+6. Confirm `Get your site ready` and `Setup section guide` use the same blue-based visual family.
+7. In Opening hours / rota, expand Staffing coverage and set a target staff count for at least one day.
+8. Confirm coverage uses the configured target rather than fixed 0/1/2 logic, showing `staff working / target N`.
+9. Mark Monday and selected weekdays as working, set Monday times, then click `Copy Monday times to working weekdays`.
+10. Confirm Tuesday-Friday rows already marked Working update immediately, non-working days stay off, and a message appears.
+11. Confirm Business opening hours, Staff weekly rota and Staffing coverage can collapse/expand and still show useful summaries.
+12. Confirm `fundmyclub.online` still renders the tenant site.
+13. Confirm `fundmyclub.online/admin` and `fundmyclub.online/api/admin/sites` remain blocked/unavailable.

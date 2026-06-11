@@ -757,3 +757,10 @@ Tenant settings now include `setupGuidanceEnabled` and `homepageHeroImageUrl`. T
 Platform support should not ask for or display stored subscriber passwords. The v1 support workflow is reset/resend from Customer Sites: platform admin generates a one-time password, email delivery is attempted, and the generated value is shown once for handover. Only hashed credentials are stored.
 
 Custom-domain protections remain part of fulfilment: customer-host `/admin` and `/api/admin/*` routes stay blocked/not found; staff/business auth links may open platform-hosted `/site-staff/[siteSlug]` and `/site-admin/[siteSlug]` shells until custom-domain auth hosting is explicitly implemented.
+
+## 2026-06-11 media setup and rota coverage fulfilment notes
+
+- During fulfilment, operators should confirm tenant branding storage is configured before asking business owners to upload logo/favicon files.
+- Business owners can add a single homepage background image URL during v1 setup. Multi-image rotation and page-specific image assignment are intentionally future work.
+- Staff coverage targets are set by the business owner in `/site-admin/[siteSlug]` and should be reviewed during onboarding for businesses that need more than one staff member on a day.
+- Custom-domain security boundaries are unchanged: customer-domain `/admin` and `/api/admin/*` stay blocked, while business/staff admin routes remain platform-hosted.

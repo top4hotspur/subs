@@ -19,6 +19,7 @@ export type CustomerSiteSettingsRecord = {
   address: string | null;
   openingHoursSummary: string | null;
   openingHoursJson: unknown;
+  staffingTargetsJson: unknown;
   heroHeadline: string | null;
   heroSubheading: string | null;
   homepageHeroImageUrl: string | null;
@@ -125,6 +126,7 @@ function serializeSettings(record: {
   address: string | null;
   openingHoursSummary: string | null;
   openingHoursJson: unknown;
+  staffingTargetsJson: unknown;
   heroHeadline: string | null;
   heroSubheading: string | null;
   homepageHeroImageUrl: string | null;
@@ -257,6 +259,12 @@ export async function upsertCustomerSiteSettings(
         : parsed.openingHoursJson === null
           ? Prisma.DbNull
           : toJson(parsed.openingHoursJson),
+    staffingTargetsJson:
+      parsed.staffingTargetsJson === undefined
+        ? undefined
+        : parsed.staffingTargetsJson === null
+          ? Prisma.DbNull
+          : toJson(parsed.staffingTargetsJson),
     heroHeadline: parsed.heroHeadline ?? null,
     heroSubheading: parsed.heroSubheading ?? null,
     homepageHeroImageUrl: parsed.homepageHeroImageUrl ?? null,
@@ -328,6 +336,12 @@ export async function upsertCustomerSiteSettings(
       parsed.openingHoursJson === null
         ? Prisma.DbNull
         : toJson(parsed.openingHoursJson);
+  }
+  if (parsed.staffingTargetsJson !== undefined) {
+    updateData.staffingTargetsJson =
+      parsed.staffingTargetsJson === null
+        ? Prisma.DbNull
+        : toJson(parsed.staffingTargetsJson);
   }
   if (parsed.heroHeadline !== undefined) updateData.heroHeadline = parsed.heroHeadline;
   if (parsed.heroSubheading !== undefined) updateData.heroSubheading = parsed.heroSubheading;

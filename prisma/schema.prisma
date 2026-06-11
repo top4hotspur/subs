@@ -419,9 +419,10 @@ model CustomerSiteSettings {
   phone                            String?
   email                            String?
   address                          String?
-  openingHoursSummary              String?
-  openingHoursJson                 Json?
-  heroHeadline                     String?
+    openingHoursSummary              String?
+    openingHoursJson                 Json?
+    staffingTargetsJson              Json?
+    heroHeadline                     String?
   heroSubheading                   String?
   homepageHeroImageUrl             String?
   setupGuidanceEnabled             Boolean    @default(true)

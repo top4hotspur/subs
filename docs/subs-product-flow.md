@@ -1224,3 +1224,16 @@ Customer-host security remains unchanged: `/admin` and `/api/admin/*` on custome
 - `Services and prices` separates Service categories from Services. Both are collapsible; `Add service` lives in the Services panel and saved services remain collapsed until edited.
 - Standard staff now have useful operational staff permissions by default: appointments, manual booking support, amendments/cancellations, customer contact details, payment status and voucher checks. Super-user is framed as trusted business-configuration access rather than normal appointment access.
 - When a tenant domain is already live/connected, the business admin shows a compact domain-connected summary instead of setup-heavy domain action copy.
+
+## 2026-06-11 media setup and rota coverage polish
+
+- Business admin logo upload is wired through tenant-scoped branding media storage and now gives visible loading, success and error messages.
+- Logo uploads accept PNG, SVG, JPG/JPEG and WebP up to 1MB. PNG/SVG with a transparent background remains the recommended format for clean website headers.
+- Favicon uploads accept PNG or ICO up to 512KB. SVG favicon upload is not part of this v1 path.
+- If storage or public media URLs are not configured, the UI shows a clear configuration error instead of silently appearing to do nothing.
+- Homepage background image support remains a single homepage image URL in this pass. Multi-image upload, rotation and page-specific image assignment are deferred.
+- The setup checklist and setup section guide now share the same blue-based visual family.
+- Staff coverage now uses editable tenant-scoped day-level staff targets stored in `CustomerSiteSettings.staffingTargetsJson`.
+- Coverage labels compare scheduled working staff against the configured target: Needs cover, Under target, Covered, or Over target.
+- Business opening hours, Staff weekly rota and Staffing coverage can collapse/expand, with summaries remaining visible.
+- `Copy Monday times to working weekdays` only copies Monday times into Tuesday-Friday rows already marked Working and shows a visible message after applying.

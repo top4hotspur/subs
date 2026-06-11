@@ -367,3 +367,14 @@ Platform support access is handled through reset/resend, not plaintext credentia
 - Services and prices has separate collapsible panels for categories and services. This keeps category management from competing with day-to-day service editing.
 - Staff setup uses collapsed staff cards after save. Standard staff receive normal operational staff permissions by default; `Business configuration super-user` is reserved for trusted setup/admin responsibility.
 - Customer-domain security boundaries are unchanged: business/staff admin remain platform-hosted and customer-domain `/admin` and `/api/admin/*` remain blocked.
+
+## 2026-06-11 media setup and rota coverage polish
+
+- Business admin media uploads now surface visible upload progress, success and failure states.
+- Logo files: PNG, SVG, JPG/JPEG or WebP, max 1MB. PNG/SVG transparent landscape logos remain recommended.
+- Favicon files: PNG or ICO, max 512KB. Unsupported formats show a visible validation message.
+- If branding storage or public media URL configuration is missing, upload actions fail visibly and do not pretend the logo/favicon is available.
+- Homepage background image remains URL-based v1 through `homepageHeroImageUrl`; multi-image gallery upload, image rotation and page-specific assignment are deferred.
+- Staff coverage targets are tenant-scoped day-level settings saved in `CustomerSiteSettings.staffingTargetsJson`.
+- Coverage compares active working staff inside business opening hours with the configured target and labels each day as Needs cover, Under target, Covered, Over target, or Business closed.
+- Business opening hours, Staff weekly rota and Staffing coverage are collapsible to reduce long-scroll setup.

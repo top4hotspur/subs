@@ -66,6 +66,9 @@ export async function POST(
       contentType: file.type,
       bytes,
     });
+    if (!uploaded.url) {
+      throw new Error("PUBLIC_MEDIA_URL_NOT_CONFIGURED");
+    }
 
     const current = await getCustomerSiteSettings(resolved.tenantSiteId);
     if (current?.logoStorageKey) {
@@ -90,6 +93,9 @@ export async function POST(
     }
     if (message === "STORAGE_NOT_CONFIGURED") {
       return storageNotConfigured();
+    }
+    if (message === "PUBLIC_MEDIA_URL_NOT_CONFIGURED") {
+      return NextResponse.json({ ok: false, error: "PUBLIC_MEDIA_URL_NOT_CONFIGURED" }, { status: 503 });
     }
     return NextResponse.json({ ok: false, error: "SITE_ADMIN_LOGO_UPLOAD_FAILED", message }, { status: 500 });
   }

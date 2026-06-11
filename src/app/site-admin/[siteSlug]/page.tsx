@@ -309,14 +309,14 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
         </p>
       </section>
 
-      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="mt-6 rounded-2xl border border-sky-200 bg-sky-50 p-5 shadow-sm">
         <h2 className="text-xl font-semibold text-slate-900">Setup section guide</h2>
         <p className="mt-2 text-sm text-slate-600">
           Use this as a quick map of the setup areas below. The checklist above is the main progress tracker.
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {setupGroups.map((group) => (
-            <article key={group.group} className="rounded-xl border border-sky-100 bg-sky-50 p-4">
+            <article key={group.group} className="rounded-xl border border-sky-100 bg-white p-4">
               <h3 className="text-sm font-semibold text-slate-950">{group.group}</h3>
               <div className="mt-3 space-y-2">
                 {group.sections.map((section) => (

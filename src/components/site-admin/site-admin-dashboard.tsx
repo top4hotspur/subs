@@ -175,6 +175,7 @@ function weekdayLabel(weekday: WeekdayValue): string {
 }
 
 type SocialPlatformDraft = { enabled: boolean; url: string };
+type StaffingTargetDraft = Record<WeekdayValue, string>;
 
 type SettingsDraft = {
   siteDisplayName: string;
@@ -184,6 +185,7 @@ type SettingsDraft = {
   address: string;
   openingHoursSummary: string;
   openingHours: BusinessOpeningHours;
+  staffingTargets: StaffingTargetDraft;
   heroHeadline: string;
   heroSubheading: string;
   homepageHeroImageUrl: string;
@@ -540,6 +542,7 @@ function staffingCoverageForWeekday(
   rotaDays: RotaDayDraft[],
   staff: StaffMemberDraft[],
   openingHours: BusinessOpeningHours,
+  targetCount: number,
 ) {
   const businessDay = businessDayForWeekday(openingHours, weekday);
   const open = Boolean(businessDay?.open);
@@ -553,6 +556,7 @@ function staffingCoverageForWeekday(
   if (!open) {
     return {
       staffCount,
+      targetCount,
       label: "Business closed",
       className: "border-slate-200 bg-slate-50 text-slate-600",
     };
@@ -560,19 +564,30 @@ function staffingCoverageForWeekday(
   if (staffCount === 0) {
     return {
       staffCount,
+      targetCount,
       label: "Needs cover",
       className: "border-rose-200 bg-rose-50 text-rose-800",
     };
   }
-  if (staffCount === 1) {
+  if (staffCount < targetCount) {
     return {
       staffCount,
-      label: "Light cover",
+      targetCount,
+      label: "Under target",
       className: "border-amber-200 bg-amber-50 text-amber-900",
+    };
+  }
+  if (staffCount > targetCount) {
+    return {
+      staffCount,
+      targetCount,
+      label: "Over target",
+      className: "border-sky-200 bg-sky-50 text-sky-800",
     };
   }
   return {
     staffCount,
+    targetCount,
     label: "Covered",
     className: "border-emerald-200 bg-emerald-50 text-emerald-800",
   };
@@ -596,6 +611,9 @@ function toMessage(error: string, status: number, details?: unknown): string {
   }
   if (error === "STORAGE_NOT_CONFIGURED") {
     return "Branding storage is not configured in this environment yet.";
+  }
+  if (error === "PUBLIC_MEDIA_URL_NOT_CONFIGURED") {
+    return "Branding storage saved the file but public media URLs are not configured yet, so the logo/favicon cannot be shown.";
   }
   if (error === "FILE_TOO_LARGE") {
     return "Selected file is too large for this upload type.";
@@ -646,6 +664,27 @@ function toMessage(error: string, status: number, details?: unknown): string {
     return "Square OAuth is not configured yet. No account was connected.";
   }
   return `Request failed: ${error}`;
+}
+
+function validateBrandingFile(kind: "logo" | "favicon", file: File): string | null {
+  if (kind === "logo") {
+    const allowedLogoTypes = new Set(["image/png", "image/svg+xml", "image/jpeg", "image/webp"]);
+    if (!allowedLogoTypes.has(file.type)) {
+      return "Logo must be PNG, SVG, JPG/JPEG or WebP. PNG/SVG is best when you need a transparent background.";
+    }
+    if (file.size > 1024 * 1024) {
+      return "Logo file is too large. Please use a lightweight logo under 1MB.";
+    }
+    return null;
+  }
+  const allowedFaviconTypes = new Set(["image/png", "image/x-icon", "image/vnd.microsoft.icon"]);
+  if (!allowedFaviconTypes.has(file.type)) {
+    return "Favicon must be PNG or ICO. Use a square 512 x 512 PNG where possible.";
+  }
+  if (file.size > 512 * 1024) {
+    return "Favicon file is too large. Please use a file under 512KB.";
+  }
+  return null;
 }
 
 function validationDetailsToMessage(details: unknown): string | null {
@@ -866,6 +905,47 @@ function emptySocialDraft(): SettingsDraft["socialLinks"] {
   };
 }
 
+function defaultStaffingTargets(): StaffingTargetDraft {
+  return {
+    monday: "1",
+    tuesday: "1",
+    wednesday: "1",
+    thursday: "1",
+    friday: "1",
+    saturday: "1",
+    sunday: "1",
+  };
+}
+
+function parseStaffingTargets(input: unknown): StaffingTargetDraft {
+  const targets = defaultStaffingTargets();
+  if (!input || typeof input !== "object") return targets;
+  const source = input as Record<string, unknown>;
+  for (const weekday of weekdayValues) {
+    const value = source[weekday];
+    if (typeof value === "number" && Number.isFinite(value)) {
+      targets[weekday] = String(Math.max(0, Math.min(99, Math.round(value))));
+    } else if (typeof value === "string" && value.trim()) {
+      const parsed = Number.parseInt(value, 10);
+      if (Number.isFinite(parsed)) targets[weekday] = String(Math.max(0, Math.min(99, parsed)));
+    }
+  }
+  return targets;
+}
+
+function normalizeStaffingTargetsForSave(targets: StaffingTargetDraft): Record<WeekdayValue, number> {
+  return weekdayValues.reduce((acc, weekday) => {
+    const parsed = Number.parseInt(targets[weekday], 10);
+    acc[weekday] = Number.isFinite(parsed) ? Math.max(0, Math.min(99, parsed)) : 1;
+    return acc;
+  }, {} as Record<WeekdayValue, number>);
+}
+
+function staffingTargetForWeekday(targets: StaffingTargetDraft, weekday: WeekdayValue): number {
+  const parsed = Number.parseInt(targets[weekday], 10);
+  return Number.isFinite(parsed) ? Math.max(0, Math.min(99, parsed)) : 1;
+}
+
 function parseSocialDraft(input: unknown): SettingsDraft["socialLinks"] {
   const base = emptySocialDraft();
   if (!input || typeof input !== "object") return base;
@@ -892,6 +972,7 @@ function toSettingsDraft(settings: PersistedCustomerSiteSettings | null): Settin
     address: settings?.address ?? "",
     openingHoursSummary: settings?.openingHoursSummary ?? formatBusinessOpeningHoursSummary(openingHours),
     openingHours,
+    staffingTargets: parseStaffingTargets(settings?.staffingTargetsJson ?? null),
     heroHeadline: settings?.heroHeadline ?? "",
     heroSubheading: settings?.heroSubheading ?? "",
     homepageHeroImageUrl: settings?.homepageHeroImageUrl ?? "",
@@ -1100,6 +1181,10 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   const [serviceCategoriesOpen, setServiceCategoriesOpen] = useState(true);
   const [servicesOpen, setServicesOpen] = useState(true);
   const [expandedStaffKey, setExpandedStaffKey] = useState<string | null>(null);
+  const [businessOpeningHoursOpen, setBusinessOpeningHoursOpen] = useState(true);
+  const [staffRotaOpen, setStaffRotaOpen] = useState(true);
+  const [staffingCoverageOpen, setStaffingCoverageOpen] = useState(true);
+  const [mediaBusy, setMediaBusy] = useState<"logo" | "favicon" | null>(null);
 
   const [settingsDraft, setSettingsDraft] = useState<SettingsDraft>(() => toSettingsDraft(null));
   const [persistedSettings, setPersistedSettings] = useState<PersistedCustomerSiteSettings | null>(null);
@@ -1659,6 +1744,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       address: settingsDraft.address || null,
       openingHoursSummary: openingHoursSummary || settingsDraft.openingHoursSummary || null,
       openingHoursJson: settingsDraft.openingHours,
+      staffingTargetsJson: normalizeStaffingTargetsForSave(settingsDraft.staffingTargets),
       heroHeadline: settingsDraft.heroHeadline || null,
       heroSubheading: settingsDraft.heroSubheading || null,
       homepageHeroImageUrl: settingsDraft.homepageHeroImageUrl.trim() || null,
@@ -1726,6 +1812,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
     const result = await patchSiteAdminSettings(siteSlug, {
       openingHoursSummary: openingHoursSummary || null,
       openingHoursJson: settingsDraft.openingHours,
+      staffingTargetsJson: normalizeStaffingTargetsForSave(settingsDraft.staffingTargets),
     });
     if (!result.ok) {
       setMessage(toMessage(result.error, result.status));
@@ -1741,48 +1828,88 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
     router.refresh();
   }
 
+  async function saveStaffingTargets() {
+    setMessage("Saving staffing targets...");
+    const result = await patchSiteAdminSettings(siteSlug, {
+      staffingTargetsJson: normalizeStaffingTargetsForSave(settingsDraft.staffingTargets),
+    });
+    if (!result.ok) {
+      setMessage(toMessage(result.error, result.status, result.details));
+      return;
+    }
+    setSettingsDraft(toSettingsDraft(result.settings));
+    setPersistedSettings(result.settings);
+    setMessage("Staffing targets saved. Coverage now uses your target numbers.");
+  }
+
   async function uploadLogo(file: File) {
+    const validationError = validateBrandingFile("logo", file);
+    if (validationError) {
+      setMessage(validationError);
+      return;
+    }
+    setMediaBusy("logo");
     setMessage("Uploading logo...");
     const result = await uploadSiteAdminBrandingLogo(siteSlug, file);
+    setMediaBusy(null);
     if (!result.ok) {
       setMessage(toMessage(result.error, result.status));
       return;
     }
     setPersistedSettings(result.settings);
-    setMessage("Logo uploaded.");
+    setSettingsDraft(toSettingsDraft(result.settings));
+    setMessage("Logo uploaded. The preview and public site will use this logo where supported.");
+    router.refresh();
   }
 
   async function removeLogo() {
+    setMediaBusy("logo");
     setMessage("Removing logo...");
     const result = await removeSiteAdminBrandingLogo(siteSlug);
+    setMediaBusy(null);
     if (!result.ok) {
       setMessage(toMessage(result.error, result.status));
       return;
     }
     setPersistedSettings(result.settings);
+    setSettingsDraft(toSettingsDraft(result.settings));
     setMessage("Logo removed.");
+    router.refresh();
   }
 
   async function uploadFavicon(file: File) {
+    const validationError = validateBrandingFile("favicon", file);
+    if (validationError) {
+      setMessage(validationError);
+      return;
+    }
+    setMediaBusy("favicon");
     setMessage("Uploading favicon...");
     const result = await uploadSiteAdminBrandingFavicon(siteSlug, file);
+    setMediaBusy(null);
     if (!result.ok) {
       setMessage(toMessage(result.error, result.status));
       return;
     }
     setPersistedSettings(result.settings);
-    setMessage("Favicon uploaded.");
+    setSettingsDraft(toSettingsDraft(result.settings));
+    setMessage("Favicon uploaded. Browser tabs can now use this icon where supported.");
+    router.refresh();
   }
 
   async function removeFavicon() {
+    setMediaBusy("favicon");
     setMessage("Removing favicon...");
     const result = await removeSiteAdminBrandingFavicon(siteSlug);
+    setMediaBusy(null);
     if (!result.ok) {
       setMessage(toMessage(result.error, result.status));
       return;
     }
     setPersistedSettings(result.settings);
+    setSettingsDraft(toSettingsDraft(result.settings));
     setMessage("Favicon removed.");
+    router.refresh();
   }
 
   async function saveServices() {
@@ -2285,7 +2412,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                 onChange={(event) => setSettingsDraft((current) => ({ ...current, homepageHeroImageUrl: event.target.value }))}
               />
               <span className="mt-1 block text-[11px] font-normal text-slate-600">
-                V1 supports one homepage image only. No rotating gallery or page-by-page images yet.
+                V1 supports one homepage image URL only. Multi-image upload, rotation and page-specific image assignment are deferred.
               </span>
             </label>
             <label className="flex items-start gap-2 rounded-lg border border-sky-100 bg-sky-50 p-3 text-xs font-semibold text-slate-800 sm:col-span-2">
@@ -2308,7 +2435,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
               <h4 className="text-sm font-semibold text-slate-900">Business logo</h4>
               <p className="mt-1 text-xs text-slate-600">
-                Recommended PNG or SVG with a transparent background. A landscape logo around 1200px wide works best. Max 1MB.
+                PNG or SVG is best for a transparent logo. JPG/JPEG and WebP are accepted if you do not need transparency. A landscape logo around 1200px wide works best. Max 1MB.
               </p>
               {persistedSettings?.logoUrl ? (
                 <img
@@ -2321,11 +2448,12 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
               )}
               <div className="mt-2 flex flex-wrap gap-2">
                 <label className={`${outlineButtonClass} ${smallButtonClass} cursor-pointer`}>
-                  Upload logo
+                  {mediaBusy === "logo" ? "Uploading logo..." : "Upload logo"}
                   <input
                     type="file"
                     accept=".png,.svg,.jpg,.jpeg,.webp,image/png,image/svg+xml,image/jpeg,image/webp"
                     className="hidden"
+                    disabled={mediaBusy === "logo"}
                     onChange={(event) => {
                       const file = event.target.files?.[0];
                       if (file) void uploadLogo(file);
@@ -2334,8 +2462,8 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                   />
                 </label>
                 {persistedSettings?.logoUrl ? (
-                  <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void removeLogo()}>
-                    Remove logo
+                  <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} disabled={mediaBusy === "logo"} onClick={() => void removeLogo()}>
+                    {mediaBusy === "logo" ? "Working..." : "Remove logo"}
                   </button>
                 ) : null}
               </div>
@@ -2344,7 +2472,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
               <h4 className="text-sm font-semibold text-slate-900">Favicon</h4>
               <p className="mt-1 text-xs text-slate-600">
-                Recommended PNG or ICO. 512 x 512 px source. Max 512KB.
+                PNG or ICO only. A 512 x 512 px square PNG source is recommended. Max 512KB.
               </p>
               {persistedSettings?.faviconUrl ? (
                 <img
@@ -2357,11 +2485,12 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
               )}
               <div className="mt-2 flex flex-wrap gap-2">
                 <label className={`${outlineButtonClass} ${smallButtonClass} cursor-pointer`}>
-                  Upload favicon
+                  {mediaBusy === "favicon" ? "Uploading favicon..." : "Upload favicon"}
                   <input
                     type="file"
-                    accept=".png,.ico,.svg,image/png,image/x-icon,image/vnd.microsoft.icon,image/svg+xml"
+                    accept=".png,.ico,image/png,image/x-icon,image/vnd.microsoft.icon"
                     className="hidden"
+                    disabled={mediaBusy === "favicon"}
                     onChange={(event) => {
                       const file = event.target.files?.[0];
                       if (file) void uploadFavicon(file);
@@ -2370,8 +2499,8 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                   />
                 </label>
                 {persistedSettings?.faviconUrl ? (
-                  <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void removeFavicon()}>
-                    Remove favicon
+                  <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} disabled={mediaBusy === "favicon"} onClick={() => void removeFavicon()}>
+                    {mediaBusy === "favicon" ? "Working..." : "Remove favicon"}
                   </button>
                 ) : null}
               </div>
@@ -4245,11 +4374,22 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                   These are your normal public opening hours and the first availability window for future booking rules.
                 </p>
               </div>
-              <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700">
-                <span className="font-semibold">Summary: </span>
-                {formatBusinessOpeningHoursSummary(settingsDraft.openingHours) || "Opening hours not set yet"}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700">
+                  <span className="font-semibold">Summary: </span>
+                  {formatBusinessOpeningHoursSummary(settingsDraft.openingHours) || "Opening hours not set yet"}
+                </div>
+                <button
+                  type="button"
+                  className={`${outlineButtonClass} ${smallButtonClass}`}
+                  onClick={() => setBusinessOpeningHoursOpen((current) => !current)}
+                >
+                  {businessOpeningHoursOpen ? "Collapse" : "Expand"}
+                </button>
               </div>
             </div>
+            {businessOpeningHoursOpen ? (
+            <>
             <div className="mt-3 grid gap-2">
               {BUSINESS_WEEKDAYS.map((weekday) => {
                 const day = settingsDraft.openingHours.days.find((item) => item.weekday === weekday) ??
@@ -4304,6 +4444,8 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
             <button type="button" className={`mt-4 ${primaryButtonClass} ${smallButtonClass}`} onClick={() => void saveOpeningHours()}>
               Save opening hours
             </button>
+            </>
+            ) : null}
           </div>
 
           <div className="mt-3 grid gap-6 lg:grid-cols-2">
@@ -4315,22 +4457,37 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     Choose a staff member, then set their normal working pattern. Rota can be saved outside business hours, but booking slots only appear inside business opening hours.
                   </p>
                 </div>
-                <label className="text-xs font-semibold text-slate-700">
-                  Staff member
-                  <select
-                    className="mt-1 block min-w-48 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm font-normal text-slate-900"
-                    value={selectedSchedulingStaffId}
-                    onChange={(event) => setSelectedSchedulingStaffId(event.target.value)}
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700">
+                    <span className="font-semibold">Selected: </span>
+                    {selectedStaff ? buildStaffDisplayName(selectedStaff) || "Unnamed staff" : "No staff selected"}
+                  </div>
+                  <button
+                    type="button"
+                    className={`${outlineButtonClass} ${smallButtonClass}`}
+                    onClick={() => setStaffRotaOpen((current) => !current)}
                   >
-                    <option value="">Select staff member</option>
-                    {staffDraft.filter((staff) => staff.active && staff.id).map((staff, index) => (
-                      <option key={`${staff.id ?? "new"}-${index}`} value={staff.id ?? ""}>
-                        {staff.displayName || "Unnamed staff"}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    {staffRotaOpen ? "Collapse" : "Expand"}
+                  </button>
+                </div>
               </div>
+              {staffRotaOpen ? (
+              <>
+              <label className="mt-3 block text-xs font-semibold text-slate-700">
+                Staff member
+                <select
+                  className="mt-1 block min-w-48 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm font-normal text-slate-900"
+                  value={selectedSchedulingStaffId}
+                  onChange={(event) => setSelectedSchedulingStaffId(event.target.value)}
+                >
+                  <option value="">Select staff member</option>
+                  {staffDraft.filter((staff) => staff.active && staff.id).map((staff, index) => (
+                    <option key={`${staff.id ?? "new"}-${index}`} value={staff.id ?? ""}>
+                      {staff.displayName || "Unnamed staff"}
+                    </option>
+                  ))}
+                </select>
+              </label>
               {staffDraft.filter((staff) => staff.active && staff.id).length === 0 ? (
                 <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                   Add and save at least one active staff member before setting rota.
@@ -4496,6 +4653,8 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                   );
                 })}
               </div>
+              </>
+              ) : null}
             </div>
 
             <div className="space-y-4">
@@ -4504,32 +4663,66 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                   <div>
                     <p className="text-sm font-semibold text-slate-900">Staffing coverage</p>
                     <p className="mt-1 text-xs text-slate-600">
-                      Quick view of active staff scheduled during business opening hours. Targets by day/period are planned next.
+                      Compare active staff scheduled during business opening hours against your target staff count for each day.
                     </p>
                   </div>
-                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-600">
-                    Interim logic
-                  </span>
+                  <button
+                    type="button"
+                    className={`${outlineButtonClass} ${smallButtonClass}`}
+                    onClick={() => setStaffingCoverageOpen((current) => !current)}
+                  >
+                    {staffingCoverageOpen ? "Collapse" : "Expand"}
+                  </button>
                 </div>
+                {staffingCoverageOpen ? (
+                <>
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
                   {weekdayValues.map((weekday) => {
-                    const coverage = staffingCoverageForWeekday(weekday, rotaDaysDraft, staffDraft, settingsDraft.openingHours);
+                    const coverage = staffingCoverageForWeekday(
+                      weekday,
+                      rotaDaysDraft,
+                      staffDraft,
+                      settingsDraft.openingHours,
+                      staffingTargetForWeekday(settingsDraft.staffingTargets, weekday),
+                    );
                     return (
                       <div key={weekday} className={`rounded-md border px-3 py-2 text-xs ${coverage.className}`}>
                         <div className="flex items-center justify-between gap-2">
                           <p className="font-semibold">{weekdayLabel(weekday).slice(0, 3)}</p>
                           <p className="font-semibold">{coverage.label}</p>
                         </div>
-                        <p className="mt-1">
-                          {coverage.staffCount} staff working
-                        </p>
+                        <p className="mt-1">{coverage.staffCount} staff working / target {coverage.targetCount}</p>
+                        <label className="mt-2 block text-[11px] font-semibold">
+                          Target staff
+                          <input
+                            className="mt-1 w-20 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-900"
+                            type="number"
+                            min={0}
+                            max={99}
+                            value={settingsDraft.staffingTargets[weekday]}
+                            onChange={(event) =>
+                              setSettingsDraft((current) => ({
+                                ...current,
+                                staffingTargets: {
+                                  ...current.staffingTargets,
+                                  [weekday]: event.target.value,
+                                },
+                              }))
+                            }
+                          />
+                        </label>
                       </div>
                     );
                   })}
                 </div>
+                <button type="button" className={`mt-3 ${outlineButtonClass} ${smallButtonClass}`} onClick={() => void saveStaffingTargets()}>
+                  Save staffing targets
+                </button>
                 <p className="mt-3 text-xs text-slate-500">
-                  Red = open day with no staff, amber = one staff member, green = two or more staff, grey = business closed.
+                  Red = needs cover, amber = under target, green = covered, blue = over target, grey = business closed. V1 uses day-level targets; period targets are future work.
                 </p>
+                </>
+                ) : null}
               </div>
 
               <div>

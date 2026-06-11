@@ -54,6 +54,7 @@ export const upsertCustomerSiteSettingsSchema = z.object({
   address: z.string().trim().min(1).max(320).nullable().optional(),
   openingHoursSummary: z.string().trim().min(1).max(500).nullable().optional(),
   openingHoursJson: z.unknown().nullable().optional(),
+  staffingTargetsJson: z.unknown().nullable().optional(),
   heroHeadline: z.string().trim().min(1).max(200).nullable().optional(),
   heroSubheading: z.string().trim().min(1).max(400).nullable().optional(),
   homepageHeroImageUrl: z.string().trim().url().max(1200).nullable().optional(),

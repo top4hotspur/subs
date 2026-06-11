@@ -9,7 +9,6 @@ const FAVICON_ALLOWED_TYPES = new Set([
   "image/png",
   "image/x-icon",
   "image/vnd.microsoft.icon",
-  "image/svg+xml",
 ]);
 
 const LOGO_MAX_BYTES = 1024 * 1024;
