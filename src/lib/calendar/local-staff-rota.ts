@@ -27,7 +27,7 @@ const TUESDAY_TO_SATURDAY: Weekday[] = ["tuesday", "wednesday", "thursday", "fri
 const MONDAY_TO_FRIDAY: Weekday[] = ["monday", "tuesday", "wednesday", "thursday", "friday"];
 
 function usesTuesdayToSaturday(industrySlug: WebsiteTemplateSlug): boolean {
-  return ["barbers", "hairdressers", "beauticians", "nail-salon", "massage", "dog-grooming"].includes(industrySlug);
+  return ["barbers", "hairdressers", "beauticians", "makeup", "nail-salon", "massage", "dog-grooming"].includes(industrySlug);
 }
 
 export function listLocalStaffRota(industrySlug: WebsiteTemplateSlug): StaffRotaDay[] {

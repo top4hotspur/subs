@@ -55,6 +55,7 @@ const TUESDAY_TO_SATURDAY_INDUSTRIES = new Set([
   "barbers",
   "hairdressers",
   "beauticians",
+  "makeup",
   "nail-salon",
   "massage",
   "dog-grooming",

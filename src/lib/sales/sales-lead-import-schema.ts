@@ -17,6 +17,7 @@ export const salesLeadImportEmailStatusSchema = z.enum([
   "Website found",
   "Email found",
   "Needs manual research",
+  "No Email Available",
   "Do not contact",
 ]);
 

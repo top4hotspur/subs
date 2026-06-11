@@ -37,6 +37,8 @@ function buildSeed(slug: WebsiteTemplateSlug): StaffRoleDefinition[] {
       ? ["Barber", "Senior Barber", "Apprentice Barber"]
       : slug === "hairdressers"
         ? ["Stylist", "Senior Stylist", "Colourist"]
+        : slug === "makeup"
+          ? ["Makeup Artist", "Senior Makeup Artist"]
         : slug === "nail-salon"
           ? ["Nail Technician", "Senior Nail Technician"]
           : slug === "taxi"

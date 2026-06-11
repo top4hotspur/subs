@@ -4,6 +4,7 @@
   "barbers",
   "hairdressers",
   "beauticians",
+  "makeup",
   "nail-salon",
   "massage",
   "window-cleaning",

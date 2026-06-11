@@ -198,6 +198,12 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 2. Do we want global `/account` accessible publicly at all before customer auth exists?
 3. For setup confirmation lookup, is signed token preferred over authenticated retrieval for v1?
 4. What is the intended pre-payment process: manual invoice, payment link, or deferred billing?
+
+## 12. 2026-06-11 Sales Import And Makeup Update
+- Sales import now keeps active preview rows compact, hides skipped/approved rows from the active table, and preserves skipped rows in a collapsed recovery table.
+- Manual email research remains human-reviewed only: Google links open public search in a new tab, with no Google scraping, no hidden/private email scraping, and no campaign sending from import.
+- Missing-email and `NO_EMAIL_AVAILABLE` imported leads are excluded from Campaign Builder until an admin adds a valid email, keeps marketing status active, and marks the lead ready for campaigns.
+- `makeup` is now covered by the generated industry/demo/setup route family and sits in Hair, Beauty & Wellness.
 5. Should platform-level “Contact us” be email-only first, or include a minimal persisted lead form?
 ## P0 conversion cleanup applied (2026-05-26)
 - `/demo/[industry]/customise` is retained only as a transition page and no longer presents the full editing workflow.

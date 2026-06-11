@@ -301,7 +301,12 @@ export async function approveSalesLeadImportRows(batchId: string, input: Approve
         ? Number(row.estimatedCurrentMonthlyCost)
         : undefined,
       marketingStatus: row.emailEnrichmentStatus === "Do not contact" ? "DO_NOT_CONTACT" : "ACTIVE",
-      pipelineVisibility: row.emailEnrichmentStatus === "Do not contact" ? "DO_NOT_CONTACT" : "RESEARCH",
+      pipelineVisibility:
+        row.emailEnrichmentStatus === "Do not contact"
+          ? "DO_NOT_CONTACT"
+          : row.emailEnrichmentStatus === "No Email Available"
+            ? "NO_EMAIL_AVAILABLE"
+            : "RESEARCH",
       doNotContactReason: row.emailEnrichmentStatus === "Do not contact" ? "Import row marked do not contact." : undefined,
       status: row.extractedEmail ? "NEW" : "FOLLOW_UP",
       source: "url-import",
@@ -314,7 +319,12 @@ export async function approveSalesLeadImportRows(batchId: string, input: Approve
         status: "APPROVED",
         approvedLeadId: lead.id,
         approvedAt: new Date(),
-        emailEnrichmentStatus: row.extractedEmail ? "Email found" : "Needs manual research",
+        emailEnrichmentStatus:
+          row.extractedEmail
+            ? "Email found"
+            : row.emailEnrichmentStatus === "No Email Available"
+              ? "No Email Available"
+              : "Needs manual research",
       },
     });
     approvedLeadIds.push(lead.id);

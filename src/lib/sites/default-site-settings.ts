@@ -149,6 +149,14 @@ const DEMO_SERVICE_DEFAULTS: Record<string, Record<string, DemoServiceDefault>> 
     "lash-lift": { basePriceGbp: 38, durationMinutes: 50, description: "Lash lift treatment." },
     waxing: { basePriceGbp: 25, durationMinutes: 30, description: "Waxing appointment." },
   },
+  makeup: {
+    "bridal-makeup": { basePriceGbp: 120, durationMinutes: 90, description: "Bridal makeup appointment.", category: "Bridal" },
+    "occasion-makeup": { basePriceGbp: 55, durationMinutes: 60, description: "Makeup for events and special occasions.", category: "Occasion" },
+    "prom-makeup": { basePriceGbp: 50, durationMinutes: 60, description: "Prom makeup appointment.", category: "Occasion" },
+    "makeup-trial": { basePriceGbp: 45, durationMinutes: 60, description: "Trial makeup session.", category: "Trials" },
+    "photoshoot-makeup": { basePriceGbp: 75, durationMinutes: 75, description: "Makeup for photoshoots.", category: "Packages" },
+    "group-booking": { requiresQuote: true, durationMinutes: 120, description: "Group makeup booking.", category: "Groups" },
+  },
   "nail-salon": {
     manicure: { basePriceGbp: 25, durationMinutes: 45, description: "Luxury manicure." },
     biab: { basePriceGbp: 35, durationMinutes: 60, description: "BIAB overlay appointment." },
@@ -230,6 +238,9 @@ export function getDefaultServiceCategories(templateSlug: string): string[] {
   }
   if (templateSlug === "hairdressers") {
     return ["Cuts", "Colour", "Styling", "Treatments", "Packages"];
+  }
+  if (templateSlug === "makeup") {
+    return ["Bridal", "Occasion", "Trials", "Groups", "Packages"];
   }
 
   const defaults = Object.values(DEMO_SERVICE_DEFAULTS[templateSlug] ?? {})

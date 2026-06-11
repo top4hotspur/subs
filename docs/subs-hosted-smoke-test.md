@@ -145,6 +145,10 @@ Add these checks after backend envs are configured:
 
 ## Hosted smoke additions: new industries
 - Verify these routes load:
+  - `/makeup`
+  - `/demo/makeup`
+  - `/demo/makeup/admin`
+  - `/setup/makeup`
   - `/tutors`
   - `/demo/tutors`
   - `/demo/tutors/customise`
@@ -649,9 +653,9 @@ olePrice:<role> columns accepted
 7. Confirm Booksy emails are not scraped; missing email remains editable/manual and `Find email` opens Google research.
 8. Edit business/contact/location fields, save the row, and confirm duplicate warning appears when postcode+industry, business/postcode, email, phone, or source URL matches an existing SalesLead.
 9. Use `Mark for email research` on a row without email and confirm status/email enrichment move to manual research.
-10. Save a non-duplicate row to the lead dataset and confirm a SalesLead is created with sourceUrl/profileUrl, leadSource, currentProvider, cost, address/postcode/city, phone/email when present, and notes.
+10. Save a non-duplicate row with `Save to dataset` and confirm a SalesLead is created with sourceUrl/profileUrl, leadSource, currentProvider, cost, address/postcode/city, phone/email when present, and notes.
 11. Confirm the saved imported lead appears in `Imported lead dataset` with pipeline visibility `RESEARCH` and does not appear in Campaign Builder yet.
-12. Approve a row missing email and confirm it is allowed but marked as needing email research in notes/status.
+12. Mark a row `No Email Available`, save it to the dataset, and confirm the lead is filtered under `No email available` and excluded from Campaign Builder.
 13. In `Imported lead dataset`, edit email/contact/phone/postcode/provider/cost inline and save.
 14. Click `Show in campaigns` and confirm the lead appears in Campaign Builder only after visibility becomes `READY_FOR_CAMPAIGN`.
 15. Confirm `Hide from campaigns` and `Do not contact` remove/suppress it from Campaign Builder.
@@ -802,6 +806,14 @@ Notes:
 6. Confirm invalid email text is rejected with a visible validation message.
 7. Confirm the row becomes eligible for email campaign selection when marketing status is active.
 8. Confirm this workflow does not scrape Google, does not scrape hidden/private emails, and does not send campaign emails.
+
+## 2026-06-11 hosted smoke checks: sales import tidy
+1. Create an `/admin/sales` URL import preview and confirm the active table does not show the old `Source/provider` column.
+2. Skip a row and confirm it disappears from the active preview without being deleted.
+3. Expand `Skipped / all imported rows`, change the skipped row back to `PENDING_REVIEW`, save changes, and confirm it returns to the active preview.
+4. Confirm source/profile links render as compact text such as `Booksy profile` or `Open listing`, never full URLs.
+5. Confirm imported dataset filters include `All`, `Research`, `Ready for campaign`, `Hidden`, `Do not contact`, and `No email available`.
+6. Confirm Campaign Builder only shows active, email-present leads marked `READY_FOR_CAMPAIGN`.
 
 ## 2026-06-11 hosted smoke checks: sales page structure
 1. Open `/admin/sales`.

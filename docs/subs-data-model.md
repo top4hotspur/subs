@@ -7,7 +7,7 @@
 - v1 does not default to per-customer code exports or per-customer databases.
 
 ## Core Domains
-- Industry catalogue: 14 launch industries (including tutors and bus-hire)
+- Industry catalogue: 15 launch industries (including tutors, bus-hire and makeup)
 - Templates/themes: subscriber visual system for customer-facing sites
 - Setup/provisioning: setup requests, tenant sites, domain records, subscription placeholders, provisioning tasks
 - Site settings: per-tenant persisted settings
@@ -283,7 +283,7 @@ Notes:
 
 ## Sales pipeline data expansion (2026-05-30)
 - SalesLead fields added: postcode, address, serviceArea, leadSource, sourceUrl, currentProvider, estimatedCurrentMonthlyCost, marketingStatus, unsubscribedAt, doNotContactReason.
-- SalesLead campaign visibility added: pipelineVisibility defaults to READY_FOR_CAMPAIGN for existing/manual leads and supports RESEARCH, READY_FOR_CAMPAIGN, HIDDEN and DO_NOT_CONTACT.
+- SalesLead campaign visibility added: pipelineVisibility defaults to READY_FOR_CAMPAIGN for existing/manual leads and supports RESEARCH, READY_FOR_CAMPAIGN, HIDDEN, NO_EMAIL_AVAILABLE and DO_NOT_CONTACT.
 - New models: SalesCampaign, SalesCampaignRecipient, SalesCampaignEvent for campaign lifecycle and future click/delivery event storage.
 - Duplicate detection in import workflow is rule-based at app level (postcode+industry primary, plus business/postcode, email, phone checks).
 
@@ -293,4 +293,5 @@ Notes:
 - SalesLeadImportRow stores sourceUrl, visible extracted fields, leadSource/currentProvider, editable estimatedCurrentMonthlyCost, industry/city defaults, duplicateReason, emailEnrichmentStatus, notes, raw metadata, and optional approvedLeadId.
 - Import rows use review statuses: PENDING_REVIEW, APPROVED, SKIPPED, NEEDS_ENRICHMENT and DUPLICATE.
 - Approval creates a SalesLead and links the import row to the approved lead. Imported rows default to RESEARCH visibility; rows missing email can still be saved as FOLLOW_UP with notes requiring email research.
+- Import rows marked `No Email Available` create `SalesLead.pipelineVisibility = NO_EMAIL_AVAILABLE`; those leads are excluded from email campaign eligibility without being treated as full do-not-contact records.
 - The model supports public/manual enrichment only; it is not a private-email scraping or campaign-sending system.

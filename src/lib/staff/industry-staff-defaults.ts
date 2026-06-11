@@ -14,6 +14,7 @@ export function getDefaultStaffRoleForIndustry(slug: WebsiteTemplateSlug): Staff
     case "hairdressers":
       return StaffRoleType.STYLIST;
     case "beauticians":
+    case "makeup":
       return StaffRoleType.BEAUTICIAN;
     case "nail-salon":
       return StaffRoleType.NAIL_TECHNICIAN;
@@ -46,6 +47,7 @@ export function getDefaultStaffAvailabilityModeForIndustry(
     case "hairdressers":
       return StaffAvailabilityMode.FIXED_HOURS;
     case "beauticians":
+    case "makeup":
     case "nail-salon":
     case "massage":
     case "dog-grooming":
@@ -82,6 +84,7 @@ export function getDefaultStaffLabelForIndustry(slug: WebsiteTemplateSlug): stri
     case "hairdressers":
       return "Stylist";
     case "beauticians":
+    case "makeup":
       return "Beautician";
     case "nail-salon":
       return "Nail technician";

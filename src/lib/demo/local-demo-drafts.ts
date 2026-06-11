@@ -67,6 +67,8 @@ function templateDisplayName(slug: WebsiteTemplateSlug): string {
       return "Hairdresser Website";
     case "beauticians":
       return "Beautician Website";
+    case "makeup":
+      return "Makeup Artist Website";
     case "nail-salon":
       return "Nail Salon Website";
     case "massage":

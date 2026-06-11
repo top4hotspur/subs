@@ -261,6 +261,50 @@ export const websiteTemplates: Record<WebsiteTemplate["slug"], WebsiteTemplate> 
       },
     },
   },
+  makeup: {
+    slug: "makeup",
+    name: "Makeup Artist Websites",
+    category: "Hair, Beauty & Wellness",
+    marketingSummary:
+      "Managed makeup artist websites for weddings, events, photoshoots, and special occasion bookings.",
+    featureBullets: [
+      "Occasion-led service menus",
+      "Bridal and group booking flows",
+      "Consultation-ready enquiry sections",
+    ],
+    pricing: {
+      setupFeeLabel: "From GBP 349 one-off setup",
+      monthlyFeeLabel: "From GBP 69/month managed",
+      notes: "Pricing varies by pages, integrations, and support level.",
+    },
+    demoLogin: {
+      email: "demo.makeup@myexperiment.club",
+      password: "demo123",
+    },
+    defaultConfig: {
+      businessName: "Glow Makeup Studio",
+      primaryColor: "#c084fc",
+      accentColor: "#86198f",
+      heroHeadline: "Makeup for Every Occasion",
+      heroSubheading:
+        "Professional makeup services for weddings, events, photoshoots and special moments.",
+      ctaLabel: "Book Makeup",
+      services: [
+        { id: "bridal-makeup", name: "Bridal makeup", description: "Bridal category" },
+        { id: "occasion-makeup", name: "Occasion makeup", description: "Occasion category" },
+        { id: "prom-makeup", name: "Prom makeup", description: "Occasion category" },
+        { id: "makeup-trial", name: "Makeup trial", description: "Trials category" },
+        { id: "photoshoot-makeup", name: "Photoshoot makeup", description: "Packages category" },
+        { id: "group-booking", name: "Group booking", description: "Groups category" },
+      ],
+      openingHours: { summary: "Tue-Sat: 10:00-18:00, Sun-Mon: By appointment" },
+      contact: {
+        phone: "020 7946 5200",
+        email: "bookings@glowmakeup.example",
+        address: "14 Rose Court, Central Quarter",
+      },
+    },
+  },
   "nail-salon": {
     slug: "nail-salon",
     name: "Nail Salon Websites",

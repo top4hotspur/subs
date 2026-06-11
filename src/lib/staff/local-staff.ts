@@ -32,7 +32,7 @@ function parse(raw: string | null): StaffMember[] {
 }
 
 function defaultAvailableWeekdays(industrySlug: WebsiteTemplateSlug): Weekday[] {
-  if (["barbers", "hairdressers", "beauticians", "nail-salon", "massage", "dog-grooming"].includes(industrySlug)) {
+  if (["barbers", "hairdressers", "beauticians", "makeup", "nail-salon", "massage", "dog-grooming"].includes(industrySlug)) {
     return ["tuesday", "wednesday", "thursday", "friday", "saturday"];
   }
   return ["monday", "tuesday", "wednesday", "thursday", "friday"];

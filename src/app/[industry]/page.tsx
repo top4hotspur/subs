@@ -16,7 +16,7 @@ export function generateStaticParams() {
 }
 
 function getStakeholderHighlights(industry: string) {
-  if (["barbers", "hairdressers", "beauticians", "nail-salon", "massage"].includes(industry)) {
+  if (["barbers", "hairdressers", "beauticians", "makeup", "nail-salon", "massage"].includes(industry)) {
     return {
       customer: [
         "View services, prices and appointment options online",

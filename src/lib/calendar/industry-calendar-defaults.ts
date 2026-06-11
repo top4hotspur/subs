@@ -16,6 +16,7 @@ export function getDefaultAvailabilityWindowTypeForIndustry(
     case "barbers":
     case "hairdressers":
     case "beauticians":
+    case "makeup":
     case "nail-salon":
     case "massage":
     case "dog-grooming":
@@ -72,6 +73,7 @@ export function shouldUseFixedSlotsByDefault(slug: WebsiteTemplateSlug): boolean
     "barbers",
     "hairdressers",
     "beauticians",
+    "makeup",
     "nail-salon",
     "massage",
     "dog-grooming",

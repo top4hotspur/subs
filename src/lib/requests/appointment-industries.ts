@@ -5,6 +5,7 @@ const APPOINTMENT_STYLE_INDUSTRIES: WebsiteTemplateSlug[] = [
   "hairdressers",
   "nail-salon",
   "beauticians",
+  "makeup",
   "massage",
   "dog-grooming",
   "tutors",
@@ -17,6 +18,7 @@ export function isAppointmentStyleIndustry(slug: WebsiteTemplateSlug): boolean {
 export function getAppointmentServiceLabel(slug: WebsiteTemplateSlug): string {
   switch (slug) {
     case "beauticians":
+    case "makeup":
       return "Select treatment";
     case "massage":
       return "Select massage session";
@@ -32,6 +34,7 @@ export function getAppointmentServiceLabel(slug: WebsiteTemplateSlug): string {
 export function getAppointmentStaffLabel(slug: WebsiteTemplateSlug): string {
   switch (slug) {
     case "beauticians":
+    case "makeup":
       return "Preferred beautician (optional)";
     case "massage":
       return "Preferred therapist (optional)";
@@ -47,6 +50,7 @@ export function getAppointmentStaffLabel(slug: WebsiteTemplateSlug): string {
 export function getAppointmentActionHeading(slug: WebsiteTemplateSlug): string {
   switch (slug) {
     case "beauticians":
+    case "makeup":
       return "Book treatment";
     case "massage":
       return "Book massage session";

@@ -30,6 +30,7 @@ const APPOINTMENT_INDUSTRIES: WebsiteTemplateSlug[] = [
   "hairdressers",
   "nail-salon",
   "beauticians",
+  "makeup",
   "massage",
   "dog-grooming",
 ];

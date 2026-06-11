@@ -27,6 +27,7 @@ const pipelineVisibilityStatuses = [
   "RESEARCH",
   "READY_FOR_CAMPAIGN",
   "HIDDEN",
+  "NO_EMAIL_AVAILABLE",
   "DO_NOT_CONTACT",
 ] as const;
 const campaignStepStatuses = ["EMAIL_INTRODUCTION", "EMAIL_REMINDER", "SNAIL_MAIL_LETTER"] as const;

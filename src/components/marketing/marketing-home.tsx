@@ -15,7 +15,7 @@ const industryGroups: Array<{
 }> = [
   {
     title: "Hair, Beauty & Wellness",
-    slugs: ["barbers", "hairdressers", "beauticians", "nail-salon", "massage"],
+    slugs: ["barbers", "hairdressers", "beauticians", "makeup", "nail-salon", "massage"],
     description: "Appointment-led businesses with service pricing and slot booking.",
   },
   {

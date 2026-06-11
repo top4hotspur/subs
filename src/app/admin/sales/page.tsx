@@ -52,9 +52,24 @@ const TEMPLATE_KEYS: Array<{ key: TemplateKey; label: string; channel: "EMAIL" |
 
 const MARKETING_STATUSES = ["ACTIVE", "DO_NOT_CONTACT", "UNSUBSCRIBED", "BOUNCED", "CONVERTED"];
 const IMPORT_SOURCE_TYPES = ["Booksy", "Google Maps", "Facebook", "Manual", "Other"];
-const IMPORT_EMAIL_STATUSES = ["Missing email", "Website found", "Email found", "Needs manual research", "Do not contact"];
+const IMPORT_EMAIL_STATUSES = [
+  "Missing email",
+  "Website found",
+  "Email found",
+  "Needs manual research",
+  "No Email Available",
+  "Do not contact",
+];
 const IMPORT_ROW_STATUSES = ["PENDING_REVIEW", "NEEDS_ENRICHMENT", "DUPLICATE", "SKIPPED"];
-const PIPELINE_VISIBILITIES = ["RESEARCH", "READY_FOR_CAMPAIGN", "HIDDEN", "DO_NOT_CONTACT"];
+const PIPELINE_VISIBILITIES = ["RESEARCH", "READY_FOR_CAMPAIGN", "HIDDEN", "NO_EMAIL_AVAILABLE", "DO_NOT_CONTACT"];
+const DATASET_FILTERS = [
+  "All",
+  "Research",
+  "Ready for campaign",
+  "Hidden",
+  "Do not contact",
+  "No email available",
+] as const;
 
 const LEADS_CSV_TEMPLATE_HEADERS = [
   "businessName",
@@ -241,6 +256,7 @@ function buildImportEmailResearchUrl(row: SalesLeadImportRowDto): string {
 }
 
 function emailResearchStatus(lead: SalesLeadDto): string {
+  if (lead.pipelineVisibility === "NO_EMAIL_AVAILABLE") return "No email available";
   if (lead.marketingStatus === "DO_NOT_CONTACT" || lead.marketingStatus === "UNSUBSCRIBED") return "Do not contact";
   return lead.email ? "Email added manually" : "Email missing";
 }
@@ -256,6 +272,7 @@ function buildDataQualityFlags(lead: SalesLeadDto): string[] {
   if (!buildContactDisplay(lead) || buildContactDisplay(lead) === "-") flags.push("Missing contact name");
   if (!lead.phone?.trim()) flags.push("Missing phone");
   if (!lead.postcode?.trim()) flags.push("Missing postcode");
+  if (lead.pipelineVisibility === "NO_EMAIL_AVAILABLE") flags.push("No email available");
   if (lead.marketingStatus === "DO_NOT_CONTACT" || lead.pipelineVisibility === "DO_NOT_CONTACT") flags.push("Do not contact");
   if (lead.events?.some((event) => event.message?.toLowerCase().includes("duplicate"))) flags.push("Possible duplicate");
   return flags;
@@ -292,8 +309,10 @@ export default function AdminSalesPage() {
   const [selectedImportRowIds, setSelectedImportRowIds] = useState<string[]>([]);
   const [leadEmailEdits, setLeadEmailEdits] = useState<Record<string, string>>({});
   const [leadDatasetEdits, setLeadDatasetEdits] = useState<Record<string, Partial<SalesLeadDto>>>({});
+  const [datasetFilter, setDatasetFilter] = useState<(typeof DATASET_FILTERS)[number]>("All");
   const [openSections, setOpenSections] = useState({
     leadImport: true,
+    allImportRows: false,
     dataset: true,
     templates: false,
     campaigns: true,
@@ -347,10 +366,31 @@ export default function AdminSalesPage() {
     [templates, selectedTemplateKey],
   );
   const activeImportBatch = importBatches[0] ?? null;
+  const activePreviewRows = useMemo(
+    () => activeImportBatch?.rows.filter((row) => row.status !== "SKIPPED" && row.status !== "APPROVED") ?? [],
+    [activeImportBatch],
+  );
+  const archivedPreviewRows = useMemo(
+    () => activeImportBatch?.rows.filter((row) => row.status === "SKIPPED" || row.status === "APPROVED") ?? [],
+    [activeImportBatch],
+  );
   const importedDatasetLeads = useMemo(
     () => leads.filter((lead) => lead.source === "url-import" || lead.leadSource || lead.pipelineVisibility !== "READY_FOR_CAMPAIGN"),
     [leads],
   );
+  const filteredImportedDatasetLeads = useMemo(() => {
+    if (datasetFilter === "All") return importedDatasetLeads;
+    const visibilityByFilter: Record<(typeof DATASET_FILTERS)[number], string | null> = {
+      All: null,
+      Research: "RESEARCH",
+      "Ready for campaign": "READY_FOR_CAMPAIGN",
+      Hidden: "HIDDEN",
+      "Do not contact": "DO_NOT_CONTACT",
+      "No email available": "NO_EMAIL_AVAILABLE",
+    };
+    const visibility = visibilityByFilter[datasetFilter];
+    return visibility ? importedDatasetLeads.filter((lead) => lead.pipelineVisibility === visibility) : importedDatasetLeads;
+  }, [datasetFilter, importedDatasetLeads]);
   const preview = useMemo(
     () => (selectedTemplate ? renderTemplate(selectedTemplate, selectedLead, campaignIndustry) : null),
     [selectedTemplate, selectedLead, campaignIndustry],
@@ -360,6 +400,8 @@ export default function AdminSalesPage() {
     return leads
       .filter((lead) => lead.pipelineVisibility === "READY_FOR_CAMPAIGN")
       .filter((lead) => !campaignIndustry || lead.industrySlug === campaignIndustry)
+      .filter((lead) => (lead.marketingStatus ?? "ACTIVE") === "ACTIVE")
+      .filter((lead) => Boolean(lead.email?.trim()))
       .map((lead) => {
         const reasons: string[] = [];
         if (["UNSUBSCRIBED", "DO_NOT_CONTACT", "BOUNCED", "CONVERTED"].includes(lead.marketingStatus ?? "ACTIVE")) {
@@ -883,13 +925,18 @@ export default function AdminSalesPage() {
   }
 
   async function saveImportRow(row: SalesLeadImportRowDto) {
+    const email = row.extractedEmail ? normalizeEmailInput(row.extractedEmail) : "";
+    if (email && !isValidEmail(email)) {
+      setError("Enter a valid email address.");
+      return null;
+    }
     const result = await updateBackendSalesLeadImportRow(row.id, {
       extractedBusinessName: row.extractedBusinessName || null,
       extractedAddress: row.extractedAddress || null,
       extractedPostcode: row.extractedPostcode || null,
       extractedPhone: row.extractedPhone || null,
       extractedWebsite: row.extractedWebsite || null,
-      extractedEmail: row.extractedEmail || null,
+      extractedEmail: email || null,
       leadSource: row.leadSource || null,
       currentProvider: row.currentProvider || null,
       estimatedCurrentMonthlyCost: row.estimatedCurrentMonthlyCost ? Number(row.estimatedCurrentMonthlyCost) : null,
@@ -901,10 +948,40 @@ export default function AdminSalesPage() {
     });
     if (!result.ok) {
       setError(result.error);
-      return;
+      return null;
     }
     replaceImportRow(result.row);
     setMessage("Import row saved.");
+    return result.row;
+  }
+
+  async function saveImportRowToDataset(row: SalesLeadImportRowDto) {
+    if (!activeImportBatch) return;
+    setError(null);
+    setMessage(null);
+    const savedRow = await saveImportRow(row);
+    if (!savedRow) {
+      setMessage("Could not save row.");
+      return;
+    }
+    const result = await approveBackendSalesLeadImportRows(activeImportBatch.id, [savedRow.id], importForm.approveDuplicates);
+    if (!result.ok) {
+      setError(result.error);
+      setMessage("Could not save row.");
+      return;
+    }
+    if (result.result.batch) {
+      setImportBatches((current) =>
+        current.map((batch) => (batch.id === result.result.batch?.id ? result.result.batch : batch)),
+      );
+    }
+    setSelectedImportRowIds((current) => current.filter((id) => id !== savedRow.id));
+    if (result.result.approvedLeadIds.length > 0) {
+      setMessage("Saved to dataset.");
+      await loadAll();
+    } else {
+      setMessage(`Could not save row. ${result.result.skipped[0]?.reason ?? "Row was skipped."}`);
+    }
   }
 
   async function skipImportRow(row: SalesLeadImportRowDto) {
@@ -1066,14 +1143,14 @@ export default function AdminSalesPage() {
                   />
                   Save duplicates anyway
                 </label>
-                <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setSelectedImportRowIds(activeImportBatch.rows.filter((row) => row.status !== "APPROVED" && row.status !== "SKIPPED").map((row) => row.id))}>
+                <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setSelectedImportRowIds(activePreviewRows.map((row) => row.id))}>
                   Select reviewable
                 </button>
                 <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setSelectedImportRowIds([])}>
                   Clear
                 </button>
                 <button className={`${primaryButtonClass} ${smallButtonClass}`} onClick={() => void approveImportRows()} disabled={selectedImportRowIds.length === 0}>
-                  Save selected to lead dataset
+                  Save selected to dataset
                 </button>
               </div>
             </div>
@@ -1086,14 +1163,19 @@ export default function AdminSalesPage() {
                     <th className="px-2 py-2">Source/profile link</th>
                     <th className="px-2 py-2">Contact</th>
                     <th className="px-2 py-2">Location</th>
-                    <th className="px-2 py-2">Source/provider</th>
                     <th className="px-2 py-2">Email research</th>
                     <th className="px-2 py-2">Status</th>
-                    <th className="px-2 py-2">Actions</th>
+                    <th className="sticky right-0 bg-white px-2 py-2">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {activeImportBatch.rows.map((row) => (
+                  {activePreviewRows.length === 0 ? (
+                    <tr>
+                      <td className="px-2 py-4 text-slate-600" colSpan={8}>
+                        No active preview rows. Open skipped / all imported rows to restore a skipped row.
+                      </td>
+                    </tr>
+                  ) : activePreviewRows.map((row) => (
                     <tr key={row.id} className="border-b border-slate-100 align-top">
                       <td className="px-2 py-2">
                         <input
@@ -1180,26 +1262,6 @@ export default function AdminSalesPage() {
                         </select>
                       </td>
                       <td className="min-w-44 px-2 py-2">
-                        <input
-                          className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
-                          placeholder="Lead source"
-                          value={row.leadSource ?? ""}
-                          onChange={(event) => replaceImportRow({ ...row, leadSource: event.target.value })}
-                        />
-                        <input
-                          className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-xs"
-                          placeholder="Current provider"
-                          value={row.currentProvider ?? ""}
-                          onChange={(event) => replaceImportRow({ ...row, currentProvider: event.target.value })}
-                        />
-                        <input
-                          className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-xs"
-                          placeholder="Est monthly cost"
-                          value={row.estimatedCurrentMonthlyCost ?? ""}
-                          onChange={(event) => replaceImportRow({ ...row, estimatedCurrentMonthlyCost: event.target.value })}
-                        />
-                      </td>
-                      <td className="min-w-44 px-2 py-2">
                         <select
                           className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
                           value={row.emailEnrichmentStatus}
@@ -1227,10 +1289,10 @@ export default function AdminSalesPage() {
                           </select>
                         )}
                       </td>
-                      <td className="min-w-32 px-2 py-2">
+                      <td className="sticky right-0 min-w-36 bg-white px-2 py-2 shadow-[-6px_0_8px_-8px_rgba(15,23,42,0.35)]">
                         <div className="flex flex-col gap-1">
-                          <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void saveImportRow(row)} disabled={row.status === "APPROVED"}>
-                            Save
+                          <button className={`${primaryButtonClass} ${smallButtonClass}`} onClick={() => void saveImportRowToDataset(row)} disabled={row.status === "APPROVED"}>
+                            Save to dataset
                           </button>
                           <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void markImportRowForEmailResearch(row)} disabled={row.status === "APPROVED"}>
                             Mark for email research
@@ -1245,6 +1307,88 @@ export default function AdminSalesPage() {
                 </tbody>
               </table>
             </div>
+            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <button
+                type="button"
+                className="flex w-full items-center justify-between text-left"
+                onClick={() => toggleSection("allImportRows")}
+              >
+                <span className="text-sm font-semibold text-slate-900">
+                  Skipped / all imported rows ({archivedPreviewRows.length})
+                </span>
+                <span className="text-xs text-slate-600">{openSections.allImportRows ? "Hide" : "Show"}</span>
+              </button>
+              {openSections.allImportRows ? (
+                <div className="mt-3 overflow-auto">
+                  <table className="min-w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-left">
+                        <th className="px-2 py-2">Business</th>
+                        <th className="px-2 py-2">Source/profile link</th>
+                        <th className="px-2 py-2">Email status</th>
+                        <th className="px-2 py-2">Row status</th>
+                        <th className="px-2 py-2">Notes</th>
+                        <th className="px-2 py-2">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {archivedPreviewRows.length === 0 ? (
+                        <tr>
+                          <td className="px-2 py-4 text-slate-600" colSpan={6}>
+                            No skipped or approved rows in the latest preview.
+                          </td>
+                        </tr>
+                      ) : archivedPreviewRows.map((row) => (
+                        <tr key={row.id} className="border-b border-slate-200 align-top">
+                          <td className="min-w-52 px-2 py-2">
+                            <input
+                              className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                              value={row.extractedBusinessName ?? ""}
+                              onChange={(event) => replaceImportRow({ ...row, extractedBusinessName: event.target.value })}
+                            />
+                          </td>
+                          <td className="px-2 py-2">
+                            <a className="underline" href={row.sourceUrl} target="_blank" rel="noreferrer">
+                              {row.leadSource === "Booksy" ? "Booksy profile" : "Open listing"}
+                            </a>
+                          </td>
+                          <td className="min-w-44 px-2 py-2">
+                            <select
+                              className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                              value={row.emailEnrichmentStatus}
+                              onChange={(event) => replaceImportRow({ ...row, emailEnrichmentStatus: event.target.value })}
+                            >
+                              {IMPORT_EMAIL_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
+                            </select>
+                          </td>
+                          <td className="min-w-40 px-2 py-2">
+                            <select
+                              className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                              value={row.status}
+                              onChange={(event) => replaceImportRow({ ...row, status: event.target.value })}
+                            >
+                              {["PENDING_REVIEW", "NEEDS_ENRICHMENT", "APPROVED", "SKIPPED"].map((status) => <option key={status} value={status}>{status}</option>)}
+                            </select>
+                          </td>
+                          <td className="min-w-60 px-2 py-2">
+                            <textarea
+                              className="min-h-14 w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                              value={row.notes ?? ""}
+                              onChange={(event) => replaceImportRow({ ...row, notes: event.target.value })}
+                            />
+                          </td>
+                          <td className="min-w-32 px-2 py-2">
+                            <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void saveImportRow(row)}>
+                              Save changes
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : null}
+            </div>
           </div>
         ) : null}
       </section>
@@ -1254,6 +1398,17 @@ export default function AdminSalesPage() {
         <p className="mt-1 text-sm text-slate-600">
           Review imported leads, fill missing contact details, and choose which records are ready for campaign use.
         </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {DATASET_FILTERS.map((filter) => (
+            <button
+              key={filter}
+              className={`${datasetFilter === filter ? primaryButtonClass : outlineButtonClass} ${smallButtonClass}`}
+              onClick={() => setDatasetFilter(filter)}
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
         <div className="mt-3 overflow-auto">
           <table className="min-w-full text-xs">
             <thead>
@@ -1274,14 +1429,14 @@ export default function AdminSalesPage() {
               </tr>
             </thead>
             <tbody>
-              {importedDatasetLeads.length === 0 ? (
+              {filteredImportedDatasetLeads.length === 0 ? (
                 <tr>
                   <td className="px-2 py-4 text-slate-600" colSpan={13}>
-                    No imported leads yet. Save import preview rows to build the research dataset.
+                    No imported leads match this filter. Save import preview rows to build the research dataset.
                   </td>
                 </tr>
               ) : (
-                importedDatasetLeads.map((lead) => {
+                filteredImportedDatasetLeads.map((lead) => {
                   const draft = getDatasetDraft(lead);
                   const flags = buildDataQualityFlags(draft);
                   return (
@@ -1336,6 +1491,7 @@ export default function AdminSalesPage() {
                           <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void saveDatasetLead(lead)}>Save</button>
                           <button className={`${primaryButtonClass} ${smallButtonClass}`} onClick={() => void setLeadPipelineVisibility(lead, "READY_FOR_CAMPAIGN")}>Show in campaigns</button>
                           <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void setLeadPipelineVisibility(lead, "HIDDEN")}>Hide from campaigns</button>
+                          <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void setLeadPipelineVisibility(lead, "NO_EMAIL_AVAILABLE")}>No email available</button>
                           <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void setLeadPipelineVisibility(lead, "DO_NOT_CONTACT")}>Do not contact</button>
                         </div>
                       </td>
@@ -1469,7 +1625,7 @@ export default function AdminSalesPage() {
         </button>
         {openSections.campaigns ? (
         <>
-        <p className="mt-2 text-xs text-slate-600">Only leads marked as visible to campaigns appear here.</p>
+        <p className="mt-2 text-xs text-slate-600">Only leads marked as ready for campaigns appear here.</p>
         <div className="mt-2 grid gap-2 sm:grid-cols-3">
           <select className="rounded border border-slate-300 px-2 py-2 text-sm" value={campaignIndustry} onChange={(e) => setCampaignIndustry(e.target.value)}>
             {WEBSITE_TEMPLATE_SLUGS.map((slug) => <option key={slug} value={slug}>{formatIndustryLabel(slug)}</option>)}
@@ -1523,7 +1679,7 @@ export default function AdminSalesPage() {
               {candidates.length === 0 ? (
                 <tr>
                   <td className="px-2 py-4 text-slate-600" colSpan={15}>
-                    No campaign-ready leads yet. Review imported leads and mark them as visible to campaigns.
+                    No campaign-ready leads yet. Add an email, keep marketing status active, and mark imported leads as ready for campaigns.
                   </td>
                 </tr>
               ) : candidates.map((row) => (

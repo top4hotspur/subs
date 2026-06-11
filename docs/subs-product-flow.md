@@ -18,6 +18,7 @@
   - `hairdressers`
   - `nail-salon`
   - `beauticians`
+  - `makeup`
   - `massage`
   - `dog-grooming`
 - Preferred time uses morning/afternoon/evening tile selection.
@@ -163,6 +164,13 @@ Still mock for infrastructure:
   - print letter/flyer and envelope per lead
   - bulk print batching (letters first, envelopes second)
 - No real email provider sending is enabled yet.
+
+## 2026-06-11 makeup template and sales import tidy
+- `makeup` is now a Hair, Beauty & Wellness template with `/makeup`, `/demo/makeup`, `/setup/makeup`, and `/demo/makeup/admin` routes generated from `WEBSITE_TEMPLATE_SLUGS`.
+- Demo business is `Glow Makeup Studio` with makeup services for bridal, occasion, prom, trials, photoshoots, and group bookings.
+- `/admin/sales` import preview now hides skipped/approved rows from the active table, keeps them in a collapsed recovery table, and saves individual rows via `Save to dataset`.
+- Imported lead dataset filters now separate research, ready, hidden, do-not-contact, and no-email-available leads.
+- Manual Google email research remains human-reviewed only: no Google scraping, no hidden/private email scraping, and no campaign sending from import.
 
 ## Platform vs site settings distinction
 
