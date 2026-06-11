@@ -348,3 +348,13 @@ Important:
 Business-admin and staff login screens are still platform-hosted for security, but when a tenant slug is known they render inside a tenant-branded shell with the customer site's header/footer. User-facing auth wording uses `Password`; internal access-code field names and hashes remain implementation details.
 
 A live tenant site with no active services now shows a setup-friendly public empty state. It tells visitors that services, prices and booking options will appear after setup, and gives the business owner a safe platform-hosted route back to the business admin area.
+
+## 2026-06-11 Business owner setup guidance and branding V1
+
+Business owners now have a simple first-run public-site guidance toggle: `Show initial setup guidance on public site`. It is on by default for newly provisioned/empty sites and can be turned off once the site has logo, services, staff/opening hours, and core content ready.
+
+Branding V1 remains intentionally controlled. Business admin keeps logo upload/remove controls with guidance for PNG/SVG, transparent backgrounds, landscape logos and lightweight files. A single homepage hero/background image URL can be saved; slideshows, galleries and per-page image management are deferred.
+
+Business-admin and staff login pages hide the Site slug field when the tenant is already known from route/query/callback context. User-facing wording says Password. The underlying one-time password/access-code implementation remains hashed and tenant-scoped.
+
+Platform support access is handled through reset/resend, not plaintext credential display. Customer Sites can generate a one-time business-admin password, attempt email delivery, and show the new value once for support handover.

@@ -20,6 +20,8 @@ export type CustomerSitePreviewData = {
     openingHoursJson: unknown;
     heroHeadline: string | null;
     heroSubheading: string | null;
+    homepageHeroImageUrl: string | null;
+    setupGuidanceEnabled: boolean;
     visualThemeId: string | null;
     colourPaletteId: string | null;
     currency: string | null;
@@ -250,6 +252,8 @@ export async function getCustomerSitePreviewData(
           openingHoursJson: site.customerSiteSettings.openingHoursJson ?? null,
           heroHeadline: site.customerSiteSettings.heroHeadline ?? null,
           heroSubheading: site.customerSiteSettings.heroSubheading ?? null,
+          homepageHeroImageUrl: site.customerSiteSettings.homepageHeroImageUrl ?? null,
+          setupGuidanceEnabled: site.customerSiteSettings.setupGuidanceEnabled,
           visualThemeId: site.customerSiteSettings.visualThemeId ?? null,
           colourPaletteId: site.customerSiteSettings.colourPaletteId ?? null,
           currency: site.customerSiteSettings.currency ?? null,

@@ -129,6 +129,7 @@ export default async function PublicSiteSlugPage({
   const siteName = settings?.siteDisplayName || settings?.businessName || preview.tenantSite.displayName;
   const heroHeadline = settings?.heroHeadline || `Welcome to ${siteName}`;
   const heroSubheading = settings?.heroSubheading || "";
+  const homepageHeroImageUrl = settings?.homepageHeroImageUrl?.trim() || "";
   const activeServices = preview.services.filter((service) => service.active);
   const activeCategories = preview.serviceCategories.filter((category) => category.active);
   const activeCategoryIds = new Set(activeCategories.map((category) => category.id));
@@ -179,6 +180,7 @@ export default async function PublicSiteSlugPage({
     ? `${scheme.heroBackgroundClass} rounded-xl border ${scheme.borderClass} p-8`
     : `${scheme.heroBackgroundClass} rounded-2xl border ${scheme.borderClass} p-8`;
   const cardClass = `${scheme.cardClass} p-5`;
+  const showSetupGuidance = (settings?.setupGuidanceEnabled ?? true) || activeServices.length === 0;
   const bookingHref = "#services";
   const publicBasePath = await getPublicSiteBasePath(preview.tenantSite.slug);
   const contactHref = buildPublicSitePath(publicBasePath, "contact");
@@ -196,7 +198,19 @@ export default async function PublicSiteSlugPage({
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <section className={`overflow-hidden rounded-3xl border ${scheme.borderClass} shadow-sm`}>
           <div className="space-y-6 px-6 py-8 sm:px-8">
-            <div id="home" className={heroClass}>
+            <div
+              id="home"
+              className={`${heroClass} ${homepageHeroImageUrl ? "relative overflow-hidden" : ""}`}
+              style={
+                homepageHeroImageUrl
+                  ? {
+                      backgroundImage: `linear-gradient(90deg, rgba(255,255,255,0.92), rgba(255,255,255,0.72)), url(${homepageHeroImageUrl})`,
+                      backgroundPosition: "center",
+                      backgroundSize: "cover",
+                    }
+                  : undefined
+              }
+            >
               <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <p className="text-sm font-semibold uppercase tracking-wide">{siteName}</p>
                 <nav className="flex flex-wrap items-center gap-2 text-sm" aria-label={`${siteName} navigation`}>
@@ -218,6 +232,70 @@ export default async function PublicSiteSlugPage({
               {heroSubheading ? <p className={`mt-2 text-sm ${scheme.mutedTextClass}`}>{heroSubheading}</p> : null}
             </div>
 
+            {showSetupGuidance ? (
+              <div className="rounded-2xl border border-sky-200 bg-sky-50 p-5 text-slate-900 shadow-sm">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="max-w-2xl">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">Business owner setup</p>
+                    <h2 className="mt-1 text-xl font-bold text-slate-950">Welcome to your new site</h2>
+                    <p className="mt-2 text-sm text-slate-700">Let&apos;s get your site ready.</p>
+                    <p className="mt-1 text-sm text-slate-700">
+                      Are you the business owner/subscriber? If so, please log in through the business admin button below.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Link
+                      href={siteAdminHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-md bg-sky-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-800"
+                    >
+                      Open business admin
+                    </Link>
+                    <Link
+                      href={contactHref}
+                      className="rounded-md border border-sky-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-sky-100"
+                    >
+                      Contact the business
+                    </Link>
+                  </div>
+                </div>
+                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                  <div className="rounded-xl border border-sky-100 bg-white p-4">
+                    <h3 className="text-sm font-semibold text-slate-950">What to do next</h3>
+                    <ol className="mt-2 list-decimal space-y-1 pl-4 text-sm text-slate-700">
+                      <li>Add your logo</li>
+                      <li>Add services and prices</li>
+                      <li>Add staff and opening hours</li>
+                      <li>Turn off setup guidance when ready</li>
+                    </ol>
+                  </div>
+                  {!settings?.logoUrl ? (
+                    <div className="rounded-xl border border-dashed border-sky-200 bg-white p-4">
+                      <h3 className="text-sm font-semibold text-slate-950">Logo guidance</h3>
+                      <p className="mt-2 text-sm text-slate-700">
+                        Your logo will replace the default business text heading. Upload it in Business settings.
+                      </p>
+                      <p className="mt-2 text-xs text-slate-600">
+                        PNG or SVG preferred, transparent background recommended. A landscape logo works best, ideally around 1200px wide and kept lightweight.
+                      </p>
+                    </div>
+                  ) : null}
+                  {!homepageHeroImageUrl ? (
+                    <div className="rounded-xl border border-dashed border-sky-200 bg-white p-4">
+                      <h3 className="text-sm font-semibold text-slate-950">Homepage image</h3>
+                      <p className="mt-2 text-sm text-slate-700">
+                        You can add one homepage background/hero image in Business settings to make this first section feel more like your own brand.
+                      </p>
+                      <p className="mt-2 text-xs text-slate-600">
+                        V1 supports one homepage image only. Page-by-page images, slideshows and galleries are future enhancements.
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+
             <div className="space-y-6">
               <div id="services" className={cardClass}>
                 <div className="flex flex-wrap items-end justify-between gap-3">
@@ -233,34 +311,7 @@ export default async function PublicSiteSlugPage({
                     </p>
                   ) : null}
                 </div>
-                {activeServices.length === 0 ? (
-                  <div className="mt-4 rounded-xl border border-dashed border-teal-200 bg-teal-50 p-5">
-                    <h3 className="text-base font-semibold text-slate-950">This site is almost ready</h3>
-                    <p className="mt-2 text-sm text-slate-700">
-                      Services, prices and durations will appear here once the business owner finishes setup.
-                    </p>
-                    <p className="mt-2 text-sm text-slate-700">
-                      Are you the business owner? Sign in to your business admin area to add services, prices,
-                      staff, opening hours and booking settings.
-                    </p>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <Link
-                        href={siteAdminHref}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
-                      >
-                        Open business admin
-                      </Link>
-                      <Link
-                        href={contactHref}
-                        className="rounded-md border border-teal-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-teal-100"
-                      >
-                        Contact the business
-                      </Link>
-                    </div>
-                  </div>
-                ) : (
+                {activeServices.length === 0 ? null : (
                   <div className="mt-5 space-y-6">
                     {serviceGroups.map((group) => (
                       <section key={group.id}>

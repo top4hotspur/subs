@@ -421,6 +421,8 @@ model CustomerSiteSettings {
   openingHoursJson                 Json?
   heroHeadline                     String?
   heroSubheading                   String?
+  homepageHeroImageUrl             String?
+  setupGuidanceEnabled             Boolean    @default(true)
   visualThemeId                    String?
   colourPaletteId                  String?
   currency                         String?    @default("GBP")

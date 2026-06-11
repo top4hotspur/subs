@@ -33,9 +33,20 @@ export type AdminTenantSiteSummary = {
   }>;
   setupRequest?: {
     id: string;
+    contactEmail?: string | null;
+    contactName?: string | null;
     domainOption?: string | null;
     existingDomain?: string | null;
     desiredDomain?: string | null;
+  } | null;
+  customerSiteSettings?: {
+    logoUrl?: string | null;
+    homepageHeroImageUrl?: string | null;
+    setupGuidanceEnabled?: boolean | null;
+  } | null;
+  _count?: {
+    customerSiteServices?: number;
+    customerSiteStaffMembers?: number;
   } | null;
 };
 
@@ -366,6 +377,75 @@ export async function emailAdminSiteDnsInstructions(
       emailStatus: body.emailStatus ?? "UNKNOWN",
       recommendedNextStatus: body.recommendedNextStatus ?? null,
       domain: body.domain,
+    };
+  } catch {
+    return { ok: false, error: "NETWORK_ERROR", status: 0 };
+  }
+}
+
+export async function resetAndEmailAdminSiteBusinessAccess(
+  siteId: string,
+  email?: string | null,
+): Promise<
+  ClientResult<{
+    access: {
+      setupRequestId: string | null;
+      tenantSiteId: string;
+      siteSlug: string;
+      adminEmail: string | null;
+      siteAdminUserId: string | null;
+      accessCodeExists: boolean;
+      invitationStatus: "INVITED" | "ACTIVE" | "DISABLED" | null;
+      active: boolean | null;
+    };
+    generatedAccessCode: string;
+    emailSent: boolean;
+    emailSkipped: boolean;
+    emailStatus: string;
+  }>
+> {
+  try {
+    const response = await fetch(`/api/admin/sites/${encodeURIComponent(siteId)}/site-admin-access`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const body = (await parseJsonSafe(response)) as
+      | {
+          ok?: boolean;
+          access?: {
+            setupRequestId: string | null;
+            tenantSiteId: string;
+            siteSlug: string;
+            adminEmail: string | null;
+            siteAdminUserId: string | null;
+            accessCodeExists: boolean;
+            invitationStatus: "INVITED" | "ACTIVE" | "DISABLED" | null;
+            active: boolean | null;
+          };
+          generatedAccessCode?: string;
+          emailSent?: boolean;
+          emailSkipped?: boolean;
+          emailStatus?: string;
+          error?: string;
+          details?: unknown;
+        }
+      | null;
+    if (!response.ok || !body?.ok || !body.access || !body.generatedAccessCode) {
+      return {
+        ok: false,
+        error: body?.error ?? "SITE_ADMIN_ACCESS_RESET_FAILED",
+        status: response.status,
+        details: body?.details,
+      };
+    }
+    return {
+      ok: true,
+      access: body.access,
+      generatedAccessCode: body.generatedAccessCode,
+      emailSent: Boolean(body.emailSent),
+      emailSkipped: Boolean(body.emailSkipped),
+      emailStatus: body.emailStatus ?? "UNKNOWN",
     };
   } catch {
     return { ok: false, error: "NETWORK_ERROR", status: 0 };

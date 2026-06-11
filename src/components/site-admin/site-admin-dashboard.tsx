@@ -200,6 +200,8 @@ type SettingsDraft = {
   openingHours: BusinessOpeningHours;
   heroHeadline: string;
   heroSubheading: string;
+  homepageHeroImageUrl: string;
+  setupGuidanceEnabled: boolean;
   appearanceMode: SiteAppearanceMode;
   visualThemeId: string;
   colourPaletteId: string;
@@ -906,6 +908,8 @@ function toSettingsDraft(settings: PersistedCustomerSiteSettings | null): Settin
     openingHours,
     heroHeadline: settings?.heroHeadline ?? "",
     heroSubheading: settings?.heroSubheading ?? "",
+    homepageHeroImageUrl: settings?.homepageHeroImageUrl ?? "",
+    setupGuidanceEnabled: settings?.setupGuidanceEnabled ?? true,
     appearanceMode: resolveAppearanceMode(
       settings?.visualThemeId,
       settings?.colourPaletteId,
@@ -1672,6 +1676,8 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       openingHoursJson: settingsDraft.openingHours,
       heroHeadline: settingsDraft.heroHeadline || null,
       heroSubheading: settingsDraft.heroSubheading || null,
+      homepageHeroImageUrl: settingsDraft.homepageHeroImageUrl.trim() || null,
+      setupGuidanceEnabled: settingsDraft.setupGuidanceEnabled,
       visualThemeId: appearance.visualThemeId,
       colourPaletteId: appearance.colourPaletteId,
       currency: settingsDraft.currency,
@@ -2274,13 +2280,38 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
             <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Hero subheading
               <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.heroSubheading} onChange={(event) => setSettingsDraft((current) => ({ ...current, heroSubheading: event.target.value }))} />
             </label>
+            <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Homepage background / hero image URL
+              <input
+                className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                placeholder="https://..."
+                value={settingsDraft.homepageHeroImageUrl}
+                onChange={(event) => setSettingsDraft((current) => ({ ...current, homepageHeroImageUrl: event.target.value }))}
+              />
+              <span className="mt-1 block text-[11px] font-normal text-slate-600">
+                V1 supports one homepage image only. No rotating gallery or page-by-page images yet.
+              </span>
+            </label>
+            <label className="flex items-start gap-2 rounded-lg border border-sky-100 bg-sky-50 p-3 text-xs font-semibold text-slate-800 sm:col-span-2">
+              <input
+                type="checkbox"
+                className="mt-0.5"
+                checked={settingsDraft.setupGuidanceEnabled}
+                onChange={(event) => setSettingsDraft((current) => ({ ...current, setupGuidanceEnabled: event.target.checked }))}
+              />
+              <span>
+                Show initial setup guidance on public site
+                <span className="mt-1 block font-normal text-slate-600">
+                  Keep this on while you add your logo, services, staff and opening hours. Turn it off when the public site is ready.
+                </span>
+              </span>
+            </label>
           </div>
 
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
               <h4 className="text-sm font-semibold text-slate-900">Business logo</h4>
               <p className="mt-1 text-xs text-slate-600">
-                Recommended PNG or SVG. 512 x 512 px square icon or 1200 x 400 px wide logo. Max 1MB.
+                Recommended PNG or SVG with a transparent background. A landscape logo around 1200px wide works best. Max 1MB.
               </p>
               {persistedSettings?.logoUrl ? (
                 <img

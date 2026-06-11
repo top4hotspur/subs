@@ -39,7 +39,7 @@ export default async function SiteAdminLoginPage({ searchParams }: SiteAdminLogi
       <p className="text-xs font-semibold uppercase tracking-wide text-teal-700">Business admin</p>
       <h1 className="mt-2 text-2xl font-bold text-slate-900">{siteName}</h1>
       <p className="mt-2 text-sm text-slate-600">
-        Sign in to manage this website. Platform admin access is separate.
+        Sign in as the site owner/subscriber to manage this website. Platform admin access is separate.
       </p>
       <p className="mt-1 text-xs text-slate-600">
         Your password is sent by email when your site is prepared. If you cannot find it, check your

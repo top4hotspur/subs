@@ -60,6 +60,8 @@ type PersistedSettingsDraft = {
   openingHoursSummary: string;
   heroHeadline: string;
   heroSubheading: string;
+  homepageHeroImageUrl: string;
+  setupGuidanceEnabled: boolean;
   appearanceMode: SiteAppearanceMode;
   visualThemeId: string;
   colourPaletteId: string;
@@ -192,6 +194,8 @@ function toSettingsDraft(record: PersistedCustomerSiteSettings | null): Persiste
     openingHoursSummary: record?.openingHoursSummary ?? "",
     heroHeadline: record?.heroHeadline ?? "",
     heroSubheading: record?.heroSubheading ?? "",
+    homepageHeroImageUrl: record?.homepageHeroImageUrl ?? "",
+    setupGuidanceEnabled: record?.setupGuidanceEnabled ?? true,
     appearanceMode: resolveAppearanceMode(
       record?.visualThemeId,
       record?.colourPaletteId,
@@ -570,6 +574,8 @@ export default function AdminSiteSettingsPage() {
       openingHoursSummary: settingsDraft.openingHoursSummary || null,
       heroHeadline: settingsDraft.heroHeadline || null,
       heroSubheading: settingsDraft.heroSubheading || null,
+      homepageHeroImageUrl: settingsDraft.homepageHeroImageUrl.trim() || null,
+      setupGuidanceEnabled: settingsDraft.setupGuidanceEnabled,
       visualThemeId: appearance.visualThemeId,
       colourPaletteId: appearance.colourPaletteId,
       currency: settingsDraft.currency,
@@ -870,6 +876,31 @@ export default function AdminSiteSettingsPage() {
               </label>
               <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Hero subheading
                 <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.heroSubheading} onChange={(event) => setSettingsDraft((current) => ({ ...current, heroSubheading: event.target.value }))} />
+              </label>
+              <label className="text-xs font-semibold text-slate-700 sm:col-span-2">Homepage background / hero image URL
+                <input
+                  className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
+                  placeholder="https://..."
+                  value={settingsDraft.homepageHeroImageUrl}
+                  onChange={(event) => setSettingsDraft((current) => ({ ...current, homepageHeroImageUrl: event.target.value }))}
+                />
+                <span className="mt-1 block text-[11px] font-normal text-slate-600">
+                  V1 supports one homepage image only; rotating galleries and page-specific images are deferred.
+                </span>
+              </label>
+              <label className="flex items-start gap-2 rounded-lg border border-sky-100 bg-sky-50 p-3 text-xs font-semibold text-slate-800 sm:col-span-2">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={settingsDraft.setupGuidanceEnabled}
+                  onChange={(event) => setSettingsDraft((current) => ({ ...current, setupGuidanceEnabled: event.target.checked }))}
+                />
+                <span>
+                  Show initial setup guidance on public site
+                  <span className="mt-1 block font-normal text-slate-600">
+                    Leave this on while the business adds logo, services, staff and opening hours; turn it off when ready.
+                  </span>
+                </span>
               </label>
               <label className="text-xs font-semibold text-slate-700">Site appearance
                 <select className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.appearanceMode} onChange={(event) => setSettingsDraft((current) => ({ ...current, appearanceMode: event.target.value as SiteAppearanceMode }))}>

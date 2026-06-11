@@ -1202,3 +1202,15 @@ Tenant-branded shells now apply beyond the public homepage. When the tenant is k
 Public tenant service copy no longer says online booking is a future milestone. If a live tenant has no active services yet, the Services section shows a setup-friendly `This site is almost ready` empty state with guidance for the business owner and a safe platform-hosted `Open business admin` link.
 
 Platform admin is being consolidated around `/admin/sites`, now labelled Customer Sites. Setup Requests remains available as order/history, while Customer Sites starts to surface paid setup requests ready to provision and the fulfilment checklist for provisioned sites.
+
+## 2026-06-11 Tenant onboarding polish
+
+Customer Sites is the main operational workspace after a paid order is provisioned. Public tenant pages now support a first-run guidance panel for empty/new sites, with owner-facing steps to add logo, services/prices, staff/opening hours, and turn setup guidance off when ready.
+
+Business admin and staff login pages infer the tenant site from `/site-admin/[siteSlug]`, `/site-staff/[siteSlug]`, callback URL or query context where possible, so the Site slug field is hidden when the site is already known. User-facing login copy uses Password wording; internal access-code hashing/storage remains implementation detail.
+
+Tenant branding V1 is deliberately simple: existing logo upload remains, setup guidance can be toggled, and one homepage hero/background image URL can be configured. Rotating slideshows, galleries, and page-by-page hero images are deferred.
+
+Platform support must not expose stored plaintext passwords. Customer Sites now supports a platform-admin reset/resend handover flow that generates a one-time password, emails it when configured, and shows it once for support handover while only hashed credentials remain stored.
+
+Customer-host security remains unchanged: `/admin` and `/api/admin/*` on customer domains should remain blocked/not found. Platform operations stay on the platform host.

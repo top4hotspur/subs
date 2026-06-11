@@ -11,6 +11,7 @@ import {
   emailAdminSiteDnsInstructions,
   getAdminTenantSiteDetail,
   listAdminTenantSites,
+  resetAndEmailAdminSiteBusinessAccess,
   saveAdminSiteDomain,
   updateAdminSiteTaskStatus,
 } from "@/lib/sites/admin-sites-client";
@@ -298,6 +299,8 @@ export default function AdminSitesPage() {
   const [domainTestResult, setDomainTestResult] = useState<string | null>(null);
   const [dnsCopyStatus, setDnsCopyStatus] = useState<string | null>(null);
   const [dnsEmailStatus, setDnsEmailStatus] = useState<string | null>(null);
+  const [businessAccessStatus, setBusinessAccessStatus] = useState<string | null>(null);
+  const [businessAccessCode, setBusinessAccessCode] = useState<string | null>(null);
   const [domainSaving, setDomainSaving] = useState(false);
   const [domainDraft, setDomainDraft] = useState({
     domain: "",
@@ -695,6 +698,29 @@ export default function AdminSitesPage() {
     await loadSiteDetail(selectedSiteId);
   }
 
+  async function resetBusinessAdminPassword(): Promise<void> {
+    if (!selectedSite || !detail) return;
+    const email = detail.site.setupRequest?.contactEmail ?? null;
+    if (!window.confirm("Reset and email the business admin password? The new password will be shown once for platform handover and emailed to the business owner.")) {
+      return;
+    }
+    setBusinessAccessStatus("Resetting business admin password...");
+    setBusinessAccessCode(null);
+    const result = await resetAndEmailAdminSiteBusinessAccess(selectedSite.id, email);
+    if (!result.ok) {
+      setBusinessAccessStatus(toMessage(result.error, result.status));
+      return;
+    }
+    setBusinessAccessCode(result.generatedAccessCode);
+    setBusinessAccessStatus(
+      result.emailSent
+        ? `Password reset and email sent to ${result.access.adminEmail ?? "the business admin"}.`
+        : `Password reset, but email failed/skipped (${result.emailStatus}). Copy the one-time password manually for now.`,
+    );
+    await loadSites();
+    await loadSiteDetail(selectedSite.id);
+  }
+
   async function copyDnsInstructions(): Promise<void> {
     if (!selectedSite || !detail) return;
     const requestedDomain =
@@ -962,6 +988,83 @@ export default function AdminSitesPage() {
                 </p>
               </div>
 
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Public site</p>
+                  <div className="mt-2 flex flex-col gap-2">
+                    <Link href={`/sites/${encodeURIComponent(selectedSite.slug)}`} target="_blank" rel="noopener noreferrer" className={`${outlineButtonClass} ${smallButtonClass}`}>
+                      Open public site
+                    </Link>
+                    <Link href={`/admin/sites/${encodeURIComponent(selectedSite.id)}/preview`} target="_blank" rel="noopener noreferrer" className={`${outlineButtonClass} ${smallButtonClass}`}>
+                      Preview persisted site
+                    </Link>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Subscriber admin</p>
+                  {(() => {
+                    const event = detail.statusEvents.find((item) =>
+                      item.eventType.toLowerCase().includes("admin_access") ||
+                      (item.message ?? "").toLowerCase().includes("admin access") ||
+                      (item.message ?? "").toLowerCase().includes("business admin password"),
+                    );
+                    return (
+                      <p className="mt-2 text-xs text-slate-600">
+                        Access status: {event ? `last updated ${formatUkDateTime(event.createdAt)}` : "not confirmed yet"}
+                      </p>
+                    );
+                  })()}
+                  <div className="mt-2 flex flex-col gap-2">
+                    <Link href={`/site-admin/${encodeURIComponent(selectedSite.slug)}`} target="_blank" rel="noopener noreferrer" className={`${outlineButtonClass} ${smallButtonClass}`}>
+                      Open business admin login
+                    </Link>
+                    <button type="button" className={`${primaryButtonClass} ${smallButtonClass}`} onClick={() => void resetBusinessAdminPassword()}>
+                      Reset / resend password
+                    </button>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Staff access</p>
+                  <div className="mt-2 flex flex-col gap-2">
+                    <Link href={`/site-staff/${encodeURIComponent(selectedSite.slug)}`} target="_blank" rel="noopener noreferrer" className={`${outlineButtonClass} ${smallButtonClass}`}>
+                      Open staff login
+                    </Link>
+                    <p className="text-xs text-slate-600">Staff passwords are managed by the business owner in site admin.</p>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Domain / go-live</p>
+                  <p className="mt-2 text-xs text-slate-700">Domain: {lifecycleStatusLabel(selectedSite.domainStatus)}</p>
+                  <p className="mt-1 text-xs text-slate-700">Lifecycle: {lifecycleStatusLabel(selectedSite.status)}</p>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Support actions</p>
+                  <div className="mt-2 flex flex-col gap-2">
+                    <Link href={`/admin/sites/${encodeURIComponent(selectedSite.id)}/settings`} target="_blank" rel="noopener noreferrer" className={`${outlineButtonClass} ${smallButtonClass}`}>
+                      Open site settings
+                    </Link>
+                    <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void runLifecycleAction("MARK_SITE_LIVE")}>
+                      Mark site live
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {businessAccessStatus ? (
+                <div className="rounded-xl border border-sky-200 bg-sky-50 p-3 text-sm text-slate-800">
+                  <p className="font-semibold">Business admin access</p>
+                  <p className="mt-1">{businessAccessStatus}</p>
+                  {businessAccessCode ? (
+                    <p className="mt-2 rounded-md border border-sky-200 bg-white px-3 py-2 font-mono text-xs">
+                      One-time password: {businessAccessCode}
+                    </p>
+                  ) : null}
+                  <p className="mt-2 text-xs text-slate-600">
+                    Passwords are hashed in the database. This one-time value is shown only immediately after reset for support handover.
+                  </p>
+                </div>
+              ) : null}
+
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <p className="text-sm font-semibold text-slate-900">Customer fulfilment progress</p>
                 <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -989,6 +1092,18 @@ export default function AdminSitesPage() {
                     {
                       label: "Site live",
                       done: selectedSite.status === "LIVE" || selectedSite.provisioningStatus === "LIVE",
+                    },
+                    {
+                      label: "Services added",
+                      done: (detail.site._count?.customerSiteServices ?? 0) > 0,
+                    },
+                    {
+                      label: "Staff added",
+                      done: (detail.site._count?.customerSiteStaffMembers ?? 0) > 0,
+                    },
+                    {
+                      label: "Logo added",
+                      done: Boolean(detail.site.customerSiteSettings?.logoUrl),
                     },
                   ].map((item) => (
                     <div key={item.label} className={`rounded-lg border px-3 py-2 text-xs ${progressBadgeClass(item.done)}`}>

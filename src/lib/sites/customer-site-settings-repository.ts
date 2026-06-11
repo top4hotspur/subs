@@ -21,6 +21,8 @@ export type CustomerSiteSettingsRecord = {
   openingHoursJson: unknown;
   heroHeadline: string | null;
   heroSubheading: string | null;
+  homepageHeroImageUrl: string | null;
+  setupGuidanceEnabled: boolean;
   visualThemeId: string | null;
   colourPaletteId: string | null;
   currency: string | null;
@@ -125,6 +127,8 @@ function serializeSettings(record: {
   openingHoursJson: unknown;
   heroHeadline: string | null;
   heroSubheading: string | null;
+  homepageHeroImageUrl: string | null;
+  setupGuidanceEnabled: boolean;
   visualThemeId: string | null;
   colourPaletteId: string | null;
   currency: string | null;
@@ -255,6 +259,8 @@ export async function upsertCustomerSiteSettings(
           : toJson(parsed.openingHoursJson),
     heroHeadline: parsed.heroHeadline ?? null,
     heroSubheading: parsed.heroSubheading ?? null,
+    homepageHeroImageUrl: parsed.homepageHeroImageUrl ?? null,
+    setupGuidanceEnabled: parsed.setupGuidanceEnabled ?? true,
     visualThemeId: parsed.visualThemeId ?? null,
     colourPaletteId: parsed.colourPaletteId ?? null,
     currency: parsed.currency ?? "GBP",
@@ -325,6 +331,8 @@ export async function upsertCustomerSiteSettings(
   }
   if (parsed.heroHeadline !== undefined) updateData.heroHeadline = parsed.heroHeadline;
   if (parsed.heroSubheading !== undefined) updateData.heroSubheading = parsed.heroSubheading;
+  if (parsed.homepageHeroImageUrl !== undefined) updateData.homepageHeroImageUrl = parsed.homepageHeroImageUrl;
+  if (parsed.setupGuidanceEnabled !== undefined) updateData.setupGuidanceEnabled = parsed.setupGuidanceEnabled;
   if (parsed.visualThemeId !== undefined) updateData.visualThemeId = parsed.visualThemeId;
   if (parsed.colourPaletteId !== undefined) updateData.colourPaletteId = parsed.colourPaletteId;
   if (parsed.currency !== undefined) updateData.currency = parsed.currency;

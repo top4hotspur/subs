@@ -56,6 +56,8 @@ export const upsertCustomerSiteSettingsSchema = z.object({
   openingHoursJson: z.unknown().nullable().optional(),
   heroHeadline: z.string().trim().min(1).max(200).nullable().optional(),
   heroSubheading: z.string().trim().min(1).max(400).nullable().optional(),
+  homepageHeroImageUrl: z.string().trim().url().max(1200).nullable().optional(),
+  setupGuidanceEnabled: z.boolean().optional(),
   visualThemeId: z.string().trim().min(1).max(80).nullable().optional(),
   colourPaletteId: z.string().trim().min(1).max(80).nullable().optional(),
   currency: z.enum(["GBP", "EUR", "USD"]).nullable().optional(),

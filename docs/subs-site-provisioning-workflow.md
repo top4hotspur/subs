@@ -745,3 +745,15 @@ Customer Sites (`/admin/sites`) is becoming the main operator workspace for paid
 Setup Requests remains available as the order/history view. Operators should use it to inspect payment/order detail, then continue customer-site setup, domain, DNS and go-live work from Customer Sites.
 
 Tenant shell consistency now covers the public site, customer account/login/register pages, staff login and business-admin login when a tenant slug is known. Custom-domain pages and tenant auth shells must not show MyExperiment.club platform navigation or marketing footer. Staff and business-admin links on customer domains continue to point to platform-hosted routes in a new tab.
+
+## 2026-06-11 Customer Sites fulfilment cockpit and onboarding guidance
+
+Customer Sites (`/admin/sites`) is the main fulfilment cockpit for provisioned customer sites. Setup Requests remains order/history focused. The selected-site panel now groups actions by Public site, Subscriber admin, Staff access, Domain/go-live, and Support actions.
+
+Public empty customer sites now render guided setup rather than a placeholder. The panel says `Welcome to your new site`, directs the owner/subscriber to business admin, and lists the first setup tasks: add logo, add services/prices, add staff/opening hours, then turn off setup guidance when ready. The panel is shown when the tenant setting `setupGuidanceEnabled` is on or when the site has no active services.
+
+Tenant settings now include `setupGuidanceEnabled` and `homepageHeroImageUrl`. The homepage image is V1 only: one homepage hero/background image URL, no gallery, slideshow, rotating images, or per-page image management yet. Logo upload remains the existing tenant-scoped media flow.
+
+Platform support should not ask for or display stored subscriber passwords. The v1 support workflow is reset/resend from Customer Sites: platform admin generates a one-time password, email delivery is attempted, and the generated value is shown once for handover. Only hashed credentials are stored.
+
+Custom-domain protections remain part of fulfilment: customer-host `/admin` and `/api/admin/*` routes stay blocked/not found; staff/business auth links may open platform-hosted `/site-staff/[siteSlug]` and `/site-admin/[siteSlug]` shells until custom-domain auth hosting is explicitly implemented.

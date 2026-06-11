@@ -203,6 +203,19 @@ export async function getTenantSiteById(id: string) {
       statusEvents: { orderBy: { createdAt: "desc" }, take: 50 },
       subscriptions: { orderBy: { createdAt: "desc" }, take: 1 },
       setupRequest: true,
+      customerSiteSettings: {
+        select: {
+          logoUrl: true,
+          homepageHeroImageUrl: true,
+          setupGuidanceEnabled: true,
+        },
+      },
+      _count: {
+        select: {
+          customerSiteServices: true,
+          customerSiteStaffMembers: true,
+        },
+      },
     },
   });
 }

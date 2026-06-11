@@ -12,7 +12,7 @@ type SiteAdminLoginFormProps = {
 
 function toFriendlyLoginError(error: string | null | undefined): string {
   if (!error || error === "CredentialsSignin") {
-    return "Login failed. Check your site slug, email and password.";
+    return "Login failed. Check your email and password.";
   }
   if (error === "Configuration") {
     return "Login failed due to auth configuration. Please contact support.";
@@ -30,6 +30,7 @@ export function SiteAdminLoginForm({
   const [accessCode, setAccessCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const siteSlugKnown = Boolean(initialSiteSlug.trim());
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -37,6 +38,11 @@ export function SiteAdminLoginForm({
     setError(null);
 
     const trimmedSiteSlug = siteSlug.trim();
+    if (!trimmedSiteSlug) {
+      setError("Enter your site slug, email and password.");
+      setLoading(false);
+      return;
+    }
     const result = await signIn("site-admin-credentials", {
       siteSlug: trimmedSiteSlug,
       email: email.trim().toLowerCase(),
@@ -62,16 +68,20 @@ export function SiteAdminLoginForm({
 
   return (
     <form className="mt-5 space-y-3" onSubmit={handleSubmit}>
-      <label className="block text-sm font-medium text-slate-800">
-        Site slug
-        <input
-          type="text"
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-          value={siteSlug}
-          onChange={(event) => setSiteSlug(event.target.value)}
-          required
-        />
-      </label>
+      {siteSlugKnown ? (
+        <input type="hidden" name="siteSlug" value={siteSlug} />
+      ) : (
+        <label className="block text-sm font-medium text-slate-800">
+          Site slug
+          <input
+            type="text"
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            value={siteSlug}
+            onChange={(event) => setSiteSlug(event.target.value)}
+            required
+          />
+        </label>
+      )}
       <label className="block text-sm font-medium text-slate-800">
         Email
         <input

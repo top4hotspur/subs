@@ -10,6 +10,8 @@ export type PersistedCustomerSiteSettings = {
   openingHoursJson: unknown;
   heroHeadline: string | null;
   heroSubheading: string | null;
+  homepageHeroImageUrl: string | null;
+  setupGuidanceEnabled: boolean;
   visualThemeId: string | null;
   colourPaletteId: string | null;
   currency: string | null;

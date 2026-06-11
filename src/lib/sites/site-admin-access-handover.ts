@@ -239,6 +239,130 @@ export async function resetAndEmailSetupRequestSiteAdminAccess(input: {
   };
 }
 
+export async function resetAndEmailTenantSiteAdminAccess(input: {
+  tenantSiteId: string;
+  email?: string | null;
+}): Promise<
+  | {
+      access: Omit<SetupRequestSiteAdminAccessResponse, "setupRequestId"> & { setupRequestId: string | null };
+      generatedAccessCode: string;
+      emailSent: boolean;
+      emailSkipped: boolean;
+      emailStatus: string;
+    }
+  | { error: "SUBSCRIBER_SITE_NOT_FOUND" | "SITE_ADMIN_EMAIL_REQUIRED" }
+> {
+  const site = await prisma.tenantSite.findUnique({
+    where: { id: input.tenantSiteId },
+    select: {
+      id: true,
+      slug: true,
+      displayName: true,
+      setupRequestId: true,
+      setupRequest: {
+        select: {
+          id: true,
+          contactName: true,
+          contactEmail: true,
+        },
+      },
+      customerSiteSettings: {
+        select: {
+          businessName: true,
+          siteDisplayName: true,
+          email: true,
+        },
+      },
+    },
+  });
+
+  if (!site) return { error: "SUBSCRIBER_SITE_NOT_FOUND" };
+
+  const bodyEmail = input.email?.trim().toLowerCase() ?? "";
+  const fallbackEmail =
+    site.setupRequest?.contactEmail?.trim().toLowerCase() ||
+    site.customerSiteSettings?.email?.trim().toLowerCase() ||
+    "";
+  const targetEmail = bodyEmail || fallbackEmail;
+  if (!targetEmail) return { error: "SITE_ADMIN_EMAIL_REQUIRED" };
+
+  const existing = await loadPreferredAdminUser(site.id, targetEmail);
+  const generatedAccessCode = generateTemporaryAccessCode(10);
+  const displayName = site.setupRequest?.contactName ?? null;
+
+  if (existing) {
+    await updateCustomerSiteAdminUser({
+      tenantSiteId: site.id,
+      id: existing.id,
+      displayName: existing.displayName ?? displayName,
+      accessCode: generatedAccessCode,
+      active: true,
+      invitationStatus: existing.invitationStatus === "ACTIVE" ? "ACTIVE" : "INVITED",
+    });
+  } else {
+    await createCustomerSiteAdminUser({
+      tenantSiteId: site.id,
+      email: targetEmail,
+      displayName,
+      role: "OWNER",
+      active: true,
+      invitationStatus: "INVITED",
+      accessCode: generatedAccessCode,
+    });
+  }
+
+  const refreshedUser = await loadPreferredAdminUser(site.id, targetEmail);
+  const businessName = site.customerSiteSettings?.businessName || site.customerSiteSettings?.siteDisplayName || site.displayName || site.slug;
+  const loginUrl = absoluteSiteUrl(`/site-admin/${encodeURIComponent(site.slug)}`);
+  const previewUrl = absoluteSiteUrl(`/sites/${encodeURIComponent(site.slug)}`);
+  const handoverEmail = businessAdminAccessHandoverEmail({
+    businessName,
+    siteSlug: site.slug,
+    loginUrl,
+    previewUrl,
+    adminEmail: refreshedUser?.email ?? targetEmail,
+    accessCode: generatedAccessCode,
+  });
+  const emailResult = await sendTransactionalEmail({
+    to: refreshedUser?.email ?? targetEmail,
+    subject: handoverEmail.subject,
+    text: handoverEmail.text,
+    html: handoverEmail.html,
+    replyTo: getOptionalServerEnv("PLATFORM_NOTIFICATION_EMAIL"),
+  });
+
+  await prisma.siteStatusEvent.create({
+    data: {
+      tenantSiteId: site.id,
+      eventType: "SITE_ADMIN_ACCESS_RESET",
+      message: `Business admin password reset/email attempted for ${refreshedUser?.email ?? targetEmail}.`,
+      metadata: {
+        setupRequestId: site.setupRequestId,
+        emailSent: emailResult.ok,
+        emailStatus: emailResult.ok ? "SENT" : emailResult.reason,
+      },
+    },
+  });
+
+  return {
+    access: {
+      setupRequestId: site.setupRequestId,
+      tenantSiteId: site.id,
+      siteSlug: site.slug,
+      adminEmail: refreshedUser?.email ?? targetEmail,
+      siteAdminUserId: refreshedUser?.id ?? null,
+      accessCodeExists: Boolean(refreshedUser?.accessCodeHash),
+      invitationStatus:
+        (refreshedUser?.invitationStatus as "INVITED" | "ACTIVE" | "DISABLED" | undefined) ?? null,
+      active: refreshedUser?.active ?? null,
+    },
+    generatedAccessCode,
+    emailSent: emailResult.ok,
+    emailSkipped: emailResult.ok ? false : emailResult.skipped,
+    emailStatus: emailResult.ok ? "SENT" : emailResult.reason,
+  };
+}
+
 export async function ensureInitialSetupRequestSiteAdminAccess(
   setupRequestId: string,
 ): Promise<SetupRequestSiteAdminAccessEmailResult | null> {
