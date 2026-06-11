@@ -1851,3 +1851,21 @@ This means AWS/DNS/SSL reaches the app, but app-side statuses still block render
 11. Confirm Business opening hours, Staff weekly rota and Staffing coverage can collapse/expand and still show useful summaries.
 12. Confirm `fundmyclub.online` still renders the tenant site.
 13. Confirm `fundmyclub.online/admin` and `fundmyclub.online/api/admin/sites` remain blocked/unavailable.
+
+## 2026-06-11 custom-domain tenant admin smoke checks
+
+1. Open `https://fundmyclub.online`.
+2. Click `Business admin login`.
+3. Confirm it opens `https://fundmyclub.online/site-admin` or redirects safely to that same-domain tenant admin route.
+4. Confirm tenant business admin login/dashboard works, uses Password wording, and does not show a visible Site slug field.
+5. Click `Staff login`.
+6. Confirm it opens `https://fundmyclub.online/site-staff` or redirects safely to that same-domain tenant staff route.
+7. Confirm staff login uses Password wording and does not show a visible Site slug field.
+8. Confirm `https://fundmyclub.online/admin` is blocked/unavailable and does not show platform admin.
+9. Confirm `https://fundmyclub.online/api/admin/sites` returns safe 404/NOT_FOUND and does not expose platform API data.
+10. Confirm `https://myexperiment.club/admin` still opens the platform admin login.
+11. On `https://myexperiment.club/admin/login`, click `Forgot password?`, submit an authorised platform admin email and confirm the public response says `If this email is authorised, we'll send admin access instructions.`
+12. Confirm unauthorised emails receive the same public response and no access code is exposed in the browser response.
+13. In `/site-admin/fundmyclub-nails` or the same-domain `/site-admin`, upload an invalid logo type and confirm a visible validation error.
+14. Upload a valid logo and confirm either success + immediate preview or the clear storage/configuration message: `Media storage is not configured yet. Please contact platform support.` / equivalent support wording.
+15. Upload favicon and confirm success + preview or clear storage/configuration message.

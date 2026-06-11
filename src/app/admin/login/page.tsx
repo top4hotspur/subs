@@ -31,6 +31,10 @@ export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
   const [accessCode, setAccessCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [helpMessage, setHelpMessage] = useState<string | null>(null);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -59,6 +63,25 @@ export default function AdminLoginPage() {
 
     router.push(result.url || callbackUrl || "/admin");
     setLoading(false);
+  }
+
+  async function handleForgotSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setForgotLoading(true);
+    setHelpMessage(null);
+    try {
+      const response = await fetch("/api/admin/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail.trim().toLowerCase() }),
+      });
+      const body = (await response.json().catch(() => null)) as { message?: string } | null;
+      setHelpMessage(body?.message || "If this email is authorised, we'll send admin access instructions.");
+    } catch {
+      setHelpMessage("If this email is authorised, we'll send admin access instructions.");
+    } finally {
+      setForgotLoading(false);
+    }
   }
 
   return (
@@ -94,6 +117,40 @@ export default function AdminLoginPage() {
             {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
+        <div className="mt-4 border-t border-slate-200 pt-4">
+          <button
+            type="button"
+            className="text-sm font-semibold text-teal-700 underline-offset-2 hover:underline"
+            onClick={() => {
+              setShowForgotPassword((current) => !current);
+              setForgotEmail(email);
+              setHelpMessage(null);
+            }}
+          >
+            Forgot password?
+          </button>
+          {showForgotPassword ? (
+            <form className="mt-3 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3" onSubmit={handleForgotSubmit}>
+              <p className="text-xs text-slate-600">
+                Enter your platform admin email. If this email is authorised, we&apos;ll send admin access instructions.
+              </p>
+              <label className="block text-sm font-medium text-slate-800">
+                Admin email
+                <input
+                  type="email"
+                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  value={forgotEmail}
+                  onChange={(event) => setForgotEmail(event.target.value)}
+                  required
+                />
+              </label>
+              <button type="submit" className={primaryButtonClass} disabled={forgotLoading}>
+                {forgotLoading ? "Sending..." : "Send access instructions"}
+              </button>
+              {helpMessage ? <p className="text-sm text-slate-700">{helpMessage}</p> : null}
+            </form>
+          ) : null}
+        </div>
       </section>
     </main>
   );

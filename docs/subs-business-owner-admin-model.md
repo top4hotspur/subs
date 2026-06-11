@@ -378,3 +378,14 @@ Platform support access is handled through reset/resend, not plaintext credentia
 - Staff coverage targets are tenant-scoped day-level settings saved in `CustomerSiteSettings.staffingTargetsJson`.
 - Coverage compares active working staff inside business opening hours with the configured target and labels each day as Needs cover, Under target, Covered, Over target, or Business closed.
 - Business opening hours, Staff weekly rota and Staffing coverage are collapsible to reduce long-scroll setup.
+
+## 2026-06-11 tenant admin on custom domains
+
+- Live tenant custom domains may expose tenant-owned access routes:
+  - `https://customer-domain/site-admin`
+  - `https://customer-domain/site-staff`
+- These routes are tenant-scoped using the resolved SiteDomain -> TenantSite host match. They do not expose platform admin.
+- `/admin` and `/api/admin/*` remain platform-only and blocked on customer domains.
+- Business/staff login forms infer the site from host on custom domains and should hide the Site slug field.
+- Platform admin access remains at `https://myexperiment.club/admin`, with a generic access-instructions flow for allowlisted admin emails.
+- Branding media upload should show visible upload, success and failure states. If SITE_MEDIA_BUCKET/SITE_MEDIA_REGION/SITE_MEDIA_PUBLIC_BASE_URL or equivalent storage access is missing, business admins should see a clear support message rather than a silent no-op.

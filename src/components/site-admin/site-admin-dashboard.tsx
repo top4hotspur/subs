@@ -610,10 +610,10 @@ function toMessage(error: string, status: number, details?: unknown): string {
     return "Subscriber site was not found for this login session.";
   }
   if (error === "STORAGE_NOT_CONFIGURED") {
-    return "Branding storage is not configured in this environment yet.";
+    return "Media storage is not configured yet. Please contact platform support.";
   }
   if (error === "PUBLIC_MEDIA_URL_NOT_CONFIGURED") {
-    return "Branding storage saved the file but public media URLs are not configured yet, so the logo/favicon cannot be shown.";
+    return "Media storage public URLs are not configured yet. Please contact platform support.";
   }
   if (error === "FILE_TOO_LARGE") {
     return "Selected file is too large for this upload type.";

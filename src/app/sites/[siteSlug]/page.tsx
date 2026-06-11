@@ -202,8 +202,12 @@ export default async function PublicSiteSlugPage({
   const policyHref = buildPublicSitePath(publicBasePath, "policy");
   const cookiesHref = buildPublicSitePath(publicBasePath, "cookies");
   const privacyHref = buildPublicSitePath(publicBasePath, "privacy");
-  const siteAdminHref = platformAbsolutePath(`/site-admin/${encodeURIComponent(preview.tenantSite.slug)}`);
-  const staffLoginHref = platformAbsolutePath(`/site-staff/${encodeURIComponent(preview.tenantSite.slug)}`);
+  const siteAdminHref = publicBasePath === ""
+    ? "/site-admin"
+    : platformAbsolutePath(`/site-admin/${encodeURIComponent(preview.tenantSite.slug)}`);
+  const staffLoginHref = publicBasePath === ""
+    ? "/site-staff"
+    : platformAbsolutePath(`/site-staff/${encodeURIComponent(preview.tenantSite.slug)}`);
   const customerAccountHref = buildPublicSitePath(publicBasePath, "account");
   const vouchersHref = buildPublicSitePath(publicBasePath, "vouchers");
   const giftVouchersVisible = vouchersArePublic(settings?.giftVoucherSettingsJson);

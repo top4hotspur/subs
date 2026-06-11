@@ -5,6 +5,10 @@ import PublicSiteAboutPage from "@/app/sites/[siteSlug]/about/page";
 import CustomerAccountPage from "@/app/sites/[siteSlug]/account/page";
 import CustomerAccountLoginPage from "@/app/sites/[siteSlug]/account/login/page";
 import CustomerAccountRegisterPage from "@/app/sites/[siteSlug]/account/register/page";
+import SiteAdminPage from "@/app/site-admin/[siteSlug]/page";
+import SiteAdminLoginPage from "@/app/site-admin/login/page";
+import SiteStaffPage from "@/app/site-staff/[siteSlug]/page";
+import SiteStaffLoginPage from "@/app/site-staff/login/page";
 import PublicSiteSlugBookingPage from "@/app/sites/[siteSlug]/booking/page";
 import BookingPaymentReturnPage from "@/app/sites/[siteSlug]/booking/payment/page";
 import CustomerBookingPage from "@/app/sites/[siteSlug]/booking/[token]/page";
@@ -88,6 +92,38 @@ export default async function TenantDomainPage({ params, searchParams }: TenantD
   }
   if (path.length === 2 && path[0] === "account" && path[1] === "register") {
     return <CustomerAccountRegisterPage params={siteParams} />;
+  }
+  if (path.length === 1 && path[0] === "site-admin") {
+    return <SiteAdminPage params={siteParams} />;
+  }
+  if (path.length === 2 && path[0] === "site-admin" && path[1] === liveMatch.tenantSlug.toLowerCase()) {
+    redirect("/site-admin");
+  }
+  if (path.length === 2 && path[0] === "site-admin" && path[1] === "login") {
+    return (
+      <SiteAdminLoginPage
+        searchParams={Promise.resolve({
+          siteSlug: liveMatch.tenantSlug,
+          callbackUrl: "/site-admin",
+        })}
+      />
+    );
+  }
+  if (path.length === 1 && path[0] === "site-staff") {
+    return <SiteStaffPage params={siteParams} searchParams={Promise.resolve({})} />;
+  }
+  if (path.length === 2 && path[0] === "site-staff" && path[1] === liveMatch.tenantSlug.toLowerCase()) {
+    redirect("/site-staff");
+  }
+  if (path.length === 2 && path[0] === "site-staff" && path[1] === "login") {
+    return (
+      <SiteStaffLoginPage
+        searchParams={Promise.resolve({
+          siteSlug: liveMatch.tenantSlug,
+          callbackUrl: "/site-staff",
+        })}
+      />
+    );
   }
   if (path.length === 1 && path[0] === "booking") return <PublicSiteSlugBookingPage params={siteParams} />;
   if (path.length === 2 && path[0] === "booking" && path[1] === "payment") {

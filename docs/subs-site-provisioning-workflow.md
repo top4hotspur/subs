@@ -764,3 +764,11 @@ Custom-domain protections remain part of fulfilment: customer-host `/admin` and 
 - Business owners can add a single homepage background image URL during v1 setup. Multi-image rotation and page-specific image assignment are intentionally future work.
 - Staff coverage targets are set by the business owner in `/site-admin/[siteSlug]` and should be reviewed during onboarding for businesses that need more than one staff member on a day.
 - Custom-domain security boundaries are unchanged: customer-domain `/admin` and `/api/admin/*` stay blocked, while business/staff admin routes remain platform-hosted.
+
+## 2026-06-11 tenant admin route fulfilment notes
+
+- Final customer domains should support tenant-owned `/site-admin` and `/site-staff` routes once the custom domain resolves to the shared app and SiteDomain maps to a live TenantSite.
+- Platform admin remains platform-host only. Do not point customer-domain `/admin` or `/api/admin/*` at platform admin.
+- Support operators can still use platform-hosted fallback routes `/site-admin/[siteSlug]` and `/site-staff/[siteSlug]` if a custom domain is not ready.
+- When handing over a site, verify business admin and staff login links from the customer domain remain tenant-branded and infer the tenant without a visible Site slug field.
+- Media upload requires configured storage plus public media URL delivery. If those env/resources are missing, the business admin should show a clear support/configuration message.

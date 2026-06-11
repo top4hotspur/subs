@@ -1245,3 +1245,15 @@ Customer-host security remains unchanged: `/admin` and `/api/admin/*` on custome
 - Coverage labels compare scheduled working staff against the configured target: Needs cover, Under target, Covered, or Over target.
 - Business opening hours, Staff weekly rota and Staffing coverage can collapse/expand, with summaries remaining visible.
 - `Copy Monday times to working weekdays` only copies Monday times into Tuesday-Friday rows already marked Working and shows a visible message after applying.
+
+## 2026-06-11 tenant admin on customer domains
+
+- Customer custom domains can now route tenant-owned admin paths through the tenant runtime:
+  - `/site-admin` for subscriber business admin
+  - `/site-staff` for staff appointment access
+- The customer domain host identifies the tenant, so the login forms should not show a Site slug field on those routes.
+- Platform admin remains separate on `myexperiment.club/admin`; customer-domain `/admin` and `/api/admin/*` remain blocked/unavailable.
+- Platform-hosted fallback routes such as `/site-admin/[siteSlug]` and `/site-staff/[siteSlug]` remain available for support and preview contexts.
+- Public tenant footers now link Business admin and Staff login to same-domain routes when rendered on a custom domain, and to platform-hosted fallback routes when rendered from `/sites/[siteSlug]`.
+- Platform admin login now includes a safe `Forgot password?` / access-instructions flow. Because platform admin auth is env access-code based, this sends instructions only to allowlisted platform admin emails and always returns the generic message: `If this email is authorised, we'll send admin access instructions.`
+- Media upload failure handling remains fail-safe: missing storage/public media URL config is shown as a visible support/configuration issue, unsupported file types and oversize files are shown as validation errors.
