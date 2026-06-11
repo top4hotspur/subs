@@ -230,6 +230,7 @@ model SalesLead {
   currentProvider             String?
   estimatedCurrentMonthlyCost Decimal?                 @db.Decimal(10, 2)
   marketingStatus             String                   @default("ACTIVE")
+  pipelineVisibility          String                   @default("READY_FOR_CAMPAIGN")
   unsubscribedAt              DateTime?
   doNotContactReason          String?
   status                      String
@@ -261,6 +262,7 @@ model SalesLead {
   @@index([postcode])
   @@index([serviceArea])
   @@index([marketingStatus])
+  @@index([pipelineVisibility])
   @@index([lastCampaignStep])
   @@index([snoozedUntil])
 }

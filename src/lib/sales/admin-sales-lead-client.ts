@@ -30,6 +30,7 @@ export type SalesLeadDto = {
   currentProvider?: string | null;
   estimatedCurrentMonthlyCost?: string | number | null;
   marketingStatus?: string;
+  pipelineVisibility?: string;
   unsubscribedAt?: string | null;
   doNotContactReason?: string | null;
   status: string;
@@ -66,6 +67,7 @@ export async function listBackendSalesLeads(options?: {
   serviceArea?: string;
   leadSource?: string;
   marketingStatus?: string;
+  pipelineVisibility?: string;
 }) {
   const searchParams = new URLSearchParams();
   if (options?.search) searchParams.set("search", options.search);
@@ -78,6 +80,7 @@ export async function listBackendSalesLeads(options?: {
   if (options?.serviceArea) searchParams.set("serviceArea", options.serviceArea);
   if (options?.leadSource) searchParams.set("leadSource", options.leadSource);
   if (options?.marketingStatus) searchParams.set("marketingStatus", options.marketingStatus);
+  if (options?.pipelineVisibility) searchParams.set("pipelineVisibility", options.pipelineVisibility);
 
   try {
     const response = await fetch(`/api/admin/sales-leads?${searchParams.toString()}`, {

@@ -23,11 +23,18 @@ const marketingStatuses = [
   "BOUNCED",
   "CONVERTED",
 ] as const;
+const pipelineVisibilityStatuses = [
+  "RESEARCH",
+  "READY_FOR_CAMPAIGN",
+  "HIDDEN",
+  "DO_NOT_CONTACT",
+] as const;
 const campaignStepStatuses = ["EMAIL_INTRODUCTION", "EMAIL_REMINDER", "SNAIL_MAIL_LETTER"] as const;
 
 export const salesLeadStatusSchema = z.enum(leadStatuses);
 export const salesLeadCountrySchema = z.enum(countries);
 export const salesLeadMarketingStatusSchema = z.enum(marketingStatuses);
+export const salesLeadPipelineVisibilitySchema = z.enum(pipelineVisibilityStatuses);
 export const salesLeadCampaignStepSchema = z.enum(campaignStepStatuses);
 
 export const createSalesLeadSchema = z.object({
@@ -50,6 +57,7 @@ export const createSalesLeadSchema = z.object({
   currentProvider: optionalText,
   estimatedCurrentMonthlyCost: z.number().nonnegative().optional(),
   marketingStatus: salesLeadMarketingStatusSchema.default("ACTIVE"),
+  pipelineVisibility: salesLeadPipelineVisibilitySchema.default("READY_FOR_CAMPAIGN"),
   unsubscribedAt: isoDateString.optional().nullable(),
   doNotContactReason: z.string().optional(),
   status: salesLeadStatusSchema.default("NEW"),
@@ -86,6 +94,7 @@ export const updateSalesLeadSchema = z
     currentProvider: optionalText,
     estimatedCurrentMonthlyCost: z.number().nonnegative().optional().nullable(),
     marketingStatus: salesLeadMarketingStatusSchema.optional(),
+    pipelineVisibility: salesLeadPipelineVisibilitySchema.optional(),
     unsubscribedAt: isoDateString.optional().nullable(),
     doNotContactReason: z.string().optional().nullable(),
     status: salesLeadStatusSchema.optional(),
@@ -114,6 +123,7 @@ export const listSalesLeadsSchema = z.object({
   serviceArea: z.string().trim().optional(),
   leadSource: z.string().trim().optional(),
   marketingStatus: salesLeadMarketingStatusSchema.optional(),
+  pipelineVisibility: salesLeadPipelineVisibilitySchema.optional(),
   lastCampaignStep: salesLeadCampaignStepSchema.optional(),
   take: z.number().int().min(1).max(500).optional().default(200),
   skip: z.number().int().min(0).optional().default(0),

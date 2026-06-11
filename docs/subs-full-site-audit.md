@@ -306,6 +306,12 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - Email discovery remains human-reviewed: admins manually verify/copy public business emails, with no Google scraping and no hidden/private email scraping.
 - Missing-email leads stay ineligible for email campaigns until an email is saved and suppression status allows contact.
 
+## P1 sales dataset/campaign separation applied (2026-06-11)
+- Imported leads now land in a research dataset first, with compact source/profile links and inline editing for contact and provider fields.
+- `pipelineVisibility` separates RESEARCH/HIDDEN/DO_NOT_CONTACT leads from `READY_FOR_CAMPAIGN` candidates.
+- Campaign Builder only shows leads explicitly visible to campaigns, while imported leads require a deliberate `Show in campaigns` action.
+- Lower sales sections are collapsible so import/research work is easier to scan without removing existing provider/template functionality.
+
 ## 2026-05-30 P1 follow-up: business admin settings visibility
 - Light/Dark appearance was already persisted but buried inside the long settings form in site-admin.
 - Site-admin now exposes `Site appearance` as its own section and defaults dashboard view to `Bookings` for day-to-day operations.

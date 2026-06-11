@@ -301,6 +301,7 @@ export async function approveSalesLeadImportRows(batchId: string, input: Approve
         ? Number(row.estimatedCurrentMonthlyCost)
         : undefined,
       marketingStatus: row.emailEnrichmentStatus === "Do not contact" ? "DO_NOT_CONTACT" : "ACTIVE",
+      pipelineVisibility: row.emailEnrichmentStatus === "Do not contact" ? "DO_NOT_CONTACT" : "RESEARCH",
       doNotContactReason: row.emailEnrichmentStatus === "Do not contact" ? "Import row marked do not contact." : undefined,
       status: row.extractedEmail ? "NEW" : "FOLLOW_UP",
       source: "url-import",

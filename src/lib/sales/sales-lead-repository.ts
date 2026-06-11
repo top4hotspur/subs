@@ -66,6 +66,7 @@ export async function createSalesLead(input: CreateSalesLeadInput) {
       currentProvider: parsed.currentProvider,
       estimatedCurrentMonthlyCost: parsed.estimatedCurrentMonthlyCost,
       marketingStatus: parsed.marketingStatus,
+      pipelineVisibility: parsed.pipelineVisibility,
       unsubscribedAt: parsed.unsubscribedAt ? new Date(parsed.unsubscribedAt) : undefined,
       doNotContactReason: parsed.doNotContactReason,
       status: parsed.status,
@@ -118,6 +119,7 @@ export async function listSalesLeads(options: Partial<ListSalesLeadsInput> = {})
       serviceArea: parsed.serviceArea,
       leadSource: parsed.leadSource,
       marketingStatus: parsed.marketingStatus,
+      pipelineVisibility: parsed.pipelineVisibility,
       ...(query
         ? {
             OR: [
@@ -175,6 +177,7 @@ export async function updateSalesLead(input: UpdateSalesLeadInput) {
       estimatedCurrentMonthlyCost:
         parsed.estimatedCurrentMonthlyCost === null ? null : parsed.estimatedCurrentMonthlyCost,
       marketingStatus: parsed.marketingStatus,
+      pipelineVisibility: parsed.pipelineVisibility,
       unsubscribedAt:
         parsed.unsubscribedAt === null
           ? null

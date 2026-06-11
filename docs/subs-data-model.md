@@ -283,6 +283,7 @@ Notes:
 
 ## Sales pipeline data expansion (2026-05-30)
 - SalesLead fields added: postcode, address, serviceArea, leadSource, sourceUrl, currentProvider, estimatedCurrentMonthlyCost, marketingStatus, unsubscribedAt, doNotContactReason.
+- SalesLead campaign visibility added: pipelineVisibility defaults to READY_FOR_CAMPAIGN for existing/manual leads and supports RESEARCH, READY_FOR_CAMPAIGN, HIDDEN and DO_NOT_CONTACT.
 - New models: SalesCampaign, SalesCampaignRecipient, SalesCampaignEvent for campaign lifecycle and future click/delivery event storage.
 - Duplicate detection in import workflow is rule-based at app level (postcode+industry primary, plus business/postcode, email, phone checks).
 
@@ -291,5 +292,5 @@ Notes:
 - SalesLeadImportBatch stores sourceType, defaultIndustrySlug, defaultCityTown, status, createdAt and updatedAt.
 - SalesLeadImportRow stores sourceUrl, visible extracted fields, leadSource/currentProvider, editable estimatedCurrentMonthlyCost, industry/city defaults, duplicateReason, emailEnrichmentStatus, notes, raw metadata, and optional approvedLeadId.
 - Import rows use review statuses: PENDING_REVIEW, APPROVED, SKIPPED, NEEDS_ENRICHMENT and DUPLICATE.
-- Approval creates a SalesLead and links the import row to the approved lead. Rows missing email can still be approved as FOLLOW_UP with notes requiring email research.
+- Approval creates a SalesLead and links the import row to the approved lead. Imported rows default to RESEARCH visibility; rows missing email can still be saved as FOLLOW_UP with notes requiring email research.
 - The model supports public/manual enrichment only; it is not a private-email scraping or campaign-sending system.

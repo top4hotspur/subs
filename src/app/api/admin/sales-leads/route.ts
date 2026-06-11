@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
       serviceArea: search.get("serviceArea") ?? undefined,
       leadSource: search.get("leadSource") ?? undefined,
       marketingStatus: search.get("marketingStatus") ?? undefined,
+      pipelineVisibility: search.get("pipelineVisibility") ?? undefined,
       take: search.get("take") ? Number(search.get("take")) : undefined,
       skip: search.get("skip") ? Number(search.get("skip")) : undefined,
     });

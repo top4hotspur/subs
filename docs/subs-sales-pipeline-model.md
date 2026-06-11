@@ -26,8 +26,9 @@
 
 ## URL import and enrichment preview
 - `/admin/sales` includes a `Lead Import & Enrichment` section for pasted or uploaded source URLs, one URL per line.
-- The workflow creates `SalesLeadImportBatch` and `SalesLeadImportRow` preview records before anything is approved into `SalesLead`.
-- URL import is review-first: rows can be edited, skipped, marked for email research, or approved into the pipeline.
+- The workflow creates `SalesLeadImportBatch` and `SalesLeadImportRow` preview records before anything is saved into `SalesLead`.
+- URL import is review-first: rows can be edited, skipped, marked for email research, or saved into the imported lead dataset.
+- Source/profile URLs are stored in data but rendered as compact links, not full table text.
 - Booksy URLs seed leadSource `Booksy`, currentProvider `Booksy`, and estimatedCurrentMonthlyCost `40`.
 - Booksy search URLs now attempt a single public HTML fetch of the clean path, parse visible JSON-LD listing data when exposed, and create one preview row per visible listing.
 - Extracted Booksy fields can include business name, profile URL, visible address/postcode/city, rating/review count and category metadata in row notes/raw metadata.
@@ -43,6 +44,14 @@
 - Saved emails are trimmed, lower-cased and checked with a basic email format validation before updating `SalesLead.email`.
 - Email status is UI-derived in this phase: no email means `Email missing`; an email present means `Email added manually`; suppressed leads show `Do not contact`.
 - Missing-email leads remain ineligible for email campaign sending until an email is saved and marketing status allows contact.
+
+## Imported lead dataset and campaign visibility
+- Saved import rows create `SalesLead` records in the imported lead dataset with `pipelineVisibility = RESEARCH` by default.
+- `SalesLead.pipelineVisibility` values are `RESEARCH`, `READY_FOR_CAMPAIGN`, `HIDDEN`, and `DO_NOT_CONTACT`.
+- Existing leads default to `READY_FOR_CAMPAIGN` for compatibility with the pre-existing Campaign Builder.
+- Campaign Builder only shows leads marked `READY_FOR_CAMPAIGN`; imported leads must be explicitly promoted with `Show in campaigns`.
+- The dataset table flags missing email, contact name, phone, postcode, business name, do-not-contact state and possible duplicate context.
+- Template editor, Campaign Builder, provider pricing, and suppression sections are collapsible to keep the sales page usable.
 
 ## Duplicate detection rules
 - Primary: same postcode + same industrySlug

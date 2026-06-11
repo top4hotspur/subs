@@ -54,6 +54,7 @@ const MARKETING_STATUSES = ["ACTIVE", "DO_NOT_CONTACT", "UNSUBSCRIBED", "BOUNCED
 const IMPORT_SOURCE_TYPES = ["Booksy", "Google Maps", "Facebook", "Manual", "Other"];
 const IMPORT_EMAIL_STATUSES = ["Missing email", "Website found", "Email found", "Needs manual research", "Do not contact"];
 const IMPORT_ROW_STATUSES = ["PENDING_REVIEW", "NEEDS_ENRICHMENT", "DUPLICATE", "SKIPPED"];
+const PIPELINE_VISIBILITIES = ["RESEARCH", "READY_FOR_CAMPAIGN", "HIDDEN", "DO_NOT_CONTACT"];
 
 const LEADS_CSV_TEMPLATE_HEADERS = [
   "businessName",
@@ -244,6 +245,22 @@ function emailResearchStatus(lead: SalesLeadDto): string {
   return lead.email ? "Email added manually" : "Email missing";
 }
 
+function buildSourceLinkLabel(leadSource?: string | null): string {
+  return leadSource === "Booksy" ? "Booksy profile" : "Open listing";
+}
+
+function buildDataQualityFlags(lead: SalesLeadDto): string[] {
+  const flags: string[] = [];
+  if (!lead.businessName?.trim()) flags.push("Missing business name");
+  if (!lead.email?.trim()) flags.push("Missing email");
+  if (!buildContactDisplay(lead) || buildContactDisplay(lead) === "-") flags.push("Missing contact name");
+  if (!lead.phone?.trim()) flags.push("Missing phone");
+  if (!lead.postcode?.trim()) flags.push("Missing postcode");
+  if (lead.marketingStatus === "DO_NOT_CONTACT" || lead.pipelineVisibility === "DO_NOT_CONTACT") flags.push("Do not contact");
+  if (lead.events?.some((event) => event.message?.toLowerCase().includes("duplicate"))) flags.push("Possible duplicate");
+  return flags;
+}
+
 function buildImportPreviewMessage(batch: SalesLeadImportBatchDto): string {
   const extractedCounts = batch.rows
     .map((row) => (typeof row.raw?.extractedCount === "number" ? row.raw.extractedCount : 0))
@@ -274,6 +291,15 @@ export default function AdminSalesPage() {
   const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
   const [selectedImportRowIds, setSelectedImportRowIds] = useState<string[]>([]);
   const [leadEmailEdits, setLeadEmailEdits] = useState<Record<string, string>>({});
+  const [leadDatasetEdits, setLeadDatasetEdits] = useState<Record<string, Partial<SalesLeadDto>>>({});
+  const [openSections, setOpenSections] = useState({
+    leadImport: true,
+    dataset: true,
+    templates: false,
+    campaigns: true,
+    pricing: false,
+    suppression: false,
+  });
   const [selectedTemplateKey, setSelectedTemplateKey] = useState<TemplateKey>("EMAIL_INTRODUCTION");
   const [campaignLevel, setCampaignLevel] = useState<CampaignLevel>("INTRODUCTION");
   const [campaignIndustry, setCampaignIndustry] = useState("barbers");
@@ -321,6 +347,10 @@ export default function AdminSalesPage() {
     [templates, selectedTemplateKey],
   );
   const activeImportBatch = importBatches[0] ?? null;
+  const importedDatasetLeads = useMemo(
+    () => leads.filter((lead) => lead.source === "url-import" || lead.leadSource || lead.pipelineVisibility !== "READY_FOR_CAMPAIGN"),
+    [leads],
+  );
   const preview = useMemo(
     () => (selectedTemplate ? renderTemplate(selectedTemplate, selectedLead, campaignIndustry) : null),
     [selectedTemplate, selectedLead, campaignIndustry],
@@ -328,6 +358,7 @@ export default function AdminSalesPage() {
 
   const candidates = useMemo(() => {
     return leads
+      .filter((lead) => lead.pipelineVisibility === "READY_FOR_CAMPAIGN")
       .filter((lead) => !campaignIndustry || lead.industrySlug === campaignIndustry)
       .map((lead) => {
         const reasons: string[] = [];
@@ -712,6 +743,76 @@ export default function AdminSalesPage() {
     setMessage("Lead email saved.");
   }
 
+  function toggleSection(section: keyof typeof openSections) {
+    setOpenSections((current) => ({ ...current, [section]: !current[section] }));
+  }
+
+  function getDatasetDraft(lead: SalesLeadDto): SalesLeadDto {
+    return { ...lead, ...leadDatasetEdits[lead.id] };
+  }
+
+  function editDatasetLead(leadId: string, patch: Partial<SalesLeadDto>) {
+    setLeadDatasetEdits((current) => ({ ...current, [leadId]: { ...current[leadId], ...patch } }));
+  }
+
+  async function saveDatasetLead(lead: SalesLeadDto) {
+    setError(null);
+    setMessage(null);
+    const draft = getDatasetDraft(lead);
+    const email = draft.email ? normalizeEmailInput(String(draft.email)) : "";
+    if (email && !isValidEmail(email)) {
+      setError("Enter a valid email address.");
+      return;
+    }
+    const contactName = draft.contactName?.trim() || buildContactDisplay(draft);
+    const nameParts = splitContactName(contactName === "-" ? "" : contactName);
+    const result = await updateBackendSalesLead(lead.id, {
+      businessName: draft.businessName,
+      sourceUrl: draft.sourceUrl || null,
+      contactName: contactName === "-" ? undefined : contactName,
+      contactFirstName: nameParts.firstName,
+      contactLastName: nameParts.lastName,
+      email: email || undefined,
+      phone: draft.phone || undefined,
+      postcode: draft.postcode || undefined,
+      cityTown: draft.cityTown || undefined,
+      industrySlug: draft.industrySlug || undefined,
+      currentProvider: draft.currentProvider || undefined,
+      estimatedCurrentMonthlyCost: draft.estimatedCurrentMonthlyCost ? Number(draft.estimatedCurrentMonthlyCost) : null,
+      pipelineVisibility: draft.pipelineVisibility,
+      marketingStatus: draft.pipelineVisibility === "DO_NOT_CONTACT" ? "DO_NOT_CONTACT" : draft.marketingStatus,
+    });
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    setLeads((current) => current.map((item) => (item.id === lead.id ? result.lead : item)));
+    setLeadDatasetEdits((current) => {
+      const next = { ...current };
+      delete next[lead.id];
+      return next;
+    });
+    setMessage("Imported lead saved.");
+  }
+
+  async function setLeadPipelineVisibility(lead: SalesLeadDto, pipelineVisibility: string) {
+    const result = await updateBackendSalesLead(lead.id, {
+      pipelineVisibility,
+      marketingStatus: pipelineVisibility === "DO_NOT_CONTACT" ? "DO_NOT_CONTACT" : lead.marketingStatus,
+      doNotContactReason: pipelineVisibility === "DO_NOT_CONTACT" ? "Marked do not contact from imported lead dataset." : lead.doNotContactReason,
+    });
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    setLeads((current) => current.map((item) => (item.id === lead.id ? result.lead : item)));
+    setMessage(
+      pipelineVisibility === "READY_FOR_CAMPAIGN"
+        ? "Lead is now visible to campaigns."
+        : "Lead visibility updated.",
+    );
+  }
+
   async function saveProviderRow(row: SalesProviderPricingDto) {
     const result = await saveBackendSalesProviderPricing({
       id: row.id,
@@ -848,7 +949,7 @@ export default function AdminSalesPage() {
     }
     setSelectedImportRowIds([]);
     setMessage(
-      `Approved ${result.result.approvedLeadIds.length} row(s). Skipped ${result.result.skipped.length}.`,
+      `Saved ${result.result.approvedLeadIds.length} row(s) to the lead dataset. Skipped ${result.result.skipped.length}.`,
     );
     await loadAll();
   }
@@ -963,7 +1064,7 @@ export default function AdminSalesPage() {
                     checked={importForm.approveDuplicates}
                     onChange={(event) => setImportForm((current) => ({ ...current, approveDuplicates: event.target.checked }))}
                   />
-                  Approve duplicates anyway
+                  Save duplicates anyway
                 </label>
                 <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setSelectedImportRowIds(activeImportBatch.rows.filter((row) => row.status !== "APPROVED" && row.status !== "SKIPPED").map((row) => row.id))}>
                   Select reviewable
@@ -972,7 +1073,7 @@ export default function AdminSalesPage() {
                   Clear
                 </button>
                 <button className={`${primaryButtonClass} ${smallButtonClass}`} onClick={() => void approveImportRows()} disabled={selectedImportRowIds.length === 0}>
-                  Approve selected into pipeline
+                  Save selected to lead dataset
                 </button>
               </div>
             </div>
@@ -982,7 +1083,7 @@ export default function AdminSalesPage() {
                   <tr className="border-b border-slate-200 text-left">
                     <th className="px-2 py-2">Select</th>
                     <th className="px-2 py-2">Business</th>
-                    <th className="px-2 py-2">Source URL</th>
+                    <th className="px-2 py-2">Source/profile link</th>
                     <th className="px-2 py-2">Contact</th>
                     <th className="px-2 py-2">Location</th>
                     <th className="px-2 py-2">Source/provider</th>
@@ -1023,7 +1124,7 @@ export default function AdminSalesPage() {
                       </td>
                       <td className="max-w-64 px-2 py-2 break-all text-slate-600">
                         <a className="underline" href={row.sourceUrl} target="_blank" rel="noreferrer">
-                          {row.sourceUrl}
+                          {row.leadSource === "Booksy" ? "Booksy profile" : "Open listing"}
                         </a>
                       </td>
                       <td className="min-w-44 px-2 py-2">
@@ -1149,6 +1250,105 @@ export default function AdminSalesPage() {
       </section>
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-900">Imported lead dataset</h2>
+        <p className="mt-1 text-sm text-slate-600">
+          Review imported leads, fill missing contact details, and choose which records are ready for campaign use.
+        </p>
+        <div className="mt-3 overflow-auto">
+          <table className="min-w-full text-xs">
+            <thead>
+              <tr className="border-b border-slate-200 text-left">
+                <th className="px-2 py-2">Business</th>
+                <th className="px-2 py-2">Source/profile link</th>
+                <th className="px-2 py-2">Website</th>
+                <th className="px-2 py-2">Contact name</th>
+                <th className="px-2 py-2">Email</th>
+                <th className="px-2 py-2">Phone</th>
+                <th className="px-2 py-2">Postcode/location</th>
+                <th className="px-2 py-2">Industry</th>
+                <th className="px-2 py-2">Provider</th>
+                <th className="px-2 py-2">Est £/month</th>
+                <th className="px-2 py-2">Missing fields / data quality</th>
+                <th className="px-2 py-2">Pipeline visibility</th>
+                <th className="px-2 py-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {importedDatasetLeads.length === 0 ? (
+                <tr>
+                  <td className="px-2 py-4 text-slate-600" colSpan={13}>
+                    No imported leads yet. Save import preview rows to build the research dataset.
+                  </td>
+                </tr>
+              ) : (
+                importedDatasetLeads.map((lead) => {
+                  const draft = getDatasetDraft(lead);
+                  const flags = buildDataQualityFlags(draft);
+                  return (
+                    <tr key={lead.id} className="border-b border-slate-100 align-top">
+                      <td className="min-w-44 px-2 py-2">
+                        <input className="w-full rounded border border-slate-300 px-2 py-1 text-xs" value={draft.businessName ?? ""} onChange={(event) => editDatasetLead(lead.id, { businessName: event.target.value })} />
+                      </td>
+                      <td className="px-2 py-2">
+                        {draft.sourceUrl ? (
+                          <a className="underline" href={draft.sourceUrl} target="_blank" rel="noreferrer">
+                            {buildSourceLinkLabel(draft.leadSource)}
+                          </a>
+                        ) : "-"}
+                      </td>
+                      <td className="min-w-36 px-2 py-2">
+                        <input className="w-full rounded border border-slate-300 px-2 py-1 text-xs" placeholder="Website" value={draft.sourceUrl ?? ""} onChange={(event) => editDatasetLead(lead.id, { sourceUrl: event.target.value })} />
+                      </td>
+                      <td className="min-w-36 px-2 py-2">
+                        <input className="w-full rounded border border-slate-300 px-2 py-1 text-xs" placeholder="Contact" value={draft.contactName ?? buildContactDisplay(draft).replace("-", "")} onChange={(event) => editDatasetLead(lead.id, { contactName: event.target.value })} />
+                      </td>
+                      <td className="min-w-52 px-2 py-2">
+                        <input className="w-full rounded border border-slate-300 px-2 py-1 text-xs" placeholder="Email" value={draft.email ?? ""} onChange={(event) => editDatasetLead(lead.id, { email: event.target.value })} onBlur={() => editDatasetLead(lead.id, { email: normalizeEmailInput(String(draft.email ?? "")) })} />
+                        <a className={`mt-1 inline-flex ${outlineButtonClass} ${smallButtonClass}`} href={buildEmailResearchUrl(draft)} target="_blank" rel="noreferrer">Find email</a>
+                      </td>
+                      <td className="min-w-32 px-2 py-2">
+                        <input className="w-full rounded border border-slate-300 px-2 py-1 text-xs" placeholder="Phone" value={draft.phone ?? ""} onChange={(event) => editDatasetLead(lead.id, { phone: event.target.value })} />
+                      </td>
+                      <td className="min-w-44 px-2 py-2">
+                        <input className="w-full rounded border border-slate-300 px-2 py-1 text-xs" placeholder="Postcode" value={draft.postcode ?? ""} onChange={(event) => editDatasetLead(lead.id, { postcode: event.target.value })} />
+                        <input className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-xs" placeholder="City/town" value={draft.cityTown ?? ""} onChange={(event) => editDatasetLead(lead.id, { cityTown: event.target.value })} />
+                      </td>
+                      <td className="min-w-36 px-2 py-2">
+                        <select className="w-full rounded border border-slate-300 px-2 py-1 text-xs" value={draft.industrySlug ?? ""} onChange={(event) => editDatasetLead(lead.id, { industrySlug: event.target.value })}>
+                          <option value="">Industry</option>
+                          {WEBSITE_TEMPLATE_SLUGS.map((slug) => <option key={slug} value={slug}>{formatIndustryLabel(slug)}</option>)}
+                        </select>
+                      </td>
+                      <td className="min-w-36 px-2 py-2">
+                        <input className="w-full rounded border border-slate-300 px-2 py-1 text-xs" value={draft.currentProvider ?? ""} onChange={(event) => editDatasetLead(lead.id, { currentProvider: event.target.value })} />
+                      </td>
+                      <td className="min-w-24 px-2 py-2">
+                        <input className="w-full rounded border border-slate-300 px-2 py-1 text-xs" value={draft.estimatedCurrentMonthlyCost ?? ""} onChange={(event) => editDatasetLead(lead.id, { estimatedCurrentMonthlyCost: event.target.value })} />
+                      </td>
+                      <td className="min-w-44 px-2 py-2">{flags.length > 0 ? flags.join(", ") : "Complete enough for review"}</td>
+                      <td className="min-w-44 px-2 py-2">
+                        <select className="w-full rounded border border-slate-300 px-2 py-1 text-xs" value={draft.pipelineVisibility ?? "RESEARCH"} onChange={(event) => editDatasetLead(lead.id, { pipelineVisibility: event.target.value })}>
+                          {PIPELINE_VISIBILITIES.map((visibility) => <option key={visibility} value={visibility}>{visibility}</option>)}
+                        </select>
+                      </td>
+                      <td className="min-w-40 px-2 py-2">
+                        <div className="flex flex-col gap-1">
+                          <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void saveDatasetLead(lead)}>Save</button>
+                          <button className={`${primaryButtonClass} ${smallButtonClass}`} onClick={() => void setLeadPipelineVisibility(lead, "READY_FOR_CAMPAIGN")}>Show in campaigns</button>
+                          <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void setLeadPipelineVisibility(lead, "HIDDEN")}>Hide from campaigns</button>
+                          <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void setLeadPipelineVisibility(lead, "DO_NOT_CONTACT")}>Do not contact</button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">Add lead</h2>
         <div className="mt-3 grid gap-2 sm:grid-cols-3">
           <input className="rounded border border-slate-300 px-2 py-2 text-sm" placeholder="Business name *" value={form.businessName} onChange={(e) => setForm((c) => ({ ...c, businessName: e.target.value }))} />
@@ -1196,7 +1396,12 @@ export default function AdminSalesPage() {
       </section>
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Template editor</h2>
+        <button type="button" className="flex w-full items-center justify-between text-left" onClick={() => toggleSection("templates")}>
+          <h2 className="text-lg font-semibold text-slate-900">Template editor</h2>
+          <span className="text-sm text-slate-600">{openSections.templates ? "Hide" : "Show"}</span>
+        </button>
+        {openSections.templates ? (
+        <>
         <div className="mt-2 flex flex-wrap gap-2">
           {TEMPLATE_KEYS.map((item) => (
             <button key={item.key} className={`${selectedTemplateKey === item.key ? primaryButtonClass : outlineButtonClass} ${smallButtonClass}`} onClick={() => setSelectedTemplateKey(item.key)}>
@@ -1253,10 +1458,18 @@ export default function AdminSalesPage() {
             </div>
           </div>
         ) : null}
+        </>
+        ) : null}
       </section>
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Campaign builder + candidate selection</h2>
+        <button type="button" className="flex w-full items-center justify-between text-left" onClick={() => toggleSection("campaigns")}>
+          <h2 className="text-lg font-semibold text-slate-900">Campaign builder + candidate selection</h2>
+          <span className="text-sm text-slate-600">{openSections.campaigns ? "Hide" : "Show"}</span>
+        </button>
+        {openSections.campaigns ? (
+        <>
+        <p className="mt-2 text-xs text-slate-600">Only leads marked as visible to campaigns appear here.</p>
         <div className="mt-2 grid gap-2 sm:grid-cols-3">
           <select className="rounded border border-slate-300 px-2 py-2 text-sm" value={campaignIndustry} onChange={(e) => setCampaignIndustry(e.target.value)}>
             {WEBSITE_TEMPLATE_SLUGS.map((slug) => <option key={slug} value={slug}>{formatIndustryLabel(slug)}</option>)}
@@ -1307,7 +1520,13 @@ export default function AdminSalesPage() {
               </tr>
             </thead>
             <tbody>
-              {candidates.map((row) => (
+              {candidates.length === 0 ? (
+                <tr>
+                  <td className="px-2 py-4 text-slate-600" colSpan={15}>
+                    No campaign-ready leads yet. Review imported leads and mark them as visible to campaigns.
+                  </td>
+                </tr>
+              ) : candidates.map((row) => (
                 <tr key={row.lead.id} className="border-b border-slate-100">
                   <td className="px-2 py-2">
                     <input
@@ -1378,10 +1597,17 @@ export default function AdminSalesPage() {
             </tbody>
           </table>
         </div>
+        </>
+        ) : null}
       </section>
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Competitor/provider pricing</h2>
+        <button type="button" className="flex w-full items-center justify-between text-left" onClick={() => toggleSection("pricing")}>
+          <h2 className="text-lg font-semibold text-slate-900">Competitor/provider pricing</h2>
+          <span className="text-sm text-slate-600">{openSections.pricing ? "Hide" : "Show"}</span>
+        </button>
+        {openSections.pricing ? (
+        <>
         <p className="text-sm text-slate-600">Used for lead estimated monthly cost auto-fill. Booksy default is £40.</p>
         <div className="mt-3 overflow-auto">
           <table className="min-w-full text-xs">
@@ -1469,16 +1695,25 @@ export default function AdminSalesPage() {
           <input className="rounded border border-slate-300 px-2 py-2 text-sm" placeholder="notes" value={providerForm.notes} onChange={(e) => setProviderForm((c) => ({ ...c, notes: e.target.value }))} />
           <button className={`${primaryButtonClass} ${smallButtonClass}`} onClick={() => void addProviderRow()}>Add provider</button>
         </div>
+        </>
+        ) : null}
       </section>
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Suppression and unsubscribe</h2>
+        <button type="button" className="flex w-full items-center justify-between text-left" onClick={() => toggleSection("suppression")}>
+          <h2 className="text-lg font-semibold text-slate-900">Suppression and unsubscribe</h2>
+          <span className="text-sm text-slate-600">{openSections.suppression ? "Hide" : "Show"}</span>
+        </button>
+        {openSections.suppression ? (
+        <>
         <p className="text-sm text-slate-700">
           Unsubscribed, converted/subscribed, bounced, and do-not-contact leads are excluded from future campaigns.
         </p>
         <p className="mt-1 text-sm text-slate-700">
           Controlled selected sending is enabled with server-side suppression checks; unrestricted bulk blast sending remains disabled.
         </p>
+        </>
+        ) : null}
       </section>
     </main>
   );

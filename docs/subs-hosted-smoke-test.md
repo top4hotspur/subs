@@ -644,16 +644,20 @@ olePrice:<role> columns accepted
 2. Paste one Booksy search/profile URL into `Lead Import & Enrichment` and choose a default industry/city.
 3. Click `Create import preview` and confirm a `SalesLeadImportBatch` preview appears without sending any email.
 4. For a Booksy search URL whose public HTML exposes listing JSON-LD, confirm the message says `Extracted X visible Booksy listings.` and multiple rows appear.
-5. Confirm each extracted Booksy row shows a clickable Booksy profile URL, business name, visible address/postcode/city, provider `Booksy`, and estimated monthly cost `40`.
+5. Confirm each extracted Booksy row shows a compact clickable Booksy profile link, business name, visible address/postcode/city, provider `Booksy`, and estimated monthly cost `40`.
 6. Confirm sponsored listings are skipped when detectable and the message reports `Skipped Y sponsored listings.`; if not detectable, rows note `Sponsored status: Unknown`.
 7. Confirm Booksy emails are not scraped; missing email remains editable/manual and `Find email` opens Google research.
 8. Edit business/contact/location fields, save the row, and confirm duplicate warning appears when postcode+industry, business/postcode, email, phone, or source URL matches an existing SalesLead.
 9. Use `Mark for email research` on a row without email and confirm status/email enrichment move to manual research.
-10. Approve a non-duplicate row and confirm a SalesLead is created with sourceUrl/profileUrl, leadSource, currentProvider, cost, address/postcode/city, phone/email when present, and notes.
-11. Approve a row missing email and confirm it is allowed but marked as needing email research in notes/status.
-12. Confirm duplicate rows are not silently imported; they require either Skip or explicit `Approve duplicates anyway`.
-13. Confirm a blocked/no-listing Booksy HTML response falls back to a manual-review placeholder message.
-14. Confirm the compliance reminder is visible and no campaign send occurs from the import workflow.
+10. Save a non-duplicate row to the lead dataset and confirm a SalesLead is created with sourceUrl/profileUrl, leadSource, currentProvider, cost, address/postcode/city, phone/email when present, and notes.
+11. Confirm the saved imported lead appears in `Imported lead dataset` with pipeline visibility `RESEARCH` and does not appear in Campaign Builder yet.
+12. Approve a row missing email and confirm it is allowed but marked as needing email research in notes/status.
+13. In `Imported lead dataset`, edit email/contact/phone/postcode/provider/cost inline and save.
+14. Click `Show in campaigns` and confirm the lead appears in Campaign Builder only after visibility becomes `READY_FOR_CAMPAIGN`.
+15. Confirm `Hide from campaigns` and `Do not contact` remove/suppress it from Campaign Builder.
+16. Confirm duplicate rows are not silently imported; they require either Skip or explicit duplicate save.
+17. Confirm a blocked/no-listing Booksy HTML response falls back to a manual-review placeholder message.
+18. Confirm the compliance reminder is visible and no campaign send occurs from the import workflow.
 
 ## 2026-05-30 hosted smoke additions (business admin visibility)
 - Site-admin `/site-admin/[siteSlug]` defaults to `Bookings` and shows section tiles in operational order.
@@ -798,6 +802,13 @@ Notes:
 6. Confirm invalid email text is rejected with a visible validation message.
 7. Confirm the row becomes eligible for email campaign selection when marketing status is active.
 8. Confirm this workflow does not scrape Google, does not scrape hidden/private emails, and does not send campaign emails.
+
+## 2026-06-11 hosted smoke checks: sales page structure
+1. Open `/admin/sales`.
+2. Confirm full source URLs are rendered as compact links in import preview and imported dataset tables.
+3. Confirm `Imported lead dataset` is directly below Lead Import & Enrichment.
+4. Confirm Campaign Builder copy says only visible campaign leads appear.
+5. Confirm Template editor, Campaign builder, Competitor/provider pricing, and Suppression sections can be collapsed/expanded.
 
 ## 2026-06-01 hosted smoke checks: template quality + lead names
 1. Open `/admin/sales`.

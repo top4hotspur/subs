@@ -81,6 +81,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       currentProvider: body?.currentProvider,
       estimatedCurrentMonthlyCost: body?.estimatedCurrentMonthlyCost,
       marketingStatus: body?.marketingStatus,
+      pipelineVisibility: body?.pipelineVisibility,
       unsubscribedAt: body?.unsubscribedAt,
       doNotContactReason: body?.doNotContactReason,
       status: body?.status,
