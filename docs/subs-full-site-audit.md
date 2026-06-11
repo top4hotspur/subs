@@ -294,6 +294,11 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - Missing emails are marked for public website/manual research, duplicate warnings block silent import, and approval creates SalesLead records only after admin review.
 - The workflow sends no campaign emails and keeps compliance/suppression checks as a required later outreach step.
 
+## P1 manual sales email research applied (2026-06-11)
+- Campaign Builder now gives each lead a one-click Google `Find email` research link and inline email save control.
+- Email discovery remains human-reviewed: admins manually verify/copy public business emails, with no Google scraping and no hidden/private email scraping.
+- Missing-email leads stay ineligible for email campaigns until an email is saved and suppression status allows contact.
+
 ## 2026-05-30 P1 follow-up: business admin settings visibility
 - Light/Dark appearance was already persisted but buried inside the long settings form in site-admin.
 - Site-admin now exposes `Site appearance` as its own section and defaults dashboard view to `Bookings` for day-to-day operations.

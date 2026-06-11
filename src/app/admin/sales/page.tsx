@@ -204,6 +204,32 @@ function downloadLeadsCsvTemplate() {
   URL.revokeObjectURL(url);
 }
 
+function normalizeEmailInput(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function buildEmailResearchUrl(lead: SalesLeadDto): string {
+  const businessName = lead.businessName.trim();
+  const cityTown = lead.cityTown?.trim();
+  const postcode = lead.postcode?.trim();
+  const emailTerms = `email OR "contact email"`;
+  const query = cityTown
+    ? `"${businessName}" "${cityTown}" ${emailTerms}`
+    : postcode
+      ? `"${businessName}" "${postcode}" ${emailTerms}`
+      : `"${businessName}" ${emailTerms}`;
+  return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+}
+
+function emailResearchStatus(lead: SalesLeadDto): string {
+  if (lead.marketingStatus === "DO_NOT_CONTACT" || lead.marketingStatus === "UNSUBSCRIBED") return "Do not contact";
+  return lead.email ? "Email added manually" : "Email missing";
+}
+
 export default function AdminSalesPage() {
   const [leads, setLeads] = useState<SalesLeadDto[]>([]);
   const [campaigns, setCampaigns] = useState<SalesCampaignDto[]>([]);
@@ -214,6 +240,7 @@ export default function AdminSalesPage() {
   const [selectedCampaignId, setSelectedCampaignId] = useState("");
   const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
   const [selectedImportRowIds, setSelectedImportRowIds] = useState<string[]>([]);
+  const [leadEmailEdits, setLeadEmailEdits] = useState<Record<string, string>>({});
   const [selectedTemplateKey, setSelectedTemplateKey] = useState<TemplateKey>("EMAIL_INTRODUCTION");
   const [campaignLevel, setCampaignLevel] = useState<CampaignLevel>("INTRODUCTION");
   const [campaignIndustry, setCampaignIndustry] = useState("barbers");
@@ -627,6 +654,29 @@ export default function AdminSalesPage() {
     }
     setMessage(`Applied do-not-contact for 3 months to ${count} selected lead(s).`);
     await loadAll();
+  }
+
+  async function saveLeadEmail(lead: SalesLeadDto) {
+    setError(null);
+    setMessage(null);
+    const normalizedEmail = normalizeEmailInput(leadEmailEdits[lead.id] ?? lead.email ?? "");
+    if (!normalizedEmail) {
+      setError("Enter an email address before saving.");
+      return;
+    }
+    if (!isValidEmail(normalizedEmail)) {
+      setError("Enter a valid email address.");
+      return;
+    }
+
+    const result = await updateBackendSalesLead(lead.id, { email: normalizedEmail });
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    setLeads((current) => current.map((item) => (item.id === lead.id ? result.lead : item)));
+    setLeadEmailEdits((current) => ({ ...current, [lead.id]: normalizedEmail }));
+    setMessage("Lead email saved.");
   }
 
   async function saveProviderRow(row: SalesProviderPricingDto) {
@@ -1198,6 +1248,7 @@ export default function AdminSalesPage() {
                 <th className="px-2 py-2">Business</th>
                 <th className="px-2 py-2">Contact</th>
                 <th className="px-2 py-2">Email</th>
+                <th className="px-2 py-2">Email research</th>
                 <th className="px-2 py-2">Phone</th>
                 <th className="px-2 py-2">Postcode/location</th>
                 <th className="px-2 py-2">Industry</th>
@@ -1227,7 +1278,44 @@ export default function AdminSalesPage() {
                   </td>
                   <td className="px-2 py-2"><button className="underline" onClick={() => setSelectedLeadId(row.lead.id)}>{row.lead.businessName}</button></td>
                   <td className="px-2 py-2">{buildContactDisplay(row.lead)}</td>
-                  <td className="px-2 py-2">{row.lead.email ?? "-"}</td>
+                  <td className="min-w-56 px-2 py-2">
+                    <div className="flex flex-col gap-1">
+                      <input
+                        className="rounded border border-slate-300 px-2 py-1 text-xs"
+                        placeholder="Paste email"
+                        value={leadEmailEdits[row.lead.id] ?? row.lead.email ?? ""}
+                        onChange={(event) =>
+                          setLeadEmailEdits((current) => ({
+                            ...current,
+                            [row.lead.id]: event.target.value,
+                          }))
+                        }
+                        onBlur={() =>
+                          setLeadEmailEdits((current) => ({
+                            ...current,
+                            [row.lead.id]: normalizeEmailInput(current[row.lead.id] ?? row.lead.email ?? ""),
+                          }))
+                        }
+                      />
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void saveLeadEmail(row.lead)}>
+                          Save email
+                        </button>
+                        <span className="text-slate-600">{emailResearchStatus(row.lead)}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-2 py-2">
+                    <a
+                      className={`${outlineButtonClass} ${smallButtonClass}`}
+                      href={buildEmailResearchUrl(row.lead)}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Find email
+                    </a>
+                    {!row.lead.email ? <p className="mt-1 text-xs text-amber-700">Missing email</p> : null}
+                  </td>
                   <td className="px-2 py-2">{row.lead.phone ?? "-"}</td>
                   <td className="px-2 py-2">{row.lead.postcode ?? "-"} / {row.lead.cityTown ?? "-"}</td>
                   <td className="px-2 py-2">{row.lead.industrySlug ? formatIndustryLabel(row.lead.industrySlug) : "-"}</td>

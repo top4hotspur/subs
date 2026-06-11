@@ -32,6 +32,14 @@
 - The first pass does not bypass robots.txt, login walls, captchas, rate limits or anti-bot protections.
 - Hidden/private emails are not scraped. Missing email addresses remain marked for public website/manual research.
 
+## Manual email research workflow
+- Campaign Builder rows include a `Find email` Google search link built from business name plus city/town when available, falling back to postcode or business name only.
+- The Google link is a human research shortcut only; the app does not scrape Google results or automate email discovery.
+- Admins manually verify and paste public business contact emails into the inline email field, then save directly from the candidate table.
+- Saved emails are trimmed, lower-cased and checked with a basic email format validation before updating `SalesLead.email`.
+- Email status is UI-derived in this phase: no email means `Email missing`; an email present means `Email added manually`; suppressed leads show `Do not contact`.
+- Missing-email leads remain ineligible for email campaign sending until an email is saved and marketing status allows contact.
+
 ## Duplicate detection rules
 - Primary: same postcode + same industrySlug
 - Additional checks:

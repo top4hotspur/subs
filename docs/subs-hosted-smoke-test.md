@@ -785,6 +785,16 @@ Notes:
 - Live bulk email sending is still disabled.
 - Resend webhook remains verification-gated; unverified automated bounce/unsubscribe ingestion stays deferred.
 
+## 2026-06-11 hosted smoke checks: manual email research
+1. Open `/admin/sales` and scroll to Campaign builder + candidate selection.
+2. Confirm each row has an `Email research` column with a `Find email` link.
+3. Open `Find email` for a lead with city/town and confirm it opens Google in a new tab with business name, city/town and email search terms.
+4. Confirm a missing-email row shows `Missing email`, is not eligible for email sending, and has an inline email input plus `Save email`.
+5. Paste a public business email with mixed case/spaces, save it, and confirm it is stored trimmed/lower-cased.
+6. Confirm invalid email text is rejected with a visible validation message.
+7. Confirm the row becomes eligible for email campaign selection when marketing status is active.
+8. Confirm this workflow does not scrape Google, does not scrape hidden/private emails, and does not send campaign emails.
+
 ## 2026-06-01 hosted smoke checks: template quality + lead names
 1. Open `/admin/sales`.
 2. Add a lead with first name and last name.
@@ -1772,3 +1782,17 @@ This means AWS/DNS/SSL reaches the app, but app-side statuses still block render
 13. Open `/admin/setup-requests` and confirm it behaves as setup request/order history and links back to Customer Sites for fulfilment.
 14. Confirm `https://fundmyclub.online/admin` is safe-blocked.
 15. Confirm `https://fundmyclub.online/api/admin/sites` returns safe 404/NOT_FOUND and does not expose platform API data.
+
+## 2026-06-11 Tenant onboarding and support access smoke checks
+
+- Open a newly provisioned tenant public site such as `/sites/[siteSlug]` or its custom domain. If no services are configured, the homepage should show `Welcome to your new site`, blue setup guidance, `Open business admin`, `Contact the business`, and a short next-step list.
+- Confirm the public setup guidance tells owners to add logo, services/prices, staff/opening hours, and then turn off setup guidance when ready.
+- Confirm logo guidance appears when no logo exists: PNG or SVG preferred, transparent background recommended, landscape logo works best, around 1200px wide and lightweight.
+- Confirm homepage image guidance appears when no homepage image URL exists. V1 supports one homepage hero/background image only; no slideshow, gallery, or page-by-page image selection yet.
+- Sign out of site admin and open `/site-admin/[siteSlug]`. The shared login page should infer the site and not show a visible Site slug field. It should use Password wording.
+- Open `/site-staff/[siteSlug]`. The staff login page should infer the site and not show a visible Site slug field. It should use Password wording and describe shared staff/appointment access.
+- In platform admin, open `/admin/sites`. Treat Customer Sites as the main fulfilment cockpit. Select a site and verify grouped actions for Public site, Subscriber admin, Staff access, Domain/go-live, and Support actions.
+- From Customer Sites, use `Reset / resend password` only for platform support handover. Confirm a one-time password appears after reset, email status is shown, and the value is not otherwise recoverable from stored data.
+- Confirm Customer Sites fulfilment progress includes Paid, Site created, Business admin access sent, Site setup started, Domain configured, Site live, Services added, Staff added, and Logo added.
+- In `/site-admin/[siteSlug]`, update Business settings with logo, homepage image URL, and `Show initial setup guidance on public site`. Save and confirm `/sites/[siteSlug]` reflects the guidance toggle/image.
+- On a customer domain such as `fundmyclub.online`, confirm `/admin` and `/api/admin/*` remain blocked/not found. This is intentional and must not be relaxed.
