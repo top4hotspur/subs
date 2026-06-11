@@ -16,6 +16,7 @@ const staffLoginSchema = z.object({
 
 function safeCallbackUrl(callbackUrl: string | undefined, siteSlug: string): string {
   if (!callbackUrl) return `/site-staff/${encodeURIComponent(siteSlug)}`;
+  if (callbackUrl === "/site-staff") return callbackUrl;
   if (!callbackUrl.startsWith("/site-staff/")) return `/site-staff/${encodeURIComponent(siteSlug)}`;
   return callbackUrl;
 }

@@ -16,6 +16,7 @@ import {
 
 type SiteAdminPageProps = {
   params: Promise<{ siteSlug: string }>;
+  tenantHostMode?: boolean;
 };
 
 type ProgressStatus = "Done" | "Ready" | "Needs setup";
@@ -30,7 +31,7 @@ function getStatusBadgeClass(status: ProgressStatus): string {
   return "border-sky-200 bg-sky-50 text-sky-800";
 }
 
-export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
+export default async function SiteAdminPage({ params, tenantHostMode = false }: SiteAdminPageProps) {
   const { siteSlug } = await params;
   const site = await getTenantSiteBySlug(siteSlug);
   if (!site) {
@@ -39,7 +40,11 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
 
   const session = await getSiteAdminSessionContext();
   if (!session) {
-    redirect(`/site-admin/login?siteSlug=${encodeURIComponent(site.slug)}`);
+    redirect(
+      tenantHostMode
+        ? `/site-admin/login?callbackUrl=${encodeURIComponent("/site-admin")}`
+        : `/site-admin/login?siteSlug=${encodeURIComponent(site.slug)}&callbackUrl=${encodeURIComponent(`/site-admin/${site.slug}`)}`,
+    );
   }
 
   if (session.tenantSiteId !== site.id || session.tenantSlug !== site.slug) {
@@ -52,7 +57,11 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
           </p>
           <div className="mt-4">
             <Link
-              href={`/site-admin/login?siteSlug=${encodeURIComponent(site.slug)}`}
+              href={
+                tenantHostMode
+                  ? `/site-admin/login?callbackUrl=${encodeURIComponent("/site-admin")}`
+                  : `/site-admin/login?siteSlug=${encodeURIComponent(site.slug)}&callbackUrl=${encodeURIComponent(`/site-admin/${site.slug}`)}`
+              }
               className="inline-flex rounded-md border border-amber-300 bg-white px-3 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100"
             >
               Go to site admin login

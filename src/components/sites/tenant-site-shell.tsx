@@ -33,8 +33,13 @@ export function TenantSiteShell({
   const cookiesHref = buildPublicSitePath(publicBasePath, "cookies");
   const privacyHref = buildPublicSitePath(publicBasePath, "privacy");
   const policyHref = buildPublicSitePath(publicBasePath, "policy");
-  const siteAdminHref = platformAbsolutePath(`/site-admin/${encodeURIComponent(siteSlug)}`);
-  const staffLoginHref = platformAbsolutePath(`/site-staff/${encodeURIComponent(siteSlug)}`);
+  const isCustomDomainRender = publicBasePath === "";
+  const siteAdminHref = isCustomDomainRender
+    ? "/site-admin"
+    : platformAbsolutePath(`/site-admin/${encodeURIComponent(siteSlug)}`);
+  const staffLoginHref = isCustomDomainRender
+    ? "/site-staff"
+    : platformAbsolutePath(`/site-staff/${encodeURIComponent(siteSlug)}`);
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">

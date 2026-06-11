@@ -772,3 +772,10 @@ Custom-domain protections remain part of fulfilment: customer-host `/admin` and 
 - Support operators can still use platform-hosted fallback routes `/site-admin/[siteSlug]` and `/site-staff/[siteSlug]` if a custom domain is not ready.
 - When handing over a site, verify business admin and staff login links from the customer domain remain tenant-branded and infer the tenant without a visible Site slug field.
 - Media upload requires configured storage plus public media URL delivery. If those env/resources are missing, the business admin should show a clear support/configuration message.
+
+## 2026-06-11 tenant admin custom-domain handoff update
+
+- Fulfilment handoff should test customer-domain `/site-admin` and `/site-staff` directly once the domain resolves to the shared app.
+- Public tenant footer links should stay on the customer host for these tenant-owned routes.
+- Platform-hosted slug routes remain a support fallback only; they should not be the primary link from a live customer domain.
+- Platform `/admin` and `/api/admin/*` remain unavailable on customer domains.

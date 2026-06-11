@@ -1257,3 +1257,10 @@ Customer-host security remains unchanged: `/admin` and `/api/admin/*` on custome
 - Public tenant footers now link Business admin and Staff login to same-domain routes when rendered on a custom domain, and to platform-hosted fallback routes when rendered from `/sites/[siteSlug]`.
 - Platform admin login now includes a safe `Forgot password?` / access-instructions flow. Because platform admin auth is env access-code based, this sends instructions only to allowlisted platform admin emails and always returns the generic message: `If this email is authorised, we'll send admin access instructions.`
 - Media upload failure handling remains fail-safe: missing storage/public media URL config is shown as a visible support/configuration issue, unsupported file types and oversize files are shown as validation errors.
+
+## 2026-06-11 tenant admin custom-domain link correction
+
+- Customer-domain tenant pages must link business admin to same-host `/site-admin` and staff access to same-host `/site-staff`.
+- The tenant runtime resolves the host to `SiteDomain -> TenantSite`, so custom-domain login pages know the tenant without a visible Site slug field.
+- Platform fallback routes `/site-admin/[siteSlug]` and `/site-staff/[siteSlug]` remain available for support/preview on `myexperiment.club`.
+- Customer-domain `/admin` and `/api/admin/*` remain blocked and must not expose platform admin.

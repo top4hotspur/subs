@@ -17,6 +17,7 @@ import { getTenantSiteBySlug } from "@/lib/sites/tenant-resolver";
 type SiteStaffPageProps = {
   params: Promise<{ siteSlug: string }>;
   searchParams: Promise<{ staffId?: string }>;
+  tenantHostMode?: boolean;
 };
 
 const ACTIVE_STATUSES = new Set(["REQUESTED", "SUBMITTED", "CONFIRMED"]);
@@ -155,7 +156,7 @@ function BookingSection({
   );
 }
 
-export default async function SiteStaffPage({ params, searchParams }: SiteStaffPageProps) {
+export default async function SiteStaffPage({ params, searchParams, tenantHostMode = false }: SiteStaffPageProps) {
   const { siteSlug } = await params;
   const { staffId } = await searchParams;
   const site = await getTenantSiteBySlug(siteSlug);
@@ -164,7 +165,9 @@ export default async function SiteStaffPage({ params, searchParams }: SiteStaffP
   const session = await getSiteStaffSessionContext();
   if (!session || session.tenantSiteId !== site.id || session.tenantSlug !== site.slug) {
     redirect(
-      `/site-staff/login?siteSlug=${encodeURIComponent(site.slug)}&callbackUrl=${encodeURIComponent(`/site-staff/${site.slug}`)}`,
+      tenantHostMode
+        ? `/site-staff/login?callbackUrl=${encodeURIComponent("/site-staff")}`
+        : `/site-staff/login?siteSlug=${encodeURIComponent(site.slug)}&callbackUrl=${encodeURIComponent(`/site-staff/${site.slug}`)}`,
     );
   }
 
@@ -179,7 +182,9 @@ export default async function SiteStaffPage({ params, searchParams }: SiteStaffP
   });
   if (!currentStaff) {
     redirect(
-      `/site-staff/login?siteSlug=${encodeURIComponent(site.slug)}&callbackUrl=${encodeURIComponent(`/site-staff/${site.slug}`)}`,
+      tenantHostMode
+        ? `/site-staff/login?callbackUrl=${encodeURIComponent("/site-staff")}`
+        : `/site-staff/login?siteSlug=${encodeURIComponent(site.slug)}&callbackUrl=${encodeURIComponent(`/site-staff/${site.slug}`)}`,
     );
   }
   const permissions = normalizeStaffPermissions(currentStaff.staffPermissions, currentStaff.isSuperUser);

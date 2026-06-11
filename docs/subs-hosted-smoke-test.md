@@ -1871,3 +1871,16 @@ This means AWS/DNS/SSL reaches the app, but app-side statuses still block render
 13. In `/site-admin/fundmyclub-nails` or the same-domain `/site-admin`, upload an invalid logo type and confirm a visible validation error.
 14. Upload a valid logo and confirm either success + immediate preview or the clear storage/configuration message: `Media storage is not configured yet. Please contact platform support.` / equivalent support wording.
 15. Upload favicon and confirm success + preview or clear storage/configuration message.
+
+## 2026-06-11 custom-domain tenant admin link regression smoke check
+
+1. Open `https://fundmyclub.online`.
+2. Click `Business admin login` from the tenant footer or setup guidance.
+3. Confirm the browser stays on `fundmyclub.online` and opens `/site-admin` or `/site-admin/login`.
+4. Confirm the login title shows `FundMyClub Nails`, uses Password wording and does not show a visible Site slug field.
+5. Click `Staff login`.
+6. Confirm the browser stays on `fundmyclub.online` and opens `/site-staff` or `/site-staff/login`.
+7. Confirm the staff login title shows `FundMyClub Nails`, uses Password wording and does not show a visible Site slug field.
+8. Confirm `https://fundmyclub.online/admin` remains blocked/unavailable.
+9. Confirm `https://fundmyclub.online/api/admin/sites` returns safe 404/NOT_FOUND and exposes no platform data.
+10. Confirm platform fallback `/site-admin/fundmyclub-nails` still works on `myexperiment.club` for support.

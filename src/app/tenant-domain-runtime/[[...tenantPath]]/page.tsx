@@ -94,7 +94,7 @@ export default async function TenantDomainPage({ params, searchParams }: TenantD
     return <CustomerAccountRegisterPage params={siteParams} />;
   }
   if (path.length === 1 && path[0] === "site-admin") {
-    return <SiteAdminPage params={siteParams} />;
+    return <SiteAdminPage params={siteParams} tenantHostMode />;
   }
   if (path.length === 2 && path[0] === "site-admin" && path[1] === liveMatch.tenantSlug.toLowerCase()) {
     redirect("/site-admin");
@@ -110,7 +110,7 @@ export default async function TenantDomainPage({ params, searchParams }: TenantD
     );
   }
   if (path.length === 1 && path[0] === "site-staff") {
-    return <SiteStaffPage params={siteParams} searchParams={Promise.resolve({})} />;
+    return <SiteStaffPage params={siteParams} searchParams={Promise.resolve({})} tenantHostMode />;
   }
   if (path.length === 2 && path[0] === "site-staff" && path[1] === liveMatch.tenantSlug.toLowerCase()) {
     redirect("/site-staff");

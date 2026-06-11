@@ -389,3 +389,10 @@ Platform support access is handled through reset/resend, not plaintext credentia
 - Business/staff login forms infer the site from host on custom domains and should hide the Site slug field.
 - Platform admin access remains at `https://myexperiment.club/admin`, with a generic access-instructions flow for allowlisted admin emails.
 - Branding media upload should show visible upload, success and failure states. If SITE_MEDIA_BUCKET/SITE_MEDIA_REGION/SITE_MEDIA_PUBLIC_BASE_URL or equivalent storage access is missing, business admins should see a clear support message rather than a silent no-op.
+
+## 2026-06-11 custom-domain business/staff access correction
+
+- On a live customer domain, business-owner access uses `/site-admin` and staff access uses `/site-staff` on that same host.
+- The host-resolved tenant context supplies the site slug internally, so login forms hide the Site slug field and show the tenant name.
+- Platform fallback routes with explicit slugs remain for support on the platform host.
+- Customer domains must not expose platform admin routes.
