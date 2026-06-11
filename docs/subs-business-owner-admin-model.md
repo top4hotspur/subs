@@ -358,3 +358,12 @@ Branding V1 remains intentionally controlled. Business admin keeps logo upload/r
 Business-admin and staff login pages hide the Site slug field when the tenant is already known from route/query/callback context. User-facing wording says Password. The underlying one-time password/access-code implementation remains hashed and tenant-scoped.
 
 Platform support access is handled through reset/resend, not plaintext credential display. Customer Sites can generate a one-time business-admin password, attempt email delivery, and show the new value once for support handover.
+
+## 2026-06-11 business-owner setup UX consolidation
+
+- `/site-admin/[siteSlug]` now groups setup sections by owner mental model: Business setup, Services & bookings, Team & availability, and Customers.
+- The readiness checklist is more explicit: optional logo, business details, services, staff, staff rota, opening hours, policy, payment setup, preview and ready-to-go-live are tracked separately.
+- Public setup guidance is controlled by the tenant `Show initial setup guidance on public site` setting. Once disabled, it stays hidden even if the site still has no active services.
+- Services and prices has separate collapsible panels for categories and services. This keeps category management from competing with day-to-day service editing.
+- Staff setup uses collapsed staff cards after save. Standard staff receive normal operational staff permissions by default; `Business configuration super-user` is reserved for trusted setup/admin responsibility.
+- Customer-domain security boundaries are unchanged: business/staff admin remain platform-hosted and customer-domain `/admin` and `/api/admin/*` remain blocked.

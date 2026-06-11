@@ -180,7 +180,22 @@ export default async function PublicSiteSlugPage({
     ? `${scheme.heroBackgroundClass} rounded-xl border ${scheme.borderClass} p-8`
     : `${scheme.heroBackgroundClass} rounded-2xl border ${scheme.borderClass} p-8`;
   const cardClass = `${scheme.cardClass} p-5`;
-  const showSetupGuidance = (settings?.setupGuidanceEnabled ?? true) || activeServices.length === 0;
+  const logoConfigured = Boolean(settings?.logoUrl);
+  const openingHoursConfigured = Boolean(openingHoursSummary);
+  const paymentSetupConfigured = Boolean(
+    settings?.paymentProcessorSetupMode === "MANUAL_RECORDING_ONLY" ||
+      settings?.paymentProcessorSetupMode === "NEED_HELP_SETUP" ||
+      (settings?.paymentProcessorSetupMode === "EXISTING_PROCESSOR" && settings?.paymentProcessorName),
+  );
+  const setupSteps = [
+    { label: "Add your logo (optional)", done: logoConfigured, optional: true },
+    { label: "Add services and prices", done: activeServices.length > 0 },
+    { label: "Add staff", done: publicStaff.length > 0 },
+    { label: "Set opening hours", done: openingHoursConfigured },
+    { label: "Set up payment processor", done: paymentSetupConfigured },
+    { label: "Turn off setup guidance when ready", done: settings?.setupGuidanceEnabled === false },
+  ];
+  const showSetupGuidance = settings?.setupGuidanceEnabled ?? true;
   const bookingHref = "#services";
   const publicBasePath = await getPublicSiteBasePath(preview.tenantSite.slug);
   const contactHref = buildPublicSitePath(publicBasePath, "contact");
@@ -240,7 +255,7 @@ export default async function PublicSiteSlugPage({
                     <h2 className="mt-1 text-xl font-bold text-slate-950">Welcome to your new site</h2>
                     <p className="mt-2 text-sm text-slate-700">Let&apos;s get your site ready.</p>
                     <p className="mt-1 text-sm text-slate-700">
-                      Are you the business owner/subscriber? If so, please log in through the business admin button below.
+                      Are you the business owner/subscriber? If so, please log in through the Open business admin button.
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -264,11 +279,15 @@ export default async function PublicSiteSlugPage({
                   <div className="rounded-xl border border-sky-100 bg-white p-4">
                     <h3 className="text-sm font-semibold text-slate-950">What to do next</h3>
                     <ol className="mt-2 list-decimal space-y-1 pl-4 text-sm text-slate-700">
-                      <li>Add your logo</li>
-                      <li>Add services and prices</li>
-                      <li>Add staff and opening hours</li>
-                      <li>Turn off setup guidance when ready</li>
+                      {setupSteps.map((step) => (
+                        <li key={step.label} className={step.done ? "text-slate-500 line-through" : ""}>
+                          {step.label}
+                        </li>
+                      ))}
                     </ol>
+                    <p className="mt-3 text-xs text-slate-600">
+                      This setup guidance can be hidden from the public site once setup is complete.
+                    </p>
                   </div>
                   {!settings?.logoUrl ? (
                     <div className="rounded-xl border border-dashed border-sky-200 bg-white p-4">
@@ -285,10 +304,7 @@ export default async function PublicSiteSlugPage({
                     <div className="rounded-xl border border-dashed border-sky-200 bg-white p-4">
                       <h3 className="text-sm font-semibold text-slate-950">Homepage image</h3>
                       <p className="mt-2 text-sm text-slate-700">
-                        You can add one homepage background/hero image in Business settings to make this first section feel more like your own brand.
-                      </p>
-                      <p className="mt-2 text-xs text-slate-600">
-                        V1 supports one homepage image only. Page-by-page images, slideshows and galleries are future enhancements.
+                        You can add one homepage background image in Business settings to reflect your brand.
                       </p>
                     </div>
                   ) : null}

@@ -109,17 +109,17 @@ type SectionKey =
   | "giftVouchers"
   | "customerCrm";
 
-const SECTION_LIST: Array<{ key: SectionKey; label: string; description: string }> = [
-  { key: "bookings", label: "Bookings", description: "Recent live site booking records" },
-  { key: "settings", label: "Business settings", description: "Business contact and hero basics" },
-  { key: "payments", label: "Payment settings", description: "Payment providers, booking payments and refund policy" },
-  { key: "appearance", label: "Site appearance", description: "Light or dark appearance and branding assets" },
-  { key: "services", label: "Services and prices", description: "Service list, prices and durations" },
-  { key: "staffRoles", label: "Staff setup", description: "Team members, roles and public visibility" },
-  { key: "rotaBreaks", label: "Rota & breaks", description: "Weekly rota and break windows" },
-  { key: "closuresHolidays", label: "Closures & holidays", description: "Business closures and staff leave" },
-  { key: "giftVouchers", label: "Gift vouchers", description: "Voucher settings, payment checks and redemption status" },
-  { key: "customerCrm", label: "Customer CRM", description: "Customer history, consent and enquiries" },
+const SECTION_LIST: Array<{ key: SectionKey; group: string; label: string; description: string }> = [
+  { key: "settings", group: "Business setup", label: "Business settings", description: "Business contact, homepage images and setup guidance" },
+  { key: "appearance", group: "Business setup", label: "Site appearance", description: "Light/dark appearance and brand assets" },
+  { key: "services", group: "Services & bookings", label: "Services and prices", description: "Service categories, prices and durations" },
+  { key: "payments", group: "Services & bookings", label: "Payment settings", description: "Payment providers, booking payments and refund policy" },
+  { key: "giftVouchers", group: "Services & bookings", label: "Gift vouchers", description: "Voucher settings, payment checks and redemption status" },
+  { key: "staffRoles", group: "Team & availability", label: "Staff setup", description: "Team members, roles and public visibility" },
+  { key: "rotaBreaks", group: "Team & availability", label: "Rota and breaks", description: "Opening hours, staff rota and break windows" },
+  { key: "closuresHolidays", group: "Team & availability", label: "Closures and holidays", description: "Business closures and staff leave" },
+  { key: "bookings", group: "Customers", label: "Bookings", description: "Recent live site booking records" },
+  { key: "customerCrm", group: "Customers", label: "Customer CRM", description: "Customer history, consent and enquiries" },
 ];
 
 const weekdayValues: WeekdayValue[] = [
@@ -130,20 +130,6 @@ const weekdayValues: WeekdayValue[] = [
   "friday",
   "saturday",
   "sunday",
-];
-
-const STAFF_PERMISSION_OPTIONS: Array<{
-  key: keyof CustomerSiteStaffPermissions;
-  label: string;
-  note?: string;
-}> = [
-  { key: "markCompleted", label: "Mark appointments completed" },
-  { key: "addManualBooking", label: "Add manual bookings", note: "Saved now; manual staff booking form is future work." },
-  { key: "amendBooking", label: "Amend bookings", note: "Saved now; staff-side amendment action is future work." },
-  { key: "cancelBooking", label: "Cancel bookings", note: "Saved now; staff-side cancellation action is future work." },
-  { key: "viewCustomerContactDetails", label: "View customer phone and email" },
-  { key: "viewPaymentStatus", label: "View payment status" },
-  { key: "redeemVouchers", label: "Redeem/check gift vouchers", note: "Saved now; voucher redemption action is future work." },
 ];
 
 const CUSTOMER_CAMPAIGN_TYPE_OPTIONS = [
@@ -1014,21 +1000,17 @@ function buildStaffDisplayName(staff: StaffMemberDraft): string {
   );
 }
 
+function sortStaffDrafts(staff: StaffMemberDraft[]): StaffMemberDraft[] {
+  return [...staff].sort((a, b) => {
+    const roleCompare = (a.roleLabel || "").localeCompare(b.roleLabel || "", "en", { sensitivity: "base" });
+    if (roleCompare !== 0) return roleCompare;
+    return buildStaffDisplayName(a).localeCompare(buildStaffDisplayName(b), "en", { sensitivity: "base" });
+  });
+}
+
 function defaultStaffPermissions(isSuperUser: boolean): CustomerSiteStaffPermissions {
   return {
     ...(isSuperUser ? DEFAULT_SUPER_USER_STAFF_PERMISSIONS : DEFAULT_STANDARD_STAFF_PERMISSIONS),
-  };
-}
-
-function updateStaffPermission(
-  permissions: CustomerSiteStaffPermissions,
-  key: keyof CustomerSiteStaffPermissions,
-  value: boolean,
-): CustomerSiteStaffPermissions {
-  return {
-    ...permissions,
-    viewAppointments: true,
-    [key]: value,
   };
 }
 
@@ -1115,6 +1097,9 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
   const [message, setMessage] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<SectionKey>("settings");
   const [expandedServiceKey, setExpandedServiceKey] = useState<string | null>(null);
+  const [serviceCategoriesOpen, setServiceCategoriesOpen] = useState(true);
+  const [servicesOpen, setServicesOpen] = useState(true);
+  const [expandedStaffKey, setExpandedStaffKey] = useState<string | null>(null);
 
   const [settingsDraft, setSettingsDraft] = useState<SettingsDraft>(() => toSettingsDraft(null));
   const [persistedSettings, setPersistedSettings] = useState<PersistedCustomerSiteSettings | null>(null);
@@ -1281,7 +1266,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       setServiceCategoriesDraft(servicesResult.categories.map(toServiceCategoryDraft));
       setServicesDraft(servicesResult.services.map(toServiceDraft));
       setRolesDraft(rolesResult.roles.map(toRoleDraft));
-      setStaffDraft(staffResult.staff.map(toStaffDraft));
+      setStaffDraft(sortStaffDrafts(staffResult.staff.map(toStaffDraft)));
       setRotaDaysDraft(schedulingResult.scheduling.rotaDays.map(toRotaDayDraft));
       setBreakWindowsDraft(schedulingResult.scheduling.breakWindows.map(toBreakWindowDraft));
       setBusinessClosuresDraft(schedulingResult.scheduling.businessClosures.map(toBusinessClosureDraft));
@@ -1727,7 +1712,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
     }
     setSettingsDraft(toSettingsDraft(result.settings));
     setPersistedSettings(result.settings);
-    setMessage("Site settings saved.");
+    setMessage("Business settings saved.");
   }
 
   async function saveOpeningHours() {
@@ -1896,7 +1881,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
         active: staff.active,
         customerSelectable: staff.customerSelectable,
         isSuperUser: staff.isSuperUser,
-        staffPermissions: staff.isSuperUser ? staff.staffPermissions : defaultStaffPermissions(false),
+        staffPermissions: staff.staffPermissions,
         availableWeekdays: staff.availableWeekdays,
         notes: staff.notes.trim() || null,
         sortOrder: staff.sortOrder.trim() ? Number(staff.sortOrder) : index,
@@ -1908,7 +1893,8 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
     }
 
     setRolesDraft(rolesResult.roles.map(toRoleDraft));
-    setStaffDraft(staffResult.staff.map(toStaffDraft));
+    setStaffDraft(sortStaffDrafts(staffResult.staff.map(toStaffDraft)));
+    setExpandedStaffKey(null);
     if (!selectedSchedulingStaffId && staffResult.staff[0]?.id) {
       setSelectedSchedulingStaffId(staffResult.staff[0].id);
     }
@@ -1931,7 +1917,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
       setMessage(toMessage(result.error, result.status, result.details));
       return;
     }
-    setStaffDraft((current) => current.map((item) => (item.id === result.staff.id ? toStaffDraft(result.staff) : item)));
+    setStaffDraft((current) => sortStaffDrafts(current.map((item) => (item.id === result.staff.id ? toStaffDraft(result.staff) : item))));
     if (result.accessCode) {
       setStaffAccessCodes((current) => ({ ...current, [result.staff.id]: result.accessCode ?? "" }));
       setMessage("Staff password generated. Copy it now; it is only shown once.");
@@ -2220,6 +2206,10 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
     paymentSetupMode === "EXISTING_PROCESSOR" && paymentProviderGuidance.providerKey === "STRIPE";
   const noOnlineProviderSelected =
     paymentSetupMode === "MANUAL_RECORDING_ONLY" || paymentProviderGuidance.providerKey === "NONE";
+  const sectionGroups = Array.from(new Set(SECTION_LIST.map((section) => section.group))).map((group) => ({
+    group,
+    sections: SECTION_LIST.filter((section) => section.group === group),
+  }));
 
   return (
     <div className="space-y-6">
@@ -2230,34 +2220,41 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
         </p>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {SECTION_LIST.map((section) => {
-            const active = activeSection === section.key;
-            return (
-              <button
-                key={section.key}
-                type="button"
-                className={`rounded-xl border px-3 py-3 text-left ${
-                  active
-                    ? "border-slate-900 bg-slate-900 text-white"
-                    : "border-slate-200 bg-slate-50 text-slate-900 hover:bg-slate-100"
-                }`}
-                onClick={() => setActiveSection(section.key)}
-              >
-                <p className="text-sm font-semibold">{section.label}</p>
-                <p className={`mt-1 text-xs ${active ? "text-slate-200" : "text-slate-600"}`}>
-                  {section.description}
-                </p>
-              </button>
-            );
-          })}
+      <section className="rounded-2xl border border-sky-200 bg-sky-50 p-5 shadow-sm">
+        <div className="grid gap-4 lg:grid-cols-2">
+          {sectionGroups.map((group) => (
+            <div key={group.group} className="rounded-xl border border-sky-100 bg-white p-3">
+              <h3 className="text-sm font-semibold text-slate-950">{group.group}</h3>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {group.sections.map((section) => {
+                  const active = activeSection === section.key;
+                  return (
+                    <button
+                      key={section.key}
+                      type="button"
+                      className={`rounded-xl border px-3 py-3 text-left ${
+                        active
+                          ? "border-sky-700 bg-sky-700 text-white"
+                          : "border-slate-200 bg-slate-50 text-slate-900 hover:bg-sky-50"
+                      }`}
+                      onClick={() => setActiveSection(section.key)}
+                    >
+                      <p className="text-sm font-semibold">{section.label}</p>
+                      <p className={`mt-1 text-xs ${active ? "text-sky-100" : "text-slate-600"}`}>
+                        {section.description}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
       {activeSection === "settings" ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="text-lg font-semibold text-slate-900">Site settings</h3>
+          <h3 className="text-lg font-semibold text-slate-900">Business settings</h3>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <label className="text-xs font-semibold text-slate-700">Site display name
               <input className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" value={settingsDraft.siteDisplayName} onChange={(event) => setSettingsDraft((current) => ({ ...current, siteDisplayName: event.target.value }))} />
@@ -3048,7 +3045,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                 Show Gift vouchers on public site
               </label>
               <label className="text-xs font-semibold text-slate-700 sm:col-span-2">
-                Preset values (Â£)
+                Preset values (£)
                 <input
                   className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
                   value={voucherPresetValues}
@@ -3069,7 +3066,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
               </label>
               <div className="grid gap-2 sm:grid-cols-2">
                 <label className="text-xs font-semibold text-slate-700">
-                  Min custom (Â£)
+                  Min custom (£)
                   <input
                     className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
                     inputMode="numeric"
@@ -3078,7 +3075,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                   />
                 </label>
                 <label className="text-xs font-semibold text-slate-700">
-                  Max custom (Â£)
+                  Max custom (£)
                   <input
                     className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
                     inputMode="numeric"
@@ -3114,7 +3111,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                 </div>
               </div>
               <label className="text-xs font-semibold text-slate-700">
-                Postage charge (Â£)
+                Postage charge (£)
                 <input
                   className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm"
                   inputMode="numeric"
@@ -3386,7 +3383,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                           />
                           <span>
                             <span className="font-semibold text-slate-900">{customer.name || customer.email}</span>
-                            <span className="block">{customer.email} Â· {customer.marketingOptIn ? "Opted in" : "No consent"}</span>
+                            <span className="block">{customer.email} · {customer.marketingOptIn ? "Opted in" : "No consent"}</span>
                           </span>
                         </label>
                       ))}
@@ -3447,13 +3444,13 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                         <div className="flex flex-wrap items-start justify-between gap-2">
                           <div>
                             <p className="font-semibold text-slate-950">{campaign.title}</p>
-                            <p className="text-slate-600">{formatCampaignOptionLabel(CUSTOMER_CAMPAIGN_AUDIENCE_OPTIONS, campaign.audienceType)} Â· {formatCampaignOptionLabel(CUSTOMER_CAMPAIGN_TYPE_OPTIONS, campaign.campaignType)}</p>
+                            <p className="text-slate-600">{formatCampaignOptionLabel(CUSTOMER_CAMPAIGN_AUDIENCE_OPTIONS, campaign.audienceType)} · {formatCampaignOptionLabel(CUSTOMER_CAMPAIGN_TYPE_OPTIONS, campaign.campaignType)}</p>
                           </div>
                           <span className="rounded-full border border-slate-200 bg-white px-2 py-1 font-semibold text-slate-700">{campaign.status}</span>
                         </div>
                         <p className="mt-2 text-slate-600">
-                          Sent {campaign.counts.sent} Â· skipped {campaign.counts.skipped} Â· failed {campaign.counts.failed}
-                          {campaign.sentAt ? ` Â· ${new Date(campaign.sentAt).toLocaleString("en-GB")}` : ""}
+                          Sent {campaign.counts.sent} · skipped {campaign.counts.skipped} · failed {campaign.counts.failed}
+                          {campaign.sentAt ? ` · ${new Date(campaign.sentAt).toLocaleString("en-GB")}` : ""}
                         </p>
                       </button>
                     ))}
@@ -3464,7 +3461,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                       <div className="mt-2 space-y-1">
                         {selectedCustomerCampaign.recipients.slice(0, 8).map((recipient) => (
                           <p key={recipient.id} className="text-xs text-slate-600">
-                            <span className="font-semibold text-slate-800">{recipient.email}</span> Â· {recipient.status}{recipient.failureReason ? ` Â· ${recipient.failureReason}` : ""}
+                            <span className="font-semibold text-slate-800">{recipient.email}</span> · {recipient.status}{recipient.failureReason ? ` · ${recipient.failureReason}` : ""}
                           </p>
                         ))}
                       </div>
@@ -3497,7 +3494,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                   <p className="font-semibold text-slate-950">{customer.name || customer.email}</p>
                   <p className="text-xs text-slate-600">{customer.email}</p>
                   <p className="mt-1 text-xs text-slate-600">
-                    {customer.totalBookings} booking{customer.totalBookings === 1 ? "" : "s"} Â· {customer.marketingOptIn ? "Marketing opted in" : "Marketing opted out"}
+                    {customer.totalBookings} booking{customer.totalBookings === 1 ? "" : "s"} · {customer.marketingOptIn ? "Marketing opted in" : "Marketing opted out"}
                   </p>
                   <p className={`mt-2 inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
                     customer.lapsedCandidate ? "bg-amber-100 text-amber-900" : "bg-white text-slate-700"
@@ -3565,7 +3562,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                           <p className="font-semibold text-slate-950">{booking.serviceName || "Service not set"}</p>
                           <p>{booking.preferredDate || "Date not set"} {booking.preferredTime || ""}</p>
                           <p>Staff: {booking.staffName || "Assigned by business"}</p>
-                          <p>Status: {booking.status} Â· Payment: {booking.paymentStatus || "Not set"}</p>
+                          <p>Status: {booking.status} · Payment: {booking.paymentStatus || "Not set"}</p>
                           <a href={booking.detailHref} target="_blank" rel="noreferrer" className="mt-2 inline-flex font-semibold text-teal-700 underline">
                             View booking link
                           </a>
@@ -3608,14 +3605,14 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                 <article key={enquiry.id} className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
-                      <p className="font-semibold text-slate-950">{enquiry.purpose} Â· {enquiry.name}</p>
-                      <p>{enquiry.email}{enquiry.phone ? ` Â· ${enquiry.phone}` : ""}</p>
+                      <p className="font-semibold text-slate-950">{enquiry.purpose} · {enquiry.name}</p>
+                      <p>{enquiry.email}{enquiry.phone ? ` · ${enquiry.phone}` : ""}</p>
                       <p className="mt-1 whitespace-pre-wrap">{enquiry.message}</p>
                     </div>
                     <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 font-semibold text-slate-700">{enquiry.status}</span>
                   </div>
                   <p className="mt-2 text-slate-500">
-                    {new Date(enquiry.createdAt).toLocaleString("en-GB")} Â· Email {enquiry.emailStatus || "not attempted"}{enquiry.bookingId ? ` Â· Booking ${enquiry.bookingId}` : ""}
+                    {new Date(enquiry.createdAt).toLocaleString("en-GB")} · Email {enquiry.emailStatus || "not attempted"}{enquiry.bookingId ? ` · Booking ${enquiry.bookingId}` : ""}
                   </p>
                 </article>
               ))}
@@ -3661,39 +3658,11 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h3 className="text-lg font-semibold text-slate-900">Services/prices</h3>
+              <h3 className="text-lg font-semibold text-slate-900">Services and prices</h3>
               <p className="mt-1 text-sm text-slate-600">
                 Add the services customers should see on your public site. Published services appear immediately in the Services section.
               </p>
             </div>
-            <button
-              type="button"
-              className={`${outlineButtonClass} ${smallButtonClass}`}
-              onClick={() => {
-                const tempKey = `draft-${Date.now()}`;
-                setServicesDraft((current) => [
-                  ...current,
-                  {
-                    tempKey,
-                    name: "",
-                    categoryId: "",
-                    description: "",
-                    basePrice: "",
-                    durationMinutes: "",
-                    bufferAfterMinutes: "",
-                    active: true,
-                    sortOrder: String(current.length),
-                    recurringEnabled: false,
-                    recurringIntervals: [],
-                    blockBookingEnabled: false,
-                    blockBookingSuggestedCounts: "",
-                  },
-                ]);
-                setExpandedServiceKey(tempKey);
-              }}
-            >
-              Add service
-            </button>
           </div>
           <div className="mt-3 space-y-3">
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
@@ -3704,19 +3673,29 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     Group services for a cleaner public Services section. Services without a category still display safely.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  className={`${outlineButtonClass} ${smallButtonClass}`}
-                  onClick={() =>
-                    setServiceCategoriesDraft((current) => [
-                      ...current,
-                      { name: "", active: true, sortOrder: String(current.length) },
-                    ])
-                  }
-                >
-                  Add category
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    className={`${outlineButtonClass} ${smallButtonClass}`}
+                    onClick={() => setServiceCategoriesOpen((current) => !current)}
+                  >
+                    {serviceCategoriesOpen ? "Collapse" : "Expand"}
+                  </button>
+                  <button
+                    type="button"
+                    className={`${outlineButtonClass} ${smallButtonClass}`}
+                    onClick={() =>
+                      setServiceCategoriesDraft((current) => [
+                        ...current,
+                        { name: "", active: true, sortOrder: String(current.length) },
+                      ])
+                    }
+                  >
+                    Add category
+                  </button>
+                </div>
               </div>
+              {serviceCategoriesOpen ? (
               <div className="mt-3 space-y-2">
                 {serviceCategoriesDraft.length === 0 ? (
                   <p className="text-xs text-slate-600">No categories yet. Add one if you want to group related services.</p>
@@ -3777,7 +3756,57 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                   </div>
                 ))}
               </div>
+              ) : null}
             </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h4 className="text-sm font-semibold text-slate-900">Services</h4>
+                  <p className="mt-1 text-xs text-slate-600">
+                    Add the bookable services, prices, durations and booking options customers should see.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    className={`${outlineButtonClass} ${smallButtonClass}`}
+                    onClick={() => setServicesOpen((current) => !current)}
+                  >
+                    {servicesOpen ? "Collapse" : "Expand"}
+                  </button>
+                  <button
+                    type="button"
+                    className={`${outlineButtonClass} ${smallButtonClass}`}
+                    onClick={() => {
+                      const tempKey = `draft-${Date.now()}`;
+                      setServicesDraft((current) => [
+                        ...current,
+                        {
+                          tempKey,
+                          name: "",
+                          categoryId: "",
+                          description: "",
+                          basePrice: "",
+                          durationMinutes: "",
+                          bufferAfterMinutes: "",
+                          active: true,
+                          sortOrder: String(current.length),
+                          recurringEnabled: false,
+                          recurringIntervals: [],
+                          blockBookingEnabled: false,
+                          blockBookingSuggestedCounts: "",
+                        },
+                      ]);
+                      setServicesOpen(true);
+                      setExpandedServiceKey(tempKey);
+                    }}
+                  >
+                    Add service
+                  </button>
+                </div>
+              </div>
+              {servicesOpen ? (
+              <div className="mt-3 space-y-3">
             {servicesDraft.length === 0 ? (
               <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
                 <p className="text-sm font-semibold text-slate-900">Add your first service so customers can see what you offer.</p>
@@ -3844,9 +3873,9 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     </select>
                     <span className="mt-1 block text-[11px] font-normal text-slate-600">Save new categories before assigning them.</span>
                   </label>
-                  <label className="text-xs font-semibold text-slate-700">Base price (Â£)
+                  <label className="text-xs font-semibold text-slate-700">Base price (£)
                     <input className="mt-1 w-full max-w-[140px] rounded-md border border-slate-300 px-2 py-1 text-sm" inputMode="decimal" placeholder="35" value={service.basePrice} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, basePrice: event.target.value } : row))} />
-                    <span className="mt-1 block text-[11px] font-normal text-slate-600">Example: Â£35.</span>
+                    <span className="mt-1 block text-[11px] font-normal text-slate-600">Example: £35.</span>
                   </label>
                   <label className="text-xs font-semibold text-slate-700">Duration (minutes)
                     <input className="mt-1 w-full max-w-[140px] rounded-md border border-slate-300 px-2 py-1 text-sm" inputMode="numeric" placeholder="45" value={service.durationMinutes} onChange={(event) => setServicesDraft((current) => current.map((row, i) => i === index ? { ...row, durationMinutes: event.target.value } : row))} />
@@ -3936,6 +3965,9 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
               </div>
               );
             })}
+              </div>
+              ) : null}
+            </div>
           </div>
           <button type="button" className={`mt-4 ${primaryButtonClass} ${smallButtonClass}`} onClick={() => void saveServices()}>
             Save services
@@ -3948,10 +3980,10 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
           <h3 className="text-lg font-semibold text-slate-900">Staff setup</h3>
           <p className="mt-2 text-sm text-slate-600">
             Add team members if customers can choose who they book with, or if you want appointments assigned to your team.
-            Staff access lets active staff open the shared appointment view without full admin permissions.
+            Active staff can help with appointments, customer details, payment status and voucher checks from the staff view.
           </p>
           <p className="mt-1 text-xs text-slate-600">
-            Staff access lets this person open the shared appointment view for your business. Full staff permissions and super-user controls will expand later.
+            Mark someone as a business configuration super-user only if they should help edit setup areas such as services, payments, rota and site settings.
           </p>
           <div className="mt-3 grid gap-6 lg:grid-cols-2">
             <div>
@@ -3977,7 +4009,19 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
             <div>
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold text-slate-900">Staff members</p>
-                <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setStaffDraft((current) => [...current, { firstName: "", lastName: "", roleId: "", displayName: "", roleLabel: "", email: "", phone: "", bio: "", active: true, customerSelectable: false, isSuperUser: false, staffPermissions: defaultStaffPermissions(false), staffAccessEnabled: false, staffAccessCodeExists: false, availableWeekdays: [], notes: "", sortOrder: String(current.length) }])}>Add staff</button>
+                <button
+                  type="button"
+                  className={`${outlineButtonClass} ${smallButtonClass}`}
+                  onClick={() => {
+                    setStaffDraft((current) => [
+                      ...current,
+                      { firstName: "", lastName: "", roleId: "", displayName: "", roleLabel: "", email: "", phone: "", bio: "", active: true, customerSelectable: false, isSuperUser: false, staffPermissions: defaultStaffPermissions(false), staffAccessEnabled: false, staffAccessCodeExists: false, availableWeekdays: [], notes: "", sortOrder: String(current.length) },
+                    ]);
+                    setExpandedStaffKey(null);
+                  }}
+                >
+                  Add staff
+                </button>
               </div>
               <div className="mt-2 space-y-2">
                 {staffDraft.length === 0 ? (
@@ -3986,18 +4030,36 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     <p className="mt-1 text-xs text-slate-600">You can add rota and availability later. This section only creates the tenant-scoped staff list.</p>
                   </div>
                 ) : null}
-                {staffDraft.map((staff, index) => (
-                  <div key={`${staff.id ?? "new"}-${index}`} className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                {staffDraft.map((staff, index) => {
+                  const staffKey = staff.id ?? `new-${index}`;
+                  const staffExpanded = !staff.id || expandedStaffKey === staffKey;
+                  return (
+                  <div key={staffKey} className="rounded-md border border-slate-200 bg-slate-50 p-3">
                     <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                       <div>
                         <p className="text-sm font-semibold text-slate-900">{buildStaffDisplayName(staff) || `Staff member ${index + 1}`}</p>
                         <p className="text-xs text-slate-600">{staff.roleLabel || rolesDraft.find((role) => role.id === staff.roleId)?.label || "Role not set"}</p>
                       </div>
-                      <label className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700">
-                        <input type="checkbox" checked={staff.active} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, active: event.target.checked } : item))} />
-                        Active / public visible
-                      </label>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`rounded-full border px-2 py-1 text-xs font-semibold ${staff.active ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-slate-200 bg-slate-100 text-slate-600"}`}>
+                          {staff.active ? "Active" : "Hidden"}
+                        </span>
+                        {staff.isSuperUser ? (
+                          <span className="rounded-full border border-sky-200 bg-sky-50 px-2 py-1 text-xs font-semibold text-sky-800">Super-user</span>
+                        ) : null}
+                        {staff.id ? (
+                          <button
+                            type="button"
+                            className={`${outlineButtonClass} ${smallButtonClass}`}
+                            onClick={() => setExpandedStaffKey(staffExpanded ? null : staffKey)}
+                          >
+                            {staffExpanded ? "Collapse" : "Edit"}
+                          </button>
+                        ) : null}
+                      </div>
                     </div>
+                    {staffExpanded ? (
+                    <>
                     <div className="grid gap-2 sm:grid-cols-2">
                       <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="First name" value={staff.firstName} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, firstName: event.target.value } : item))} />
                       <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Last name" value={staff.lastName} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, lastName: event.target.value } : item))} />
@@ -4015,6 +4077,10 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                       <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Role / Position if no saved role selected" value={staff.roleLabel} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, roleLabel: event.target.value } : item))} />
                       <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Email" value={staff.email} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, email: event.target.value } : item))} />
                       <input className="rounded-md border border-slate-300 px-2 py-1 text-xs" placeholder="Phone" value={staff.phone} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, phone: event.target.value } : item))} />
+                      <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                        <input type="checkbox" checked={staff.active} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, active: event.target.checked } : item))} />
+                        Active / public visible
+                      </label>
                       <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
                         <input type="checkbox" checked={staff.customerSelectable} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, customerSelectable: event.target.checked } : item))} />
                         Bookable online / customer selectable
@@ -4040,52 +4106,18 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                             }
                           />
                           <span>
-                            Super-user staff access
+                            Business configuration super-user
                             <span className="mt-1 block font-normal text-slate-600">
-                              Standard staff can view the shared diary only. Super-user staff can be granted extra appointment, contact, payment and voucher permissions.
+                              Super-users are trusted to help manage setup areas such as services, pricing, staff, rota, payments and site settings.
                             </span>
                           </span>
                         </label>
-                        {staff.isSuperUser ? (
-                          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                            <label className="flex items-start gap-2 rounded-md border border-emerald-100 bg-emerald-50 px-2 py-2 text-xs text-emerald-950">
-                              <input type="checkbox" checked readOnly className="mt-0.5" />
-                              <span>
-                                <span className="font-semibold">View appointments</span>
-                                <span className="block text-[11px] text-emerald-800">Required for staff appointment access.</span>
-                              </span>
-                            </label>
-                            {STAFF_PERMISSION_OPTIONS.map((option) => (
-                              <label key={option.key} className="flex items-start gap-2 rounded-md border border-slate-200 bg-slate-50 px-2 py-2 text-xs text-slate-700">
-                                <input
-                                  type="checkbox"
-                                  className="mt-0.5"
-                                  checked={staff.staffPermissions[option.key]}
-                                  onChange={(event) =>
-                                    setStaffDraft((current) =>
-                                      current.map((item, i) =>
-                                        i === index
-                                          ? {
-                                              ...item,
-                                              staffPermissions: updateStaffPermission(item.staffPermissions, option.key, event.target.checked),
-                                            }
-                                          : item,
-                                      ),
-                                    )
-                                  }
-                                />
-                                <span>
-                                  <span className="font-semibold text-slate-900">{option.label}</span>
-                                  {option.note ? <span className="block text-[11px] text-slate-500">{option.note}</span> : null}
-                                </span>
-                              </label>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="mt-2 text-[11px] text-slate-600">
-                            Standard staff access hides customer contact details, payment status and appointment actions.
+                        <div className="mt-3 rounded-md border border-emerald-100 bg-emerald-50 p-3 text-xs text-emerald-950">
+                          <p className="font-semibold">Operational staff access is included</p>
+                          <p className="mt-1 text-emerald-800">
+                            Active staff can view appointments, add telephone or walk-in bookings, amend or cancel bookings, mark appointments complete, check payment status, view customer contact details and redeem vouchers where enabled.
                           </p>
-                        )}
+                        </div>
                       </div>
                       <textarea className="rounded-md border border-slate-300 px-2 py-1 text-xs sm:col-span-2" placeholder="Bio/notes (optional)" value={staff.bio || staff.notes} onChange={(event) => setStaffDraft((current) => current.map((item, i) => i === index ? { ...item, bio: event.target.value, notes: event.target.value } : item))} />
                       {staff.id ? (
@@ -4180,8 +4212,11 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                     >
                       {staff.id ? "Hide/archive staff" : "Remove draft"}
                     </button>
+                    </>
+                    ) : null}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>

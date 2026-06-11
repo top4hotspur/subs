@@ -114,8 +114,25 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
           cancellationPolicyNote: settings.cancellationPolicyNote,
         })),
   );
+  const paymentReady = Boolean(
+    settings?.paymentProcessorSetupMode === "MANUAL_RECORDING_ONLY" ||
+      settings?.paymentProcessorSetupMode === "NEED_HELP_SETUP" ||
+      (settings?.paymentProcessorSetupMode === "EXISTING_PROCESSOR" && settings?.paymentProcessorName),
+  );
+  const logoReady = Boolean(settings?.logoUrl);
+  const domainConnected = Boolean(
+    site.provisioningStatus === "LIVE" ||
+      site.domainStatus === "LIVE" ||
+      primaryDomain?.status === "LIVE" ||
+      primaryDomain?.dnsStatus === "DNS_CONFIGURED" ||
+      primaryDomain?.dnsStatus === "VERIFIED",
+  );
 
   const checklist = [
+    {
+      title: "Optional: add logo",
+      status: logoReady ? "Done" : "Ready",
+    },
     {
       title: "Confirm business details",
       status: settings?.businessName && settings?.phone && settings?.email ? "Done" : "Needs setup",
@@ -125,8 +142,12 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
       status: servicesCount > 0 ? "Done" : "Needs setup",
     },
     {
-      title: "Add staff and set staff rota",
-      status: staffRotaReady ? "Done" : "Needs setup",
+      title: "Add staff",
+      status: staffCount > 0 ? "Done" : "Needs setup",
+    },
+    {
+      title: "Set staff rota",
+      status: staffRotaReady ? "Done" : staffCount > 0 ? "Ready" : "Needs setup",
     },
     {
       title: "Set opening hours",
@@ -135,6 +156,10 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
     {
       title: "Set booking/cancellation policy",
       status: policyReady ? "Done" : "Needs setup",
+    },
+    {
+      title: "Set up payment processor",
+      status: paymentReady ? "Done" : "Needs setup",
     },
     {
       title: "Preview public site",
@@ -148,7 +173,9 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
         settings?.phone &&
         settings?.email &&
         openingHoursDone &&
-        staffRotaReady
+        staffRotaReady &&
+        policyReady &&
+        paymentReady
           ? "Done"
           : "Needs setup",
     },
@@ -156,18 +183,47 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
 
   const setupSections = [
     {
-      title: "Business details",
+      group: "Business setup",
+      title: "Business settings",
       summary: settings?.businessName ? "Business identity started" : "Add contact basics below",
     },
     {
-      title: "Services/prices",
+      group: "Business setup",
+      title: "Site appearance",
+      summary: logoReady ? "Logo or appearance started" : "Add logo, homepage image and appearance settings",
+    },
+    {
+      group: "Business setup",
+      title: "Policies / page content / visibility",
+      summary: policyReady ? "Policy/page content started" : "Review policies and public page content",
+    },
+    {
+      group: "Services & bookings",
+      title: "Services and prices",
       summary: servicesCount > 0 ? `${servicesCount} active service(s)` : "Add your first public service below",
     },
     {
+      group: "Services & bookings",
+      title: "Booking settings",
+      summary: "Configure booking preferences below",
+    },
+    {
+      group: "Services & bookings",
+      title: "Payment settings",
+      summary: paymentReady ? "Payment setup choice selected" : "Choose online processor, assisted setup or manual payments",
+    },
+    {
+      group: "Services & bookings",
+      title: "Gift vouchers",
+      summary: "Configure vouchers if you want to sell or redeem them",
+    },
+    {
+      group: "Team & availability",
       title: "Staff setup",
       summary: staffCount > 0 ? `${staffCount} active staff member(s)` : "Add staff or decide staff choice is not needed",
     },
     {
+      group: "Team & availability",
       title: "Opening hours / rota",
       summary: openingHoursDone
         ? staffRotaReady
@@ -176,20 +232,20 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
         : "Set business hours first; staff rota comes next",
     },
     {
-      title: "Breaks and closures",
+      group: "Team & availability",
+      title: "Breaks / closures / holidays",
       summary:
         closureCount + staffLeaveCount > 0
           ? `${closureCount} active closure(s), ${staffLeaveCount} staff leave record(s)`
           : "Optional override dates for closures and staff leave",
     },
-    { title: "Booking settings", summary: "Configure booking preferences below" },
-    { title: "Gift vouchers", summary: "Future voucher setup area" },
-    { title: "Policies", summary: "Edit cancellation and customer policy wording below" },
-    { title: "Page content / visibility", summary: "Edit public page content below" },
-    { title: "Payment settings", summary: "Payment providers, booking payments and refund policy" },
-    { title: "Customer CRM", summary: "Future tenant CRM tooling" },
-    { title: "Preview public site", summary: "Open the tenant preview route in a new tab" },
+    { group: "Customers", title: "Customer CRM", summary: "Customer history, consent and enquiries" },
+    { group: "Customers", title: "Preview public site", summary: "Open the tenant preview route in a new tab" },
   ];
+  const setupGroups = Array.from(new Set(setupSections.map((section) => section.group))).map((group) => ({
+    group,
+    sections: setupSections.filter((section) => section.group === group),
+  }));
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
@@ -206,7 +262,7 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
         <SiteAdminLogoutButton />
       </div>
 
-      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="mt-6 rounded-2xl border border-sky-200 bg-sky-50 p-5 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-semibold text-slate-900">Get your site ready</h2>
           <Link
@@ -220,7 +276,7 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
         </div>
         <div className="mt-4 grid gap-2">
           {checklist.map((item) => (
-            <div key={item.title} className="flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+            <div key={item.title} className="flex items-center justify-between gap-3 rounded-md border border-sky-100 bg-white px-3 py-2 text-sm">
               <span className="font-medium text-slate-900">{item.title}</span>
               <span className={`rounded-full border px-2 py-1 text-xs font-semibold ${getStatusBadgeClass(item.status as ProgressStatus)}`}>
                 {item.status}
@@ -228,10 +284,13 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
             </div>
           ))}
         </div>
+        <p className="mt-3 text-xs text-slate-600">
+          Setup blocks can be hidden from the public site when setup is complete by turning off public setup guidance in Business settings.
+        </p>
       </section>
 
-      <section className="mt-6 rounded-2xl border border-sky-200 bg-sky-50 p-5 shadow-sm">
-        <h2 className="text-xl font-semibold text-slate-900">Domain setup</h2>
+      <section className={`mt-6 rounded-2xl border p-5 shadow-sm ${domainConnected ? "border-emerald-200 bg-emerald-50" : "border-sky-200 bg-sky-50"}`}>
+        <h2 className="text-xl font-semibold text-slate-900">{domainConnected ? "Domain connected" : "Domain setup"}</h2>
         <div className="mt-3 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
           <p><span className="font-semibold">Current preview URL:</span> /sites/{site.slug}</p>
           <p><span className="font-semibold">Requested domain:</span> {requestedDomain ?? "Not set yet"}</p>
@@ -243,7 +302,11 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
               : lifecycleStatusLabel(primaryDomain?.status ?? site.domainStatus)}
           </p>
         </div>
-        <p className="mt-3 text-sm text-slate-700">{domainActionText}</p>
+        <p className="mt-3 text-sm text-slate-700">
+          {domainConnected
+            ? "Your customer domain is connected. We keep the preview route available for support, but no further domain setup is needed here."
+            : domainActionText}
+        </p>
       </section>
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -252,15 +315,17 @@ export default async function SiteAdminPage({ params }: SiteAdminPageProps) {
           Use this as a quick map of the setup areas below. The checklist above is the main progress tracker.
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {setupSections.map((section) => (
-            <article key={section.title} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="text-sm font-semibold text-slate-900">{section.title}</h3>
-                <span className="rounded-full border border-sky-200 bg-sky-50 px-2 py-1 text-[11px] font-semibold text-sky-800">
-                  Open
-                </span>
+          {setupGroups.map((group) => (
+            <article key={group.group} className="rounded-xl border border-sky-100 bg-sky-50 p-4">
+              <h3 className="text-sm font-semibold text-slate-950">{group.group}</h3>
+              <div className="mt-3 space-y-2">
+                {group.sections.map((section) => (
+                  <div key={section.title} className="rounded-lg border border-slate-200 bg-white p-3">
+                    <h4 className="text-sm font-semibold text-slate-900">{section.title}</h4>
+                    <p className="mt-1 text-xs text-slate-600">{section.summary}</p>
+                  </div>
+                ))}
               </div>
-              <p className="mt-1 text-xs text-slate-600">{section.summary}</p>
             </article>
           ))}
         </div>

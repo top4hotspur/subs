@@ -1279,12 +1279,10 @@ Notes:
 10. Confirm guest booking still works in a fresh/private browser session with no customer login.
 11. In `/site-admin/luna-hair-studio`, go to Staff setup and confirm each saved staff member can be standard or super-user.
 12. For a standard staff member, generate/enable staff access and log in at `/site-staff/luna-hair-studio`.
-13. Confirm the standard staff view can see appointments but hides customer phone/email and payment status, and does not show `Mark completed`.
-14. In site-admin, make the same staff member a super-user and enable `Mark appointments completed`, `View customer phone and email`, and `View payment status`.
-15. Save staff, log in again or refresh the staff diary, and confirm contact details, payment status, and mark-completed actions appear.
-16. Use `Mark completed` on an active test booking and confirm the API updates the booking only when the permission is enabled.
-17. Turn off `Mark appointments completed`, refresh the staff diary, and confirm the button is hidden. A direct API call should return `STAFF_PERMISSION_DENIED`.
-18. Confirm staff access still cannot open `/site-admin/[siteSlug]`, platform admin, provisioning controls, payment provider settings, or business settings.
+13. Confirm the standard staff view can see appointments, customer contact details, payment status and operational actions such as mark completed where the route supports them.
+14. In site-admin, make the same staff member a super-user and confirm this is presented as trusted business-configuration access, not as the only way to unlock normal appointment operations.
+15. Save staff, refresh the staff diary, and confirm operational appointment access still works.
+16. Confirm staff access still cannot open `/site-admin/[siteSlug]`, platform admin, provisioning controls, payment provider settings, or business settings unless a future configuration-permission milestone explicitly adds that route.
 
 ## Hosted Smoke Test - Site Domain Go-Live Workflow Update
 
@@ -1800,3 +1798,17 @@ This means AWS/DNS/SSL reaches the app, but app-side statuses still block render
 - Confirm Customer Sites fulfilment progress includes Paid, Site created, Business admin access sent, Site setup started, Domain configured, Site live, Services added, Staff added, and Logo added.
 - In `/site-admin/[siteSlug]`, update Business settings with logo, homepage image URL, and `Show initial setup guidance on public site`. Save and confirm `/sites/[siteSlug]` reflects the guidance toggle/image.
 - On a customer domain such as `fundmyclub.online`, confirm `/admin` and `/api/admin/*` remain blocked/not found. This is intentional and must not be relaxed.
+
+## 2026-06-11 business owner setup UX consolidation
+
+- Open `/site-admin/[siteSlug]` and confirm the setup dashboard groups cards into Business setup, Services & bookings, Team & availability, and Customers.
+- Confirm the `Get your site ready` checklist separates optional logo setup, business details, services, staff, staff rota, opening hours, policy, payment setup, preview, and ready-to-go-live.
+- Confirm the checklist uses a blue setup style and includes guidance that public setup guidance can be hidden from Business settings when the site is ready.
+- Open `Services and prices` and confirm `Service categories` and `Services` are separate collapsible panels. `Add service` should live inside the Services panel, not the section header.
+- Confirm saved service cards stay collapsed until `Edit` is clicked and newly added draft services open for editing.
+- Open `Staff setup` and confirm saved staff cards can collapse/expand. Standard staff copy should say operational access is included for appointments, customer details, payment status and voucher checks.
+- Confirm `Business configuration super-user` is presented as a trusted setup/admin capability, not as the only way to unlock normal staff operations.
+- Open a newly provisioned public site with setup guidance enabled and confirm the guidance shows progress-style next steps for logo, services/prices, staff, opening hours, payment processor and turning guidance off.
+- Turn off `Show initial setup guidance on public site` in Business settings, save, and confirm the public guidance hides even if services are still empty.
+- For a live/domain-connected tenant, confirm the site-admin domain card shows a compact `Domain connected` summary instead of a setup-heavy domain warning.
+- On a customer domain, confirm `/admin` and `/api/admin/*` remain blocked/not found.

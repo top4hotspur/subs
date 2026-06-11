@@ -49,24 +49,24 @@ export type CustomerSiteStaffPermissions = {
 
 export const DEFAULT_STANDARD_STAFF_PERMISSIONS: CustomerSiteStaffPermissions = {
   viewAppointments: true,
-  markCompleted: false,
-  addManualBooking: false,
-  amendBooking: false,
-  cancelBooking: false,
-  viewCustomerContactDetails: false,
-  viewPaymentStatus: false,
-  redeemVouchers: false,
+  markCompleted: true,
+  addManualBooking: true,
+  amendBooking: true,
+  cancelBooking: true,
+  viewCustomerContactDetails: true,
+  viewPaymentStatus: true,
+  redeemVouchers: true,
 };
 
 export const DEFAULT_SUPER_USER_STAFF_PERMISSIONS: CustomerSiteStaffPermissions = {
   viewAppointments: true,
   markCompleted: true,
-  addManualBooking: false,
-  amendBooking: false,
-  cancelBooking: false,
+  addManualBooking: true,
+  amendBooking: true,
+  cancelBooking: true,
   viewCustomerContactDetails: true,
   viewPaymentStatus: true,
-  redeemVouchers: false,
+  redeemVouchers: true,
 };
 
 export type CustomerSiteStaffRoleRecord = {

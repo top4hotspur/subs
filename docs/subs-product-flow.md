@@ -1214,3 +1214,13 @@ Tenant branding V1 is deliberately simple: existing logo upload remains, setup g
 Platform support must not expose stored plaintext passwords. Customer Sites now supports a platform-admin reset/resend handover flow that generates a one-time password, emails it when configured, and shows it once for support handover while only hashed credentials remain stored.
 
 Customer-host security remains unchanged: `/admin` and `/api/admin/*` on customer domains should remain blocked/not found. Platform operations stay on the platform host.
+
+## 2026-06-11 business-owner setup UX consolidation
+
+- Subscriber business admin now presents setup as grouped owner tasks rather than one long list: Business setup, Services & bookings, Team & availability, and Customers.
+- The top onboarding checklist separates optional logo setup from required readiness tasks such as business details, services, staff, staff rota, opening hours, policy, payment setup, preview and ready-to-go-live.
+- Public setup guidance on empty/new tenant sites is controlled only by the `Show initial setup guidance on public site` setting. Business owners can hide it when ready; it no longer reappears solely because services are still empty.
+- Public guidance now behaves like a progress list and points owners back through the platform-hosted business admin route. Customer-domain `/admin` and `/api/admin/*` blocking remains unchanged.
+- `Services and prices` separates Service categories from Services. Both are collapsible; `Add service` lives in the Services panel and saved services remain collapsed until edited.
+- Standard staff now have useful operational staff permissions by default: appointments, manual booking support, amendments/cancellations, customer contact details, payment status and voucher checks. Super-user is framed as trusted business-configuration access rather than normal appointment access.
+- When a tenant domain is already live/connected, the business admin shows a compact domain-connected summary instead of setup-heavy domain action copy.
