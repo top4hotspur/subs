@@ -36,6 +36,18 @@ function normalize(value?: string | null): string | undefined {
   return trimmed ? trimmed.toLowerCase() : undefined;
 }
 
+function pipelineVisibilityForImportRow(row: {
+  status: string;
+  emailEnrichmentStatus?: string | null;
+}): "RESEARCH" | "READY_FOR_CAMPAIGN" | "NO_EMAIL_AVAILABLE" | "DO_NOT_CONTACT" {
+  if (row.emailEnrichmentStatus === "Do not contact") return "DO_NOT_CONTACT";
+  if (row.status === "READY_FOR_CAMPAIGN") return "READY_FOR_CAMPAIGN";
+  if (row.status === "NEEDS_ENRICHMENT" || row.emailEnrichmentStatus === "No Email Available" || row.emailEnrichmentStatus === "Needs manual research") {
+    return "NO_EMAIL_AVAILABLE";
+  }
+  return "RESEARCH";
+}
+
 async function findDuplicateReason(row: {
   extractedBusinessName?: string | null;
   extractedPostcode?: string | null;
@@ -280,7 +292,9 @@ export async function approveSalesLeadImportRows(batchId: string, input: Approve
     const notes = [
       row.notes,
       row.extractedWebsite ? `Website: ${row.extractedWebsite}` : undefined,
+      row.status === "READY_FOR_CAMPAIGN" && !row.extractedEmail ? "Marked ready for campaign in preview, but email is required before email outreach." : undefined,
       !row.extractedEmail ? "Needs email research before email outreach." : undefined,
+      row.status === "NEEDS_ENRICHMENT" ? "Needs enrichment review from import preview." : undefined,
       row.duplicateReason ? `Approved despite duplicate warning: ${row.duplicateReason}` : undefined,
     ]
       .filter(Boolean)
@@ -301,12 +315,7 @@ export async function approveSalesLeadImportRows(batchId: string, input: Approve
         ? Number(row.estimatedCurrentMonthlyCost)
         : undefined,
       marketingStatus: row.emailEnrichmentStatus === "Do not contact" ? "DO_NOT_CONTACT" : "ACTIVE",
-      pipelineVisibility:
-        row.emailEnrichmentStatus === "Do not contact"
-          ? "DO_NOT_CONTACT"
-          : row.emailEnrichmentStatus === "No Email Available"
-            ? "NO_EMAIL_AVAILABLE"
-            : "RESEARCH",
+      pipelineVisibility: pipelineVisibilityForImportRow(row),
       doNotContactReason: row.emailEnrichmentStatus === "Do not contact" ? "Import row marked do not contact." : undefined,
       status: row.extractedEmail ? "NEW" : "FOLLOW_UP",
       source: "url-import",

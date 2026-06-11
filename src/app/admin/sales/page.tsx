@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, Fragment, useEffect, useMemo, useState } from "react";
 import QRCode from "qrcode";
 import { AdminPillNav } from "@/components/admin/admin-pill-nav";
 import { WEBSITE_TEMPLATE_SLUGS } from "@/lib/sites/types";
@@ -60,15 +60,15 @@ const IMPORT_EMAIL_STATUSES = [
   "No Email Available",
   "Do not contact",
 ];
-const IMPORT_ROW_STATUSES = ["PENDING_REVIEW", "NEEDS_ENRICHMENT", "DUPLICATE", "SKIPPED"];
+const IMPORT_ROW_STATUSES = ["PENDING_REVIEW", "NEEDS_ENRICHMENT", "READY_FOR_CAMPAIGN", "DUPLICATE", "SKIPPED"];
 const PIPELINE_VISIBILITIES = ["RESEARCH", "READY_FOR_CAMPAIGN", "HIDDEN", "NO_EMAIL_AVAILABLE", "DO_NOT_CONTACT"];
 const DATASET_FILTERS = [
   "All",
   "Research",
+  "Needs Enrichment",
   "Ready for campaign",
   "Hidden",
   "Do not contact",
-  "No email available",
 ] as const;
 
 const LEADS_CSV_TEMPLATE_HEADERS = [
@@ -256,13 +256,21 @@ function buildImportEmailResearchUrl(row: SalesLeadImportRowDto): string {
 }
 
 function emailResearchStatus(lead: SalesLeadDto): string {
-  if (lead.pipelineVisibility === "NO_EMAIL_AVAILABLE") return "No email available";
+  if (lead.pipelineVisibility === "NO_EMAIL_AVAILABLE") return "Needs enrichment";
   if (lead.marketingStatus === "DO_NOT_CONTACT" || lead.marketingStatus === "UNSUBSCRIBED") return "Do not contact";
   return lead.email ? "Email added manually" : "Email missing";
 }
 
 function buildSourceLinkLabel(leadSource?: string | null): string {
   return leadSource === "Booksy" ? "Booksy profile" : "Open listing";
+}
+
+function pipelineVisibilityLabel(visibility?: string | null): string {
+  if (visibility === "READY_FOR_CAMPAIGN") return "Ready for campaign";
+  if (visibility === "NO_EMAIL_AVAILABLE") return "Needs enrichment";
+  if (visibility === "DO_NOT_CONTACT") return "Do not contact";
+  if (visibility === "HIDDEN") return "Hidden";
+  return "Research";
 }
 
 function buildDataQualityFlags(lead: SalesLeadDto): string[] {
@@ -272,7 +280,7 @@ function buildDataQualityFlags(lead: SalesLeadDto): string[] {
   if (!buildContactDisplay(lead) || buildContactDisplay(lead) === "-") flags.push("Missing contact name");
   if (!lead.phone?.trim()) flags.push("Missing phone");
   if (!lead.postcode?.trim()) flags.push("Missing postcode");
-  if (lead.pipelineVisibility === "NO_EMAIL_AVAILABLE") flags.push("No email available");
+  if (lead.pipelineVisibility === "NO_EMAIL_AVAILABLE") flags.push("Needs enrichment");
   if (lead.marketingStatus === "DO_NOT_CONTACT" || lead.pipelineVisibility === "DO_NOT_CONTACT") flags.push("Do not contact");
   if (lead.events?.some((event) => event.message?.toLowerCase().includes("duplicate"))) flags.push("Possible duplicate");
   return flags;
@@ -309,11 +317,13 @@ export default function AdminSalesPage() {
   const [selectedImportRowIds, setSelectedImportRowIds] = useState<string[]>([]);
   const [leadEmailEdits, setLeadEmailEdits] = useState<Record<string, string>>({});
   const [leadDatasetEdits, setLeadDatasetEdits] = useState<Record<string, Partial<SalesLeadDto>>>({});
+  const [expandedDatasetLeadIds, setExpandedDatasetLeadIds] = useState<Record<string, boolean>>({});
   const [datasetFilter, setDatasetFilter] = useState<(typeof DATASET_FILTERS)[number]>("All");
   const [openSections, setOpenSections] = useState({
     leadImport: true,
     allImportRows: false,
     dataset: true,
+    addLead: false,
     templates: false,
     campaigns: true,
     pricing: false,
@@ -383,10 +393,10 @@ export default function AdminSalesPage() {
     const visibilityByFilter: Record<(typeof DATASET_FILTERS)[number], string | null> = {
       All: null,
       Research: "RESEARCH",
+      "Needs Enrichment": "NO_EMAIL_AVAILABLE",
       "Ready for campaign": "READY_FOR_CAMPAIGN",
       Hidden: "HIDDEN",
       "Do not contact": "DO_NOT_CONTACT",
-      "No email available": "NO_EMAIL_AVAILABLE",
     };
     const visibility = visibilityByFilter[datasetFilter];
     return visibility ? importedDatasetLeads.filter((lead) => lead.pipelineVisibility === visibility) : importedDatasetLeads;
@@ -797,6 +807,10 @@ export default function AdminSalesPage() {
     setLeadDatasetEdits((current) => ({ ...current, [leadId]: { ...current[leadId], ...patch } }));
   }
 
+  function toggleDatasetLeadDetails(leadId: string) {
+    setExpandedDatasetLeadIds((current) => ({ ...current, [leadId]: !current[leadId] }));
+  }
+
   async function saveDatasetLead(lead: SalesLeadDto) {
     setError(null);
     setMessage(null);
@@ -821,6 +835,7 @@ export default function AdminSalesPage() {
       industrySlug: draft.industrySlug || undefined,
       currentProvider: draft.currentProvider || undefined,
       estimatedCurrentMonthlyCost: draft.estimatedCurrentMonthlyCost ? Number(draft.estimatedCurrentMonthlyCost) : null,
+      notes: draft.notes || undefined,
       pipelineVisibility: draft.pipelineVisibility,
       marketingStatus: draft.pipelineVisibility === "DO_NOT_CONTACT" ? "DO_NOT_CONTACT" : draft.marketingStatus,
     });
@@ -1010,9 +1025,19 @@ export default function AdminSalesPage() {
       setError("Select at least one import row to approve.");
       return;
     }
+    const rowsToSave = activePreviewRows.filter((row) => selectedImportRowIds.includes(row.id));
+    const savedRowIds: string[] = [];
+    for (const row of rowsToSave) {
+      const savedRow = await saveImportRow(row);
+      if (savedRow) savedRowIds.push(savedRow.id);
+    }
+    if (savedRowIds.length === 0) {
+      setError("No selected rows could be saved before dataset import.");
+      return;
+    }
     const result = await approveBackendSalesLeadImportRows(
       activeImportBatch.id,
-      selectedImportRowIds,
+      savedRowIds,
       importForm.approveDuplicates,
     );
     if (!result.ok) {
@@ -1065,13 +1090,18 @@ export default function AdminSalesPage() {
       {message ? <p className="mt-2 text-sm text-emerald-700">{message}</p> : null}
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+        <button type="button" className="flex w-full items-start justify-between gap-3 text-left" onClick={() => toggleSection("leadImport")}>
           <div>
             <h2 className="text-lg font-semibold text-slate-900">Lead Import &amp; Enrichment</h2>
             <p className="mt-1 max-w-3xl text-sm text-slate-600">
               Paste search/profile URLs and we&apos;ll prepare visible lead data for review. Missing contact details can be enriched from public business websites or marked for manual research.
             </p>
           </div>
+          <span className="text-sm text-slate-600">{openSections.leadImport ? "Hide" : "Show"}</span>
+        </button>
+        {openSections.leadImport ? (
+        <>
+        <div className="mt-3 flex justify-end">
           <label className={`${outlineButtonClass} ${smallButtonClass} cursor-pointer`}>
             Upload URL list
             <input
@@ -1292,10 +1322,10 @@ export default function AdminSalesPage() {
                       <td className="sticky right-0 min-w-36 bg-white px-2 py-2 shadow-[-6px_0_8px_-8px_rgba(15,23,42,0.35)]">
                         <div className="flex flex-col gap-1">
                           <button className={`${primaryButtonClass} ${smallButtonClass}`} onClick={() => void saveImportRowToDataset(row)} disabled={row.status === "APPROVED"}>
-                            Save to dataset
+                            Save row to dataset
                           </button>
                           <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void markImportRowForEmailResearch(row)} disabled={row.status === "APPROVED"}>
-                            Mark for email research
+                            Needs enrichment
                           </button>
                           <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void skipImportRow(row)} disabled={row.status === "APPROVED" || row.status === "SKIPPED"}>
                             Skip
@@ -1367,7 +1397,7 @@ export default function AdminSalesPage() {
                               value={row.status}
                               onChange={(event) => replaceImportRow({ ...row, status: event.target.value })}
                             >
-                              {["PENDING_REVIEW", "NEEDS_ENRICHMENT", "APPROVED", "SKIPPED"].map((status) => <option key={status} value={status}>{status}</option>)}
+                              {["PENDING_REVIEW", "NEEDS_ENRICHMENT", "READY_FOR_CAMPAIGN", "APPROVED", "SKIPPED"].map((status) => <option key={status} value={status}>{status}</option>)}
                             </select>
                           </td>
                           <td className="min-w-60 px-2 py-2">
@@ -1391,13 +1421,22 @@ export default function AdminSalesPage() {
             </div>
           </div>
         ) : null}
+        </>
+        ) : null}
       </section>
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Imported lead dataset</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Review imported leads, fill missing contact details, and choose which records are ready for campaign use.
-        </p>
+        <button type="button" className="flex w-full items-start justify-between gap-3 text-left" onClick={() => toggleSection("dataset")}>
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">Imported lead dataset</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Review imported leads, fill missing contact details, and choose which records are ready for campaign use.
+            </p>
+          </div>
+          <span className="text-sm text-slate-600">{openSections.dataset ? "Hide" : "Show"}</span>
+        </button>
+        {openSections.dataset ? (
+        <>
         <div className="mt-3 flex flex-wrap gap-2">
           {DATASET_FILTERS.map((filter) => (
             <button
@@ -1409,21 +1448,14 @@ export default function AdminSalesPage() {
             </button>
           ))}
         </div>
-        <div className="mt-3 overflow-auto">
+        <div className="mt-3 overflow-x-auto">
           <table className="min-w-full text-xs">
             <thead>
               <tr className="border-b border-slate-200 text-left">
                 <th className="px-2 py-2">Business</th>
-                <th className="px-2 py-2">Source/profile link</th>
-                <th className="px-2 py-2">Website</th>
-                <th className="px-2 py-2">Contact name</th>
-                <th className="px-2 py-2">Email</th>
-                <th className="px-2 py-2">Phone</th>
-                <th className="px-2 py-2">Postcode/location</th>
+                <th className="px-2 py-2">Contact/email status</th>
+                <th className="px-2 py-2">Location</th>
                 <th className="px-2 py-2">Industry</th>
-                <th className="px-2 py-2">Provider</th>
-                <th className="px-2 py-2">Est £/month</th>
-                <th className="px-2 py-2">Missing fields / data quality</th>
                 <th className="px-2 py-2">Pipeline visibility</th>
                 <th className="px-2 py-2">Actions</th>
               </tr>
@@ -1431,7 +1463,7 @@ export default function AdminSalesPage() {
             <tbody>
               {filteredImportedDatasetLeads.length === 0 ? (
                 <tr>
-                  <td className="px-2 py-4 text-slate-600" colSpan={13}>
+                  <td className="px-2 py-4 text-slate-600" colSpan={6}>
                     No imported leads match this filter. Save import preview rows to build the research dataset.
                   </td>
                 </tr>
@@ -1439,73 +1471,86 @@ export default function AdminSalesPage() {
                 filteredImportedDatasetLeads.map((lead) => {
                   const draft = getDatasetDraft(lead);
                   const flags = buildDataQualityFlags(draft);
+                  const detailsOpen = expandedDatasetLeadIds[lead.id] ?? false;
                   return (
-                    <tr key={lead.id} className="border-b border-slate-100 align-top">
-                      <td className="min-w-44 px-2 py-2">
-                        <input className="w-full rounded border border-slate-300 px-2 py-1 text-xs" value={draft.businessName ?? ""} onChange={(event) => editDatasetLead(lead.id, { businessName: event.target.value })} />
-                      </td>
-                      <td className="px-2 py-2">
-                        {draft.sourceUrl ? (
-                          <a className="underline" href={draft.sourceUrl} target="_blank" rel="noreferrer">
-                            {buildSourceLinkLabel(draft.leadSource)}
-                          </a>
-                        ) : "-"}
-                      </td>
-                      <td className="min-w-36 px-2 py-2">
-                        <input className="w-full rounded border border-slate-300 px-2 py-1 text-xs" placeholder="Website" value={draft.sourceUrl ?? ""} onChange={(event) => editDatasetLead(lead.id, { sourceUrl: event.target.value })} />
-                      </td>
-                      <td className="min-w-36 px-2 py-2">
-                        <input className="w-full rounded border border-slate-300 px-2 py-1 text-xs" placeholder="Contact" value={draft.contactName ?? buildContactDisplay(draft).replace("-", "")} onChange={(event) => editDatasetLead(lead.id, { contactName: event.target.value })} />
-                      </td>
-                      <td className="min-w-52 px-2 py-2">
-                        <input className="w-full rounded border border-slate-300 px-2 py-1 text-xs" placeholder="Email" value={draft.email ?? ""} onChange={(event) => editDatasetLead(lead.id, { email: event.target.value })} onBlur={() => editDatasetLead(lead.id, { email: normalizeEmailInput(String(draft.email ?? "")) })} />
-                        <a className={`mt-1 inline-flex ${outlineButtonClass} ${smallButtonClass}`} href={buildEmailResearchUrl(draft)} target="_blank" rel="noreferrer">Find email</a>
-                      </td>
-                      <td className="min-w-32 px-2 py-2">
-                        <input className="w-full rounded border border-slate-300 px-2 py-1 text-xs" placeholder="Phone" value={draft.phone ?? ""} onChange={(event) => editDatasetLead(lead.id, { phone: event.target.value })} />
-                      </td>
-                      <td className="min-w-44 px-2 py-2">
-                        <input className="w-full rounded border border-slate-300 px-2 py-1 text-xs" placeholder="Postcode" value={draft.postcode ?? ""} onChange={(event) => editDatasetLead(lead.id, { postcode: event.target.value })} />
-                        <input className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-xs" placeholder="City/town" value={draft.cityTown ?? ""} onChange={(event) => editDatasetLead(lead.id, { cityTown: event.target.value })} />
-                      </td>
-                      <td className="min-w-36 px-2 py-2">
-                        <select className="w-full rounded border border-slate-300 px-2 py-1 text-xs" value={draft.industrySlug ?? ""} onChange={(event) => editDatasetLead(lead.id, { industrySlug: event.target.value })}>
-                          <option value="">Industry</option>
-                          {WEBSITE_TEMPLATE_SLUGS.map((slug) => <option key={slug} value={slug}>{formatIndustryLabel(slug)}</option>)}
-                        </select>
-                      </td>
-                      <td className="min-w-36 px-2 py-2">
-                        <input className="w-full rounded border border-slate-300 px-2 py-1 text-xs" value={draft.currentProvider ?? ""} onChange={(event) => editDatasetLead(lead.id, { currentProvider: event.target.value })} />
-                      </td>
-                      <td className="min-w-24 px-2 py-2">
-                        <input className="w-full rounded border border-slate-300 px-2 py-1 text-xs" value={draft.estimatedCurrentMonthlyCost ?? ""} onChange={(event) => editDatasetLead(lead.id, { estimatedCurrentMonthlyCost: event.target.value })} />
-                      </td>
-                      <td className="min-w-44 px-2 py-2">{flags.length > 0 ? flags.join(", ") : "Complete enough for review"}</td>
-                      <td className="min-w-44 px-2 py-2">
-                        <select className="w-full rounded border border-slate-300 px-2 py-1 text-xs" value={draft.pipelineVisibility ?? "RESEARCH"} onChange={(event) => editDatasetLead(lead.id, { pipelineVisibility: event.target.value })}>
-                          {PIPELINE_VISIBILITIES.map((visibility) => <option key={visibility} value={visibility}>{visibility}</option>)}
-                        </select>
-                      </td>
-                      <td className="min-w-40 px-2 py-2">
-                        <div className="flex flex-col gap-1">
-                          <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void saveDatasetLead(lead)}>Save</button>
-                          <button className={`${primaryButtonClass} ${smallButtonClass}`} onClick={() => void setLeadPipelineVisibility(lead, "READY_FOR_CAMPAIGN")}>Show in campaigns</button>
-                          <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void setLeadPipelineVisibility(lead, "HIDDEN")}>Hide from campaigns</button>
-                          <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void setLeadPipelineVisibility(lead, "NO_EMAIL_AVAILABLE")}>No email available</button>
-                          <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void setLeadPipelineVisibility(lead, "DO_NOT_CONTACT")}>Do not contact</button>
-                        </div>
-                      </td>
-                    </tr>
+                    <Fragment key={lead.id}>
+                      <tr className="border-b border-slate-100 align-top">
+                        <td className="w-64 px-2 py-2">
+                          <input className="w-full rounded border border-slate-300 px-2 py-1 text-xs" value={draft.businessName ?? ""} onChange={(event) => editDatasetLead(lead.id, { businessName: event.target.value })} />
+                          {draft.sourceUrl ? (
+                            <a className="mt-1 inline-flex text-slate-600 underline" href={draft.sourceUrl} target="_blank" rel="noreferrer">
+                              {buildSourceLinkLabel(draft.leadSource)}
+                            </a>
+                          ) : null}
+                        </td>
+                        <td className="w-56 px-2 py-2">
+                          <p>{draft.email?.trim() || "Email missing"}</p>
+                          <p className="mt-1 text-slate-600">{buildContactDisplay(draft)}</p>
+                          {draft.pipelineVisibility === "NO_EMAIL_AVAILABLE" ? <p className="mt-1 font-semibold text-amber-700">Needs enrichment</p> : null}
+                        </td>
+                        <td className="w-44 px-2 py-2">{draft.postcode ?? "-"} / {draft.cityTown ?? "-"}</td>
+                        <td className="w-40 px-2 py-2">{draft.industrySlug ? formatIndustryLabel(draft.industrySlug) : "-"}</td>
+                        <td className="w-44 px-2 py-2">
+                          <select className="w-full rounded border border-slate-300 px-2 py-1 text-xs" value={draft.pipelineVisibility ?? "RESEARCH"} onChange={(event) => editDatasetLead(lead.id, { pipelineVisibility: event.target.value })}>
+                            {PIPELINE_VISIBILITIES.map((visibility) => <option key={visibility} value={visibility}>{pipelineVisibilityLabel(visibility)}</option>)}
+                          </select>
+                          <p className="mt-1 text-slate-600">{flags.length > 0 ? flags.join(", ") : "Complete enough for review"}</p>
+                        </td>
+                        <td className="w-48 px-2 py-2">
+                          <div className="flex flex-wrap gap-1">
+                            <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void saveDatasetLead(lead)}>Save</button>
+                            <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => toggleDatasetLeadDetails(lead.id)}>{detailsOpen ? "Hide details" : "Details"}</button>
+                            <a className={`${outlineButtonClass} ${smallButtonClass}`} href={buildEmailResearchUrl(draft)} target="_blank" rel="noreferrer">Find email</a>
+                            {draft.pipelineVisibility === "READY_FOR_CAMPAIGN" ? (
+                              <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void setLeadPipelineVisibility(lead, "RESEARCH")}>Move to research</button>
+                            ) : (
+                              <button className={`${primaryButtonClass} ${smallButtonClass}`} onClick={() => void setLeadPipelineVisibility(lead, "READY_FOR_CAMPAIGN")}>Mark ready</button>
+                            )}
+                            <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void setLeadPipelineVisibility(lead, "NO_EMAIL_AVAILABLE")}>Needs enrichment</button>
+                            <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void setLeadPipelineVisibility(lead, "HIDDEN")}>Hide</button>
+                            <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void setLeadPipelineVisibility(lead, "DO_NOT_CONTACT")}>Do not contact</button>
+                          </div>
+                        </td>
+                      </tr>
+                      {detailsOpen ? (
+                        <tr className="border-b border-slate-100 bg-slate-50 align-top">
+                          <td className="px-2 py-3" colSpan={6}>
+                            <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
+                              <input className="rounded border border-slate-300 px-2 py-1 text-xs" placeholder="Website/source URL" value={draft.sourceUrl ?? ""} onChange={(event) => editDatasetLead(lead.id, { sourceUrl: event.target.value })} />
+                              <input className="rounded border border-slate-300 px-2 py-1 text-xs" placeholder="Contact name" value={draft.contactName ?? buildContactDisplay(draft).replace("-", "")} onChange={(event) => editDatasetLead(lead.id, { contactName: event.target.value })} />
+                              <input className="rounded border border-slate-300 px-2 py-1 text-xs" placeholder="Email" value={draft.email ?? ""} onChange={(event) => editDatasetLead(lead.id, { email: event.target.value })} onBlur={() => editDatasetLead(lead.id, { email: normalizeEmailInput(String(draft.email ?? "")) })} />
+                              <input className="rounded border border-slate-300 px-2 py-1 text-xs" placeholder="Phone" value={draft.phone ?? ""} onChange={(event) => editDatasetLead(lead.id, { phone: event.target.value })} />
+                              <input className="rounded border border-slate-300 px-2 py-1 text-xs" placeholder="Postcode" value={draft.postcode ?? ""} onChange={(event) => editDatasetLead(lead.id, { postcode: event.target.value })} />
+                              <input className="rounded border border-slate-300 px-2 py-1 text-xs" placeholder="City/town" value={draft.cityTown ?? ""} onChange={(event) => editDatasetLead(lead.id, { cityTown: event.target.value })} />
+                              <select className="rounded border border-slate-300 px-2 py-1 text-xs" value={draft.industrySlug ?? ""} onChange={(event) => editDatasetLead(lead.id, { industrySlug: event.target.value })}>
+                                <option value="">Industry</option>
+                                {WEBSITE_TEMPLATE_SLUGS.map((slug) => <option key={slug} value={slug}>{formatIndustryLabel(slug)}</option>)}
+                              </select>
+                              <input className="rounded border border-slate-300 px-2 py-1 text-xs" placeholder="Provider" value={draft.currentProvider ?? ""} onChange={(event) => editDatasetLead(lead.id, { currentProvider: event.target.value })} />
+                              <input className="rounded border border-slate-300 px-2 py-1 text-xs" placeholder="Estimated monthly cost" value={draft.estimatedCurrentMonthlyCost ?? ""} onChange={(event) => editDatasetLead(lead.id, { estimatedCurrentMonthlyCost: event.target.value })} />
+                              <textarea className="min-h-16 rounded border border-slate-300 px-2 py-1 text-xs md:col-span-2 lg:col-span-3" placeholder="Notes/source context" value={draft.notes ?? ""} onChange={(event) => editDatasetLead(lead.id, { notes: event.target.value })} />
+                            </div>
+                          </td>
+                        </tr>
+                      ) : null}
+                    </Fragment>
                   );
                 })
               )}
             </tbody>
           </table>
         </div>
+        </>
+        ) : null}
       </section>
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Add lead</h2>
+        <button type="button" className="flex w-full items-center justify-between text-left" onClick={() => toggleSection("addLead")}>
+          <h2 className="text-lg font-semibold text-slate-900">Add lead</h2>
+          <span className="text-sm text-slate-600">{openSections.addLead ? "Hide" : "Show"}</span>
+        </button>
+        {openSections.addLead ? (
+        <>
         <div className="mt-3 grid gap-2 sm:grid-cols-3">
           <input className="rounded border border-slate-300 px-2 py-2 text-sm" placeholder="Business name *" value={form.businessName} onChange={(e) => setForm((c) => ({ ...c, businessName: e.target.value }))} />
           <select className="rounded border border-slate-300 px-2 py-2 text-sm" value={form.industrySlug} onChange={(e) => setForm((c) => ({ ...c, industrySlug: e.target.value }))}>
@@ -1549,6 +1594,8 @@ export default function AdminSalesPage() {
         <button className={`mt-2 ${primaryButtonClass} ${smallButtonClass}`} onClick={() => void addLead()}>
           Add lead
         </button>
+        </>
+        ) : null}
       </section>
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

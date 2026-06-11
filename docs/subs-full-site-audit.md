@@ -202,7 +202,7 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 ## 12. 2026-06-11 Sales Import And Makeup Update
 - Sales import now keeps active preview rows compact, hides skipped/approved rows from the active table, and preserves skipped rows in a collapsed recovery table.
 - Manual email research remains human-reviewed only: Google links open public search in a new tab, with no Google scraping, no hidden/private email scraping, and no campaign sending from import.
-- Missing-email and `NO_EMAIL_AVAILABLE` imported leads are excluded from Campaign Builder until an admin adds a valid email, keeps marketing status active, and marks the lead ready for campaigns.
+- Missing-email and `Needs Enrichment` imported leads are excluded from Campaign Builder until an admin adds a valid email, keeps marketing status active, and marks the lead ready for campaigns.
 - `makeup` is now covered by the generated industry/demo/setup route family and sits in Hair, Beauty & Wellness.
 5. Should platform-level “Contact us” be email-only first, or include a minimal persisted lead form?
 ## P0 conversion cleanup applied (2026-05-26)
@@ -313,9 +313,10 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - Missing-email leads stay ineligible for email campaigns until an email is saved and suppression status allows contact.
 
 ## P1 sales dataset/campaign separation applied (2026-06-11)
-- Imported leads now land in a research dataset first, with compact source/profile links and inline editing for contact and provider fields.
-- `pipelineVisibility` separates RESEARCH/HIDDEN/DO_NOT_CONTACT leads from `READY_FOR_CAMPAIGN` candidates.
-- Campaign Builder only shows leads explicitly visible to campaigns, while imported leads require a deliberate `Show in campaigns` action.
+- Imported leads now land in a compact research dataset first, with source/profile links on the summary row and an expandable details area for website, contact, email, phone, postcode, city/town, provider, estimated cost and notes.
+- `pipelineVisibility` separates RESEARCH/NO_EMAIL_AVAILABLE-as-Needs-Enrichment/HIDDEN/DO_NOT_CONTACT leads from `READY_FOR_CAMPAIGN` candidates.
+- Import preview supports `READY_FOR_CAMPAIGN`; Campaign Builder still only shows active leads with a valid email, while imported leads can be promoted with `Mark ready`.
+- Lead Import & Enrichment, Imported lead dataset, and Add lead are collapsible; import and dataset default open, while Add lead defaults collapsed.
 - Lower sales sections are collapsible so import/research work is easier to scan without removing existing provider/template functionality.
 
 ## 2026-05-30 P1 follow-up: business admin settings visibility

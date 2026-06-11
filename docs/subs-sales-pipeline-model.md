@@ -27,7 +27,7 @@
 ## URL import and enrichment preview
 - `/admin/sales` includes a `Lead Import & Enrichment` section for pasted or uploaded source URLs, one URL per line.
 - The workflow creates `SalesLeadImportBatch` and `SalesLeadImportRow` preview records before anything is saved into `SalesLead`.
-- URL import is review-first: rows can be edited, skipped, marked for email research, or saved into the imported lead dataset.
+- URL import is review-first: rows can be edited, skipped, marked as needing enrichment, marked ready for campaign review, or saved into the imported lead dataset.
 - Source/profile URLs are stored in data but rendered as compact links, not full table text.
 - Booksy URLs seed leadSource `Booksy`, currentProvider `Booksy`, and estimatedCurrentMonthlyCost `40`.
 - Booksy search URLs now attempt a single public HTML fetch of the clean path, parse visible JSON-LD listing data when exposed, and create one preview row per visible listing.
@@ -42,19 +42,20 @@
 - The Google link is a human research shortcut only; the app does not scrape Google results or automate email discovery.
 - Admins manually verify and paste public business contact emails into the inline email field, then save directly from the candidate table.
 - Saved emails are trimmed, lower-cased and checked with a basic email format validation before updating `SalesLead.email`.
-- Email status is UI-derived in this phase: no email means `Email missing`; an email present means `Email added manually`; `NO_EMAIL_AVAILABLE` shows that an admin checked and found no public business email; suppressed leads show `Do not contact`.
-- Missing-email and `NO_EMAIL_AVAILABLE` leads remain ineligible for email campaign sending until an email is saved, marketing status allows contact, and the lead is marked ready for campaigns.
+- Email status is UI-derived in this phase: no email means `Email missing`; an email present means `Email added manually`; `NO_EMAIL_AVAILABLE` is displayed as `Needs enrichment`; suppressed leads show `Do not contact`.
+- Missing-email and `Needs enrichment` leads remain ineligible for email campaign sending until an email is saved, marketing status allows contact, and the lead is marked ready for campaigns.
 
 ## Imported lead dataset and campaign visibility
 - Active import preview hides `SKIPPED` and already approved rows; the collapsed `Skipped / all imported rows` section keeps them reviewable so admins can restore or save status changes without deleting import evidence.
-- Preview row actions use `Save to dataset`; bulk actions use `Save selected to dataset`.
+- Preview row actions use row-level `Save row to dataset`; bulk actions use `Save selected to dataset`.
 - Saved import rows create `SalesLead` records in the imported lead dataset with `pipelineVisibility = RESEARCH` by default.
-- Rows marked `No Email Available` create leads with `pipelineVisibility = NO_EMAIL_AVAILABLE`; this is not the same as do-not-contact and does not imply phone/postal suppression.
+- Rows marked `NEEDS_ENRICHMENT`, `Needs manual research`, or legacy `No Email Available` create leads displayed under `Needs Enrichment` using the existing `pipelineVisibility = NO_EMAIL_AVAILABLE` backing value; this is not the same as do-not-contact and does not imply phone/postal suppression.
+- Rows marked `READY_FOR_CAMPAIGN` create leads with `pipelineVisibility = READY_FOR_CAMPAIGN`; campaign eligibility still requires active marketing status and a valid email.
 - `SalesLead.pipelineVisibility` values are `RESEARCH`, `READY_FOR_CAMPAIGN`, `HIDDEN`, `NO_EMAIL_AVAILABLE`, and `DO_NOT_CONTACT`.
 - Existing leads default to `READY_FOR_CAMPAIGN` for compatibility with the pre-existing Campaign Builder.
-- Campaign Builder only shows leads marked `READY_FOR_CAMPAIGN` with active marketing status and a valid email present; imported leads must be explicitly promoted with `Show in campaigns`.
-- The dataset table flags missing email, contact name, phone, postcode, business name, do-not-contact state and possible duplicate context.
-- Template editor, Campaign Builder, provider pricing, and suppression sections are collapsible to keep the sales page usable.
+- Campaign Builder only shows leads marked `READY_FOR_CAMPAIGN` with active marketing status and a valid email present; imported leads can be explicitly promoted with `Mark ready`.
+- The dataset table uses a compact row for business, contact/email status, location, industry, visibility and actions, with an expandable details area for website, contact, email, phone, postcode, city/town, provider, estimated cost and notes.
+- Lead Import & Enrichment, Imported lead dataset, Add lead, Template editor, Campaign Builder, provider pricing, and suppression sections are collapsible to keep the sales page usable. Lead Import and Dataset default open; Add lead defaults collapsed.
 
 ## Duplicate detection rules
 - Primary: same postcode + same industrySlug

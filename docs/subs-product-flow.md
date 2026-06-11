@@ -168,8 +168,8 @@ Still mock for infrastructure:
 ## 2026-06-11 makeup template and sales import tidy
 - `makeup` is now a Hair, Beauty & Wellness template with `/makeup`, `/demo/makeup`, `/setup/makeup`, and `/demo/makeup/admin` routes generated from `WEBSITE_TEMPLATE_SLUGS`.
 - Demo business is `Glow Makeup Studio` with makeup services for bridal, occasion, prom, trials, photoshoots, and group bookings.
-- `/admin/sales` import preview now hides skipped/approved rows from the active table, keeps them in a collapsed recovery table, and saves individual rows via `Save to dataset`.
-- Imported lead dataset filters now separate research, ready, hidden, do-not-contact, and no-email-available leads.
+- `/admin/sales` import preview now hides skipped/approved rows from the active table, keeps them in a collapsed recovery table, and saves individual rows via row-level `Save row to dataset`.
+- Imported lead dataset filters now separate research, needs-enrichment, ready, hidden, and do-not-contact leads.
 - Manual Google email research remains human-reviewed only: no Google scraping, no hidden/private email scraping, and no campaign sending from import.
 
 ## Platform vs site settings distinction
@@ -1086,7 +1086,7 @@ FAQ copy:
 ## 2026-06-03 homepage and sales page visual polish
 - Homepage hero pricing helper now reads only `Only ?149 setup + ?30/month.`
 - Homepage value section heading now reads `Fully managed, feature rich website to help grow your business`.
-- Business type category colours remain distinct but now use a premium muted palette: Soft Blush, Muted Sage, Warm Sand and Slate Lavender.
+- Business type category colours remain distinct but now use a premium muted palette: Hair, Beauty & Wellness uses the neutral Slate Lavender treatment, Home Services uses Muted Sage, Transport uses Warm Sand, and Learning uses Soft Blush.
 - Homepage `How it works` now uses a connected stepped flow/timeline with extra step detail revealed on hover/focus and visible on mobile. Step 3 is `Place order`; Step 5 is `Customise and go live`.
 - Dark CTA panels render the secondary `View example demo` action with the same readable blue treatment as the primary action.
 - Industry sales pages keep `What happens after you subscribe?` and now show the four onboarding steps as a visual process flow instead of static tiles.

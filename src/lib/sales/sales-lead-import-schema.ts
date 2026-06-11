@@ -7,6 +7,7 @@ const nullableText = z.string().trim().min(1).optional().nullable();
 export const salesLeadImportRowStatusSchema = z.enum([
   "PENDING_REVIEW",
   "APPROVED",
+  "READY_FOR_CAMPAIGN",
   "SKIPPED",
   "NEEDS_ENRICHMENT",
   "DUPLICATE",

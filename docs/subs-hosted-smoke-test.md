@@ -624,7 +624,7 @@ olePrice:<role> columns accepted
 ## Homepage and industry sales polish smoke checks (2026-06-03)
 1. Open `/` and confirm the hero pricing helper reads exactly `Only ?149 setup + ?30/month.`
 2. Confirm the value section heading reads `Fully managed, feature rich website to help grow your business`.
-3. Confirm business type category tabs/cards use the premium muted palette: Soft Blush for Hair/Beauty, Muted Sage for Home Services, Warm Sand for Transport, and Slate Lavender for Learning.
+3. Confirm business type category tabs/cards use the premium muted palette: Slate Lavender for Hair/Beauty, Muted Sage for Home Services, Warm Sand for Transport, and Soft Blush for Learning.
 4. Confirm selected category state is still obvious and Window Cleaning uses the Muted Sage Home Services treatment.
 5. Confirm homepage `How it works` is a connected flow/timeline rather than plain tile cards.
 6. Confirm Step 3 reads `Place order` and Step 5 reads `Customise and go live`.
@@ -652,16 +652,17 @@ olePrice:<role> columns accepted
 6. Confirm sponsored listings are skipped when detectable and the message reports `Skipped Y sponsored listings.`; if not detectable, rows note `Sponsored status: Unknown`.
 7. Confirm Booksy emails are not scraped; missing email remains editable/manual and `Find email` opens Google research.
 8. Edit business/contact/location fields, save the row, and confirm duplicate warning appears when postcode+industry, business/postcode, email, phone, or source URL matches an existing SalesLead.
-9. Use `Mark for email research` on a row without email and confirm status/email enrichment move to manual research.
-10. Save a non-duplicate row with `Save to dataset` and confirm a SalesLead is created with sourceUrl/profileUrl, leadSource, currentProvider, cost, address/postcode/city, phone/email when present, and notes.
+9. Use `Needs enrichment` on a row without email and confirm status/email enrichment move to manual research.
+10. Save a non-duplicate row with row-level `Save row to dataset` and confirm a SalesLead is created with sourceUrl/profileUrl, leadSource, currentProvider, cost, address/postcode/city, phone/email when present, and notes.
 11. Confirm the saved imported lead appears in `Imported lead dataset` with pipeline visibility `RESEARCH` and does not appear in Campaign Builder yet.
-12. Mark a row `No Email Available`, save it to the dataset, and confirm the lead is filtered under `No email available` and excluded from Campaign Builder.
-13. In `Imported lead dataset`, edit email/contact/phone/postcode/provider/cost inline and save.
-14. Click `Show in campaigns` and confirm the lead appears in Campaign Builder only after visibility becomes `READY_FOR_CAMPAIGN`.
-15. Confirm `Hide from campaigns` and `Do not contact` remove/suppress it from Campaign Builder.
-16. Confirm duplicate rows are not silently imported; they require either Skip or explicit duplicate save.
-17. Confirm a blocked/no-listing Booksy HTML response falls back to a manual-review placeholder message.
-18. Confirm the compliance reminder is visible and no campaign send occurs from the import workflow.
+12. Mark a row `NEEDS_ENRICHMENT`, save it to the dataset, and confirm the lead is filtered under `Needs Enrichment` and excluded from Campaign Builder.
+13. Mark a row `READY_FOR_CAMPAIGN`, save it to the dataset, and confirm campaign eligibility still requires a valid email and active marketing status.
+14. In `Imported lead dataset`, expand details, edit email/contact/phone/postcode/provider/cost/notes, and save.
+15. Click `Mark ready` and confirm the lead appears in Campaign Builder only after visibility becomes `READY_FOR_CAMPAIGN` and an email is present.
+16. Confirm `Hide` and `Do not contact` remove/suppress it from Campaign Builder.
+17. Confirm duplicate rows are not silently imported; they require either Skip or explicit duplicate save.
+18. Confirm a blocked/no-listing Booksy HTML response falls back to a manual-review placeholder message.
+19. Confirm the compliance reminder is visible and no campaign send occurs from the import workflow.
 
 ## 2026-05-30 hosted smoke additions (business admin visibility)
 - Site-admin `/site-admin/[siteSlug]` defaults to `Bookings` and shows section tiles in operational order.
@@ -812,7 +813,7 @@ Notes:
 2. Skip a row and confirm it disappears from the active preview without being deleted.
 3. Expand `Skipped / all imported rows`, change the skipped row back to `PENDING_REVIEW`, save changes, and confirm it returns to the active preview.
 4. Confirm source/profile links render as compact text such as `Booksy profile` or `Open listing`, never full URLs.
-5. Confirm imported dataset filters include `All`, `Research`, `Ready for campaign`, `Hidden`, `Do not contact`, and `No email available`.
+5. Confirm imported dataset filters include `All`, `Research`, `Needs Enrichment`, `Ready for campaign`, `Hidden`, and `Do not contact`.
 6. Confirm Campaign Builder only shows active, email-present leads marked `READY_FOR_CAMPAIGN`.
 
 ## 2026-06-11 hosted smoke checks: sales page structure
@@ -820,7 +821,8 @@ Notes:
 2. Confirm full source URLs are rendered as compact links in import preview and imported dataset tables.
 3. Confirm `Imported lead dataset` is directly below Lead Import & Enrichment.
 4. Confirm Campaign Builder copy says only visible campaign leads appear.
-5. Confirm Template editor, Campaign builder, Competitor/provider pricing, and Suppression sections can be collapsed/expanded.
+5. Confirm Lead Import & Enrichment, Imported lead dataset, Add lead, Template editor, Campaign builder, Competitor/provider pricing, and Suppression sections can be collapsed/expanded.
+6. Confirm Lead Import & Enrichment and Imported lead dataset default open, while Add lead defaults collapsed.
 
 ## 2026-06-01 hosted smoke checks: template quality + lead names
 1. Open `/admin/sales`.

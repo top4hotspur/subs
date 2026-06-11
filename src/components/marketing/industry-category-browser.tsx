@@ -28,13 +28,13 @@ const GROUP_STYLE_BY_TITLE: Record<
   }
 > = {
   "Hair, Beauty & Wellness": {
-    activeTabClass: "border-[#D8AEB4] bg-[#FCEAEA] text-[#5F2D35] shadow-sm",
-    inactiveTabHoverClass: "hover:bg-[#FCEAEA]",
-    activeTabTextSubClass: "text-[#7A3E46]",
-    cardClass: "bg-[#FCEAEA]",
-    cardBorderClass: "border-[#E8C8CC]",
-    cardAccentClass: "bg-[#9B5A64]",
-    bulletClass: "text-[#5F2D35]",
+    activeTabClass: "border-[#C9CEE3] bg-[#ECEEF6] text-[#30384F] shadow-sm",
+    inactiveTabHoverClass: "hover:bg-[#ECEEF6]",
+    activeTabTextSubClass: "text-[#4E5876]",
+    cardClass: "bg-[#ECEEF6]",
+    cardBorderClass: "border-[#D2D7E8]",
+    cardAccentClass: "bg-[#66708F]",
+    bulletClass: "text-[#30384F]",
   },
   "Home Services": {
     activeTabClass: "border-[#B8D5C1] bg-[#E8F4EC] text-[#284B35] shadow-sm",
@@ -55,13 +55,13 @@ const GROUP_STYLE_BY_TITLE: Record<
     bulletClass: "text-[#5C4320]",
   },
   Learning: {
-    activeTabClass: "border-[#C9CEE3] bg-[#ECEEF6] text-[#30384F] shadow-sm",
-    inactiveTabHoverClass: "hover:bg-[#ECEEF6]",
-    activeTabTextSubClass: "text-[#4E5876]",
-    cardClass: "bg-[#ECEEF6]",
-    cardBorderClass: "border-[#D2D7E8]",
-    cardAccentClass: "bg-[#66708F]",
-    bulletClass: "text-[#30384F]",
+    activeTabClass: "border-[#D8AEB4] bg-[#FCEAEA] text-[#5F2D35] shadow-sm",
+    inactiveTabHoverClass: "hover:bg-[#FCEAEA]",
+    activeTabTextSubClass: "text-[#7A3E46]",
+    cardClass: "bg-[#FCEAEA]",
+    cardBorderClass: "border-[#E8C8CC]",
+    cardAccentClass: "bg-[#9B5A64]",
+    bulletClass: "text-[#5F2D35]",
   },
 };
 
