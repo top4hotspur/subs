@@ -29,6 +29,15 @@ import {
   saveBackendSalesProviderPricing,
   SalesProviderPricingDto,
 } from "@/lib/sales/admin-sales-provider-pricing-client";
+import {
+  approveBackendSalesLeadImportRows,
+  createBackendSalesLeadImportBatch,
+  listBackendSalesLeadImportBatches,
+  markBackendSalesLeadImportRowForEmailResearch,
+  SalesLeadImportBatchDto,
+  SalesLeadImportRowDto,
+  updateBackendSalesLeadImportRow,
+} from "@/lib/sales/admin-sales-lead-import-client";
 import { outlineButtonClass, primaryButtonClass, smallButtonClass } from "@/lib/ui/button-styles";
 import { formatUkDateTime } from "@/lib/ui/display-labels";
 
@@ -42,6 +51,9 @@ const TEMPLATE_KEYS: Array<{ key: TemplateKey; label: string; channel: "EMAIL" |
 ];
 
 const MARKETING_STATUSES = ["ACTIVE", "DO_NOT_CONTACT", "UNSUBSCRIBED", "BOUNCED", "CONVERTED"];
+const IMPORT_SOURCE_TYPES = ["Booksy", "Google Maps", "Facebook", "Manual", "Other"];
+const IMPORT_EMAIL_STATUSES = ["Missing email", "Website found", "Email found", "Needs manual research", "Do not contact"];
+const IMPORT_ROW_STATUSES = ["PENDING_REVIEW", "NEEDS_ENRICHMENT", "DUPLICATE", "SKIPPED"];
 
 const LEADS_CSV_TEMPLATE_HEADERS = [
   "businessName",
@@ -197,9 +209,11 @@ export default function AdminSalesPage() {
   const [campaigns, setCampaigns] = useState<SalesCampaignDto[]>([]);
   const [templates, setTemplates] = useState<SalesCampaignTemplateDto[]>([]);
   const [providers, setProviders] = useState<SalesProviderPricingDto[]>([]);
+  const [importBatches, setImportBatches] = useState<SalesLeadImportBatchDto[]>([]);
   const [selectedLeadId, setSelectedLeadId] = useState("");
   const [selectedCampaignId, setSelectedCampaignId] = useState("");
   const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
+  const [selectedImportRowIds, setSelectedImportRowIds] = useState<string[]>([]);
   const [selectedTemplateKey, setSelectedTemplateKey] = useState<TemplateKey>("EMAIL_INTRODUCTION");
   const [campaignLevel, setCampaignLevel] = useState<CampaignLevel>("INTRODUCTION");
   const [campaignIndustry, setCampaignIndustry] = useState("barbers");
@@ -228,6 +242,13 @@ export default function AdminSalesPage() {
     notes: "",
     active: true,
   });
+  const [importForm, setImportForm] = useState({
+    sourceUrls: "",
+    sourceType: "Booksy",
+    defaultIndustrySlug: "",
+    defaultCityTown: "",
+    approveDuplicates: false,
+  });
   const [letterQrDataUrl, setLetterQrDataUrl] = useState<string | null>(null);
 
   const selectedLead = useMemo(() => leads.find((x) => x.id === selectedLeadId) ?? null, [leads, selectedLeadId]);
@@ -239,6 +260,7 @@ export default function AdminSalesPage() {
     () => templates.find((x) => x.templateKey === selectedTemplateKey) ?? null,
     [templates, selectedTemplateKey],
   );
+  const activeImportBatch = importBatches[0] ?? null;
   const preview = useMemo(
     () => (selectedTemplate ? renderTemplate(selectedTemplate, selectedLead, campaignIndustry) : null),
     [selectedTemplate, selectedLead, campaignIndustry],
@@ -277,11 +299,12 @@ export default function AdminSalesPage() {
   async function loadAll() {
     setLoading(true);
     setError(null);
-    const [leadResult, campaignResult, templateResult, providerResult] = await Promise.all([
+    const [leadResult, campaignResult, templateResult, providerResult, importResult] = await Promise.all([
       listBackendSalesLeads(),
       listBackendSalesCampaigns(),
       listBackendSalesCampaignTemplates(),
       listBackendSalesProviderPricing(),
+      listBackendSalesLeadImportBatches(),
     ]);
     if (!leadResult.ok) setError(leadResult.error);
     else {
@@ -299,6 +322,7 @@ export default function AdminSalesPage() {
     }
     if (templateResult.ok) setTemplates(templateResult.templates);
     if (providerResult.ok) setProviders(providerResult.providers);
+    if (importResult.ok) setImportBatches(importResult.batches);
     setLoading(false);
   }
 
@@ -638,6 +662,114 @@ export default function AdminSalesPage() {
     await loadAll();
   }
 
+  function replaceImportRow(row: SalesLeadImportRowDto) {
+    setImportBatches((current) =>
+      current.map((batch) =>
+        batch.id === row.batchId
+          ? { ...batch, rows: batch.rows.map((item) => (item.id === row.id ? row : item)) }
+          : batch,
+      ),
+    );
+  }
+
+  async function createImportPreview() {
+    setError(null);
+    setMessage(null);
+    const sourceUrls = importForm.sourceUrls
+      .split(/\r?\n/)
+      .map((url) => url.trim())
+      .filter(Boolean);
+    if (sourceUrls.length === 0) {
+      setError("Paste at least one source URL.");
+      return;
+    }
+    const result = await createBackendSalesLeadImportBatch({
+      sourceUrls,
+      sourceType: importForm.sourceType || undefined,
+      defaultIndustrySlug: importForm.defaultIndustrySlug || undefined,
+      defaultCityTown: importForm.defaultCityTown || undefined,
+    });
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    setImportBatches((current) => [result.batch, ...current.filter((batch) => batch.id !== result.batch.id)]);
+    setSelectedImportRowIds(result.batch.rows.filter((row) => row.status !== "SKIPPED").map((row) => row.id));
+    setMessage(`Import preview created with ${result.batch.rows.length} row(s).`);
+  }
+
+  async function saveImportRow(row: SalesLeadImportRowDto) {
+    const result = await updateBackendSalesLeadImportRow(row.id, {
+      extractedBusinessName: row.extractedBusinessName || null,
+      extractedAddress: row.extractedAddress || null,
+      extractedPostcode: row.extractedPostcode || null,
+      extractedPhone: row.extractedPhone || null,
+      extractedWebsite: row.extractedWebsite || null,
+      extractedEmail: row.extractedEmail || null,
+      leadSource: row.leadSource || null,
+      currentProvider: row.currentProvider || null,
+      estimatedCurrentMonthlyCost: row.estimatedCurrentMonthlyCost ? Number(row.estimatedCurrentMonthlyCost) : null,
+      industrySlug: row.industrySlug || null,
+      cityTown: row.cityTown || null,
+      status: row.status,
+      emailEnrichmentStatus: row.emailEnrichmentStatus,
+      notes: row.notes || null,
+    });
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    replaceImportRow(result.row);
+    setMessage("Import row saved.");
+  }
+
+  async function skipImportRow(row: SalesLeadImportRowDto) {
+    const result = await updateBackendSalesLeadImportRow(row.id, { status: "SKIPPED" });
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    replaceImportRow(result.row);
+    setSelectedImportRowIds((current) => current.filter((id) => id !== row.id));
+    setMessage("Import row skipped.");
+  }
+
+  async function markImportRowForEmailResearch(row: SalesLeadImportRowDto) {
+    const result = await markBackendSalesLeadImportRowForEmailResearch(row.id);
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    replaceImportRow(result.row);
+    setMessage("Import row marked for email research.");
+  }
+
+  async function approveImportRows() {
+    if (!activeImportBatch || selectedImportRowIds.length === 0) {
+      setError("Select at least one import row to approve.");
+      return;
+    }
+    const result = await approveBackendSalesLeadImportRows(
+      activeImportBatch.id,
+      selectedImportRowIds,
+      importForm.approveDuplicates,
+    );
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    if (result.result.batch) {
+      setImportBatches((current) =>
+        current.map((batch) => (batch.id === result.result.batch?.id ? result.result.batch : batch)),
+      );
+    }
+    setSelectedImportRowIds([]);
+    setMessage(
+      `Approved ${result.result.approvedLeadIds.length} row(s). Skipped ${result.result.skipped.length}.`,
+    );
+    await loadAll();
+  }
+
   return (
     <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -670,6 +802,256 @@ export default function AdminSalesPage() {
       </div>
       {error ? <p className="mt-2 text-sm text-rose-700">{error}</p> : null}
       {message ? <p className="mt-2 text-sm text-emerald-700">{message}</p> : null}
+
+      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">Lead Import &amp; Enrichment</h2>
+            <p className="mt-1 max-w-3xl text-sm text-slate-600">
+              Paste search/profile URLs and we&apos;ll prepare visible lead data for review. Missing contact details can be enriched from public business websites or marked for manual research.
+            </p>
+          </div>
+          <label className={`${outlineButtonClass} ${smallButtonClass} cursor-pointer`}>
+            Upload URL list
+            <input
+              type="file"
+              className="hidden"
+              accept=".txt,.csv,text/plain,text/csv"
+              onChange={async (event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                const text = await file.text();
+                setImportForm((current) => ({ ...current, sourceUrls: text }));
+                event.target.value = "";
+              }}
+            />
+          </label>
+        </div>
+        <div className="mt-3 grid gap-2 lg:grid-cols-[minmax(0,2fr)_minmax(260px,1fr)]">
+          <textarea
+            className="min-h-32 rounded border border-slate-300 px-3 py-2 text-sm"
+            placeholder="One URL per line"
+            value={importForm.sourceUrls}
+            onChange={(event) => setImportForm((current) => ({ ...current, sourceUrls: event.target.value }))}
+          />
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+            <select
+              className="rounded border border-slate-300 px-2 py-2 text-sm"
+              value={importForm.sourceType}
+              onChange={(event) => setImportForm((current) => ({ ...current, sourceType: event.target.value }))}
+            >
+              {IMPORT_SOURCE_TYPES.map((sourceType) => (
+                <option key={sourceType} value={sourceType}>{sourceType}</option>
+              ))}
+            </select>
+            <select
+              className="rounded border border-slate-300 px-2 py-2 text-sm"
+              value={importForm.defaultIndustrySlug}
+              onChange={(event) => setImportForm((current) => ({ ...current, defaultIndustrySlug: event.target.value }))}
+            >
+              <option value="">Default industry</option>
+              {WEBSITE_TEMPLATE_SLUGS.map((slug) => <option key={slug} value={slug}>{formatIndustryLabel(slug)}</option>)}
+            </select>
+            <input
+              className="rounded border border-slate-300 px-2 py-2 text-sm"
+              placeholder="Default city/town"
+              value={importForm.defaultCityTown}
+              onChange={(event) => setImportForm((current) => ({ ...current, defaultCityTown: event.target.value }))}
+            />
+            <button className={`${primaryButtonClass} ${smallButtonClass}`} onClick={() => void createImportPreview()}>
+              Create import preview
+            </button>
+          </div>
+        </div>
+        <p className="mt-3 text-xs text-slate-600">
+          Before sending marketing emails, confirm the lead is a suitable business contact and honour unsubscribe/do-not-contact requests.
+        </p>
+
+        {activeImportBatch ? (
+          <div className="mt-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm text-slate-700">
+                Latest preview: {activeImportBatch.rows.length} row(s) from {activeImportBatch.sourceType ?? "mixed"}.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <label className="inline-flex items-center gap-2 text-xs text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={importForm.approveDuplicates}
+                    onChange={(event) => setImportForm((current) => ({ ...current, approveDuplicates: event.target.checked }))}
+                  />
+                  Approve duplicates anyway
+                </label>
+                <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setSelectedImportRowIds(activeImportBatch.rows.filter((row) => row.status !== "APPROVED" && row.status !== "SKIPPED").map((row) => row.id))}>
+                  Select reviewable
+                </button>
+                <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setSelectedImportRowIds([])}>
+                  Clear
+                </button>
+                <button className={`${primaryButtonClass} ${smallButtonClass}`} onClick={() => void approveImportRows()} disabled={selectedImportRowIds.length === 0}>
+                  Approve selected into pipeline
+                </button>
+              </div>
+            </div>
+            <div className="mt-3 overflow-auto">
+              <table className="min-w-full text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 text-left">
+                    <th className="px-2 py-2">Select</th>
+                    <th className="px-2 py-2">Business</th>
+                    <th className="px-2 py-2">Source URL</th>
+                    <th className="px-2 py-2">Contact</th>
+                    <th className="px-2 py-2">Location</th>
+                    <th className="px-2 py-2">Source/provider</th>
+                    <th className="px-2 py-2">Email research</th>
+                    <th className="px-2 py-2">Status</th>
+                    <th className="px-2 py-2">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activeImportBatch.rows.map((row) => (
+                    <tr key={row.id} className="border-b border-slate-100 align-top">
+                      <td className="px-2 py-2">
+                        <input
+                          type="checkbox"
+                          disabled={row.status === "APPROVED" || row.status === "SKIPPED"}
+                          checked={selectedImportRowIds.includes(row.id)}
+                          onChange={(event) =>
+                            setSelectedImportRowIds((current) =>
+                              event.target.checked ? [...current, row.id] : current.filter((id) => id !== row.id),
+                            )
+                          }
+                        />
+                      </td>
+                      <td className="min-w-52 px-2 py-2">
+                        <input
+                          className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                          placeholder="Business name"
+                          value={row.extractedBusinessName ?? ""}
+                          onChange={(event) => replaceImportRow({ ...row, extractedBusinessName: event.target.value })}
+                        />
+                        <input
+                          className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                          placeholder="Website"
+                          value={row.extractedWebsite ?? ""}
+                          onChange={(event) => replaceImportRow({ ...row, extractedWebsite: event.target.value })}
+                        />
+                        {row.duplicateReason ? <p className="mt-1 text-amber-700">Duplicate: {row.duplicateReason}</p> : null}
+                      </td>
+                      <td className="max-w-64 px-2 py-2 break-all text-slate-600">{row.sourceUrl}</td>
+                      <td className="min-w-44 px-2 py-2">
+                        <input
+                          className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                          placeholder="Email"
+                          value={row.extractedEmail ?? ""}
+                          onChange={(event) => replaceImportRow({ ...row, extractedEmail: event.target.value, emailEnrichmentStatus: event.target.value ? "Email found" : row.emailEnrichmentStatus })}
+                        />
+                        <input
+                          className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                          placeholder="Phone"
+                          value={row.extractedPhone ?? ""}
+                          onChange={(event) => replaceImportRow({ ...row, extractedPhone: event.target.value })}
+                        />
+                      </td>
+                      <td className="min-w-48 px-2 py-2">
+                        <input
+                          className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                          placeholder="Address"
+                          value={row.extractedAddress ?? ""}
+                          onChange={(event) => replaceImportRow({ ...row, extractedAddress: event.target.value })}
+                        />
+                        <div className="mt-1 grid grid-cols-2 gap-1">
+                          <input
+                            className="rounded border border-slate-300 px-2 py-1 text-xs"
+                            placeholder="Postcode"
+                            value={row.extractedPostcode ?? ""}
+                            onChange={(event) => replaceImportRow({ ...row, extractedPostcode: event.target.value })}
+                          />
+                          <input
+                            className="rounded border border-slate-300 px-2 py-1 text-xs"
+                            placeholder="City/town"
+                            value={row.cityTown ?? ""}
+                            onChange={(event) => replaceImportRow({ ...row, cityTown: event.target.value })}
+                          />
+                        </div>
+                        <select
+                          className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                          value={row.industrySlug ?? ""}
+                          onChange={(event) => replaceImportRow({ ...row, industrySlug: event.target.value })}
+                        >
+                          <option value="">Industry</option>
+                          {WEBSITE_TEMPLATE_SLUGS.map((slug) => <option key={slug} value={slug}>{formatIndustryLabel(slug)}</option>)}
+                        </select>
+                      </td>
+                      <td className="min-w-44 px-2 py-2">
+                        <input
+                          className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                          placeholder="Lead source"
+                          value={row.leadSource ?? ""}
+                          onChange={(event) => replaceImportRow({ ...row, leadSource: event.target.value })}
+                        />
+                        <input
+                          className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                          placeholder="Current provider"
+                          value={row.currentProvider ?? ""}
+                          onChange={(event) => replaceImportRow({ ...row, currentProvider: event.target.value })}
+                        />
+                        <input
+                          className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                          placeholder="Est monthly cost"
+                          value={row.estimatedCurrentMonthlyCost ?? ""}
+                          onChange={(event) => replaceImportRow({ ...row, estimatedCurrentMonthlyCost: event.target.value })}
+                        />
+                      </td>
+                      <td className="min-w-44 px-2 py-2">
+                        <select
+                          className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                          value={row.emailEnrichmentStatus}
+                          onChange={(event) => replaceImportRow({ ...row, emailEnrichmentStatus: event.target.value })}
+                        >
+                          {IMPORT_EMAIL_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
+                        </select>
+                        <textarea
+                          className="mt-1 min-h-14 w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                          placeholder="Notes"
+                          value={row.notes ?? ""}
+                          onChange={(event) => replaceImportRow({ ...row, notes: event.target.value })}
+                        />
+                      </td>
+                      <td className="min-w-36 px-2 py-2">
+                        {row.status === "APPROVED" ? (
+                          <span className="font-semibold text-emerald-700">APPROVED</span>
+                        ) : (
+                          <select
+                            className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                            value={row.status}
+                            onChange={(event) => replaceImportRow({ ...row, status: event.target.value })}
+                          >
+                            {IMPORT_ROW_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
+                          </select>
+                        )}
+                      </td>
+                      <td className="min-w-32 px-2 py-2">
+                        <div className="flex flex-col gap-1">
+                          <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void saveImportRow(row)} disabled={row.status === "APPROVED"}>
+                            Save
+                          </button>
+                          <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void markImportRowForEmailResearch(row)} disabled={row.status === "APPROVED"}>
+                            Mark for email research
+                          </button>
+                          <button className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => void skipImportRow(row)} disabled={row.status === "APPROVED" || row.status === "SKIPPED"}>
+                            Skip
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : null}
+      </section>
 
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">Add lead</h2>

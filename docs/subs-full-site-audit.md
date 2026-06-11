@@ -288,6 +288,12 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - Outreach workflow has clear non-sending controls in-app (prepared/sent-manual markers) with preview-only campaign copy.
 - Compliance foundation added via marketing suppression fields and unsubscribe placeholder requirements.
 
+## P1 sales URL import foundation applied (2026-06-11)
+- `/admin/sales` now includes review-first source URL import and enrichment preview records.
+- Booksy URLs seed source/provider/cost defaults without aggressive scraping or private email harvesting.
+- Missing emails are marked for public website/manual research, duplicate warnings block silent import, and approval creates SalesLead records only after admin review.
+- The workflow sends no campaign emails and keeps compliance/suppression checks as a required later outreach step.
+
 ## 2026-05-30 P1 follow-up: business admin settings visibility
 - Light/Dark appearance was already persisted but buried inside the long settings form in site-admin.
 - Site-admin now exposes `Site appearance` as its own section and defaults dashboard view to `Bookings` for day-to-day operations.

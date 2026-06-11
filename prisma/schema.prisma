@@ -9,42 +9,42 @@ datasource db {
 }
 
 model TenantSite {
-  id                            String                         @id @default(cuid())
-  slug                          String                         @unique
-  displayName                   String
-  industrySlug                  String?
-  status                        String
-  domainPrimary                 String?
-  setupRequestId                String?                        @unique
-  provisioningStatus            String?
-  subscriptionStatus            String?
-  domainStatus                  String?
-  whatsappAddonEnabled          Boolean                        @default(false)
-  createdAt                     DateTime                       @default(now())
-  updatedAt                     DateTime                       @updatedAt
-  setupRequests                 SetupRequest[]                 @relation("TenantSiteSetupRequests")
-  demoDraftSnapshots            DemoDraftSnapshot[]
-  siteDomains                   SiteDomain[]
-  provisioningTasks             SiteProvisioningTask[]
-  statusEvents                  SiteStatusEvent[]
-  subscriptions                 SubscriptionRecord[]
-  customerSiteSettings          CustomerSiteSettings?
-  customerSiteServiceCategories CustomerSiteServiceCategory[]
-  customerSiteServices          CustomerSiteService[]
-  customerSiteStaffRoles        CustomerSiteStaffRole[]
-  customerSiteStaffMembers      CustomerSiteStaffMember[]
-  customerSiteStaffRotaDays     CustomerSiteStaffRotaDay[]
-  customerSiteStaffBreakWindows CustomerSiteStaffBreakWindow[]
-  customerSiteBusinessClosures  CustomerSiteBusinessClosure[]
-  customerSiteStaffHolidays     CustomerSiteStaffHoliday[]
-  customerSiteBookings          CustomerSiteBooking[]
-  customerSiteGiftVouchers      CustomerSiteGiftVoucher[]
-  customerSiteAdminUsers        CustomerSiteAdminUser[]
-  customerSiteCustomers         CustomerSiteCustomer[]
-  customerSiteContactEnquiries  CustomerSiteContactEnquiry[]
-  customerSiteMarketingCampaigns CustomerSiteMarketingCampaign[]
+  id                                     String                                  @id @default(cuid())
+  slug                                   String                                  @unique
+  displayName                            String
+  industrySlug                           String?
+  status                                 String
+  domainPrimary                          String?
+  setupRequestId                         String?                                 @unique
+  provisioningStatus                     String?
+  subscriptionStatus                     String?
+  domainStatus                           String?
+  whatsappAddonEnabled                   Boolean                                 @default(false)
+  createdAt                              DateTime                                @default(now())
+  updatedAt                              DateTime                                @updatedAt
+  setupRequests                          SetupRequest[]                          @relation("TenantSiteSetupRequests")
+  demoDraftSnapshots                     DemoDraftSnapshot[]
+  siteDomains                            SiteDomain[]
+  provisioningTasks                      SiteProvisioningTask[]
+  statusEvents                           SiteStatusEvent[]
+  subscriptions                          SubscriptionRecord[]
+  customerSiteSettings                   CustomerSiteSettings?
+  customerSiteServiceCategories          CustomerSiteServiceCategory[]
+  customerSiteServices                   CustomerSiteService[]
+  customerSiteStaffRoles                 CustomerSiteStaffRole[]
+  customerSiteStaffMembers               CustomerSiteStaffMember[]
+  customerSiteStaffRotaDays              CustomerSiteStaffRotaDay[]
+  customerSiteStaffBreakWindows          CustomerSiteStaffBreakWindow[]
+  customerSiteBusinessClosures           CustomerSiteBusinessClosure[]
+  customerSiteStaffHolidays              CustomerSiteStaffHoliday[]
+  customerSiteBookings                   CustomerSiteBooking[]
+  customerSiteGiftVouchers               CustomerSiteGiftVoucher[]
+  customerSiteAdminUsers                 CustomerSiteAdminUser[]
+  customerSiteCustomers                  CustomerSiteCustomer[]
+  customerSiteContactEnquiries           CustomerSiteContactEnquiry[]
+  customerSiteMarketingCampaigns         CustomerSiteMarketingCampaign[]
   customerSitePaymentProviderConnections CustomerSitePaymentProviderConnection[]
-  setupRequest                  SetupRequest?                  @relation("SetupRequestToTenantSite", fields: [setupRequestId], references: [id])
+  setupRequest                           SetupRequest?                           @relation("SetupRequestToTenantSite", fields: [setupRequestId], references: [id])
 }
 
 model DemoDraftSnapshot {
@@ -133,29 +133,29 @@ model PlatformAdminUser {
 }
 
 model SiteDomain {
-  id                            String     @id @default(cuid())
-  tenantSiteId                  String
-  domain                        String
-  domainType                    String
-  status                        String
-  domainStatus                  String?
-  domainSetupMode               String?
-  dnsStatus                     String?
-  sslStatus                     String?
-  nameserverInstructionsSentAt  DateTime?
-  dnsLastCheckedAt              DateTime?
-  dnsVerifiedAt                 DateTime?
-  goLiveRequestedAt             DateTime?
-  wentLiveAt                    DateTime?
-  domainNotes                   String?
-  expectedDnsTarget             String?
-  expectedNameservers           Json?
-  lastDnsCheckResult            Json?
-  registrarNotes                String?
-  dnsInstructions               Json?
-  createdAt                     DateTime   @default(now())
-  updatedAt                     DateTime   @updatedAt
-  tenantSite                    TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  id                           String     @id @default(cuid())
+  tenantSiteId                 String
+  domain                       String
+  domainType                   String
+  status                       String
+  domainStatus                 String?
+  domainSetupMode              String?
+  dnsStatus                    String?
+  sslStatus                    String?
+  nameserverInstructionsSentAt DateTime?
+  dnsLastCheckedAt             DateTime?
+  dnsVerifiedAt                DateTime?
+  goLiveRequestedAt            DateTime?
+  wentLiveAt                   DateTime?
+  domainNotes                  String?
+  expectedDnsTarget            String?
+  expectedNameservers          Json?
+  lastDnsCheckResult           Json?
+  registrarNotes               String?
+  dnsInstructions              Json?
+  createdAt                    DateTime   @default(now())
+  updatedAt                    DateTime   @updatedAt
+  tenantSite                   TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
 
   @@unique([tenantSiteId, domain, domainType])
   @@index([tenantSiteId])
@@ -247,6 +247,7 @@ model SalesLead {
   events                      SalesLeadEvent[]
   campaignRecipients          SalesCampaignRecipient[]
   campaignEvents              SalesCampaignEvent[]
+  importRows                  SalesLeadImportRow[]
 
   @@index([status])
   @@index([industrySlug])
@@ -262,6 +263,56 @@ model SalesLead {
   @@index([marketingStatus])
   @@index([lastCampaignStep])
   @@index([snoozedUntil])
+}
+
+model SalesLeadImportBatch {
+  id                  String               @id @default(cuid())
+  sourceType          String?
+  defaultIndustrySlug String?
+  defaultCityTown     String?
+  status              String               @default("PREVIEW")
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  rows                SalesLeadImportRow[]
+
+  @@index([sourceType])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model SalesLeadImportRow {
+  id                          String               @id @default(cuid())
+  batchId                     String
+  sourceUrl                   String
+  extractedBusinessName       String?
+  extractedAddress            String?
+  extractedPostcode           String?
+  extractedPhone              String?
+  extractedWebsite            String?
+  extractedEmail              String?
+  leadSource                  String?
+  currentProvider             String?
+  estimatedCurrentMonthlyCost Decimal?             @db.Decimal(10, 2)
+  industrySlug                String?
+  cityTown                    String?
+  status                      String               @default("PENDING_REVIEW")
+  emailEnrichmentStatus       String               @default("Missing email")
+  duplicateReason             String?
+  notes                       String?
+  raw                         Json?
+  approvedLeadId              String?
+  approvedAt                  DateTime?
+  createdAt                   DateTime             @default(now())
+  updatedAt                   DateTime             @updatedAt
+  batch                       SalesLeadImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  approvedLead                SalesLead?           @relation(fields: [approvedLeadId], references: [id], onDelete: SetNull)
+
+  @@index([batchId])
+  @@index([status])
+  @@index([leadSource])
+  @@index([industrySlug])
+  @@index([cityTown])
+  @@index([approvedLeadId])
 }
 
 model SalesLeadEvent {
@@ -625,42 +676,42 @@ model CustomerSiteStaffHoliday {
 }
 
 model CustomerSiteBooking {
-  id                             String                @id @default(cuid())
-  tenantSiteId                   String
-  customerSiteCustomerId         String?
-  serviceId                      String?
-  serviceName                    String?
-  customerName                   String
-  customerEmail                  String?
-  customerPhone                  String?
-  preferredDate                  String?
-  preferredTime                  String?
-  startDateTime                  DateTime?
-  endDateTime                    DateTime?
-  staffMemberId                  String?
-  staffName                      String?
-  status                         String
-  paymentStatus                  String?
-  paymentMethod                  String?
-  paymentAmountPence             Int?
-  paymentCurrency                String?
-  paymentProvider                String?
-  paymentProviderAccountId       String?
-  paymentProviderSessionId       String?
-  paymentProviderPaymentIntentId String?
+  id                               String                @id @default(cuid())
+  tenantSiteId                     String
+  customerSiteCustomerId           String?
+  serviceId                        String?
+  serviceName                      String?
+  customerName                     String
+  customerEmail                    String?
+  customerPhone                    String?
+  preferredDate                    String?
+  preferredTime                    String?
+  startDateTime                    DateTime?
+  endDateTime                      DateTime?
+  staffMemberId                    String?
+  staffName                        String?
+  status                           String
+  paymentStatus                    String?
+  paymentMethod                    String?
+  paymentAmountPence               Int?
+  paymentCurrency                  String?
+  paymentProvider                  String?
+  paymentProviderAccountId         String?
+  paymentProviderSessionId         String?
+  paymentProviderPaymentIntentId   String?
   paymentProviderCheckoutExpiresAt DateTime?
-  refundStatus                   String?
-  refundGuidance                 String?
-  cancellationReason             String?
-  cancelledAt                    DateTime?
-  notes                          String?
-  policyAcceptedAt               DateTime?
-  source                         String?
-  rawPayload                     Json?
-  createdAt                      DateTime              @default(now())
-  updatedAt                      DateTime              @updatedAt
-  tenantSite                     TenantSite            @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
-  customer                       CustomerSiteCustomer? @relation(fields: [customerSiteCustomerId], references: [id], onDelete: SetNull)
+  refundStatus                     String?
+  refundGuidance                   String?
+  cancellationReason               String?
+  cancelledAt                      DateTime?
+  notes                            String?
+  policyAcceptedAt                 DateTime?
+  source                           String?
+  rawPayload                       Json?
+  createdAt                        DateTime              @default(now())
+  updatedAt                        DateTime              @updatedAt
+  tenantSite                       TenantSite            @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  customer                         CustomerSiteCustomer? @relation(fields: [customerSiteCustomerId], references: [id], onDelete: SetNull)
 
   @@index([tenantSiteId])
   @@index([customerSiteCustomerId])
@@ -712,21 +763,21 @@ model CustomerSiteGiftVoucher {
 }
 
 model CustomerSiteCustomer {
-  id             String                @id @default(cuid())
-  tenantSiteId   String
-  email          String
-  firstName      String
-  lastName       String?
-  phone          String?
-  accessCodeHash String?
-  marketingOptIn Boolean               @default(false)
-  marketingOptInAt DateTime?
-  crmNotes       String?
-  active         Boolean               @default(true)
-  createdAt      DateTime              @default(now())
-  updatedAt      DateTime              @updatedAt
-  tenantSite     TenantSite            @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
-  bookings       CustomerSiteBooking[]
+  id                          String                                   @id @default(cuid())
+  tenantSiteId                String
+  email                       String
+  firstName                   String
+  lastName                    String?
+  phone                       String?
+  accessCodeHash              String?
+  marketingOptIn              Boolean                                  @default(false)
+  marketingOptInAt            DateTime?
+  crmNotes                    String?
+  active                      Boolean                                  @default(true)
+  createdAt                   DateTime                                 @default(now())
+  updatedAt                   DateTime                                 @updatedAt
+  tenantSite                  TenantSite                               @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  bookings                    CustomerSiteBooking[]
   marketingCampaignRecipients CustomerSiteMarketingCampaignRecipient[]
 
   @@unique([tenantSiteId, email])
@@ -737,21 +788,21 @@ model CustomerSiteCustomer {
 }
 
 model CustomerSiteContactEnquiry {
-  id             String     @id @default(cuid())
-  tenantSiteId   String
+  id                     String     @id @default(cuid())
+  tenantSiteId           String
   customerSiteCustomerId String?
-  bookingId      String?
-  purpose        String
-  name           String
-  email          String
-  phone          String?
-  message        String
-  status         String     @default("NEW")
-  source         String?
-  emailStatus    String?
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-  tenantSite     TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  bookingId              String?
+  purpose                String
+  name                   String
+  email                  String
+  phone                  String?
+  message                String
+  status                 String     @default("NEW")
+  source                 String?
+  emailStatus            String?
+  createdAt              DateTime   @default(now())
+  updatedAt              DateTime   @updatedAt
+  tenantSite             TenantSite @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
 
   @@index([tenantSiteId])
   @@index([tenantSiteId, status])
@@ -762,20 +813,20 @@ model CustomerSiteContactEnquiry {
 }
 
 model CustomerSiteMarketingCampaign {
-  id           String                                  @id @default(cuid())
+  id           String                                   @id @default(cuid())
   tenantSiteId String
   title        String
   subject      String
   body         String
   campaignType String
-  status       String                                  @default("DRAFT")
+  status       String                                   @default("DRAFT")
   audienceType String
   ctaLabel     String?
   ctaUrl       String?
   sentAt       DateTime?
-  createdAt    DateTime                                @default(now())
-  updatedAt    DateTime                                @updatedAt
-  tenantSite   TenantSite                              @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
+  createdAt    DateTime                                 @default(now())
+  updatedAt    DateTime                                 @updatedAt
+  tenantSite   TenantSite                               @relation(fields: [tenantSiteId], references: [id], onDelete: Cascade)
   recipients   CustomerSiteMarketingCampaignRecipient[]
 
   @@index([tenantSiteId])
@@ -784,19 +835,19 @@ model CustomerSiteMarketingCampaign {
 }
 
 model CustomerSiteMarketingCampaignRecipient {
-  id                     String                         @id @default(cuid())
+  id                     String                        @id @default(cuid())
   campaignId             String
   tenantSiteId           String
   customerSiteCustomerId String?
   email                  String
   name                   String?
-  status                 String                         @default("PENDING")
+  status                 String                        @default("PENDING")
   sentAt                 DateTime?
   failureReason          String?
-  createdAt              DateTime                       @default(now())
-  updatedAt              DateTime                       @updatedAt
-  campaign               CustomerSiteMarketingCampaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  customer               CustomerSiteCustomer?          @relation(fields: [customerSiteCustomerId], references: [id], onDelete: SetNull)
+  createdAt              DateTime                      @default(now())
+  updatedAt              DateTime                      @updatedAt
+  campaign               CustomerSiteMarketingCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  customer               CustomerSiteCustomer?         @relation(fields: [customerSiteCustomerId], references: [id], onDelete: SetNull)
 
   @@unique([campaignId, email])
   @@index([tenantSiteId])

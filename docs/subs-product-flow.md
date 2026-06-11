@@ -529,6 +529,14 @@ CSV import/export setup tools moved out of demo customisation and into business 
 - Manual sent tracking remains available for external/manual sends.
 - Sales lead cleanup actions are now available for test/spam leads (with stronger confirmation for history/converted records).
 
+## 2026-06-11 sales URL import foundation
+- `/admin/sales` now includes `Lead Import & Enrichment` for pasted or uploaded source URLs.
+- URL imports create review-first preview rows in `SalesLeadImportBatch`/`SalesLeadImportRow`; admins edit, skip, mark for email research, or approve selected rows into Sales Pipeline.
+- Booksy URLs set lead source/provider to Booksy and default estimated current monthly cost to 40, while keeping the cost editable.
+- Missing emails are not harvested from hidden/private data. They are marked for public business website/manual research, and this workflow sends no campaign emails.
+- Duplicate checks run before approval using postcode+industry, businessName+postcode, email, and phone. Duplicate rows require explicit admin approval or skip.
+- Compliance remains required before any outreach: confirm suitable business contact details and honour unsubscribe/do-not-contact requests.
+
 ## Stripe Checkout hosted verification notes (2026-05-31)
 - Checkout API: `/api/setup-requests/[id]/checkout` (requires setup confirmation token or platform-admin session).
 - Payment status is trusted from Stripe webhooks, not frontend redirect state.

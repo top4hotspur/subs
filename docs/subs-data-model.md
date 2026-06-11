@@ -285,3 +285,11 @@ Notes:
 - SalesLead fields added: postcode, address, serviceArea, leadSource, sourceUrl, currentProvider, estimatedCurrentMonthlyCost, marketingStatus, unsubscribedAt, doNotContactReason.
 - New models: SalesCampaign, SalesCampaignRecipient, SalesCampaignEvent for campaign lifecycle and future click/delivery event storage.
 - Duplicate detection in import workflow is rule-based at app level (postcode+industry primary, plus business/postcode, email, phone checks).
+
+## Sales lead URL import data (2026-06-11)
+- New models: SalesLeadImportBatch and SalesLeadImportRow.
+- SalesLeadImportBatch stores sourceType, defaultIndustrySlug, defaultCityTown, status, createdAt and updatedAt.
+- SalesLeadImportRow stores sourceUrl, visible extracted fields, leadSource/currentProvider, editable estimatedCurrentMonthlyCost, industry/city defaults, duplicateReason, emailEnrichmentStatus, notes, raw metadata, and optional approvedLeadId.
+- Import rows use review statuses: PENDING_REVIEW, APPROVED, SKIPPED, NEEDS_ENRICHMENT and DUPLICATE.
+- Approval creates a SalesLead and links the import row to the approved lead. Rows missing email can still be approved as FOLLOW_UP with notes requiring email research.
+- The model supports public/manual enrichment only; it is not a private-email scraping or campaign-sending system.

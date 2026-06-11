@@ -639,6 +639,18 @@ olePrice:<role> columns accepted
 - Email previews are visible but no live bulk sending is executed.
 - /api/resend/webhook returns verification-required stub response (501) until signed verification is implemented.
 
+## Sales lead URL import smoke checks (2026-06-11)
+1. Open `/admin/sales`.
+2. Paste one Booksy search/profile URL into `Lead Import & Enrichment` and choose a default industry/city.
+3. Click `Create import preview` and confirm a `SalesLeadImportBatch` preview appears without sending any email.
+4. Confirm Booksy rows default lead source/provider to `Booksy` and estimated monthly cost to `40`.
+5. Edit business/contact/location fields, save the row, and confirm duplicate warning appears when postcode+industry, business/postcode, email, or phone matches an existing SalesLead.
+6. Use `Mark for email research` on a row without email and confirm status/email enrichment move to manual research.
+7. Approve a non-duplicate row and confirm a SalesLead is created with sourceUrl, leadSource, currentProvider, cost, address/postcode/city, phone/email when present, and notes.
+8. Approve a row missing email and confirm it is allowed but marked as needing email research in notes/status.
+9. Confirm duplicate rows are not silently imported; they require either Skip or explicit `Approve duplicates anyway`.
+10. Confirm the compliance reminder is visible and no campaign send occurs from the import workflow.
+
 ## 2026-05-30 hosted smoke additions (business admin visibility)
 - Site-admin `/site-admin/[siteSlug]` defaults to `Bookings` and shows section tiles in operational order.
 - Confirm `Site appearance` section is visible and includes `Light`/`Dark` selector.

@@ -24,6 +24,14 @@
 - estimatedCurrentMonthlyCost
 - notes
 
+## URL import and enrichment preview
+- `/admin/sales` includes a `Lead Import & Enrichment` section for pasted or uploaded source URLs, one URL per line.
+- The workflow creates `SalesLeadImportBatch` and `SalesLeadImportRow` preview records before anything is approved into `SalesLead`.
+- URL import is review-first: rows can be edited, skipped, marked for email research, or approved into the pipeline.
+- Booksy URLs seed leadSource `Booksy`, currentProvider `Booksy`, and estimatedCurrentMonthlyCost `40`.
+- The first pass does not bypass robots.txt, login walls, captchas, rate limits or anti-bot protections.
+- Hidden/private emails are not scraped. Missing email addresses remain marked for public website/manual research.
+
 ## Duplicate detection rules
 - Primary: same postcode + same industrySlug
 - Additional checks:
@@ -31,7 +39,7 @@
   - same email
   - same phone
 
-Import rows are explicitly marked and require admin decision for duplicates.
+CSV and URL import rows are explicitly marked and require admin decision for duplicates. Duplicate URL rows can be approved anyway only through an explicit admin choice.
 
 ## Campaign levels
 - LAUNCH_OFFER
@@ -50,6 +58,8 @@ Definitions are implemented as preview copy in `/admin/sales`.
 - SalesLead.doNotContactReason
 
 Live campaign sends must suppress non-ACTIVE leads.
+
+URL import does not send campaign emails. Before any later outreach, admins must confirm the lead is a suitable business contact and honour unsubscribe/do-not-contact requests.
 
 ## Tracking foundation
 - SalesCampaign
