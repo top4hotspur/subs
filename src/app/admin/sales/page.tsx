@@ -225,9 +225,42 @@ function buildEmailResearchUrl(lead: SalesLeadDto): string {
   return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
 }
 
+function buildImportEmailResearchUrl(row: SalesLeadImportRowDto): string {
+  const businessName = row.extractedBusinessName?.trim();
+  if (!businessName) return "https://www.google.com/search?q=business%20contact%20email";
+  const cityTown = row.cityTown?.trim();
+  const postcode = row.extractedPostcode?.trim();
+  const emailTerms = `email OR "contact email"`;
+  const query = cityTown
+    ? `"${businessName}" "${cityTown}" ${emailTerms}`
+    : postcode
+      ? `"${businessName}" "${postcode}" ${emailTerms}`
+      : `"${businessName}" ${emailTerms}`;
+  return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+}
+
 function emailResearchStatus(lead: SalesLeadDto): string {
   if (lead.marketingStatus === "DO_NOT_CONTACT" || lead.marketingStatus === "UNSUBSCRIBED") return "Do not contact";
   return lead.email ? "Email added manually" : "Email missing";
+}
+
+function buildImportPreviewMessage(batch: SalesLeadImportBatchDto): string {
+  const extractedCounts = batch.rows
+    .map((row) => (typeof row.raw?.extractedCount === "number" ? row.raw.extractedCount : 0))
+    .filter((count) => count > 0);
+  const sponsoredSkippedCount = batch.rows.reduce(
+    (total, row) => total + (typeof row.raw?.sponsoredSkippedCount === "number" ? row.raw.sponsoredSkippedCount : 0),
+    0,
+  );
+  const fallbackReason = batch.rows.find((row) => row.raw?.fallbackReason)?.raw?.fallbackReason;
+  if (extractedCounts.length > 0) {
+    const extractedCount = Math.max(...extractedCounts);
+    return `Extracted ${extractedCount} visible Booksy listings.${sponsoredSkippedCount > 0 ? ` Skipped ${sponsoredSkippedCount} sponsored listings.` : ""}`;
+  }
+  if (fallbackReason) {
+    return "Could not extract visible listings from this URL. A placeholder row has been created for manual review.";
+  }
+  return `Import preview created with ${batch.rows.length} row(s).`;
 }
 
 export default function AdminSalesPage() {
@@ -745,7 +778,7 @@ export default function AdminSalesPage() {
     }
     setImportBatches((current) => [result.batch, ...current.filter((batch) => batch.id !== result.batch.id)]);
     setSelectedImportRowIds(result.batch.rows.filter((row) => row.status !== "SKIPPED").map((row) => row.id));
-    setMessage(`Import preview created with ${result.batch.rows.length} row(s).`);
+    setMessage(buildImportPreviewMessage(result.batch));
   }
 
   async function saveImportRow(row: SalesLeadImportRowDto) {
@@ -988,7 +1021,11 @@ export default function AdminSalesPage() {
                         />
                         {row.duplicateReason ? <p className="mt-1 text-amber-700">Duplicate: {row.duplicateReason}</p> : null}
                       </td>
-                      <td className="max-w-64 px-2 py-2 break-all text-slate-600">{row.sourceUrl}</td>
+                      <td className="max-w-64 px-2 py-2 break-all text-slate-600">
+                        <a className="underline" href={row.sourceUrl} target="_blank" rel="noreferrer">
+                          {row.sourceUrl}
+                        </a>
+                      </td>
                       <td className="min-w-44 px-2 py-2">
                         <input
                           className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
@@ -1002,6 +1039,14 @@ export default function AdminSalesPage() {
                           value={row.extractedPhone ?? ""}
                           onChange={(event) => replaceImportRow({ ...row, extractedPhone: event.target.value })}
                         />
+                        <a
+                          className={`mt-1 inline-flex ${outlineButtonClass} ${smallButtonClass}`}
+                          href={buildImportEmailResearchUrl(row)}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Find email
+                        </a>
                       </td>
                       <td className="min-w-48 px-2 py-2">
                         <input

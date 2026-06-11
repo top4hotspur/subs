@@ -29,8 +29,12 @@
 - The workflow creates `SalesLeadImportBatch` and `SalesLeadImportRow` preview records before anything is approved into `SalesLead`.
 - URL import is review-first: rows can be edited, skipped, marked for email research, or approved into the pipeline.
 - Booksy URLs seed leadSource `Booksy`, currentProvider `Booksy`, and estimatedCurrentMonthlyCost `40`.
+- Booksy search URLs now attempt a single public HTML fetch of the clean path, parse visible JSON-LD listing data when exposed, and create one preview row per visible listing.
+- Extracted Booksy fields can include business name, profile URL, visible address/postcode/city, rating/review count and category metadata in row notes/raw metadata.
+- Sponsored Booksy listings are skipped when a visible marker can be detected; unknown sponsorship is noted rather than guessed.
 - The first pass does not bypass robots.txt, login walls, captchas, rate limits or anti-bot protections.
 - Hidden/private emails are not scraped. Missing email addresses remain marked for public website/manual research.
+- If Booksy HTML does not expose listing data, the import falls back to a manual-review placeholder row.
 
 ## Manual email research workflow
 - Campaign Builder rows include a `Find email` Google search link built from business name plus city/town when available, falling back to postcode or business name only.

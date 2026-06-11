@@ -294,6 +294,13 @@ The highest-risk gaps are conversion/clarity issues: legacy customiser messaging
 - Missing emails are marked for public website/manual research, duplicate warnings block silent import, and approval creates SalesLead records only after admin review.
 - The workflow sends no campaign emails and keeps compliance/suppression checks as a required later outreach step.
 
+## P1 Booksy visible listing extraction applied (2026-06-11)
+- Booksy search imports now attempt one public HTML fetch of the robots-respecting clean path and parse visible JSON-LD listings when present.
+- Extracted rows carry Booksy profile URLs, public listing address/postcode/city, rating/review metadata in notes/raw data, provider `Booksy`, and estimated cost `40`.
+- Sponsored listings are skipped when a visible marker can be detected; uncertain sponsorship is left as unknown rather than guessed.
+- No browser automation, proxies, captcha bypass, hidden/private email scraping, or campaign sending is used; missing emails stay manual via Google research.
+- If Booksy does not expose listing data in fetched HTML, the importer falls back to a manual-review placeholder row.
+
 ## P1 manual sales email research applied (2026-06-11)
 - Campaign Builder now gives each lead a one-click Google `Find email` research link and inline email save control.
 - Email discovery remains human-reviewed: admins manually verify/copy public business emails, with no Google scraping and no hidden/private email scraping.

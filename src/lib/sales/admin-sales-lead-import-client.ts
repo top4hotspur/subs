@@ -27,6 +27,7 @@ export type SalesLeadImportRowDto = {
   emailEnrichmentStatus: string;
   duplicateReason?: string | null;
   notes?: string | null;
+  raw?: Record<string, unknown> | null;
   approvedLeadId?: string | null;
   createdAt: string;
   updatedAt: string;

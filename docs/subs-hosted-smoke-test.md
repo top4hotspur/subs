@@ -643,13 +643,17 @@ olePrice:<role> columns accepted
 1. Open `/admin/sales`.
 2. Paste one Booksy search/profile URL into `Lead Import & Enrichment` and choose a default industry/city.
 3. Click `Create import preview` and confirm a `SalesLeadImportBatch` preview appears without sending any email.
-4. Confirm Booksy rows default lead source/provider to `Booksy` and estimated monthly cost to `40`.
-5. Edit business/contact/location fields, save the row, and confirm duplicate warning appears when postcode+industry, business/postcode, email, or phone matches an existing SalesLead.
-6. Use `Mark for email research` on a row without email and confirm status/email enrichment move to manual research.
-7. Approve a non-duplicate row and confirm a SalesLead is created with sourceUrl, leadSource, currentProvider, cost, address/postcode/city, phone/email when present, and notes.
-8. Approve a row missing email and confirm it is allowed but marked as needing email research in notes/status.
-9. Confirm duplicate rows are not silently imported; they require either Skip or explicit `Approve duplicates anyway`.
-10. Confirm the compliance reminder is visible and no campaign send occurs from the import workflow.
+4. For a Booksy search URL whose public HTML exposes listing JSON-LD, confirm the message says `Extracted X visible Booksy listings.` and multiple rows appear.
+5. Confirm each extracted Booksy row shows a clickable Booksy profile URL, business name, visible address/postcode/city, provider `Booksy`, and estimated monthly cost `40`.
+6. Confirm sponsored listings are skipped when detectable and the message reports `Skipped Y sponsored listings.`; if not detectable, rows note `Sponsored status: Unknown`.
+7. Confirm Booksy emails are not scraped; missing email remains editable/manual and `Find email` opens Google research.
+8. Edit business/contact/location fields, save the row, and confirm duplicate warning appears when postcode+industry, business/postcode, email, phone, or source URL matches an existing SalesLead.
+9. Use `Mark for email research` on a row without email and confirm status/email enrichment move to manual research.
+10. Approve a non-duplicate row and confirm a SalesLead is created with sourceUrl/profileUrl, leadSource, currentProvider, cost, address/postcode/city, phone/email when present, and notes.
+11. Approve a row missing email and confirm it is allowed but marked as needing email research in notes/status.
+12. Confirm duplicate rows are not silently imported; they require either Skip or explicit `Approve duplicates anyway`.
+13. Confirm a blocked/no-listing Booksy HTML response falls back to a manual-review placeholder message.
+14. Confirm the compliance reminder is visible and no campaign send occurs from the import workflow.
 
 ## 2026-05-30 hosted smoke additions (business admin visibility)
 - Site-admin `/site-admin/[siteSlug]` defaults to `Bookings` and shows section tiles in operational order.

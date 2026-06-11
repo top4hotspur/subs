@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
+import { extractVisibleBooksyListings } from "@/lib/sales/booksy-lead-extractor";
 import { extractLeadImportRow } from "@/lib/sales/lead-import-extractor";
 import { createSalesLead } from "@/lib/sales/sales-lead-repository";
 import {
@@ -41,12 +42,14 @@ async function findDuplicateReason(row: {
   extractedEmail?: string | null;
   extractedPhone?: string | null;
   industrySlug?: string | null;
+  sourceUrl?: string | null;
 }) {
   const postcode = normalize(row.extractedPostcode);
   const industrySlug = normalize(row.industrySlug);
   const businessName = normalize(row.extractedBusinessName);
   const email = normalize(row.extractedEmail);
   const phone = normalize(row.extractedPhone);
+  const sourceUrl = normalize(row.sourceUrl);
   const reasons: string[] = [];
 
   if (postcode && industrySlug) {
@@ -80,8 +83,52 @@ async function findDuplicateReason(row: {
     });
     if (match) reasons.push(`phone matches ${match.businessName}`);
   }
+  if (sourceUrl) {
+    const match = await prisma.salesLead.findFirst({
+      where: { sourceUrl: { equals: sourceUrl, mode: "insensitive" } },
+      select: { businessName: true },
+    });
+    if (match) reasons.push(`source URL matches ${match.businessName}`);
+  }
 
   return reasons.join("; ") || undefined;
+}
+
+function isBooksyUrl(sourceUrl: string, sourceType?: string | null): boolean {
+  if (sourceType === "Booksy") return true;
+  try {
+    const host = new URL(sourceUrl).hostname.toLowerCase();
+    return host === "booksy.com" || host.endsWith(".booksy.com") || host === "booksy.net" || host.endsWith(".booksy.net") || host === "booksy.co.uk" || host.endsWith(".booksy.co.uk");
+  } catch {
+    return false;
+  }
+}
+
+async function createImportRow(batchId: string, extracted: ReturnType<typeof extractLeadImportRow>) {
+  const duplicateReason = await findDuplicateReason(extracted);
+
+  return prisma.salesLeadImportRow.create({
+    data: {
+      batchId,
+      sourceUrl: extracted.sourceUrl,
+      extractedBusinessName: extracted.extractedBusinessName,
+      extractedAddress: extracted.extractedAddress,
+      extractedPostcode: extracted.extractedPostcode,
+      extractedPhone: extracted.extractedPhone,
+      extractedWebsite: extracted.extractedWebsite,
+      extractedEmail: extracted.extractedEmail,
+      leadSource: extracted.leadSource,
+      currentProvider: extracted.currentProvider,
+      estimatedCurrentMonthlyCost: extracted.estimatedCurrentMonthlyCost,
+      industrySlug: extracted.industrySlug,
+      cityTown: extracted.cityTown,
+      status: duplicateReason ? "DUPLICATE" : extracted.status,
+      emailEnrichmentStatus: extracted.emailEnrichmentStatus,
+      duplicateReason,
+      notes: extracted.notes,
+      raw: toJson(extracted.raw),
+    },
+  });
 }
 
 export async function listSalesLeadImportBatches() {
@@ -114,36 +161,49 @@ export async function createSalesLeadImportBatch(input: CreateSalesLeadImportBat
   });
 
   for (const sourceUrl of uniqueUrls) {
-    const extracted = extractLeadImportRow({
+    if (isBooksyUrl(sourceUrl, parsed.sourceType)) {
+      const booksyResult = await extractVisibleBooksyListings({
+        sourceUrl,
+        defaultIndustrySlug: parsed.defaultIndustrySlug,
+        defaultCityTown: parsed.defaultCityTown,
+      });
+      if (booksyResult.rows.length > 0) {
+        for (const row of booksyResult.rows) {
+          await createImportRow(batch.id, row);
+        }
+        continue;
+      }
+      const fallback = extractLeadImportRow({
+        sourceUrl,
+        sourceType: "Booksy",
+        defaultIndustrySlug: parsed.defaultIndustrySlug,
+        defaultCityTown: parsed.defaultCityTown,
+      });
+      await createImportRow(batch.id, {
+        ...fallback,
+        status: "NEEDS_ENRICHMENT",
+        notes: [
+          "Could not extract visible listings from this URL. A placeholder row has been created for manual review.",
+          booksyResult.fallbackReason,
+        ].filter(Boolean).join("\n"),
+        raw: {
+          ...fallback.raw,
+          strategy: "booksy-public-html-fallback",
+          fetchedUrl: booksyResult.fetchedUrl,
+          fallbackReason: booksyResult.fallbackReason,
+          extractedCount: 0,
+          sponsoredSkippedCount: booksyResult.sponsoredSkippedCount,
+        },
+      });
+      continue;
+    }
+
+    await createImportRow(batch.id, extractLeadImportRow({
       sourceUrl,
       sourceType: parsed.sourceType,
       defaultIndustrySlug: parsed.defaultIndustrySlug,
       defaultCityTown: parsed.defaultCityTown,
-    });
-    const duplicateReason = await findDuplicateReason(extracted);
-
-    await prisma.salesLeadImportRow.create({
-      data: {
-        batchId: batch.id,
-        sourceUrl: extracted.sourceUrl,
-        extractedBusinessName: extracted.extractedBusinessName,
-        extractedAddress: extracted.extractedAddress,
-        extractedPostcode: extracted.extractedPostcode,
-        extractedPhone: extracted.extractedPhone,
-        extractedWebsite: extracted.extractedWebsite,
-        extractedEmail: extracted.extractedEmail,
-        leadSource: extracted.leadSource,
-        currentProvider: extracted.currentProvider,
-        estimatedCurrentMonthlyCost: extracted.estimatedCurrentMonthlyCost,
-        industrySlug: extracted.industrySlug,
-        cityTown: extracted.cityTown,
-        status: duplicateReason ? "DUPLICATE" : extracted.status,
-        emailEnrichmentStatus: extracted.emailEnrichmentStatus,
-        duplicateReason,
-        notes: extracted.notes,
-        raw: toJson(extracted.raw),
-      },
-    });
+    }));
   }
 
   return getSalesLeadImportBatch(batch.id);
@@ -159,6 +219,7 @@ export async function updateSalesLeadImportRow(input: UpdateSalesLeadImportRowIn
     extractedEmail: parsed.extractedEmail === undefined ? existing.extractedEmail : parsed.extractedEmail,
     extractedPhone: parsed.extractedPhone === undefined ? existing.extractedPhone : parsed.extractedPhone,
     industrySlug: parsed.industrySlug === undefined ? existing.industrySlug : parsed.industrySlug,
+    sourceUrl: existing.sourceUrl,
   };
   const duplicateReason =
     parsed.status === "SKIPPED" || parsed.status === "APPROVED"
