@@ -779,3 +779,9 @@ Custom-domain protections remain part of fulfilment: customer-host `/admin` and 
 - Public tenant footer links should stay on the customer host for these tenant-owned routes.
 - Platform-hosted slug routes remain a support fallback only; they should not be the primary link from a live customer domain.
 - Platform `/admin` and `/api/admin/*` remain unavailable on customer domains.
+
+## 2026-06-12 FundMyClub booking fulfilment notes
+
+The FundMyClub.online rehearsal now includes the live tenant booking lifecycle. Operators should verify public service display, availability calculation, booking submission, secure customer booking links, business-admin booking visibility, staff diary visibility and customer-account booking history before considering a tenant ready for broader use.
+
+For custom-domain bookings, customer booking detail URLs should use the customer domain. Platform preview links remain available under `/sites/[siteSlug]`, but customer-facing booking links should not unnecessarily send users back to `myexperiment.club`.

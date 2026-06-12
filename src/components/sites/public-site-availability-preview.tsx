@@ -123,6 +123,7 @@ export function PublicSiteAvailabilityPreview({
   const [policyAccepted, setPolicyAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [bookingDetailsUrl, setBookingDetailsUrl] = useState<string | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<Record<SlotGroupName, boolean>>({
     Morning: false,
     Afternoon: false,
@@ -188,6 +189,7 @@ export function PublicSiteAvailabilityPreview({
   function selectSlot(slot: PublicAvailabilitySlot) {
     setSelectedSlot(slot);
     setSuccessMessage(null);
+    setBookingDetailsUrl(null);
     window.setTimeout(() => {
       bookingFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       bookingFormRef.current?.focus({ preventScroll: true });
@@ -205,6 +207,7 @@ export function PublicSiteAvailabilityPreview({
   async function checkAvailability() {
     setLoading(true);
     setSelectedSlot(null);
+    setBookingDetailsUrl(null);
     setMessage("Checking availability...");
     try {
       const params = new URLSearchParams({ serviceId, date });
@@ -260,6 +263,7 @@ export function PublicSiteAvailabilityPreview({
       setMessage(toErrorMessage(result.error, result.status));
       return;
     }
+    setBookingDetailsUrl(result.bookingUrl ?? null);
     if (result.checkoutUrl) {
       setMessage("Booking created. Redirecting to secure payment...");
       window.location.assign(result.checkoutUrl);
@@ -470,11 +474,18 @@ export function PublicSiteAvailabilityPreview({
                     <a href={`${siteBasePath}/account/login`} className={`${outlineButtonClass} ${smallButtonClass}`}>
                       Login
                     </a>
-                    <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setSuccessMessage(null)}>
-                      Continue without account
-                    </button>
-                  </div>
-                </>
+                  <button type="button" className={`${outlineButtonClass} ${smallButtonClass}`} onClick={() => setSuccessMessage(null)}>
+                    Continue without account
+                  </button>
+                </div>
+              </>
+            ) : null}
+              {bookingDetailsUrl ? (
+                <div className="mt-3">
+                  <a href={bookingDetailsUrl} className={`${outlineButtonClass} ${smallButtonClass}`}>
+                    View booking details
+                  </a>
+                </div>
               ) : null}
             </div>
           ) : null}

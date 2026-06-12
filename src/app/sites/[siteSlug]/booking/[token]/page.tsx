@@ -108,8 +108,8 @@ export default async function CustomerBookingPage({ params, searchParams }: Cust
         <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
           <p className="font-semibold text-slate-950">Need to change this booking?</p>
           <p className="mt-2">
-            Please contact the business to change your booking. Online rescheduling will be available
-            in a future release.
+            Please contact the business to change your booking. Self-service online rescheduling is
+            not enabled for this business yet.
           </p>
           <div className="mt-3 flex flex-wrap gap-3">
             <Link href={contactHref} className="inline-flex rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900">

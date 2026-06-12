@@ -31,7 +31,7 @@ export async function createPublicSiteBooking(
     notes?: string;
     policyAccepted?: boolean;
   },
-): Promise<ClientResult<{ bookingId: string; checkoutUrl?: string | null }>> {
+): Promise<ClientResult<{ bookingId: string; bookingUrl?: string | null; checkoutUrl?: string | null }>> {
   try {
     const response = await fetch(`/api/sites/${encodeURIComponent(siteSlug)}/bookings`, {
       method: "POST",
@@ -39,7 +39,14 @@ export async function createPublicSiteBooking(
       body: JSON.stringify(booking),
     });
     const body = (await parseJsonSafe(response)) as
-      | { ok?: boolean; booking?: { id?: string }; checkoutUrl?: string | null; error?: string; details?: unknown }
+      | {
+          ok?: boolean;
+          booking?: { id?: string };
+          bookingUrl?: string | null;
+          checkoutUrl?: string | null;
+          error?: string;
+          details?: unknown;
+        }
       | null;
 
     if (!response.ok || !body?.ok || !body.booking?.id) {
@@ -50,7 +57,12 @@ export async function createPublicSiteBooking(
         details: body?.details,
       };
     }
-    return { ok: true, bookingId: body.booking.id, checkoutUrl: body.checkoutUrl ?? null };
+    return {
+      ok: true,
+      bookingId: body.booking.id,
+      bookingUrl: body.bookingUrl ?? null,
+      checkoutUrl: body.checkoutUrl ?? null,
+    };
   } catch {
     return { ok: false, error: "NETWORK_ERROR", status: 0 };
   }

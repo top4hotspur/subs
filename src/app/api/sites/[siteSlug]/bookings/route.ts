@@ -25,6 +25,7 @@ import {
   createStripeTenantBookingCheckoutSession,
   isStripeConnectionCheckoutReady,
 } from "@/lib/billing/stripe-tenant-checkout";
+import { getLiveTenantSiteByDomainHost } from "@/lib/sites/tenant-resolver";
 
 function backendNotConfigured() {
   return NextResponse.json(
@@ -37,6 +38,10 @@ function absoluteSiteAdminUrl(siteSlug: string): string {
   const baseUrl = getOptionalServerEnv("NEXT_PUBLIC_SITE_URL")?.replace(/\/+$/, "");
   const path = `/site-admin/${encodeURIComponent(siteSlug)}`;
   return baseUrl ? `${baseUrl}${path}` : path;
+}
+
+function requestHost(request: NextRequest): string {
+  return request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "";
 }
 
 function priceToPence(value: unknown): number | null {
@@ -230,18 +235,23 @@ export async function POST(
       site.settings?.businessName ||
       site.tenantSite.displayName ||
       "Your business";
+    const tenantHostMatch = await getLiveTenantSiteByDomainHost(requestHost(request));
+    const isTenantHost = tenantHostMatch?.tenantSlug === site.tenantSite.slug;
+    const publicBasePath = isTenantHost ? "" : `/sites/${encodeURIComponent(site.tenantSite.slug)}`;
+    const bookingUrl = createBookingAccessUrl({
+      baseUrl: request.nextUrl.origin,
+      siteSlug: site.tenantSite.slug,
+      tenantSiteId: site.tenantSite.id,
+      bookingId: booking.id,
+      publicBasePath,
+    });
     const siteSummary = {
       siteName,
       siteSlug: site.tenantSite.slug,
       contactEmail: site.settings?.email ?? null,
       contactPhone: site.settings?.phone ?? null,
-      adminUrl: absoluteSiteAdminUrl(site.tenantSite.slug),
-      bookingUrl: createBookingAccessUrl({
-        baseUrl: getOptionalServerEnv("NEXT_PUBLIC_SITE_URL"),
-        siteSlug: site.tenantSite.slug,
-        tenantSiteId: site.tenantSite.id,
-        bookingId: booking.id,
-      }),
+      adminUrl: isTenantHost ? `${request.nextUrl.origin}/site-admin` : absoluteSiteAdminUrl(site.tenantSite.slug),
+      bookingUrl,
     };
     const customerEmailStatus = booking.customerEmail
       ? await sendTransactionalEmail({
@@ -262,6 +272,7 @@ export async function POST(
       {
         ok: true,
         booking,
+        bookingUrl,
         checkoutUrl: null,
         checkoutSessionId: null,
         emailStatus: { customer: customerEmailStatus, business: businessEmailStatus },

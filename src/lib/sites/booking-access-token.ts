@@ -89,6 +89,7 @@ export function createBookingAccessUrl(input: {
   siteSlug: string;
   tenantSiteId: string;
   bookingId: string;
+  publicBasePath?: string;
 }): string {
   const path = createBookingAccessPath(input);
   const baseUrl = input.baseUrl?.replace(/\/+$/, "");

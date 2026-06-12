@@ -156,7 +156,9 @@ export default async function CustomerAccountPage({ params }: AccountPageProps) 
         </div>
         <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
           <p className="font-semibold text-slate-950">Need to change a booking?</p>
-          <p className="mt-1">Please contact the business to change your booking. Online rescheduling will be added later.</p>
+          <p className="mt-1">
+            Please contact the business to change your booking. Self-service online rescheduling is not enabled for this business yet.
+          </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Link href={contactHref} className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-100">Contact business</Link>
             <Link href={policyHref} className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-100">Booking policy</Link>
@@ -186,7 +188,7 @@ export default async function CustomerAccountPage({ params }: AccountPageProps) 
         <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-700 shadow-sm">
           <p className="font-semibold text-slate-950">Payment methods</p>
           <p className="mt-1">
-            Saved payment methods will be available when this business connects an online payment provider.
+            This business does not store card details here. If online payment is enabled for a booking, secure checkout will be handled separately.
           </p>
         </section>
         <div className="mt-6 grid gap-6">

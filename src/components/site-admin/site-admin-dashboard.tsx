@@ -3940,7 +3940,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
               <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
                 <p className="text-sm font-semibold text-slate-900">Add your first service so customers can see what you offer.</p>
                 <p className="mt-1 text-xs text-slate-600">
-                  Start with the name, price and duration. Booking actions stay as placeholders until the booking engine milestone.
+                    Start with the name, price and duration. Active services with valid durations can be used by the live booking availability flow.
                 </p>
               </div>
             ) : null}
@@ -4156,7 +4156,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                 {staffDraft.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
                     <p className="text-sm font-semibold text-slate-900">Add staff members if customers can choose who they book with, or if you want appointments assigned to your team.</p>
-                    <p className="mt-1 text-xs text-slate-600">You can add rota and availability later. This section only creates the tenant-scoped staff list.</p>
+                    <p className="mt-1 text-xs text-slate-600">Add rota/availability next so this staff member can receive live bookings.</p>
                   </div>
                 ) : null}
                 {staffDraft.map((staff, index) => {
@@ -4244,7 +4244,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
                         <div className="mt-3 rounded-md border border-emerald-100 bg-emerald-50 p-3 text-xs text-emerald-950">
                           <p className="font-semibold">Operational staff access is included</p>
                           <p className="mt-1 text-emerald-800">
-                            Active staff can view appointments, add telephone or walk-in bookings, amend or cancel bookings, mark appointments complete, check payment status, view customer contact details and redeem vouchers where enabled.
+                            Active staff can view appointments, mark appointments complete, check payment status, view customer contact details and redeem vouchers where enabled. Telephone/walk-in booking and amendment tools can be added to staff access as those staff-side controls are enabled.
                           </p>
                         </div>
                       </div>
@@ -4361,7 +4361,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
             <div>
               <h3 className="text-lg font-semibold text-slate-900">Opening hours / rota</h3>
               <p className="mt-1 text-sm text-slate-600">
-                Set the normal days and times your business is open. Staff rota, holidays and appointment availability will build on this later.
+                Set the normal days and times your business is open. Staff rota, holidays and appointment availability use these hours to calculate bookable slots.
               </p>
             </div>
           </div>
@@ -4796,7 +4796,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
               <div>
                 <h4 className="text-sm font-semibold text-teal-950">Booking availability preview</h4>
                 <p className="mt-1 text-xs text-teal-900">
-                  Preview the first calculated booking slots from services, business opening hours, staff rota, breaks, closures, staff leave, and existing active bookings. Booking submission and payment are still future milestones.
+                  Preview calculated booking slots from services, business opening hours, staff rota, breaks, closures, staff leave, and existing active bookings before customers choose a time.
                 </p>
               </div>
               <button
@@ -4891,7 +4891,7 @@ export function SiteAdminDashboard({ siteSlug }: { siteSlug: string }) {
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <h3 className="text-lg font-semibold text-slate-900">Closures, holidays and staff leave</h3>
           <p className="mt-1 text-sm text-slate-600">
-            Use this to block dates when the whole business is closed, or when individual staff members are unavailable. These will be used by online booking availability once booking goes live.
+            Use this to block dates when the whole business is closed, or when individual staff members are unavailable. These records are used by live online booking availability.
           </p>
           <div className="mt-3 grid gap-6 lg:grid-cols-2">
             <div>

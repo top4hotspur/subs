@@ -396,3 +396,9 @@ Platform support access is handled through reset/resend, not plaintext credentia
 - The host-resolved tenant context supplies the site slug internally, so login forms hide the Site slug field and show the tenant name.
 - Platform fallback routes with explicit slugs remain for support on the platform host.
 - Customer domains must not expose platform admin routes.
+
+## 2026-06-12 booking operations visibility
+
+Business admins use the Bookings section to review live tenant bookings with customer contact details, service, staff, date/time, booking status and payment status. The customer-facing site can create confirmed no-online-payment bookings when the tenant payment policy allows it, and those bookings should appear for both business-admin review and staff diary operations.
+
+Staff access should be described according to the controls currently implemented: shared appointment visibility, completion, payment/contact visibility and voucher checks where permitted. Manual booking and amendment tools should not be promised in staff-facing copy unless those controls are present.

@@ -327,7 +327,7 @@ export default async function PublicSiteSlugPage({
                   </div>
                   {publicStaff.length > 0 ? (
                     <p className="text-xs font-semibold text-slate-600">
-                      Staff availability will be used when online booking goes live.
+                      Staff availability is used to show bookable times.
                     </p>
                   ) : null}
                 </div>

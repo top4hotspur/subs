@@ -1884,3 +1884,22 @@ This means AWS/DNS/SSL reaches the app, but app-side statuses still block render
 8. Confirm `https://fundmyclub.online/admin` remains blocked/unavailable.
 9. Confirm `https://fundmyclub.online/api/admin/sites` returns safe 404/NOT_FOUND and exposes no platform data.
 10. Confirm platform fallback `/site-admin/fundmyclub-nails` still works on `myexperiment.club` for support.
+
+## 2026-06-12 FundMyClub live booking lifecycle smoke check
+
+1. Open `https://fundmyclub.online`.
+2. Confirm configured services such as `Shave` and `Wax` appear with category, price, duration and `Check availability`.
+3. Confirm public copy does not say booking/payment will be connected later.
+4. Choose a service, date and time. If selecting `Any available staff`, slot cards should show time only; staff assignment can stay internal.
+5. Enter customer name, email and phone.
+6. Confirm the booking/cancellation policy checkbox is required.
+7. Submit the booking.
+8. Confirm no Stripe/card checkout is required when the tenant payment settings do not require online prepayment.
+9. Confirm the success state says the booking is confirmed and provides a secure `View booking details` link.
+10. Open the booking detail link and confirm it stays on the customer domain when created from `fundmyclub.online`.
+11. Re-check availability for the same staff/service/date/time and confirm the booked staff member's slot is blocked. If other staff are available at the same time, `Any available staff` may still show that time.
+12. Open `https://fundmyclub.online/site-admin`, sign in, and confirm the new booking appears in Bookings with customer details, service, staff, date/time, status and payment status.
+13. Confirm sensible admin actions remain available: amend/reschedule where implemented, cancel, mark completed, mark manual payment received where applicable.
+14. Open `https://fundmyclub.online/site-staff`, sign in with an enabled staff account, and confirm the shared diary shows business appointments according to permissions.
+15. Register or log in at `https://fundmyclub.online/account` using the same customer email and confirm the booking appears in the account booking history.
+16. Confirm `https://fundmyclub.online/admin` and `https://fundmyclub.online/api/admin/sites` remain blocked/unavailable.

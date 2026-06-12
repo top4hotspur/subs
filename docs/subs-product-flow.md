@@ -1264,3 +1264,20 @@ Customer-host security remains unchanged: `/admin` and `/api/admin/*` on custome
 - The tenant runtime resolves the host to `SiteDomain -> TenantSite`, so custom-domain login pages know the tenant without a visible Site slug field.
 - Platform fallback routes `/site-admin/[siteSlug]` and `/site-staff/[siteSlug]` remain available for support/preview on `myexperiment.club`.
 - Customer-domain `/admin` and `/api/admin/*` remain blocked and must not expose platform admin.
+
+## 2026-06-12 FundMyClub live booking lifecycle proof
+
+FundMyClub.online is the current live tenant rehearsal for the full booking lifecycle. The public site uses the customer domain while `/sites/fundmyclub-nails` remains the platform preview route.
+
+Expected public flow:
+- Services such as `Shave` and `Wax` render with category, price, duration and `Check availability` actions.
+- Availability is calculated from active services, business opening hours, staff rota, breaks, closures, staff leave and existing active bookings.
+- Customers choose a service/date/time, enter contact details, accept the booking/cancellation policy and submit.
+- If the tenant has no online processor/prepayment requirement, no card checkout is required; the booking is confirmed and payment copy says no online payment is taken or payment is arranged directly with the business.
+- The customer receives or can open a secure booking detail link on the same customer domain when the booking was created from the custom domain.
+- Booked staff/service/time windows are blocked for that staff member. If `Any available staff` is selected, the same time may still appear when a different staff member is genuinely available.
+
+Back-office expectations:
+- `/site-admin` on the customer domain shows the tenant business admin, and the Bookings section lists new bookings with customer details, service, staff, date/time, status, payment status and available actions.
+- `/site-staff` on the customer domain shows the shared staff diary after staff login. Staff can see business appointments according to permissions and can mark eligible bookings completed. Manual booking/amendment controls remain limited to the staff-side tools currently implemented.
+- Customer accounts show bookings linked by tenant/customer account or matching email address, with secure booking detail links.
